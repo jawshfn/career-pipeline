@@ -4,12 +4,12 @@ import EmptyApplicationsState from "./EmptyApplicationsState.jsx";
 import StatusBadge from "./StatusBadge.jsx";
 
 function formatValue(value) {
-  return value || "—";
+  return value || "-";
 }
 
 function getResumeLabel(application, resumeVersionsById) {
   if (!application.resume_version_id) {
-    return "—";
+    return "-";
   }
 
   return resumeVersionsById.get(application.resume_version_id)?.name || application.resume_version_id;

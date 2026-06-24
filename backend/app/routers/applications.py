@@ -1,12 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from datetime import date, timedelta
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Application
-from ..schemas import ApplicationCreate, ApplicationRead, ApplicationUpdate
+from ..models import Application, utc_now
+from ..schemas import ApplicationActionItemsRead, ApplicationCreate, ApplicationRead, ApplicationUpdate
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
+
+STALE_EXCLUDED_STATUSES = ("Offer", "Rejected", "Withdrawn", "Archived")
 
 
 @router.get("", response_model=list[ApplicationRead])
@@ -36,6 +40,51 @@ def list_applications(
         )
 
     return query.order_by(Application.updated_at.desc()).all()
+
+
+@router.get("/action-items", response_model=ApplicationActionItemsRead)
+def get_action_items(db: Session = Depends(get_db)) -> dict[str, list[Application]]:
+    today = date.today()
+    stale_cutoff = utc_now() - timedelta(days=14)
+
+    overdue_followups = (
+        db.query(Application)
+        .filter(
+            Application.is_archived.is_(False),
+            Application.follow_up_date.is_not(None),
+            Application.follow_up_date < today,
+        )
+        .order_by(Application.follow_up_date.asc(), Application.updated_at.desc())
+        .all()
+    )
+
+    due_today = (
+        db.query(Application)
+        .filter(
+            Application.is_archived.is_(False),
+            Application.follow_up_date == today,
+        )
+        .order_by(Application.updated_at.desc())
+        .all()
+    )
+
+    stale_applications = (
+        db.query(Application)
+        .filter(
+            Application.is_archived.is_(False),
+            Application.follow_up_date.is_(None),
+            Application.status.notin_(STALE_EXCLUDED_STATUSES),
+            Application.updated_at < stale_cutoff,
+        )
+        .order_by(Application.updated_at.asc())
+        .all()
+    )
+
+    return {
+        "overdue_followups": overdue_followups,
+        "due_today": due_today,
+        "stale_applications": stale_applications,
+    }
 
 
 @router.post("", response_model=ApplicationRead, status_code=status.HTTP_201_CREATED)

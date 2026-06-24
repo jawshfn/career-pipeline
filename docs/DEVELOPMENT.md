@@ -106,9 +106,17 @@ Run this checklist before starting a new product phase or opening a pull request
 - Frontend dev server starts with `npm run dev`.
 - Applications table loads backend applications.
 - Quick-add creates an application.
+- Quick-add can create an application with a follow-up date.
+- Applications table displays the follow-up date.
 - Pipeline groups applications by status.
 - Changing pipeline status persists after refresh.
 - Applications page reflects pipeline status changes.
+- Overdue follow-up appears in the Daily Command Center.
+- Due today follow-up appears in the Daily Command Center.
+- Future follow-up does not appear in the Daily Command Center.
+- Stale active application appears in the Daily Command Center.
+- Rejected, withdrawn, and archived applications do not appear as stale.
+- No `Follow-up Due` or `Follow-up due` status exists.
 - Demo data and screenshots contain no private or personal job-search data.
 
 ## Definition of Done for a Feature

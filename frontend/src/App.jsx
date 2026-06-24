@@ -4,10 +4,11 @@ import { createApplication, getApplications, updateApplication } from "./api/app
 import { getResumeVersions } from "./api/resumeVersionsApi.js";
 import AppLayout from "./components/layout/AppLayout.jsx";
 import ApplicationsPage from "./pages/ApplicationsPage.jsx";
+import CommandCenterPage from "./pages/CommandCenterPage.jsx";
 import PipelinePage from "./pages/PipelinePage.jsx";
 
 export default function App() {
-  const [activePage, setActivePage] = useState("applications");
+  const [activePage, setActivePage] = useState("command-center");
   const [applications, setApplications] = useState([]);
   const [resumeVersions, setResumeVersions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -56,7 +57,9 @@ export default function App() {
 
   return (
     <AppLayout activePage={activePage} onNavigate={setActivePage}>
-      {activePage === "pipeline" ? (
+      {activePage === "command-center" ? (
+        <CommandCenterPage />
+      ) : activePage === "pipeline" ? (
         <PipelinePage
           applications={applications}
           error={loadError}

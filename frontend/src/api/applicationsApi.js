@@ -45,3 +45,8 @@ export async function updateApplication(applicationId, applicationData) {
 
   return parseResponse(response);
 }
+
+export async function getApplicationActionItems() {
+  const response = await fetch(`${API_BASE_URL}/api/applications/action-items`);
+  return parseResponse(response);
+}

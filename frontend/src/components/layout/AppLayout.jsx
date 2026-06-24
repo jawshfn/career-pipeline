@@ -3,9 +3,16 @@ import React from "react";
 import "./AppLayout.css";
 
 const navigationItems = [
+  { id: "command-center", label: "Command Center" },
   { id: "applications", label: "Applications" },
   { id: "pipeline", label: "Pipeline" },
 ];
+
+const pageTitles = {
+  "command-center": "Command Center",
+  applications: "Applications",
+  pipeline: "Pipeline",
+};
 
 export default function AppLayout({ activePage, children, onNavigate }) {
   return (
@@ -13,7 +20,7 @@ export default function AppLayout({ activePage, children, onNavigate }) {
       <aside className="app-sidebar" aria-label="Primary">
         <div>
           <p className="app-brand-kicker">Career Pipeline</p>
-          <h1>{activePage === "pipeline" ? "Pipeline" : "Applications"}</h1>
+          <h1>{pageTitles[activePage] || "Applications"}</h1>
         </div>
         <nav className="app-nav" aria-label="Current section">
           {navigationItems.map((item) => (

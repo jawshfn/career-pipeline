@@ -7,6 +7,7 @@ const initialFormState = {
   source: "Other",
   status: "Saved",
   resume_version_id: "",
+  follow_up_date: "",
   notes: "",
 };
 
@@ -55,6 +56,7 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
       source: formData.source,
       status: formData.status,
       resume_version_id: formData.resume_version_id ? Number(formData.resume_version_id) : null,
+      follow_up_date: formData.follow_up_date || null,
       notes: formData.notes.trim() || null,
     };
 
@@ -146,6 +148,16 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
               </option>
             ))}
           </select>
+        </label>
+
+        <label>
+          Follow-up date
+          <input
+            name="follow_up_date"
+            type="date"
+            value={formData.follow_up_date}
+            onChange={updateField}
+          />
         </label>
 
         <label className="notes-field">

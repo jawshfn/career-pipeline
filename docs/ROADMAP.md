@@ -64,14 +64,21 @@ Status: complete
 
 ## Phase 4: Follow-Up Queue / Daily Command Center
 
-Status: next
+Status: complete
 
 - Add follow-up date filtering
-- Build due and overdue follow-up queue
+- Build rule-based Daily Command Center
+- Surface overdue follow-ups and follow-ups due today
+- Surface stale active applications without adding "Follow-up due" as a status
+
+Later follow-up enhancements:
+
 - Add mark-complete and reschedule behavior
-- Show key daily metrics on the dashboard
+- Add richer daily summary metrics after dashboard work begins
 
 ## Phase 5: Resume Versions
+
+Status: next
 
 - Add resume version records
 - Assign resume versions to applications

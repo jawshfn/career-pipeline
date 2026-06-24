@@ -85,6 +85,12 @@ class ApplicationRead(ApplicationBase):
     updated_at: datetime
 
 
+class ApplicationActionItemsRead(BaseModel):
+    overdue_followups: list[ApplicationRead]
+    due_today: list[ApplicationRead]
+    stale_applications: list[ApplicationRead]
+
+
 class ResumeVersionCreate(BaseModel):
     name: str = Field(min_length=1)
     target_role: str | None = None
