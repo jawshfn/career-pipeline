@@ -35,9 +35,9 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Project Status
 
-Career Pipeline is currently in planning and early implementation. Phase 0 product documentation is in place. The Phase 1 backend foundation exists with a local-first FastAPI API, SQLite persistence, and backend pytest coverage. Phase 1.5 added GitHub Actions CI. Phase 2 added the React frontend scaffold, quick-add application form, and applications table connected to the backend.
+Career Pipeline is currently in planning and early implementation. Phase 0 product documentation is in place. The Phase 1 backend foundation exists with a local-first FastAPI API, SQLite persistence, and backend pytest coverage. Phase 1.5 added GitHub Actions CI. Phase 2 added the React frontend scaffold, quick-add application form, and applications table connected to the backend. Phase 3 adds a Pipeline board with status-based columns and status updates.
 
-The full product is not complete yet. The pipeline board, dashboard metrics, red flags, follow-up queue, application detail page, and deployment are still planned.
+The full product is not complete yet. Follow-up queue, red flags, dashboard metrics, application detail page, and deployment are still planned.
 
 ## Planned Development Phases
 

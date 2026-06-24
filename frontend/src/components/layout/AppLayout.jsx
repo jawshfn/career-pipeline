@@ -2,16 +2,30 @@ import React from "react";
 
 import "./AppLayout.css";
 
-export default function AppLayout({ children }) {
+const navigationItems = [
+  { id: "applications", label: "Applications" },
+  { id: "pipeline", label: "Pipeline" },
+];
+
+export default function AppLayout({ activePage, children, onNavigate }) {
   return (
     <div className="app-shell">
       <aside className="app-sidebar" aria-label="Primary">
         <div>
           <p className="app-brand-kicker">Career Pipeline</p>
-          <h1>Applications</h1>
+          <h1>{activePage === "pipeline" ? "Pipeline" : "Applications"}</h1>
         </div>
         <nav className="app-nav" aria-label="Current section">
-          <span className="app-nav-item app-nav-item-active">Applications</span>
+          {navigationItems.map((item) => (
+            <button
+              className={`app-nav-item ${activePage === item.id ? "app-nav-item-active" : ""}`}
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
         </nav>
       </aside>
       <main className="app-main">{children}</main>

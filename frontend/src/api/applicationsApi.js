@@ -10,14 +10,33 @@ async function parseResponse(response) {
   return response.json();
 }
 
-export async function getApplications() {
-  const response = await fetch(`${API_BASE_URL}/api/applications`);
+export async function getApplications(options = {}) {
+  const searchParams = new URLSearchParams();
+
+  if (options.includeArchived) {
+    searchParams.set("include_archived", "true");
+  }
+
+  const queryString = searchParams.toString();
+  const response = await fetch(`${API_BASE_URL}/api/applications${queryString ? `?${queryString}` : ""}`);
   return parseResponse(response);
 }
 
 export async function createApplication(applicationData) {
   const response = await fetch(`${API_BASE_URL}/api/applications`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(applicationData),
+  });
+
+  return parseResponse(response);
+}
+
+export async function updateApplication(applicationId, applicationData) {
+  const response = await fetch(`${API_BASE_URL}/api/applications/${applicationId}`, {
+    method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
