@@ -35,7 +35,7 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Project Status
 
-Career Pipeline is currently in planning and prototyping. The repository is focused on product definition, MVP scope, architecture planning, data modeling, API planning, and interface wireframes. Backend and frontend application code have not been created yet.
+Career Pipeline is currently in planning and early implementation. Phase 0 product documentation is in place, and the Phase 1 backend foundation now includes a local-first FastAPI API, SQLite persistence, initial application and resume-version endpoints, seed data, and pytest coverage. The React frontend has not been created yet.
 
 ## Planned Development Phases
 
@@ -55,11 +55,15 @@ Screenshots will be added after the first working frontend prototype is availabl
 
 ## Run Locally
 
-Local setup instructions will be added when the backend and frontend project structure is created.
+Backend setup instructions are available in [backend/README.md](backend/README.md). Frontend setup instructions will be added when the React project is created.
 
 ## Tests
 
-Test instructions will be added when the first backend and frontend test suites are introduced.
+Backend tests can be run from the `backend` directory with:
+
+```powershell
+python -m pytest
+```
 
 ## Deployment
 
