@@ -104,7 +104,7 @@ Follow-up due is not a pipeline status. It is a computed action state based on f
 
 ### Review Follow-Ups Due
 
-The user opens the daily command center and sees applications with follow-ups due today or overdue. Each item should show enough context to act quickly: company, role, source, status, due date, and latest note.
+The user opens the daily command center and sees applications with overdue follow-ups, upcoming follow-ups due within the next 3 days, and stale active applications. Each item should show enough context to act quickly: company, role, source, status, due date, and latest note.
 
 The user can mark a follow-up complete, reschedule it, or open the application detail page.
 
@@ -143,7 +143,7 @@ The dashboard should answer practical questions:
 
 - A user can add a job opportunity in under a minute.
 - A user can track at least 25 applications without losing important context.
-- A user can identify follow-ups due today or overdue.
+- A user can identify overdue follow-ups and upcoming follow-ups due within 3 days.
 - A user can assign a resume version to each application.
 - A user can flag suspicious or questionable postings.
 - A user can see basic response and source insights.

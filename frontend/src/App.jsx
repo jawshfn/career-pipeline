@@ -20,7 +20,7 @@ export default function App() {
 
     try {
       const [applicationsData, resumeVersionsData] = await Promise.all([
-        getApplications({ includeArchived: true }),
+        getApplications(),
         getResumeVersions(),
       ]);
 
@@ -61,7 +61,7 @@ export default function App() {
         <CommandCenterPage />
       ) : activePage === "pipeline" ? (
         <PipelinePage
-          applications={applications}
+          applications={activeApplications}
           error={loadError}
           isLoading={isLoading}
           onUpdateApplication={handleUpdateApplication}

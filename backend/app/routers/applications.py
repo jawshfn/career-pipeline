@@ -45,6 +45,7 @@ def list_applications(
 @router.get("/action-items", response_model=ApplicationActionItemsRead)
 def get_action_items(db: Session = Depends(get_db)) -> dict[str, list[Application]]:
     today = date.today()
+    upcoming_cutoff = today + timedelta(days=3)
     stale_cutoff = utc_now() - timedelta(days=14)
 
     overdue_followups = (
@@ -58,13 +59,15 @@ def get_action_items(db: Session = Depends(get_db)) -> dict[str, list[Applicatio
         .all()
     )
 
-    due_today = (
+    upcoming_followups = (
         db.query(Application)
         .filter(
             Application.is_archived.is_(False),
-            Application.follow_up_date == today,
+            Application.follow_up_date.is_not(None),
+            Application.follow_up_date >= today,
+            Application.follow_up_date <= upcoming_cutoff,
         )
-        .order_by(Application.updated_at.desc())
+        .order_by(Application.follow_up_date.asc(), Application.updated_at.desc())
         .all()
     )
 
@@ -82,7 +85,7 @@ def get_action_items(db: Session = Depends(get_db)) -> dict[str, list[Applicatio
 
     return {
         "overdue_followups": overdue_followups,
-        "due_today": due_today,
+        "upcoming_followups": upcoming_followups,
         "stale_applications": stale_applications,
     }
 

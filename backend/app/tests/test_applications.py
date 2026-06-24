@@ -20,6 +20,25 @@ def test_create_application(client):
     assert data["is_archived"] is False
 
 
+def test_create_application_without_status_defaults_to_saved(client):
+    response = create_application(client)
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "Saved"
+
+
+def test_blank_status_validation(client):
+    response = create_application(client, status="")
+
+    assert response.status_code == 422
+
+
+def test_null_status_validation(client):
+    response = create_application(client, status=None)
+
+    assert response.status_code == 422
+
+
 def test_list_applications(client):
     create_application(client, company_name="Northstar Labs")
     create_application(client, company_name="Cedar Metrics", source="Referral")

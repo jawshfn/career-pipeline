@@ -32,28 +32,46 @@ def test_action_items_include_overdue_followups(client):
     data = get_action_items(client)
 
     assert [item["company_name"] for item in data["overdue_followups"]] == ["Overdue Co"]
-    assert data["due_today"] == []
+    assert data["upcoming_followups"] == []
     assert data["stale_applications"] == []
 
 
-def test_action_items_include_due_today(client):
+def test_action_items_include_today_in_upcoming_followups(client):
     today = date.today()
-    create_application(client, company_name="Due Today Co", follow_up_date=today.isoformat())
+    create_application(client, company_name="Today Co", follow_up_date=today.isoformat())
 
     data = get_action_items(client)
 
-    assert [item["company_name"] for item in data["due_today"]] == ["Due Today Co"]
+    assert [item["company_name"] for item in data["upcoming_followups"]] == ["Today Co"]
     assert data["overdue_followups"] == []
 
 
-def test_action_items_exclude_future_followups(client):
+def test_action_items_include_tomorrow_in_upcoming_followups(client):
     tomorrow = date.today() + timedelta(days=1)
-    create_application(client, company_name="Future Follow Up Co", follow_up_date=tomorrow.isoformat())
+    create_application(client, company_name="Tomorrow Co", follow_up_date=tomorrow.isoformat())
+
+    data = get_action_items(client)
+
+    assert [item["company_name"] for item in data["upcoming_followups"]] == ["Tomorrow Co"]
+
+
+def test_action_items_include_three_days_out_in_upcoming_followups(client):
+    three_days_out = date.today() + timedelta(days=3)
+    create_application(client, company_name="Three Days Out Co", follow_up_date=three_days_out.isoformat())
+
+    data = get_action_items(client)
+
+    assert [item["company_name"] for item in data["upcoming_followups"]] == ["Three Days Out Co"]
+
+
+def test_action_items_exclude_four_days_out_followups(client):
+    four_days_out = date.today() + timedelta(days=4)
+    create_application(client, company_name="Four Days Out Co", follow_up_date=four_days_out.isoformat())
 
     data = get_action_items(client)
 
     assert data["overdue_followups"] == []
-    assert data["due_today"] == []
+    assert data["upcoming_followups"] == []
     assert data["stale_applications"] == []
 
 

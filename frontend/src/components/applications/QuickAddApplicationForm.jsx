@@ -34,6 +34,26 @@ const sourceOptions = [
   "Other",
 ];
 
+const followUpPresets = [
+  { label: "Tomorrow", daysFromToday: 1 },
+  { label: "In 3 days", daysFromToday: 3 },
+  { label: "In 1 week", daysFromToday: 7 },
+  { label: "In 2 weeks", daysFromToday: 14 },
+];
+
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getPresetDate(daysFromToday) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromToday);
+  return formatLocalDate(date);
+}
+
 export default function QuickAddApplicationForm({ resumeVersions, onCreateApplication }) {
   const [formData, setFormData] = useState(initialFormState);
   const [error, setError] = useState("");
@@ -42,6 +62,10 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
   function updateField(event) {
     const { name, value } = event.target;
     setFormData((current) => ({ ...current, [name]: value }));
+  }
+
+  function setFollowUpDate(value) {
+    setFormData((current) => ({ ...current, follow_up_date: value }));
   }
 
   async function handleSubmit(event) {
@@ -150,15 +174,31 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
           </select>
         </label>
 
-        <label>
-          Follow-up date
-          <input
-            name="follow_up_date"
-            type="date"
-            value={formData.follow_up_date}
-            onChange={updateField}
-          />
-        </label>
+        <div className="follow-up-date-field">
+          <label>
+            Follow-up date
+            <input
+              name="follow_up_date"
+              type="date"
+              value={formData.follow_up_date}
+              onChange={updateField}
+            />
+          </label>
+          <div className="follow-up-presets" aria-label="Follow-up date presets">
+            {followUpPresets.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => setFollowUpDate(getPresetDate(preset.daysFromToday))}
+              >
+                {preset.label}
+              </button>
+            ))}
+            <button type="button" onClick={() => setFollowUpDate("")}>
+              Clear
+            </button>
+          </div>
+        </div>
 
         <label className="notes-field">
           Notes

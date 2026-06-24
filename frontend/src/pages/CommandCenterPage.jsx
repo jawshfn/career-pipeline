@@ -7,7 +7,7 @@ import LoadingState from "../components/ui/LoadingState.jsx";
 
 const emptyActionItems = {
   overdue_followups: [],
-  due_today: [],
+  upcoming_followups: [],
   stale_applications: [],
 };
 
@@ -48,7 +48,7 @@ export default function CommandCenterPage() {
 
   const hasActionItems =
     actionItems.overdue_followups.length > 0 ||
-    actionItems.due_today.length > 0 ||
+    actionItems.upcoming_followups.length > 0 ||
     actionItems.stale_applications.length > 0;
 
   return (
@@ -74,9 +74,9 @@ export default function CommandCenterPage() {
             title="Overdue Follow-ups"
           />
           <CommandCenterSection
-            applications={actionItems.due_today}
-            description="Follow-ups scheduled for today."
-            title="Due Today"
+            applications={actionItems.upcoming_followups}
+            description="Follow-ups due today through the next 3 days."
+            title="Upcoming Follow-ups"
           />
           <CommandCenterSection
             applications={actionItems.stale_applications}

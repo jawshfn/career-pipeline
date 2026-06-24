@@ -15,7 +15,7 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Planned MVP Features
 
-- Quick-add workflow for fast application capture, including optional follow-up date
+- Quick-add workflow for fast application capture, including optional follow-up date presets
 - Applications table with search, filtering, and status tracking
 - Pipeline board for visual application progress
 - Daily Command Center for overdue, due-today, and stale application action items
@@ -35,7 +35,7 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Project Status
 
-Career Pipeline is currently in planning and early implementation. Phase 0 product documentation is complete. The Phase 1 backend foundation exists with a local-first FastAPI API, SQLite persistence, and backend pytest coverage. Phase 1.5 added GitHub Actions CI. Phase 2 added the React frontend scaffold, quick-add application form, and applications table connected to the backend. Phase 3 added a Pipeline board with status-based columns and status updates. Phase 3.5 added frontend workflow polish, shared state consistency, and documentation cleanup. Phase 4 adds a rule-based Daily Command Center for overdue follow-ups, follow-ups due today, and stale active applications.
+Career Pipeline is currently in planning and early implementation. Phase 0 product documentation is complete. The Phase 1 backend foundation exists with a local-first FastAPI API, SQLite persistence, and backend pytest coverage. Phase 1.5 added GitHub Actions CI. Phase 2 added the React frontend scaffold, quick-add application form, and applications table connected to the backend. Phase 3 added a Pipeline board with status-based columns and status updates. Phase 3.5 added frontend workflow polish, shared state consistency, and documentation cleanup. Phase 4 adds a rule-based Daily Command Center for overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications.
 
 The full product is not complete yet. Red flags, dashboard metrics, application detail page, follow-up completion/rescheduling, and deployment are still planned.
 

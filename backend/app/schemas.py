@@ -87,7 +87,7 @@ class ApplicationRead(ApplicationBase):
 
 class ApplicationActionItemsRead(BaseModel):
     overdue_followups: list[ApplicationRead]
-    due_today: list[ApplicationRead]
+    upcoming_followups: list[ApplicationRead]
     stale_applications: list[ApplicationRead]
 
 

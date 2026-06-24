@@ -107,17 +107,39 @@ Run this checklist before starting a new product phase or opening a pull request
 - Applications table loads backend applications.
 - Quick-add creates an application.
 - Quick-add can create an application with a follow-up date.
+- Quick-add follow-up presets fill Tomorrow, In 3 days, In 1 week, and In 2 weeks as `YYYY-MM-DD`.
+- Quick-add follow-up Clear removes the follow-up date.
 - Applications table displays the follow-up date.
 - Pipeline groups applications by status.
 - Changing pipeline status persists after refresh.
 - Applications page reflects pipeline status changes.
-- Overdue follow-up appears in the Daily Command Center.
-- Due today follow-up appears in the Daily Command Center.
-- Future follow-up does not appear in the Daily Command Center.
+- Overdue follow-up appears separately in the Daily Command Center.
+- Today follow-up appears under Upcoming Follow-ups.
+- Tomorrow follow-up appears under Upcoming Follow-ups.
+- Three-days-out follow-up appears under Upcoming Follow-ups.
+- Four-days-out follow-up does not appear in the Daily Command Center.
 - Stale active application appears in the Daily Command Center.
 - Rejected, withdrawn, and archived applications do not appear as stale.
 - No `Follow-up Due` or `Follow-up due` status exists.
 - Demo data and screenshots contain no private or personal job-search data.
+
+## Local QA Data Cleanup
+
+Manual QA may create temporary local applications in `backend/career_pipeline.db`. Do not add automatic cleanup behavior to application startup or production code.
+
+For ordinary cleanup, archive individual QA records through the API:
+
+```powershell
+Invoke-RestMethod -Method Delete -Uri http://127.0.0.1:8000/api/applications/{application_id}
+```
+
+For a full local reset, stop the backend server and delete the local SQLite database file:
+
+```powershell
+Remove-Item -LiteralPath backend/career_pipeline.db
+```
+
+The database will be recreated the next time the backend starts. Use this only for local development data.
 
 ## Definition of Done for a Feature
 

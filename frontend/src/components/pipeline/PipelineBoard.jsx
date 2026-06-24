@@ -17,7 +17,7 @@ export default function PipelineBoard({
 
   applications.forEach((application) => {
     const status = PIPELINE_STATUSES.includes(application.status) ? application.status : "Saved";
-    applicationsByStatus[status].push(application);
+    applicationsByStatus[status].push({ ...application, status });
   });
 
   return (

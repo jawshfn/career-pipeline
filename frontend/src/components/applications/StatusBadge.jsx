@@ -12,8 +12,11 @@ const statusClassNames = {
   Archived: "status-archived",
 };
 
-export default function StatusBadge({ status }) {
-  const className = statusClassNames[status] || "status-default";
+const allowedStatuses = Object.keys(statusClassNames);
 
-  return <span className={`status-badge ${className}`}>{status || "Saved"}</span>;
+export default function StatusBadge({ status }) {
+  const displayStatus = allowedStatuses.includes(status) ? status : "Saved";
+  const className = statusClassNames[displayStatus] || "status-default";
+
+  return <span className={`status-badge ${className}`}>{displayStatus}</span>;
 }

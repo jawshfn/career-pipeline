@@ -68,7 +68,7 @@ Status: complete
 
 - Add follow-up date filtering
 - Build rule-based Daily Command Center
-- Surface overdue follow-ups and follow-ups due today
+- Surface overdue follow-ups and upcoming follow-ups due within 3 days
 - Surface stale active applications without adding "Follow-up due" as a status
 
 Later follow-up enhancements:
