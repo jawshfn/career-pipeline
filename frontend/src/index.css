@@ -1,0 +1,280 @@
+:root {
+  color: #17202a;
+  background: #f6f7f9;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+.applications-page {
+  display: grid;
+  gap: 24px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: #60706d;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.page-header h2,
+.section-heading h2 {
+  margin: 0;
+  color: #17202a;
+  letter-spacing: 0;
+}
+
+.page-header h2 {
+  font-size: 2rem;
+}
+
+.page-header p,
+.section-heading p {
+  margin: 6px 0 0;
+  color: #60706d;
+}
+
+.panel {
+  padding: 22px;
+  border: 1px solid #dce3e1;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(23, 32, 42, 0.06);
+}
+
+.section-heading {
+  margin-bottom: 18px;
+}
+
+.quick-add-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.quick-add-form label {
+  display: grid;
+  gap: 6px;
+  color: #34413f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.quick-add-form input,
+.quick-add-form select,
+.quick-add-form textarea {
+  width: 100%;
+  border: 1px solid #cbd6d3;
+  border-radius: 6px;
+  padding: 10px 11px;
+  color: #17202a;
+  background: #ffffff;
+}
+
+.quick-add-form input:focus,
+.quick-add-form select:focus,
+.quick-add-form textarea:focus {
+  border-color: #287c73;
+  outline: 3px solid rgba(40, 124, 115, 0.14);
+}
+
+.notes-field {
+  grid-column: 1 / -1;
+}
+
+.form-actions {
+  display: flex;
+  align-items: end;
+}
+
+.form-actions button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 16px;
+  color: #ffffff;
+  background: #287c73;
+  font-weight: 800;
+}
+
+.form-actions button:hover {
+  background: #1f6860;
+}
+
+.form-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.message {
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-weight: 700;
+}
+
+.quick-add-panel .message {
+  margin-bottom: 16px;
+}
+
+.message-error {
+  border: 1px solid #f0b4a8;
+  color: #8b2f20;
+  background: #fff1ee;
+}
+
+.message-loading {
+  border: 1px solid #c7d8ec;
+  color: #214e7a;
+  background: #eef6ff;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.applications-table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+}
+
+.applications-table th,
+.applications-table td {
+  border-bottom: 1px solid #e5ebe9;
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.applications-table th {
+  color: #52605d;
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.applications-table td {
+  color: #202a33;
+}
+
+.notes-cell {
+  max-width: 260px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.status-saved {
+  color: #38505f;
+  background: #e8eef2;
+}
+
+.status-applied {
+  color: #27556d;
+  background: #dff0f8;
+}
+
+.status-assessment,
+.status-screen {
+  color: #694c13;
+  background: #f8ebc9;
+}
+
+.status-interview {
+  color: #31533a;
+  background: #dff1e4;
+}
+
+.status-offer {
+  color: #164f47;
+  background: #cdeee7;
+}
+
+.status-closed,
+.status-archived {
+  color: #6b3535;
+  background: #f1dddd;
+}
+
+.status-default {
+  color: #34413f;
+  background: #edf1ef;
+}
+
+.empty-state {
+  border: 1px dashed #b7c5c1;
+  border-radius: 8px;
+  padding: 28px;
+  color: #52605d;
+  background: #f9fbfa;
+  text-align: center;
+}
+
+@media (max-width: 980px) {
+  .quick-add-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .quick-add-form {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    padding: 18px;
+  }
+}

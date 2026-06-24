@@ -1,0 +1,69 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.app-sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 32px 24px;
+  color: #f7faf9;
+  background: #143d3a;
+}
+
+.app-brand-kicker {
+  margin: 0 0 8px;
+  color: #b8d9d3;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.app-sidebar h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.7rem;
+  letter-spacing: 0;
+}
+
+.app-nav {
+  display: grid;
+  gap: 8px;
+}
+
+.app-nav-item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #d9eeea;
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+}
+
+.app-nav-item-active {
+  background: #ffffff;
+  color: #143d3a;
+}
+
+.app-main {
+  width: 100%;
+  padding: 32px;
+}
+
+@media (max-width: 780px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .app-sidebar {
+    padding: 24px;
+  }
+
+  .app-main {
+    padding: 20px;
+  }
+}
