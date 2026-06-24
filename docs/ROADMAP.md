@@ -4,7 +4,7 @@ This roadmap is intentionally product-first and conservative. The goal is to bui
 
 ## Phase 0: Documentation and Product Planning
 
-Status: in progress
+Status: complete
 
 - Define product vision and MVP scope
 - Document core workflows
@@ -15,6 +15,8 @@ Status: in progress
 
 ## Phase 1: Backend Foundation
 
+Status: complete
+
 - Create FastAPI project structure
 - Add SQLite database setup
 - Add application configuration for local development
@@ -22,7 +24,17 @@ Status: in progress
 - Add initial pytest setup
 - Add basic GitHub Actions test workflow
 
+## Phase 1.5: CI Foundation
+
+Status: complete
+
+- Add GitHub Actions backend test automation
+- Add frontend build automation after the React scaffold exists
+- Keep CI focused on backend pytest and frontend production build
+
 ## Phase 2: Quick-Add and Applications Table
+
+Status: complete
 
 - Implement application create, read, update, list, and archive behavior
 - Support quick-add required fields
@@ -32,13 +44,27 @@ Status: in progress
 
 ## Phase 3: Pipeline Board
 
+Status: complete
+
 - Define status transitions
 - Add status update endpoint
 - Build visual pipeline board
 - Allow moving an application between statuses
-- Record status changes as application events
+- Keep status changes persisted through the existing application update flow
+
+## Phase 3.5: Frontend Workflow Polish
+
+Status: complete
+
+- Improve navigation clarity between Applications and Pipeline
+- Keep Applications and Pipeline state reasonably consistent
+- Improve status update loading and error states
+- Add manual QA checklist
+- Update project documentation for current state
 
 ## Phase 4: Follow-Up Queue / Daily Command Center
+
+Status: next
 
 - Add follow-up date filtering
 - Build due and overdue follow-up queue

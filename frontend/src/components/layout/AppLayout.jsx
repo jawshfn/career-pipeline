@@ -18,6 +18,7 @@ export default function AppLayout({ activePage, children, onNavigate }) {
         <nav className="app-nav" aria-label="Current section">
           {navigationItems.map((item) => (
             <button
+              aria-current={activePage === item.id ? "page" : undefined}
               className={`app-nav-item ${activePage === item.id ? "app-nav-item-active" : ""}`}
               key={item.id}
               onClick={() => onNavigate(item.id)}

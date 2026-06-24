@@ -3,7 +3,7 @@ import React from "react";
 import PipelineStatusSelect from "./PipelineStatusSelect.jsx";
 
 function formatValue(value) {
-  return value || "—";
+  return value || "-";
 }
 
 function getResumeLabel(application, resumeVersion) {
@@ -11,7 +11,7 @@ function getResumeLabel(application, resumeVersion) {
     return resumeVersion.name;
   }
 
-  return application.resume_version_id || "—";
+  return application.resume_version_id || "-";
 }
 
 function getNotesPreview(notes) {
@@ -26,7 +26,7 @@ export default function PipelineCard({ application, isUpdating, onStatusChange, 
   const notesPreview = getNotesPreview(application.notes);
 
   return (
-    <article className="pipeline-card">
+    <article className={`pipeline-card ${isUpdating ? "pipeline-card-saving" : ""}`}>
       <div className="pipeline-card-heading">
         <h4>{application.company_name}</h4>
         <p>{application.role_title}</p>
@@ -55,6 +55,7 @@ export default function PipelineCard({ application, isUpdating, onStatusChange, 
 
       <PipelineStatusSelect
         disabled={isUpdating}
+        isSaving={isUpdating}
         onChange={(nextStatus) => onStatusChange(application, nextStatus)}
         value={application.status}
       />

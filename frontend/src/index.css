@@ -202,6 +202,10 @@ a {
   color: #202a33;
 }
 
+.applications-table tbody tr:hover {
+  background: #f7faf9;
+}
+
 .notes-cell {
   max-width: 260px;
 }
@@ -338,6 +342,11 @@ a {
   box-shadow: 0 6px 18px rgba(23, 32, 42, 0.06);
 }
 
+.pipeline-card-saving {
+  border-color: #a9c8c3;
+  background: #fbfdfc;
+}
+
 .pipeline-card-heading h4 {
   margin: 0;
   color: #17202a;
@@ -399,6 +408,12 @@ a {
   padding: 9px 10px;
   color: #17202a;
   background: #ffffff;
+  cursor: pointer;
+}
+
+.pipeline-status-select select:disabled {
+  cursor: wait;
+  opacity: 0.72;
 }
 
 .pipeline-status-select select:focus {

@@ -36,7 +36,7 @@ Examples:
 docs: add product spec and roadmap
 api: add application quick-add endpoint
 ui: build applications table filters
-test: cover status update events
+test: cover status updates
 ```
 
 ## Testing Expectations
@@ -47,7 +47,7 @@ Expected backend coverage:
 
 - Health endpoint
 - Application create, list, retrieve, update, and archive
-- Status updates and event creation
+- Status updates
 - Due and overdue follow-up filtering based on follow_up_date
 - Resume version assignment
 - Red-flag assignment and removal
@@ -95,6 +95,21 @@ Update docs when:
 - Workflow decisions change
 - Screenshots become available
 - Local setup, test, or deployment instructions become real
+
+## Manual QA Checklist
+
+Run this checklist before starting a new product phase or opening a pull request:
+
+- Backend tests pass with `python -m pytest` from `backend`.
+- Frontend build passes with `npm run build` from `frontend`.
+- Backend server starts with `python -m uvicorn app.main:app --reload`.
+- Frontend dev server starts with `npm run dev`.
+- Applications table loads backend applications.
+- Quick-add creates an application.
+- Pipeline groups applications by status.
+- Changing pipeline status persists after refresh.
+- Applications page reflects pipeline status changes.
+- Demo data and screenshots contain no private or personal job-search data.
 
 ## Definition of Done for a Feature
 

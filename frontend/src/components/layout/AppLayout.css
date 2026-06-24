@@ -47,9 +47,22 @@
   text-align: left;
 }
 
+.app-nav-item:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.app-nav-item:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.38);
+  outline-offset: 2px;
+}
+
 .app-nav-item-active {
   background: #ffffff;
   color: #143d3a;
+}
+
+.app-nav-item-active:hover {
+  background: #ffffff;
 }
 
 .app-main {

@@ -1,53 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
-import { getApplications, updateApplication } from "../api/applicationsApi.js";
-import { getResumeVersions } from "../api/resumeVersionsApi.js";
 import PipelineBoard from "../components/pipeline/PipelineBoard.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
-export default function PipelinePage() {
-  const [applications, setApplications] = useState([]);
-  const [resumeVersions, setResumeVersions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+export default function PipelinePage({
+  applications,
+  error,
+  isLoading,
+  onUpdateApplication,
+  resumeVersions,
+}) {
   const [statusUpdateError, setStatusUpdateError] = useState("");
   const [updatingApplicationId, setUpdatingApplicationId] = useState(null);
-
-  useEffect(() => {
-    let ignore = false;
-
-    async function loadPageData() {
-      setIsLoading(true);
-      setError("");
-
-      try {
-        const [applicationsData, resumeVersionsData] = await Promise.all([
-          getApplications({ includeArchived: true }),
-          getResumeVersions(),
-        ]);
-
-        if (!ignore) {
-          setApplications(applicationsData);
-          setResumeVersions(resumeVersionsData);
-        }
-      } catch (loadError) {
-        if (!ignore) {
-          setError(loadError.message || "Could not load pipeline.");
-        }
-      } finally {
-        if (!ignore) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    loadPageData();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
 
   async function handleStatusChange(application, nextStatus) {
     if (application.status === nextStatus) {
@@ -58,12 +23,7 @@ export default function PipelinePage() {
     setUpdatingApplicationId(application.id);
 
     try {
-      const updatedApplication = await updateApplication(application.id, { status: nextStatus });
-      setApplications((currentApplications) =>
-        currentApplications.map((currentApplication) =>
-          currentApplication.id === updatedApplication.id ? updatedApplication : currentApplication,
-        ),
-      );
+      await onUpdateApplication(application.id, { status: nextStatus });
     } catch (updateError) {
       setStatusUpdateError(updateError.message || "Could not update application status.");
     } finally {

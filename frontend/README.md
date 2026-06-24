@@ -2,7 +2,7 @@
 
 This is the React frontend for Career Pipeline. It includes the Applications page, quick-add application flow, applications table, and Pipeline page for viewing applications by status and updating status.
 
-Dashboard metrics, red flags, follow-up queue, authentication, deployment, and browser extension features are not part of this phase yet.
+Phase 3.5 adds workflow polish and shared state consistency between Applications and Pipeline. The Follow-up Queue / Daily Command Center is next. Dashboard metrics, red flags, authentication, deployment, and browser extension features are not part of this phase yet.
 
 ## Setup
 
