@@ -35,7 +35,7 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Project Status
 
-Career Pipeline is currently in planning and early implementation. Phase 0 product documentation is in place, and the Phase 1 backend foundation now includes a local-first FastAPI API, SQLite persistence, initial application and resume-version endpoints, seed data, and pytest coverage. The React frontend has not been created yet.
+Career Pipeline is currently in planning and early implementation. Phase 0 product documentation is in place, and the Phase 1 backend foundation now includes a local-first FastAPI API, SQLite persistence, initial application and resume-version endpoints, seed data, pytest coverage, and GitHub Actions CI for backend tests. The React frontend has not been created yet.
 
 ## Planned Development Phases
 
@@ -62,8 +62,11 @@ Backend setup instructions are available in [backend/README.md](backend/README.m
 Backend tests can be run from the `backend` directory with:
 
 ```powershell
+cd backend
 python -m pytest
 ```
+
+GitHub Actions CI runs the same backend pytest suite on push and pull request.
 
 ## Deployment
 

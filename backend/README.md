@@ -2,7 +2,7 @@
 
 This backend is the Phase 1 foundation for Career Pipeline. It provides a local-first FastAPI API with SQLite persistence, SQLAlchemy models, Pydantic schemas, seed data, and pytest coverage for the initial application and resume-version workflows.
 
-The React frontend, dashboard, red flags, follow-up queue, pipeline UI, deployment, and GitHub Actions CI are intentionally out of scope for this phase.
+The React frontend, dashboard, red flags, follow-up queue, pipeline UI, deployment, and frontend CI are intentionally out of scope for this phase.
 
 ## Setup
 
@@ -53,10 +53,13 @@ To use a different SQLite database path, set `CAREER_PIPELINE_DATABASE_URL` befo
 From the backend directory:
 
 ```powershell
+cd backend
 python -m pytest
 ```
 
 Tests use a separate temporary SQLite database and do not write to `backend/career_pipeline.db`.
+
+GitHub Actions CI runs this same backend test command on push and pull request.
 
 ## Seed Demo Data
 
