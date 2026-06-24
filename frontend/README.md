@@ -2,7 +2,7 @@
 
 This is the Phase 2 React frontend scaffold for Career Pipeline. It implements the first full-stack product loop: view applications from the FastAPI backend, quick-add a new application, and see it appear in the applications table.
 
-The pipeline board, dashboard metrics, red flags, follow-up queue, authentication, deployment, and browser extension features are intentionally out of scope for this phase.
+The pipeline board, dashboard metrics, red flags, follow-up queue, authentication, deployment, and browser extension features are not part of this phase yet.
 
 ## Setup
 

@@ -2,7 +2,7 @@
 
 This backend is the Phase 1 foundation for Career Pipeline. It provides a local-first FastAPI API with SQLite persistence, SQLAlchemy models, Pydantic schemas, seed data, and pytest coverage for the initial application and resume-version workflows.
 
-The React frontend, dashboard, red flags, follow-up queue, pipeline UI, deployment, and frontend CI are intentionally out of scope for this phase.
+The backend currently supports applications and resume versions. Dashboard metrics, red flags, follow-up queue behavior, pipeline UI behavior, deployment, and authentication are planned for later phases.
 
 ## Setup
 

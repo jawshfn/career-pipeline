@@ -35,7 +35,9 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Project Status
 
-Career Pipeline is currently in planning and early implementation. Phase 0 product documentation is in place, the Phase 1 backend foundation includes a local-first FastAPI API with pytest coverage, and Phase 1.5 added GitHub Actions CI. Phase 2 adds the React frontend scaffold and the first quick-add applications table loop. The full product is not complete yet.
+Career Pipeline is currently in planning and early implementation. Phase 0 product documentation is in place. The Phase 1 backend foundation exists with a local-first FastAPI API, SQLite persistence, and backend pytest coverage. Phase 1.5 added GitHub Actions CI. Phase 2 added the React frontend scaffold, quick-add application form, and applications table connected to the backend.
+
+The full product is not complete yet. The pipeline board, dashboard metrics, red flags, follow-up queue, application detail page, and deployment are still planned.
 
 ## Planned Development Phases
 
@@ -55,27 +57,43 @@ Screenshots will be added after the first working frontend prototype is availabl
 
 ## Run Locally
 
-Backend setup instructions are available in [backend/README.md](backend/README.md). Frontend setup instructions are available in [frontend/README.md](frontend/README.md).
+Backend:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
+```
+
+Frontend:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Additional setup details are available in [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md).
 
 ## Tests
 
-Backend tests can be run from the `backend` directory with:
+Backend:
 
 ```powershell
 cd backend
 python -m pytest
 ```
 
-GitHub Actions CI runs the same backend pytest suite on push and pull request.
-
-The frontend build can be run from the `frontend` directory with:
+Frontend:
 
 ```powershell
 cd frontend
 npm run build
 ```
 
-GitHub Actions CI also runs the frontend build on push and pull request.
+GitHub Actions CI runs backend pytest and the frontend production build on push and pull request.
 
 ## Deployment
 
