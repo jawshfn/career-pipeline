@@ -46,7 +46,7 @@ The v0.1 MVP should include:
 - Quick-add form with only essential fields
 - Applications table with basic filtering and sorting
 - Pipeline statuses for tracking progress
-- Follow-up dates and a due follow-up queue
+- Follow-up dates and a due follow-up queue based on computed follow-up state
 - Resume version records and assignment to applications
 - Red-flag tags assignable to applications
 - Application event history for meaningful changes
@@ -90,8 +90,8 @@ Planned statuses:
 
 - Saved
 - Applied
-- Follow-up due
-- Recruiter screen
+- Assessment
+- Recruiter Screen
 - Interview
 - Offer
 - Rejected
@@ -99,6 +99,8 @@ Planned statuses:
 - Archived
 
 Each status update should create an application event so the timeline remains useful.
+
+Follow-up due is not a pipeline status. It is a computed action state based on follow_up_date, such as due today, overdue, upcoming, or not scheduled.
 
 ### Review Follow-Ups Due
 

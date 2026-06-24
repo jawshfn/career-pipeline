@@ -15,7 +15,7 @@ Stores the main record for each job opportunity or application.
 - role_title: job title or opportunity name
 - source: where the opportunity came from, such as LinkedIn, Indeed, referral, recruiter, company site, or other
 - job_url: optional link to the posting
-- status: current pipeline status
+- status: current pipeline status, such as Saved, Applied, Assessment, Recruiter Screen, Interview, Offer, Rejected, Withdrawn, or Archived
 - location: optional job location or remote label
 - compensation_text: optional compensation note as written by the user
 - follow_up_date: optional date for next follow-up
@@ -25,6 +25,8 @@ Stores the main record for each job opportunity or application.
 - created_at: creation timestamp
 - updated_at: last update timestamp
 - applied_at: optional date the user applied
+
+Follow-up due should not be stored as a status. It should be computed from follow_up_date when listing follow-up queues, dashboard actions, and table filters.
 
 ### Important Relationships
 

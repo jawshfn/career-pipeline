@@ -48,7 +48,7 @@ Expected backend coverage:
 - Health endpoint
 - Application create, list, retrieve, update, and archive
 - Status updates and event creation
-- Follow-up due and overdue filtering
+- Due and overdue follow-up filtering based on follow_up_date
 - Resume version assignment
 - Red-flag assignment and removal
 - Dashboard summary calculations

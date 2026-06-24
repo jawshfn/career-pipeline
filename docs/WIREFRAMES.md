@@ -22,8 +22,8 @@ Northwind        QA Analyst           Overdue    Applied     [Open]
 
 Pipeline Snapshot
 ----------------------------------------------------------------
-Saved      Applied      Screen      Interview      Offer
-[ 4 ]      [ 12 ]       [ 3 ]       [ 2 ]          [ 0 ]
+Saved      Applied      Assessment      Recruiter Screen      Interview      Offer
+[ 4 ]      [ 12 ]       [ 2 ]           [ 3 ]                 [ 2 ]          [ 0 ]
 
 Source Insights
 ----------------------------------------------------------------
@@ -77,13 +77,13 @@ The table should support scanning and quick status updates without requiring the
 ```text
 Pipeline
 ----------------------------------------------------------------
-Saved           Applied         Screen          Interview       Offer
+Saved           Applied         Assessment      Recruiter Screen      Interview       Offer
 ----------------------------------------------------------------
-Example Co      Northwind       Contoso         Fabrikam        -
-Role title      Role title      Role title      Role title
-Source          Follow-up       Recruiter       Date
+Example Co      Northwind       Contoso         Fabrikam              Initech         -
+Role title      Role title      Role title      Role title            Role title
+Source          Follow-up       Assessment      Recruiter             Date
 
-Archived and rejected applications should be hidden by default.
+Archived, rejected, and withdrawn applications should be hidden by default.
 ```
 
 The board should make application flow visible. Drag-and-drop can come later; button or menu status changes are enough for the first prototype.

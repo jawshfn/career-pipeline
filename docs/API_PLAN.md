@@ -127,6 +127,8 @@ Scope: v0.1
 
 Purpose: update an application's pipeline status and create a timeline event.
 
+Allowed planned statuses: Saved, Applied, Assessment, Recruiter Screen, Interview, Offer, Rejected, Withdrawn, Archived. Follow-up due is not a status; it is computed from follow_up_date.
+
 Example request:
 
 ```json
