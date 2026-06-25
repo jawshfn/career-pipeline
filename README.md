@@ -1,5 +1,7 @@
 # Career Pipeline
 
+[![CI](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml)
+
 Career Pipeline is a full-stack job-search command center prototype for capturing opportunities, tracking applications, managing follow-ups, and understanding job-search progress across multiple sources.
 
 ## Product Goal
