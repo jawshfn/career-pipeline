@@ -48,24 +48,30 @@ Expected backend coverage:
 - Health endpoint
 - Application create, list, retrieve, update, and archive
 - Status updates
-- Due and overdue follow-up filtering based on follow_up_date
+- Overdue and upcoming follow-up action items based on follow_up_date
 - Resume version assignment
+- Archive status and is_archived consistency
+
+Future backend coverage:
+
 - Red-flag assignment and removal
 - Dashboard summary calculations
+- Application event history
 
 Frontend testing can start with smoke tests and focused interaction tests once the frontend structure exists.
 
 ## GitHub Actions CI Expectations
 
-The initial CI workflow should:
+The current CI workflow should:
 
 - Install backend dependencies
 - Run pytest
-- Fail clearly on test errors
+- Install frontend dependencies
+- Run the frontend production build
+- Fail clearly on test or build errors
 
 Later CI can add:
 
-- Frontend install and build checks
 - Linting or formatting checks
 - Lightweight frontend tests
 
@@ -79,7 +85,7 @@ Demo records should include:
 - A range of statuses across the pipeline
 - Several follow-ups due and overdue
 - Multiple resume versions
-- A few red-flagged postings
+- Future red-flagged postings after red flags are implemented
 
 Do not use personal job-search data, real recruiter names, private company notes, or sensitive contact details.
 

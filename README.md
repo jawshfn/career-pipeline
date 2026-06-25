@@ -1,10 +1,10 @@
 # Career Pipeline
 
-Career Pipeline is a planned full-stack job-search command center for capturing opportunities, tracking applications, managing follow-ups, and understanding job-search progress across multiple sources.
+Career Pipeline is a full-stack job-search command center prototype for capturing opportunities, tracking applications, managing follow-ups, and understanding job-search progress across multiple sources.
 
 ## Product Goal
 
-Help new grads, early-career applicants, career switchers, and active job seekers quickly capture job opportunities, track each application through a clear pipeline, remember which resume version was used, record company and recruiter notes, identify questionable postings with red-flag tags, and see where responses are coming from.
+Help new grads, early-career applicants, career switchers, and active job seekers quickly capture job opportunities, track each application through a clear pipeline, remember which resume version was used, record company and recruiter notes, and manage follow-up work. Planned future capabilities include red-flag tags for questionable postings and response/source insights.
 
 ## Target Users
 
@@ -13,16 +13,22 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 - Career switchers tracking role fit, resume variants, and outreach
 - Job seekers using LinkedIn, Indeed, ZipRecruiter, company sites, referrals, recruiter calls, and direct outreach
 
-## Planned MVP Features
+## Current Product Flow
 
 - Quick-add workflow for fast application capture, including optional follow-up date presets
-- Applications table with search, filtering, and status tracking
-- Pipeline board for visual application progress
-- Daily Command Center for overdue, due-today, and stale application action items
-- Resume version tracking per application
+- Applications table for active applications
+- Pipeline board with persisted status updates
+- Daily Command Center for overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications
+- Resume-version backend endpoints and quick-add assignment support
+- Archive behavior that hides archived records from active workflow views
+
+## Planned Future Features
+
+- Application detail workflow with richer notes and history
 - Red-flag tags for questionable or suspicious postings
-- Basic dashboard metrics for source, status, and response insights
-- Application detail view with notes and event history
+- Dashboard metrics for source, status, and response insights
+- Follow-up completion and rescheduling workflow
+- Deployment, authentication, AI features, and browser extension support are not implemented yet
 
 ## Tech Stack
 
@@ -35,9 +41,9 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Project Status
 
-Career Pipeline is currently in planning and early implementation. Phase 0 product documentation is complete. The Phase 1 backend foundation exists with a local-first FastAPI API, SQLite persistence, and backend pytest coverage. Phase 1.5 added GitHub Actions CI. Phase 2 added the React frontend scaffold, quick-add application form, and applications table connected to the backend. Phase 3 added a Pipeline board with status-based columns and status updates. Phase 3.5 added frontend workflow polish, shared state consistency, and documentation cleanup. Phase 4 adds a rule-based Daily Command Center for overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications.
+Career Pipeline currently has a FastAPI backend with SQLite and SQLAlchemy, a React/Vite frontend, backend pytest coverage, and GitHub Actions CI for backend tests and frontend build. The working prototype supports quick-add, application table views, resume-version assignment during quick-add, pipeline status updates, archive behavior, and the Daily Command Center.
 
-The full product is not complete yet. Red flags, dashboard metrics, application detail page, follow-up completion/rescheduling, and deployment are still planned.
+The full product is not complete yet. Red flags, dashboard metrics, application detail workflow, follow-up completion/rescheduling, deployment, authentication, AI, and browser extension features are still planned or intentionally out of scope.
 
 ## Planned Development Phases
 
@@ -46,14 +52,14 @@ The full product is not complete yet. Red flags, dashboard metrics, application 
 3. Phase 2: Quick-add and applications table
 4. Phase 3: Pipeline board
 5. Phase 4: Follow-up queue / daily command center
-6. Phase 5: Resume versions
+6. Phase 5: Application detail / resume version workflow
 7. Phase 6: Red-flag system
 8. Phase 7: Dashboard metrics and insights
 9. Phase 8: Testing, CI, demo data, screenshots, and polish
 
 ## Screenshots
 
-Screenshots will be added after the first working frontend prototype is available.
+Screenshots have not been added yet. They should be captured from the working frontend after the next UI polish pass.
 
 ## Run Locally
 

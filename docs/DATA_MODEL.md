@@ -1,6 +1,8 @@
 # Data Model
 
-The planned database for the initial prototype is SQLite. The model should support quick capture first, with optional enrichment through notes, resume versions, red flags, and timeline events.
+The implemented backend uses SQLite with SQLAlchemy. The model supports quick capture, application tracking, resume-version assignment, follow-up action items, and archive behavior.
+
+## Implemented Tables
 
 ## applications
 
@@ -13,32 +15,51 @@ Stores the main record for each job opportunity or application.
 - id: primary key
 - company_name: company or organization name
 - role_title: job title or opportunity name
+- job_link: optional link to the posting
 - source: where the opportunity came from, such as LinkedIn, Indeed, referral, recruiter, company site, or other
-- job_url: optional link to the posting
-- status: current application status, such as Saved, Applied, Assessment, Recruiter Screen, Interview, Offer, Rejected, Withdrawn, or Archived
+- status: current application status
 - location: optional job location or remote label
-- compensation_text: optional compensation note as written by the user
+- salary_min: optional numeric lower salary value
+- salary_max: optional numeric upper salary value
+- employment_type: optional employment type label
+- date_saved: date the opportunity was saved
+- date_applied: optional date the user applied
 - follow_up_date: optional date for next follow-up
 - resume_version_id: optional foreign key to resume_versions
 - notes: general user notes
-- is_archived: boolean for hiding inactive records without deleting them
+- is_archived: boolean for hiding inactive records from active workflow views
 - created_at: creation timestamp
 - updated_at: last update timestamp
-- applied_at: optional date the user applied
 
-Follow-up due should not be stored as a status. It should be computed from follow_up_date when listing follow-up queues, dashboard actions, and table filters.
+### Status Values
 
-Archived is stored for archived records, but it is not an active pipeline stage. Active workflow views should hide records where is_archived is true.
+Allowed stored statuses:
+
+- Saved
+- Applied
+- Assessment
+- Recruiter Screen
+- Interview
+- Offer
+- Rejected
+- Withdrawn
+- Archived
+
+`Archived` is stored for archived records, but it is not an active pipeline stage. Active Applications and Pipeline views filter out records where `is_archived` is true.
+
+`Follow-up due` is not stored as a status. Follow-up action states are computed from `follow_up_date`.
 
 ### Important Relationships
 
 - applications.resume_version_id references resume_versions.id
-- applications can have many red_flags through application_red_flags
-- applications can have many application_events
 
-### MVP Priority
+### Implementation Notes
 
-Required for v0.1. This is the core table.
+- Creating an application without status defaults to `Saved`.
+- Creating a normal application with `Archived` status is rejected.
+- Archiving through DELETE sets `status` to `Archived` and `is_archived` to true.
+- Updating status to `Archived` also sets `is_archived` to true.
+- Restoring archived records is intentionally not implemented yet.
 
 ## resume_versions
 
@@ -51,8 +72,8 @@ Stores named resume variants so users can remember which resume they used for ea
 - id: primary key
 - name: user-facing resume version name
 - target_role: optional role family or target
-- notes: optional description of positioning or changes
-- file_reference: optional local filename, URL, or plain text reference
+- description: optional description of positioning or changes
+- is_active: boolean for hiding inactive resume versions
 - created_at: creation timestamp
 - updated_at: last update timestamp
 
@@ -60,104 +81,60 @@ Stores named resume variants so users can remember which resume they used for ea
 
 - One resume version can be assigned to many applications.
 
-### MVP Priority
+## Planned Future Tables
 
-Included in v0.1 after the core applications workflow is working.
+The following tables are still planned and are not implemented yet.
 
 ## red_flags
 
-### Purpose
+Purpose: reusable red-flag tags for questionable, suspicious, or low-quality postings.
 
-Stores reusable red-flag tags that help users identify questionable, suspicious, or low-quality postings.
+Potential fields:
 
-### Fields
-
-- id: primary key
-- label: short red-flag name
-- description: optional explanation
-- severity: optional user-facing level, such as low, medium, or high
-- is_active: boolean for hiding deprecated tags
-- created_at: creation timestamp
-- updated_at: last update timestamp
-
-### Important Relationships
-
-- red_flags can be assigned to many applications through application_red_flags.
-
-### MVP Priority
-
-Included in v0.1 after resume versions or alongside the application detail page.
+- id
+- label
+- description
+- severity
+- is_active
+- created_at
+- updated_at
 
 ## application_red_flags
 
-### Purpose
+Purpose: join table connecting applications to selected red flags.
 
-Join table connecting applications to selected red flags.
+Potential fields:
 
-### Fields
-
-- id: primary key
-- application_id: foreign key to applications
-- red_flag_id: foreign key to red_flags
-- note: optional user note explaining why the flag was applied
-- created_at: creation timestamp
-
-### Important Relationships
-
-- application_red_flags.application_id references applications.id
-- application_red_flags.red_flag_id references red_flags.id
-- A unique constraint should prevent duplicate red-flag assignments for the same application and red_flag pair.
-
-### MVP Priority
-
-Included in v0.1 as part of the red-flag system.
+- id
+- application_id
+- red_flag_id
+- note
+- created_at
 
 ## application_events
 
-### Purpose
+Purpose: timeline of meaningful actions and changes for an application.
 
-Stores a timeline of meaningful actions and changes for an application.
+Potential fields:
 
-### Fields
-
-- id: primary key
-- application_id: foreign key to applications
-- event_type: type of event, such as created, status_changed, follow_up_completed, note_added, resume_assigned, or red_flag_added
-- event_date: event timestamp or user-specified date
-- previous_value: optional prior value for change events
-- new_value: optional new value for change events
-- note: optional event note
-- created_at: creation timestamp
-
-### Important Relationships
-
-- application_events.application_id references applications.id
-- One application can have many events.
-
-### MVP Priority
-
-Useful for v0.1 status history and detail pages. If implementation time is tight, start with created and status_changed events.
+- id
+- application_id
+- event_type
+- event_date
+- previous_value
+- new_value
+- note
+- created_at
 
 ## company_notes
 
-### Purpose
+Purpose: possible later table for company-level notes shared across multiple applications at the same organization.
 
-Possible later table for company-level notes shared across multiple applications at the same organization.
+Potential fields:
 
-### Fields
-
-- id: primary key
-- company_name: company name used to associate notes
-- note: company-level note
-- sentiment: optional lightweight label, such as positive, neutral, or caution
-- created_at: creation timestamp
-- updated_at: last update timestamp
-
-### Important Relationships
-
-- Could relate to applications by company_name initially.
-- A later normalized companies table could replace company_name matching if needed.
-
-### MVP Priority
-
-Later. Not required for v0.1 unless company-level notes become necessary during prototyping.
+- id
+- company_name
+- note
+- sentiment
+- created_at
+- updated_at

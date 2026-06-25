@@ -38,19 +38,28 @@ Career Pipeline aims to centralize that activity into a simple, trustworthy work
 - Practical over comprehensive: v0.1 should support a real job-search workflow without trying to cover every recruiting edge case.
 - Public-repo appropriate: documentation should focus on product, architecture, and development, not private strategy or personal examples.
 
-## MVP Scope
+## Current Implemented Scope
 
-The v0.1 MVP should include:
+The current prototype includes:
 
 - Create, view, update, and archive job applications
-- Quick-add form with only essential fields
-- Applications table with basic filtering and sorting
-- Pipeline statuses for tracking progress
-- Follow-up dates and a due follow-up queue based on computed follow-up state
-- Resume version records and assignment to applications
+- Quick-add form with required company and role fields, optional resume version, follow-up date, and follow-up date presets
+- Applications table for active records
+- Pipeline board with persisted status updates
+- Daily Command Center with overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications
+- Resume-version backend records and quick-add assignment support
+- Archive behavior that stores `Archived` status while hiding archived records from active workflow views
+
+## Planned Future Scope
+
+Planned future work includes:
+
+- Application detail workflow
+- Application event history and timeline
+- Follow-up completion and rescheduling
+- Resume-version management UI
 - Red-flag tags assignable to applications
-- Application event history for meaningful changes
-- Basic dashboard summary by status, source, and follow-up state
+- Dashboard summary by status, source, response, and follow-up state
 
 ## Non-Goals for v0.1
 
@@ -86,7 +95,7 @@ After saving, the application appears in the applications table and pipeline boa
 
 The user updates the status as an opportunity moves through the process.
 
-Planned statuses:
+Stored statuses:
 
 - Saved
 - Applied
@@ -98,7 +107,9 @@ Planned statuses:
 - Withdrawn
 - Archived
 
-Each status update should create an application event so the timeline remains useful.
+Archived is stored for archived records but is not an active pipeline stage. Active pipeline controls show only non-archived workflow statuses.
+
+Application event history is planned future work.
 
 Follow-up due is not a pipeline status. It is a computed action state based on follow_up_date, such as due today, overdue, upcoming, or not scheduled.
 
@@ -106,17 +117,17 @@ Follow-up due is not a pipeline status. It is a computed action state based on f
 
 The user opens the daily command center and sees applications with overdue follow-ups, upcoming follow-ups due within the next 3 days, and stale active applications. Each item should show enough context to act quickly: company, role, source, status, due date, and latest note.
 
-The user can mark a follow-up complete, reschedule it, or open the application detail page.
+Follow-up completion, rescheduling, and application detail actions are planned future work.
 
 ### Assign Resume Versions
 
-The user creates named resume versions and assigns one to an application. This helps answer: "Which resume did I send for this role?"
+The backend supports named resume versions, and quick-add can assign a resume version to an application. This helps answer: "Which resume did I send for this role?"
 
-Resume versions should be simple in v0.1: name, target role or focus, notes, and optional file reference.
+Resume version management UI and richer editing are planned future work.
 
 ### Flag Questionable Postings
 
-The user can apply red-flag tags to applications when something looks suspicious or low quality.
+Red flags are planned future work. The intended workflow is that the user can apply red-flag tags to applications when something looks suspicious or low quality.
 
 Example red flags:
 
@@ -131,7 +142,7 @@ Red flags should help the user notice risk patterns without making automated cla
 
 ### Review Dashboard Insights
 
-The dashboard should answer practical questions:
+Dashboard metrics are planned future work. The dashboard should eventually answer practical questions:
 
 - How many applications are active?
 - Which follow-ups are due or overdue?
@@ -144,7 +155,7 @@ The dashboard should answer practical questions:
 - A user can add a job opportunity in under a minute.
 - A user can track at least 25 applications without losing important context.
 - A user can identify overdue follow-ups and upcoming follow-ups due within 3 days.
-- A user can assign a resume version to each application.
-- A user can flag suspicious or questionable postings.
-- A user can see basic response and source insights.
+- A user can assign a resume version during quick-add.
+- Future work should allow a user to flag suspicious or questionable postings.
+- Future work should show basic response and source insights.
 - The app remains simple enough that quick capture is still the primary workflow.

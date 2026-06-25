@@ -76,14 +76,14 @@ Later follow-up enhancements:
 - Add mark-complete and reschedule behavior
 - Add richer daily summary metrics after dashboard work begins
 
-## Phase 5: Resume Versions
+## Phase 5: Application Detail / Resume Version Workflow
 
 Status: next
 
-- Add resume version records
-- Assign resume versions to applications
-- Show resume version on application detail and table views
-- Add resume version management page
+- Build application detail page
+- Improve resume-version assignment and editing workflows
+- Show richer notes and application context
+- Prepare for timeline/event history
 
 ## Phase 6: Red-Flag System
 

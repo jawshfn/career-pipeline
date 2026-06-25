@@ -1,8 +1,10 @@
 # Wireframes
 
-These text-based wireframes describe the planned product structure before frontend implementation. They are intentionally simple and should guide layout and workflow decisions without locking in final visual design.
+These text-based wireframes describe the product direction. Some screens are implemented in the current prototype, while others are planned future UI. They are intentionally simple and should guide layout and workflow decisions without locking in final visual design.
 
-## Daily Command Center / Dashboard
+## Daily Command Center
+
+Status: partially implemented. The current UI shows overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications. Dashboard metrics are planned future work.
 
 ```text
 Career Pipeline
@@ -11,10 +13,10 @@ Quick Add: [ Company ] [ Role ] [ Source v ] [ Save ]
 
 Today
 ----------------------------------------------------------------
-Follow-ups Due        Active Applications       Interviews
+Upcoming Follow-ups   Active Applications       Interviews
 [ 3 ]                 [ 24 ]                    [ 2 ]
 
-Due / Overdue Follow-Ups
+Overdue / Upcoming Follow-Ups
 ----------------------------------------------------------------
 Company          Role                 Due        Status      Action
 Example Co       Software Developer   Today      Applied     [Open]
@@ -39,6 +41,8 @@ Example Staffing Data Entry Assistant Suspicious contact       [Review]
 
 ## Quick Add Form
 
+Status: implemented. The current form also includes resume version selection and follow-up date preset buttons.
+
 ```text
 Quick Add Application
 ----------------------------------------------------------------
@@ -57,6 +61,8 @@ Quick-add should stay compact. Resume version, detailed notes, red flags, and ti
 
 ## Applications Table
 
+Status: implemented for active applications.
+
 ```text
 Applications
 ----------------------------------------------------------------
@@ -74,6 +80,8 @@ The table should support scanning and quick status updates without requiring the
 
 ## Pipeline Board
 
+Status: implemented without drag-and-drop.
+
 ```text
 Pipeline
 ----------------------------------------------------------------
@@ -83,12 +91,14 @@ Example Co      Northwind       Contoso         Fabrikam              Initech   
 Role title      Role title      Role title      Role title            Role title
 Source          Follow-up       Assessment      Recruiter             Date
 
-Archived, rejected, and withdrawn applications should be hidden by default.
+Archived applications are hidden from active workflow views. Rejected and withdrawn remain visible as active workflow statuses unless archived.
 ```
 
 The board should make application flow visible. Drag-and-drop can come later; button or menu status changes are enough for the first prototype.
 
 ## Application Detail Page
+
+Status: planned future UI.
 
 ```text
 Application Detail
@@ -121,6 +131,8 @@ Jun 25  Follow-up scheduled for Jul 1
 
 ## Resume Versions Page
 
+Status: planned future UI. Resume-version backend endpoints and quick-add assignment support already exist.
+
 ```text
 Resume Versions
 ----------------------------------------------------------------
@@ -142,6 +154,8 @@ Notes           [ Emphasizes Python, APIs, and databases. ]
 ```
 
 ## Red-Flag Checklist Section
+
+Status: planned future UI.
 
 ```text
 Red Flags
