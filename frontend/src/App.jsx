@@ -1,11 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { createApplication, getApplications, updateApplication } from "./api/applicationsApi.js";
-import { getResumeVersions } from "./api/resumeVersionsApi.js";
+import {
+  createResumeVersion,
+  getResumeVersions,
+  updateResumeVersion,
+} from "./api/resumeVersionsApi.js";
 import AppLayout from "./components/layout/AppLayout.jsx";
 import ApplicationsPage from "./pages/ApplicationsPage.jsx";
 import CommandCenterPage from "./pages/CommandCenterPage.jsx";
 import PipelinePage from "./pages/PipelinePage.jsx";
+import ResumeVersionsPage from "./pages/ResumeVersionsPage.jsx";
 
 export default function App() {
   const [activePage, setActivePage] = useState("command-center");
@@ -14,7 +19,21 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
-  async function loadWorkspaceData() {
+  const loadResumeVersions = useCallback(async (options = {}) => {
+    setIsLoading(true);
+    setLoadError("");
+
+    try {
+      const resumeVersionsData = await getResumeVersions(options);
+      setResumeVersions(resumeVersionsData);
+    } catch (error) {
+      setLoadError(error.message || "Could not load resume versions.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const loadWorkspaceData = useCallback(async () => {
     setIsLoading(true);
     setLoadError("");
 
@@ -31,11 +50,11 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadWorkspaceData();
-  }, [activePage]);
+  }, [activePage, loadWorkspaceData]);
 
   async function handleCreateApplication(applicationData) {
     const createdApplication = await createApplication(applicationData);
@@ -53,12 +72,45 @@ export default function App() {
     return updatedApplication;
   }
 
+  async function handleCreateResumeVersion(payload) {
+    const createdResumeVersion = await createResumeVersion(payload);
+    setResumeVersions((currentResumeVersions) => [createdResumeVersion, ...currentResumeVersions]);
+    return createdResumeVersion;
+  }
+
+  async function handleUpdateResumeVersion(resumeVersionId, payload) {
+    const updatedResumeVersion = await updateResumeVersion(resumeVersionId, payload);
+    setResumeVersions((currentResumeVersions) => {
+      const hasResumeVersion = currentResumeVersions.some(
+        (resumeVersion) => resumeVersion.id === updatedResumeVersion.id,
+      );
+
+      if (!hasResumeVersion) {
+        return [updatedResumeVersion, ...currentResumeVersions];
+      }
+
+      return currentResumeVersions.map((resumeVersion) =>
+        resumeVersion.id === updatedResumeVersion.id ? updatedResumeVersion : resumeVersion,
+      );
+    });
+    return updatedResumeVersion;
+  }
+
   const activeApplications = applications.filter((application) => !application.is_archived);
 
   return (
     <AppLayout activePage={activePage} onNavigate={setActivePage}>
       {activePage === "command-center" ? (
         <CommandCenterPage />
+      ) : activePage === "resume-versions" ? (
+        <ResumeVersionsPage
+          error={loadError}
+          isLoading={isLoading}
+          onCreateResumeVersion={handleCreateResumeVersion}
+          onLoadResumeVersions={loadResumeVersions}
+          onUpdateResumeVersion={handleUpdateResumeVersion}
+          resumeVersions={resumeVersions}
+        />
       ) : activePage === "pipeline" ? (
         <PipelinePage
           applications={activeApplications}

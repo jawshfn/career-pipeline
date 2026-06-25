@@ -126,6 +126,13 @@ Run this checklist before starting a new product phase or opening a pull request
 - Closing the detail panel with unsaved changes prompts before discarding changes.
 - Saving detail panel changes keeps the panel open and clears the unsaved-change warning.
 - Detail panel status options do not include `Archived`.
+- Resume Versions page loads active resume versions by default.
+- Resume Versions page can create a resume version.
+- Resume Versions page can edit name, target role, and description.
+- Deactivating a resume version removes it from the active-only view.
+- Including inactive resume versions shows inactive versions.
+- Reactivating a resume version returns it to the active view.
+- Quick Add and Application Detail receive current active resume-version options.
 - Pipeline groups applications by status.
 - Pipeline does not show `Archived` as an active column.
 - Changing pipeline status persists after refresh.

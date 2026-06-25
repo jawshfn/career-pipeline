@@ -81,8 +81,9 @@ Later follow-up enhancements:
 Status: in progress
 
 - Phase 5.1 complete: add an application detail panel from the Applications table
+- Phase 5.2 complete: add Resume Versions page for create, edit, deactivate, and reactivate workflows
 - Support editing richer application context without making Quick Add heavier
-- Improve resume-version assignment and editing workflows
+- Support resume-version assignment from Quick Add and Application Detail
 - Prepare for timeline/event history
 
 ## Phase 6: Red-Flag System

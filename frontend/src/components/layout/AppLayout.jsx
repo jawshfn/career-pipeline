@@ -6,12 +6,14 @@ const navigationItems = [
   { id: "command-center", label: "Command Center" },
   { id: "applications", label: "Applications" },
   { id: "pipeline", label: "Pipeline" },
+  { id: "resume-versions", label: "Resume Versions" },
 ];
 
 const pageTitles = {
   "command-center": "Command Center",
   applications: "Applications",
   pipeline: "Pipeline",
+  "resume-versions": "Resume Versions",
 };
 
 export default function AppLayout({ activePage, children, onNavigate }) {

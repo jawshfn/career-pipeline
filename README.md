@@ -22,7 +22,8 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 - Application detail panel for editing richer context after quick-add
 - Pipeline board with persisted status updates
 - Daily Command Center for overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications
-- Resume-version backend endpoints and quick-add assignment support
+- Resume Versions page for creating, editing, deactivating, and reactivating reusable resume variants
+- Resume-version assignment support from Quick Add and Application Detail
 - Archive behavior that hides archived records from active workflow views
 
 ## Planned Future Features
@@ -44,7 +45,7 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Project Status
 
-Career Pipeline currently has a FastAPI backend with SQLite and SQLAlchemy, a React/Vite frontend, backend pytest coverage, and GitHub Actions CI for backend tests and frontend build. The working prototype supports quick-add, application table views, application detail editing, resume-version assignment, pipeline status updates, archive behavior, and the Daily Command Center.
+Career Pipeline currently has a FastAPI backend with SQLite and SQLAlchemy, a React/Vite frontend, backend pytest coverage, and GitHub Actions CI for backend tests and frontend build. The working prototype supports quick-add, application table views, application detail editing, resume-version management and assignment, pipeline status updates, archive behavior, and the Daily Command Center.
 
 The full product is not complete yet. Red flags, dashboard metrics, full application event history, follow-up completion/rescheduling, deployment, authentication, AI, and browser extension features are still planned or intentionally out of scope.
 

@@ -36,7 +36,8 @@ a {
 
 .applications-page,
 .command-center-page,
-.pipeline-page {
+.pipeline-page,
+.resume-versions-page {
   display: grid;
   gap: 24px;
   max-width: 1240px;
@@ -309,6 +310,176 @@ a {
 }
 
 .detail-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.resume-version-form,
+.resume-version-edit-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.resume-version-form label,
+.resume-version-edit-form label,
+.include-inactive-toggle {
+  display: grid;
+  gap: 6px;
+  color: #34413f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.resume-version-form input,
+.resume-version-form textarea,
+.resume-version-edit-form input,
+.resume-version-edit-form textarea {
+  width: 100%;
+  border: 1px solid #cbd6d3;
+  border-radius: 6px;
+  padding: 10px 11px;
+  color: #17202a;
+  background: #ffffff;
+}
+
+.resume-version-form input:focus,
+.resume-version-form textarea:focus,
+.resume-version-edit-form input:focus,
+.resume-version-edit-form textarea:focus {
+  border-color: #287c73;
+  outline: 3px solid rgba(40, 124, 115, 0.14);
+}
+
+.resume-version-create-panel .message {
+  margin-bottom: 16px;
+}
+
+.resume-version-description-field {
+  grid-column: 1 / -1;
+}
+
+.resume-version-list-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.include-inactive-toggle {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+}
+
+.include-inactive-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #287c73;
+}
+
+.resume-version-list {
+  display: grid;
+  gap: 14px;
+}
+
+.resume-version-card {
+  display: grid;
+  gap: 14px;
+  border: 1px solid #dce3e1;
+  border-radius: 8px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.resume-version-card-inactive {
+  background: #f8faf9;
+}
+
+.resume-version-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.resume-version-card-header h3 {
+  margin: 0;
+  color: #17202a;
+  font-size: 1.05rem;
+  letter-spacing: 0;
+}
+
+.resume-version-card-header p,
+.resume-version-description {
+  margin: 4px 0 0;
+  color: #52605d;
+}
+
+.resume-version-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #164f47;
+  background: #cdeee7;
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.resume-version-state-inactive {
+  color: #6b3535;
+  background: #f1dddd;
+}
+
+.resume-version-meta {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.resume-version-meta div {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.resume-version-meta dt {
+  color: #60706d;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.resume-version-meta dd {
+  margin: 0;
+  color: #202a33;
+  font-size: 0.88rem;
+}
+
+.resume-version-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.primary-small-button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 14px;
+  color: #ffffff;
+  background: #287c73;
+  font-weight: 800;
+}
+
+.primary-small-button:hover {
+  background: #1f6860;
+}
+
+.primary-small-button:disabled,
+.resume-version-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }
@@ -684,6 +855,11 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .resume-version-form,
+  .resume-version-edit-form {
+    grid-template-columns: 1fr;
+  }
+
   .command-center-grid {
     grid-template-columns: 1fr;
   }
@@ -707,6 +883,12 @@ a {
 
   .application-detail-form {
     grid-template-columns: 1fr;
+  }
+
+  .resume-version-list-heading,
+  .resume-version-card-header {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .panel {
