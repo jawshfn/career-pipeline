@@ -122,6 +122,9 @@ Run this checklist before starting a new product phase or opening a pull request
 - Editing resume version in the detail panel updates the application.
 - Editing follow-up date in the detail panel updates the Applications table.
 - Editing status in the detail panel updates the Applications table and Pipeline.
+- Closing the detail panel with no unsaved changes closes immediately.
+- Closing the detail panel with unsaved changes prompts before discarding changes.
+- Saving detail panel changes keeps the panel open and clears the unsaved-change warning.
 - Detail panel status options do not include `Archived`.
 - Pipeline groups applications by status.
 - Pipeline does not show `Archived` as an active column.

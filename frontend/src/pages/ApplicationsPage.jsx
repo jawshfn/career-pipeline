@@ -34,7 +34,7 @@ export default function ApplicationsPage({
       {selectedApplicationId ? (
         <ApplicationDetailPanel
           applicationId={selectedApplicationId}
-          onCancel={() => setSelectedApplicationId(null)}
+          onClose={() => setSelectedApplicationId(null)}
           onSaveApplication={onUpdateApplication}
           resumeVersions={resumeVersions}
         />

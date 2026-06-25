@@ -76,11 +76,12 @@ function numberOrNull(value) {
 
 export default function ApplicationDetailPanel({
   applicationId,
-  onCancel,
+  onClose,
   onSaveApplication,
   resumeVersions,
 }) {
   const [formData, setFormData] = useState(initialFormState);
+  const [savedFormData, setSavedFormData] = useState(initialFormState);
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
@@ -99,7 +100,9 @@ export default function ApplicationDetailPanel({
       try {
         const application = await getApplication(applicationId);
         if (isCurrent) {
-          setFormData(toFormState(application));
+          const nextFormState = toFormState(application);
+          setFormData(nextFormState);
+          setSavedFormData(nextFormState);
         }
       } catch (error) {
         if (isCurrent) {
@@ -119,10 +122,23 @@ export default function ApplicationDetailPanel({
     };
   }, [applicationId]);
 
+  const hasUnsavedChanges = JSON.stringify(formData) !== JSON.stringify(savedFormData);
+
   function updateField(event) {
     const { name, value } = event.target;
     setFormData((current) => ({ ...current, [name]: value }));
     setSaveMessage("");
+  }
+
+  function handleClose() {
+    if (
+      hasUnsavedChanges &&
+      !window.confirm("You have unsaved changes. Close without saving?")
+    ) {
+      return;
+    }
+
+    onClose();
   }
 
   async function handleSubmit(event) {
@@ -149,7 +165,9 @@ export default function ApplicationDetailPanel({
 
     try {
       const updatedApplication = await onSaveApplication(applicationId, payload);
-      setFormData(toFormState(updatedApplication));
+      const nextFormState = toFormState(updatedApplication);
+      setFormData(nextFormState);
+      setSavedFormData(nextFormState);
       setSaveMessage("Changes saved.");
     } catch (error) {
       setSaveError(error.message || "Could not save application details.");
@@ -166,8 +184,8 @@ export default function ApplicationDetailPanel({
           <h2 id="application-detail-title">Edit Application</h2>
           <p>Add richer context without slowing down Quick Add.</p>
         </div>
-        <button className="secondary-button" type="button" onClick={onCancel}>
-          Cancel
+        <button className="secondary-button" type="button" onClick={handleClose}>
+          Close
         </button>
       </div>
 
@@ -322,8 +340,8 @@ export default function ApplicationDetailPanel({
           </label>
 
           <div className="detail-actions">
-            <button className="secondary-button" type="button" onClick={onCancel}>
-              Cancel
+            <button className="secondary-button" type="button" onClick={handleClose}>
+              Close
             </button>
             <button type="submit" disabled={isSaving}>
               {isSaving ? "Saving..." : "Save changes"}
