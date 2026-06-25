@@ -47,6 +47,14 @@ class ApplicationCreate(ApplicationBase):
     company_name: str = Field(min_length=1)
     role_title: str = Field(min_length=1)
 
+    @field_validator("status")
+    @classmethod
+    def validate_create_status(cls, value: str) -> str:
+        value = super().validate_status(value)
+        if value == "Archived":
+            raise ValueError("applications must be archived through archive behavior")
+        return value
+
 
 class ApplicationUpdate(BaseModel):
     company_name: str | None = Field(default=None, min_length=1)

@@ -20,7 +20,6 @@ const statusOptions = [
   "Offer",
   "Rejected",
   "Withdrawn",
-  "Archived",
 ];
 
 const sourceOptions = [

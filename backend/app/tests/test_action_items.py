@@ -85,17 +85,32 @@ def test_action_items_include_stale_active_applications(client, db_session):
 
 
 def test_action_items_exclude_inactive_statuses_from_stale(client, db_session):
-    for status in ["Offer", "Rejected", "Withdrawn", "Archived"]:
-        created = create_application(
-            client,
-            company_name=f"{status} Co",
-            status=status,
-            is_archived=status == "Archived",
-        ).json()
+    for status in ["Offer", "Rejected", "Withdrawn"]:
+        created = create_application(client, company_name=f"{status} Co", status=status).json()
         set_updated_at(db_session, created["id"], utc_now() - timedelta(days=15))
+
+    archived = create_application(client, company_name="Archived Co").json()
+    client.patch(f"/api/applications/{archived['id']}", json={"status": "Archived"})
+    set_updated_at(db_session, archived["id"], utc_now() - timedelta(days=15))
 
     data = get_action_items(client)
 
+    assert data["stale_applications"] == []
+
+
+def test_archived_application_does_not_appear_in_action_items(client):
+    today = date.today()
+    created = create_application(
+        client,
+        company_name="Archived Action Co",
+        follow_up_date=today.isoformat(),
+    ).json()
+    client.patch(f"/api/applications/{created['id']}", json={"status": "Archived"})
+
+    data = get_action_items(client)
+
+    assert data["overdue_followups"] == []
+    assert data["upcoming_followups"] == []
     assert data["stale_applications"] == []
 
 

@@ -84,6 +84,40 @@ def test_archive_application_instead_of_hard_delete(client):
     assert len(archived_list_response.json()) == 1
 
 
+def test_patching_status_to_archived_sets_archive_flag(client):
+    created = create_application(client).json()
+
+    response = client.patch(f"/api/applications/{created['id']}", json={"status": "Archived"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "Archived"
+    assert data["is_archived"] is True
+
+
+def test_patch_archived_application_excluded_from_default_list(client):
+    created = create_application(client).json()
+    client.patch(f"/api/applications/{created['id']}", json={"status": "Archived"})
+
+    default_response = client.get("/api/applications")
+    archived_response = client.get("/api/applications?include_archived=true")
+
+    assert default_response.status_code == 200
+    assert default_response.json() == []
+    assert archived_response.status_code == 200
+    assert len(archived_response.json()) == 1
+    assert archived_response.json()[0]["status"] == "Archived"
+
+
+def test_archived_application_cannot_be_restored_with_status_patch(client):
+    created = create_application(client).json()
+    client.patch(f"/api/applications/{created['id']}", json={"status": "Archived"})
+
+    response = client.patch(f"/api/applications/{created['id']}", json={"status": "Saved"})
+
+    assert response.status_code == 400
+
+
 def test_search_and_filter_applications(client):
     create_application(client, company_name="Northstar Labs", source="LinkedIn", status="Applied")
     create_application(client, company_name="Cedar Metrics", source="Referral", status="Interview")
@@ -101,5 +135,11 @@ def test_search_and_filter_applications(client):
 
 def test_invalid_status_validation(client):
     response = create_application(client, status="Follow-up due")
+
+    assert response.status_code == 422
+
+
+def test_create_application_rejects_archived_status(client):
+    response = create_application(client, status="Archived")
 
     assert response.status_code == 422

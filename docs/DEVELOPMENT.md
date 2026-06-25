@@ -106,12 +106,18 @@ Run this checklist before starting a new product phase or opening a pull request
 - Frontend dev server starts with `npm run dev`.
 - Applications table loads backend applications.
 - Quick-add creates an application.
+- Quick Add does not offer `Archived` as a status.
 - Quick-add can create an application with a follow-up date.
 - Quick-add follow-up presets fill Tomorrow, In 3 days, In 1 week, and In 2 weeks as `YYYY-MM-DD`.
 - Quick-add follow-up Clear removes the follow-up date.
 - Applications table displays the follow-up date.
 - Pipeline groups applications by status.
+- Pipeline does not show `Archived` as an active column.
 - Changing pipeline status persists after refresh.
+- Moving an application to `Archived` removes it from active Applications.
+- Moving an application to `Archived` removes it from active Pipeline.
+- Archived applications do not appear in the Daily Command Center.
+- Archived records remain available through the backend `include_archived=true` behavior.
 - Applications page reflects pipeline status changes.
 - Overdue follow-up appears separately in the Daily Command Center.
 - Today follow-up appears under Upcoming Follow-ups.

@@ -15,7 +15,7 @@ Stores the main record for each job opportunity or application.
 - role_title: job title or opportunity name
 - source: where the opportunity came from, such as LinkedIn, Indeed, referral, recruiter, company site, or other
 - job_url: optional link to the posting
-- status: current pipeline status, such as Saved, Applied, Assessment, Recruiter Screen, Interview, Offer, Rejected, Withdrawn, or Archived
+- status: current application status, such as Saved, Applied, Assessment, Recruiter Screen, Interview, Offer, Rejected, Withdrawn, or Archived
 - location: optional job location or remote label
 - compensation_text: optional compensation note as written by the user
 - follow_up_date: optional date for next follow-up
@@ -27,6 +27,8 @@ Stores the main record for each job opportunity or application.
 - applied_at: optional date the user applied
 
 Follow-up due should not be stored as a status. It should be computed from follow_up_date when listing follow-up queues, dashboard actions, and table filters.
+
+Archived is stored for archived records, but it is not an active pipeline stage. Active workflow views should hide records where is_archived is true.
 
 ### Important Relationships
 

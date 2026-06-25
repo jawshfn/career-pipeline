@@ -9,7 +9,6 @@ export const PIPELINE_STATUSES = [
   "Offer",
   "Rejected",
   "Withdrawn",
-  "Archived",
 ];
 
 export default function PipelineStatusSelect({ disabled, isSaving, onChange, value }) {

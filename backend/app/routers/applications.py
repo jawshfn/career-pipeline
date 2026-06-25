@@ -118,6 +118,19 @@ def update_application(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
 
     updates = payload.model_dump(exclude_unset=True)
+    next_status = updates.get("status")
+
+    if application.is_archived and (
+        (next_status is not None and next_status != "Archived") or updates.get("is_archived") is False
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Archived applications cannot be restored through this endpoint",
+        )
+
+    if next_status == "Archived":
+        updates["is_archived"] = True
+
     for field, value in updates.items():
         setattr(application, field, value)
 
