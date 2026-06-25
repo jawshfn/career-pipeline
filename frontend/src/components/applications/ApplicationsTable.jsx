@@ -12,7 +12,14 @@ function getResumeLabel(application, resumeVersionsById) {
     return "-";
   }
 
-  return resumeVersionsById.get(application.resume_version_id)?.name || application.resume_version_id;
+  const resumeVersion = resumeVersionsById.get(application.resume_version_id);
+  if (!resumeVersion) {
+    return `Resume #${application.resume_version_id}`;
+  }
+
+  return resumeVersion.target_role
+    ? `${resumeVersion.name} (${resumeVersion.target_role})`
+    : resumeVersion.name;
 }
 
 export default function ApplicationsTable({ applications, onOpenDetails, resumeVersions }) {

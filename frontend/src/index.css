@@ -251,12 +251,16 @@ a {
 .application-detail-form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
+}
+
+.application-detail-form label,
+.detail-field-group {
+  display: grid;
+  gap: 8px;
 }
 
 .application-detail-form label {
-  display: grid;
-  gap: 6px;
   color: #34413f;
   font-size: 0.9rem;
   font-weight: 700;
@@ -284,8 +288,47 @@ a {
   grid-column: 1 / -1;
 }
 
-.detail-notes-field {
+.message-warning {
+  border: 1px solid #ead397;
+  color: #6d4f0c;
+  background: #fff8e5;
+}
+
+.detail-field-group {
+  align-content: start;
+  border: 1px solid #e4ebe9;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fbfdfc;
+}
+
+.detail-field-group-wide {
   grid-column: 1 / -1;
+}
+
+.detail-field-group-status {
+  grid-column: span 2;
+}
+
+.detail-field-group h3 {
+  margin: 0;
+  color: #17202a;
+  font-size: 0.98rem;
+  letter-spacing: 0;
+}
+
+.detail-field-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.detail-field-group-status .detail-field-grid {
+  grid-template-columns: minmax(220px, 1.2fr) minmax(180px, 1fr);
+}
+
+.detail-notes-field {
+  display: grid;
 }
 
 .detail-actions {
@@ -855,6 +898,10 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .detail-field-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .resume-version-form,
   .resume-version-edit-form {
     grid-template-columns: 1fr;
@@ -882,6 +929,14 @@ a {
   }
 
   .application-detail-form {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-field-group-status {
+    grid-column: 1 / -1;
+  }
+
+  .detail-field-grid {
     grid-template-columns: 1fr;
   }
 

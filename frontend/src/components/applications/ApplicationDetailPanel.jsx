@@ -74,6 +74,18 @@ function numberOrNull(value) {
   return value === "" ? null : Number(value);
 }
 
+function normalizeFormState(formState) {
+  return Object.fromEntries(
+    Object.entries(formState).map(([key, value]) => [key, value === null || value === undefined ? "" : String(value)]),
+  );
+}
+
+function getResumeVersionLabel(resumeVersion) {
+  return resumeVersion.target_role
+    ? `${resumeVersion.name} (${resumeVersion.target_role})`
+    : resumeVersion.name;
+}
+
 export default function ApplicationDetailPanel({
   applicationId,
   onClose,
@@ -122,7 +134,7 @@ export default function ApplicationDetailPanel({
     };
   }, [applicationId]);
 
-  const hasUnsavedChanges = JSON.stringify(formData) !== JSON.stringify(savedFormData);
+  const hasUnsavedChanges = JSON.stringify(normalizeFormState(formData)) !== JSON.stringify(normalizeFormState(savedFormData));
 
   function updateField(event) {
     const { name, value } = event.target;
@@ -200,144 +212,183 @@ export default function ApplicationDetailPanel({
               {saveMessage}
             </div>
           ) : null}
+          {hasUnsavedChanges && !saveMessage ? (
+            <div className="message message-warning" role="status">
+              Unsaved changes
+            </div>
+          ) : null}
 
-          <label>
-            Company name
-            <input
-              name="company_name"
-              value={formData.company_name}
-              onChange={updateField}
-              required
-            />
-          </label>
+          <div className="detail-field-group detail-field-group-wide">
+            <h3>Core details</h3>
+            <div className="detail-field-grid">
+              <label>
+                Company name
+                <input
+                  name="company_name"
+                  value={formData.company_name}
+                  onChange={updateField}
+                  required
+                  placeholder="Company name"
+                />
+              </label>
 
-          <label>
-            Role title
-            <input
-              name="role_title"
-              value={formData.role_title}
-              onChange={updateField}
-              required
-            />
-          </label>
+              <label>
+                Role title
+                <input
+                  name="role_title"
+                  value={formData.role_title}
+                  onChange={updateField}
+                  required
+                  placeholder="Role title"
+                />
+              </label>
 
-          <label>
-            Job link
-            <input
-              name="job_link"
-              value={formData.job_link}
-              onChange={updateField}
-              placeholder="https://..."
-            />
-          </label>
+              <label>
+                Location
+                <input
+                  name="location"
+                  value={formData.location}
+                  onChange={updateField}
+                  placeholder="Remote, city, or region"
+                />
+              </label>
+            </div>
+          </div>
 
-          <label>
-            Source
-            <select name="source" value={formData.source} onChange={updateField}>
-              {sourceOptions.map((source) => (
-                <option key={source} value={source}>
-                  {source}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="detail-field-group detail-field-group-status">
+            <h3>Application status</h3>
+            <div className="detail-field-grid">
+              <label>
+                Status
+                <select name="status" value={formData.status} onChange={updateField}>
+                  {statusOptions.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <label>
-            Status
-            <select name="status" value={formData.status} onChange={updateField}>
-              {statusOptions.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </label>
+              <label>
+                Date applied
+                <input
+                  name="date_applied"
+                  type="date"
+                  value={formData.date_applied}
+                  onChange={updateField}
+                />
+              </label>
+            </div>
+          </div>
 
-          <label>
-            Resume version
-            <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
-              <option value="">No resume selected</option>
-              {resumeVersions.map((resumeVersion) => (
-                <option key={resumeVersion.id} value={resumeVersion.id}>
-                  {resumeVersion.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="detail-field-group">
+            <h3>Follow-up</h3>
+            <div className="detail-field-grid">
+              <label>
+                Follow-up date
+                <input
+                  name="follow_up_date"
+                  type="date"
+                  value={formData.follow_up_date}
+                  onChange={updateField}
+                />
+              </label>
+            </div>
+          </div>
 
-          <label>
-            Follow-up date
-            <input
-              name="follow_up_date"
-              type="date"
-              value={formData.follow_up_date}
-              onChange={updateField}
-            />
-          </label>
+          <div className="detail-field-group detail-field-group-wide">
+            <h3>Resume/source details</h3>
+            <div className="detail-field-grid">
+              <label>
+                Source
+                <select name="source" value={formData.source} onChange={updateField}>
+                  {sourceOptions.map((source) => (
+                    <option key={source} value={source}>
+                      {source}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <label>
-            Date applied
-            <input
-              name="date_applied"
-              type="date"
-              value={formData.date_applied}
-              onChange={updateField}
-            />
-          </label>
+              <label>
+                Resume version
+                <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
+                  <option value="">No resume selected</option>
+                  {resumeVersions.map((resumeVersion) => (
+                    <option key={resumeVersion.id} value={resumeVersion.id}>
+                      {getResumeVersionLabel(resumeVersion)}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <label>
-            Location
-            <input
-              name="location"
-              value={formData.location}
-              onChange={updateField}
-              placeholder="Remote, city, or region"
-            />
-          </label>
+              <label>
+                Job link
+                <input
+                  name="job_link"
+                  value={formData.job_link}
+                  onChange={updateField}
+                  placeholder="https://..."
+                />
+              </label>
+            </div>
+          </div>
 
-          <label>
-            Salary min
-            <input
-              min="0"
-              name="salary_min"
-              type="number"
-              value={formData.salary_min}
-              onChange={updateField}
-            />
-          </label>
+          <div className="detail-field-group detail-field-group-wide">
+            <h3>Compensation/context</h3>
+            <div className="detail-field-grid">
+              <label>
+                Salary min
+                <input
+                  min="0"
+                  name="salary_min"
+                  placeholder="Minimum"
+                  step="1"
+                  type="number"
+                  value={formData.salary_min}
+                  onChange={updateField}
+                />
+              </label>
 
-          <label>
-            Salary max
-            <input
-              min="0"
-              name="salary_max"
-              type="number"
-              value={formData.salary_max}
-              onChange={updateField}
-            />
-          </label>
+              <label>
+                Salary max
+                <input
+                  min="0"
+                  name="salary_max"
+                  placeholder="Maximum"
+                  step="1"
+                  type="number"
+                  value={formData.salary_max}
+                  onChange={updateField}
+                />
+              </label>
 
-          <label>
-            Employment type
-            <select name="employment_type" value={formData.employment_type} onChange={updateField}>
-              {employmentTypeOptions.map((employmentType) => (
-                <option key={employmentType || "blank"} value={employmentType}>
-                  {employmentType || "Not specified"}
-                </option>
-              ))}
-            </select>
-          </label>
+              <label>
+                Employment type
+                <select name="employment_type" value={formData.employment_type} onChange={updateField}>
+                  {employmentTypeOptions.map((employmentType) => (
+                    <option key={employmentType || "blank"} value={employmentType}>
+                      {employmentType || "Not specified"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
 
-          <label className="detail-notes-field">
-            Notes
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={updateField}
-              rows="5"
-              placeholder="Company context, recruiter notes, interview prep, or next steps"
-            />
-          </label>
+          <div className="detail-field-group detail-field-group-wide">
+            <h3>Notes</h3>
+            <label className="detail-notes-field">
+              Notes
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={updateField}
+                rows="5"
+                placeholder="Company context, recruiter notes, interview prep, or next steps"
+              />
+            </label>
+          </div>
 
           <div className="detail-actions">
             <button className="secondary-button" type="button" onClick={handleClose}>

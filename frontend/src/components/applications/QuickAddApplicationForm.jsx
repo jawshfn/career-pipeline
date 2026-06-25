@@ -53,6 +53,12 @@ function getPresetDate(daysFromToday) {
   return formatLocalDate(date);
 }
 
+function getResumeVersionLabel(resumeVersion) {
+  return resumeVersion.target_role
+    ? `${resumeVersion.name} (${resumeVersion.target_role})`
+    : resumeVersion.name;
+}
+
 export default function QuickAddApplicationForm({ resumeVersions, onCreateApplication }) {
   const [formData, setFormData] = useState(initialFormState);
   const [error, setError] = useState("");
@@ -167,7 +173,7 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
             <option value="">No resume selected</option>
             {resumeVersions.map((resumeVersion) => (
               <option key={resumeVersion.id} value={resumeVersion.id}>
-                {resumeVersion.name}
+                {getResumeVersionLabel(resumeVersion)}
               </option>
             ))}
           </select>
