@@ -78,11 +78,11 @@ Later follow-up enhancements:
 
 ## Phase 5: Application Detail / Resume Version Workflow
 
-Status: next
+Status: in progress
 
-- Build application detail page
+- Phase 5.1 complete: add an application detail panel from the Applications table
+- Support editing richer application context without making Quick Add heavier
 - Improve resume-version assignment and editing workflows
-- Show richer notes and application context
 - Prepare for timeline/event history
 
 ## Phase 6: Red-Flag System

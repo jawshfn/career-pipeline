@@ -22,6 +22,11 @@ export async function getApplications(options = {}) {
   return parseResponse(response);
 }
 
+export async function getApplication(applicationId) {
+  const response = await fetch(`${API_BASE_URL}/api/applications/${applicationId}`);
+  return parseResponse(response);
+}
+
 export async function createApplication(applicationData) {
   const response = await fetch(`${API_BASE_URL}/api/applications`, {
     method: "POST",

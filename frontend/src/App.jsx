@@ -73,6 +73,7 @@ export default function App() {
           error={loadError}
           isLoading={isLoading}
           onCreateApplication={handleCreateApplication}
+          onUpdateApplication={handleUpdateApplication}
           resumeVersions={resumeVersions}
         />
       )}

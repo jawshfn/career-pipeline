@@ -67,6 +67,53 @@ def test_update_application_status(client):
     assert response.json()["status"] == "Interview"
 
 
+def test_update_application_detail_fields(client):
+    resume = client.post(
+        "/api/resume-versions",
+        json={
+            "name": "Backend Detail Resume",
+            "target_role": "Software Engineering",
+            "description": "Fictional detail-panel test resume.",
+        },
+    ).json()
+    created = create_application(client).json()
+
+    response = client.patch(
+        f"/api/applications/{created['id']}",
+        json={
+            "company_name": "Updated Northstar Labs",
+            "role_title": "Associate Software Engineer",
+            "job_link": "https://example.com/jobs/123",
+            "source": "Company Website",
+            "status": "Assessment",
+            "location": "Remote",
+            "salary_min": 62000,
+            "salary_max": 78000,
+            "employment_type": "Full-time",
+            "date_applied": "2026-06-20",
+            "follow_up_date": "2026-06-27",
+            "resume_version_id": resume["id"],
+            "notes": "Updated through application detail panel.",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["company_name"] == "Updated Northstar Labs"
+    assert data["role_title"] == "Associate Software Engineer"
+    assert data["job_link"] == "https://example.com/jobs/123"
+    assert data["source"] == "Company Website"
+    assert data["status"] == "Assessment"
+    assert data["location"] == "Remote"
+    assert data["salary_min"] == 62000
+    assert data["salary_max"] == 78000
+    assert data["employment_type"] == "Full-time"
+    assert data["date_applied"] == "2026-06-20"
+    assert data["follow_up_date"] == "2026-06-27"
+    assert data["resume_version_id"] == resume["id"]
+    assert data["notes"] == "Updated through application detail panel."
+
+
 def test_archive_application_instead_of_hard_delete(client):
     created = create_application(client).json()
 

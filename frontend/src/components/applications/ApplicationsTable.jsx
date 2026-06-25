@@ -15,7 +15,7 @@ function getResumeLabel(application, resumeVersionsById) {
   return resumeVersionsById.get(application.resume_version_id)?.name || application.resume_version_id;
 }
 
-export default function ApplicationsTable({ applications, resumeVersions }) {
+export default function ApplicationsTable({ applications, onOpenDetails, resumeVersions }) {
   if (applications.length === 0) {
     return <EmptyApplicationsState />;
   }
@@ -35,6 +35,7 @@ export default function ApplicationsTable({ applications, resumeVersions }) {
             <th>Applied Date</th>
             <th>Follow-Up Date</th>
             <th>Notes</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -50,6 +51,15 @@ export default function ApplicationsTable({ applications, resumeVersions }) {
               <td>{formatValue(application.date_applied)}</td>
               <td>{formatValue(application.follow_up_date)}</td>
               <td className="notes-cell">{formatValue(application.notes)}</td>
+              <td>
+                <button
+                  className="table-action-button"
+                  type="button"
+                  onClick={() => onOpenDetails(application.id)}
+                >
+                  Details
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>

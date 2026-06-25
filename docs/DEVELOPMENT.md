@@ -117,6 +117,12 @@ Run this checklist before starting a new product phase or opening a pull request
 - Quick-add follow-up presets fill Tomorrow, In 3 days, In 1 week, and In 2 weeks as `YYYY-MM-DD`.
 - Quick-add follow-up Clear removes the follow-up date.
 - Applications table displays the follow-up date.
+- Application detail panel opens from an Applications table row.
+- Editing notes in the detail panel persists after save.
+- Editing resume version in the detail panel updates the application.
+- Editing follow-up date in the detail panel updates the Applications table.
+- Editing status in the detail panel updates the Applications table and Pipeline.
+- Detail panel status options do not include `Archived`.
 - Pipeline groups applications by status.
 - Pipeline does not show `Archived` as an active column.
 - Changing pipeline status persists after refresh.

@@ -17,6 +17,7 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 - Quick-add workflow for fast application capture, including optional follow-up date presets
 - Applications table for active applications
+- Application detail panel for editing richer context after quick-add
 - Pipeline board with persisted status updates
 - Daily Command Center for overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications
 - Resume-version backend endpoints and quick-add assignment support
@@ -24,7 +25,7 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Planned Future Features
 
-- Application detail workflow with richer notes and history
+- Full application history and event timeline
 - Red-flag tags for questionable or suspicious postings
 - Dashboard metrics for source, status, and response insights
 - Follow-up completion and rescheduling workflow
@@ -41,9 +42,9 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Project Status
 
-Career Pipeline currently has a FastAPI backend with SQLite and SQLAlchemy, a React/Vite frontend, backend pytest coverage, and GitHub Actions CI for backend tests and frontend build. The working prototype supports quick-add, application table views, resume-version assignment during quick-add, pipeline status updates, archive behavior, and the Daily Command Center.
+Career Pipeline currently has a FastAPI backend with SQLite and SQLAlchemy, a React/Vite frontend, backend pytest coverage, and GitHub Actions CI for backend tests and frontend build. The working prototype supports quick-add, application table views, application detail editing, resume-version assignment, pipeline status updates, archive behavior, and the Daily Command Center.
 
-The full product is not complete yet. Red flags, dashboard metrics, application detail workflow, follow-up completion/rescheduling, deployment, authentication, AI, and browser extension features are still planned or intentionally out of scope.
+The full product is not complete yet. Red flags, dashboard metrics, full application event history, follow-up completion/rescheduling, deployment, authentication, AI, and browser extension features are still planned or intentionally out of scope.
 
 ## Planned Development Phases
 

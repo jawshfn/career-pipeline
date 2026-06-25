@@ -1,0 +1,336 @@
+import React, { useEffect, useState } from "react";
+
+import { getApplication } from "../../api/applicationsApi.js";
+import ErrorMessage from "../ui/ErrorMessage.jsx";
+import LoadingState from "../ui/LoadingState.jsx";
+
+const initialFormState = {
+  company_name: "",
+  role_title: "",
+  job_link: "",
+  source: "Other",
+  status: "Saved",
+  resume_version_id: "",
+  follow_up_date: "",
+  date_applied: "",
+  location: "",
+  salary_min: "",
+  salary_max: "",
+  employment_type: "",
+  notes: "",
+};
+
+const statusOptions = [
+  "Saved",
+  "Applied",
+  "Assessment",
+  "Recruiter Screen",
+  "Interview",
+  "Offer",
+  "Rejected",
+  "Withdrawn",
+];
+
+const sourceOptions = [
+  "LinkedIn",
+  "Indeed",
+  "ZipRecruiter",
+  "Company Website",
+  "Recruiter",
+  "Referral",
+  "Handshake",
+  "Other",
+];
+
+const employmentTypeOptions = [
+  "",
+  "Full-time",
+  "Part-time",
+  "Contract",
+  "Internship",
+  "Temporary",
+  "Other",
+];
+
+function toFormState(application) {
+  return {
+    company_name: application.company_name || "",
+    role_title: application.role_title || "",
+    job_link: application.job_link || "",
+    source: application.source || "Other",
+    status: statusOptions.includes(application.status) ? application.status : "Saved",
+    resume_version_id: application.resume_version_id ? String(application.resume_version_id) : "",
+    follow_up_date: application.follow_up_date || "",
+    date_applied: application.date_applied || "",
+    location: application.location || "",
+    salary_min: application.salary_min ?? "",
+    salary_max: application.salary_max ?? "",
+    employment_type: application.employment_type || "",
+    notes: application.notes || "",
+  };
+}
+
+function numberOrNull(value) {
+  return value === "" ? null : Number(value);
+}
+
+export default function ApplicationDetailPanel({
+  applicationId,
+  onCancel,
+  onSaveApplication,
+  resumeVersions,
+}) {
+  const [formData, setFormData] = useState(initialFormState);
+  const [loadError, setLoadError] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [saveMessage, setSaveMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    async function loadApplication() {
+      setIsLoading(true);
+      setLoadError("");
+      setSaveError("");
+      setSaveMessage("");
+
+      try {
+        const application = await getApplication(applicationId);
+        if (isCurrent) {
+          setFormData(toFormState(application));
+        }
+      } catch (error) {
+        if (isCurrent) {
+          setLoadError(error.message || "Could not load application details.");
+        }
+      } finally {
+        if (isCurrent) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadApplication();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [applicationId]);
+
+  function updateField(event) {
+    const { name, value } = event.target;
+    setFormData((current) => ({ ...current, [name]: value }));
+    setSaveMessage("");
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setIsSaving(true);
+    setSaveError("");
+    setSaveMessage("");
+
+    const payload = {
+      company_name: formData.company_name.trim(),
+      role_title: formData.role_title.trim(),
+      job_link: formData.job_link.trim() || null,
+      source: formData.source,
+      status: formData.status,
+      location: formData.location.trim() || null,
+      salary_min: numberOrNull(formData.salary_min),
+      salary_max: numberOrNull(formData.salary_max),
+      employment_type: formData.employment_type || null,
+      date_applied: formData.date_applied || null,
+      follow_up_date: formData.follow_up_date || null,
+      resume_version_id: formData.resume_version_id ? Number(formData.resume_version_id) : null,
+      notes: formData.notes.trim() || null,
+    };
+
+    try {
+      const updatedApplication = await onSaveApplication(applicationId, payload);
+      setFormData(toFormState(updatedApplication));
+      setSaveMessage("Changes saved.");
+    } catch (error) {
+      setSaveError(error.message || "Could not save application details.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <section className="panel application-detail-panel" aria-labelledby="application-detail-title">
+      <div className="section-heading detail-heading">
+        <div>
+          <p className="eyebrow">Application detail</p>
+          <h2 id="application-detail-title">Edit Application</h2>
+          <p>Add richer context without slowing down Quick Add.</p>
+        </div>
+        <button className="secondary-button" type="button" onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+
+      {isLoading ? <LoadingState message="Loading application details..." /> : null}
+      {!isLoading && loadError ? <ErrorMessage message={loadError} /> : null}
+
+      {!isLoading && !loadError ? (
+        <form className="application-detail-form" onSubmit={handleSubmit}>
+          {saveError ? <ErrorMessage message={saveError} /> : null}
+          {saveMessage ? (
+            <div className="message message-success" role="status">
+              {saveMessage}
+            </div>
+          ) : null}
+
+          <label>
+            Company name
+            <input
+              name="company_name"
+              value={formData.company_name}
+              onChange={updateField}
+              required
+            />
+          </label>
+
+          <label>
+            Role title
+            <input
+              name="role_title"
+              value={formData.role_title}
+              onChange={updateField}
+              required
+            />
+          </label>
+
+          <label>
+            Job link
+            <input
+              name="job_link"
+              value={formData.job_link}
+              onChange={updateField}
+              placeholder="https://..."
+            />
+          </label>
+
+          <label>
+            Source
+            <select name="source" value={formData.source} onChange={updateField}>
+              {sourceOptions.map((source) => (
+                <option key={source} value={source}>
+                  {source}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Status
+            <select name="status" value={formData.status} onChange={updateField}>
+              {statusOptions.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Resume version
+            <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
+              <option value="">No resume selected</option>
+              {resumeVersions.map((resumeVersion) => (
+                <option key={resumeVersion.id} value={resumeVersion.id}>
+                  {resumeVersion.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Follow-up date
+            <input
+              name="follow_up_date"
+              type="date"
+              value={formData.follow_up_date}
+              onChange={updateField}
+            />
+          </label>
+
+          <label>
+            Date applied
+            <input
+              name="date_applied"
+              type="date"
+              value={formData.date_applied}
+              onChange={updateField}
+            />
+          </label>
+
+          <label>
+            Location
+            <input
+              name="location"
+              value={formData.location}
+              onChange={updateField}
+              placeholder="Remote, city, or region"
+            />
+          </label>
+
+          <label>
+            Salary min
+            <input
+              min="0"
+              name="salary_min"
+              type="number"
+              value={formData.salary_min}
+              onChange={updateField}
+            />
+          </label>
+
+          <label>
+            Salary max
+            <input
+              min="0"
+              name="salary_max"
+              type="number"
+              value={formData.salary_max}
+              onChange={updateField}
+            />
+          </label>
+
+          <label>
+            Employment type
+            <select name="employment_type" value={formData.employment_type} onChange={updateField}>
+              {employmentTypeOptions.map((employmentType) => (
+                <option key={employmentType || "blank"} value={employmentType}>
+                  {employmentType || "Not specified"}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="detail-notes-field">
+            Notes
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={updateField}
+              rows="5"
+              placeholder="Company context, recruiter notes, interview prep, or next steps"
+            />
+          </label>
+
+          <div className="detail-actions">
+            <button className="secondary-button" type="button" onClick={onCancel}>
+              Cancel
+            </button>
+            <button type="submit" disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save changes"}
+            </button>
+          </div>
+        </form>
+      ) : null}
+    </section>
+  );
+}

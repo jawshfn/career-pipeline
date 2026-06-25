@@ -183,6 +183,31 @@ a {
   opacity: 0.65;
 }
 
+.secondary-button,
+.table-action-button {
+  border: 1px solid #cbd6d3;
+  border-radius: 6px;
+  color: #287c73;
+  background: #ffffff;
+  font-weight: 800;
+}
+
+.secondary-button {
+  min-height: 40px;
+  padding: 9px 13px;
+}
+
+.table-action-button {
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+
+.secondary-button:hover,
+.table-action-button:hover {
+  border-color: #287c73;
+  background: #eef7f5;
+}
+
 .message {
   border-radius: 6px;
   padding: 12px 14px;
@@ -203,6 +228,89 @@ a {
   border: 1px solid #c7d8ec;
   color: #214e7a;
   background: #eef6ff;
+}
+
+.message-success {
+  border: 1px solid #a9d6c8;
+  color: #1f5f45;
+  background: #effaf5;
+}
+
+.application-detail-panel {
+  border-color: #cfdedb;
+}
+
+.detail-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.application-detail-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.application-detail-form label {
+  display: grid;
+  gap: 6px;
+  color: #34413f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.application-detail-form input,
+.application-detail-form select,
+.application-detail-form textarea {
+  width: 100%;
+  border: 1px solid #cbd6d3;
+  border-radius: 6px;
+  padding: 10px 11px;
+  color: #17202a;
+  background: #ffffff;
+}
+
+.application-detail-form input:focus,
+.application-detail-form select:focus,
+.application-detail-form textarea:focus {
+  border-color: #287c73;
+  outline: 3px solid rgba(40, 124, 115, 0.14);
+}
+
+.application-detail-form .message {
+  grid-column: 1 / -1;
+}
+
+.detail-notes-field {
+  grid-column: 1 / -1;
+}
+
+.detail-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.detail-actions button[type="submit"] {
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 15px;
+  color: #ffffff;
+  background: #287c73;
+  font-weight: 800;
+}
+
+.detail-actions button[type="submit"]:hover {
+  background: #1f6860;
+}
+
+.detail-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .table-wrap {
@@ -572,6 +680,10 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .application-detail-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .command-center-grid {
     grid-template-columns: 1fr;
   }
@@ -584,6 +696,16 @@ a {
   }
 
   .quick-add-form {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-heading,
+  .detail-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .application-detail-form {
     grid-template-columns: 1fr;
   }
 
