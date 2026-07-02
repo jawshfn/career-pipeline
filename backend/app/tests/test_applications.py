@@ -142,6 +142,17 @@ def test_patching_status_to_archived_sets_archive_flag(client):
     assert data["is_archived"] is True
 
 
+def test_patching_archive_flag_sets_archived_status(client):
+    created = create_application(client).json()
+
+    response = client.patch(f"/api/applications/{created['id']}", json={"is_archived": True})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["is_archived"] is True
+    assert data["status"] == "Archived"
+
+
 def test_patch_archived_application_excluded_from_default_list(client):
     created = create_application(client).json()
     client.patch(f"/api/applications/{created['id']}", json={"status": "Archived"})

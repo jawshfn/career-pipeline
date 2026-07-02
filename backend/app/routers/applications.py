@@ -130,6 +130,8 @@ def update_application(
 
     if next_status == "Archived":
         updates["is_archived"] = True
+    elif updates.get("is_archived") is True:
+        updates["status"] = "Archived"
 
     for field, value in updates.items():
         setattr(application, field, value)
