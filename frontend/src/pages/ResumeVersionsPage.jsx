@@ -142,7 +142,7 @@ export default function ResumeVersionsPage({
         <div>
           <p className="eyebrow">Resume library</p>
           <h2>Resume Versions</h2>
-          <p>Manage reusable resume variants for different roles, industries, or positioning.</p>
+          <p>Manage reusable resume variants for different roles and applications.</p>
         </div>
       </header>
 
@@ -312,7 +312,7 @@ export default function ResumeVersionsPage({
                           Edit
                         </button>
                         <button
-                          className="secondary-button"
+                          className={`secondary-button ${resumeVersion.is_active ? "quiet-danger-button" : ""}`}
                           type="button"
                           disabled={isSaving}
                           onClick={() => handleActiveToggle(resumeVersion)}

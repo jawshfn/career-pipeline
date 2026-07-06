@@ -18,7 +18,7 @@ export default function PipelineColumn({
 
       <div className="pipeline-card-list">
         {applications.length === 0 ? (
-          <p className="pipeline-empty-column">No applications in this status.</p>
+          <p className="pipeline-empty-column">No applications in this status yet.</p>
         ) : (
           applications.map((application) => (
             <PipelineCard

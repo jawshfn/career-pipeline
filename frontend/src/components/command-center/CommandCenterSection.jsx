@@ -14,7 +14,7 @@ export default function CommandCenterSection({ applications, description, showUp
       </div>
 
       {applications.length === 0 ? (
-        <p className="command-center-empty">No items in this group.</p>
+        <p className="command-center-empty">Nothing needs attention here.</p>
       ) : (
         <div className="command-center-list">
           {applications.map((application) => (

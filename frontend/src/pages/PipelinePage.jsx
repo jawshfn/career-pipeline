@@ -37,7 +37,7 @@ export default function PipelinePage({
         <div>
           <p className="eyebrow">Pipeline board</p>
           <h2>Pipeline</h2>
-          <p>Review applications by status and move opportunities forward.</p>
+          <p>Review applications by stage and update where each opportunity stands.</p>
         </div>
       </header>
 

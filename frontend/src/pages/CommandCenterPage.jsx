@@ -56,15 +56,18 @@ export default function CommandCenterPage() {
       <header className="page-header">
         <div>
           <p className="eyebrow">Daily Command Center</p>
-          <h2>Today&apos;s Actions</h2>
-          <p>Review applications that need follow-up or a next step.</p>
+          <h2>Command Center</h2>
+          <p>See follow-ups and stale applications that need attention.</p>
         </div>
       </header>
 
       {isLoading ? <LoadingState message="Loading action items..." /> : null}
       {!isLoading && error ? <ErrorMessage message={error} /> : null}
       {!isLoading && !error && !hasActionItems ? (
-        <div className="empty-state">No action items right now. Your pipeline is clear for today.</div>
+        <div className="empty-state">
+          <h3>No action items right now</h3>
+          <p>Add follow-up dates or update stale applications to keep this view useful.</p>
+        </div>
       ) : null}
       {!isLoading && !error && hasActionItems ? (
         <div className="command-center-grid">

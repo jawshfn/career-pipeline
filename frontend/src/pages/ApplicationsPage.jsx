@@ -22,7 +22,7 @@ export default function ApplicationsPage({
         <div>
           <p className="eyebrow">Application tracker</p>
           <h2>Applications</h2>
-          <p>Track job opportunities, applications, and next steps.</p>
+          <p>Capture opportunities quickly, then open details when you need more context.</p>
         </div>
       </header>
 

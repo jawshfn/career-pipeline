@@ -39,7 +39,7 @@ a {
 .pipeline-page,
 .resume-versions-page {
   display: grid;
-  gap: 24px;
+  gap: 20px;
   min-width: 0;
   max-width: 1240px;
   margin: 0 auto;
@@ -84,7 +84,7 @@ a {
 
 .panel {
   min-width: 0;
-  padding: 22px;
+  padding: 20px;
   border: 1px solid #dce3e1;
   border-radius: 8px;
   background: #ffffff;
@@ -92,13 +92,13 @@ a {
 }
 
 .section-heading {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .quick-add-form {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-  gap: 16px;
+  gap: 14px;
   max-width: 100%;
 }
 
@@ -123,7 +123,7 @@ a {
   width: 100%;
   border: 1px solid #cbd6d3;
   border-radius: 6px;
-  padding: 10px 11px;
+  padding: 9px 10px;
   color: #17202a;
   background: #ffffff;
 }
@@ -170,6 +170,7 @@ a {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -218,6 +219,15 @@ a {
   background: #eef7f5;
 }
 
+.quiet-danger-button {
+  color: #8b2f20;
+}
+
+.quiet-danger-button:hover {
+  border-color: #c76a5b;
+  background: #fff1ee;
+}
+
 .message {
   border-radius: 6px;
   padding: 12px 14px;
@@ -260,7 +270,7 @@ a {
 .application-detail-form {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 14px;
   min-width: 0;
 }
 
@@ -282,7 +292,7 @@ a {
   width: 100%;
   border: 1px solid #cbd6d3;
   border-radius: 6px;
-  padding: 10px 11px;
+  padding: 9px 10px;
   color: #17202a;
   background: #ffffff;
 }
@@ -309,7 +319,7 @@ a {
   align-content: start;
   border: 1px solid #e4ebe9;
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px;
   background: #fbfdfc;
 }
 
@@ -331,7 +341,7 @@ a {
 .detail-field-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
 }
 
@@ -345,6 +355,7 @@ a {
 
 .detail-actions {
   display: flex;
+  flex-wrap: wrap;
   grid-column: 1 / -1;
   justify-content: flex-end;
   gap: 10px;
@@ -373,7 +384,7 @@ a {
 .resume-version-edit-form {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
 .resume-version-form label,
@@ -393,7 +404,7 @@ a {
   width: 100%;
   border: 1px solid #cbd6d3;
   border-radius: 6px;
-  padding: 10px 11px;
+  padding: 9px 10px;
   color: #17202a;
   background: #ffffff;
 }
@@ -440,10 +451,10 @@ a {
 
 .resume-version-card {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   border: 1px solid #dce3e1;
   border-radius: 8px;
-  padding: 16px;
+  padding: 14px;
   background: #ffffff;
 }
 
@@ -628,10 +639,22 @@ a {
 .empty-state {
   border: 1px dashed #b7c5c1;
   border-radius: 8px;
-  padding: 28px;
+  padding: 24px 18px;
   color: #52605d;
   background: #f9fbfa;
   text-align: center;
+}
+
+.empty-state h3 {
+  margin: 0;
+  color: #17202a;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.empty-state p {
+  max-width: 540px;
+  margin: 6px auto 0;
 }
 
 .command-center-grid {
@@ -643,7 +666,7 @@ a {
 .command-center-section {
   display: grid;
   align-content: start;
-  gap: 14px;
+  gap: 12px;
 }
 
 .command-center-section-header {
@@ -696,7 +719,7 @@ a {
 
 .command-center-item {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   border: 1px solid #e1e8e6;
   border-radius: 8px;
   padding: 14px;
@@ -750,7 +773,7 @@ a {
 
 .pipeline-board {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   min-width: 0;
 }
 
@@ -792,7 +815,7 @@ a {
 
 .pipeline-groups {
   display: grid;
-  gap: 16px;
+  gap: 14px;
   min-width: 0;
 }
 
@@ -810,7 +833,7 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 14px 10px;
+  padding: 12px 14px 10px;
   border-bottom: 1px solid #dce3e1;
 }
 
@@ -838,8 +861,8 @@ a {
   display: grid;
   align-content: start;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 285px), 1fr));
-  gap: 12px;
-  padding: 14px;
+  gap: 10px;
+  padding: 12px;
 }
 
 .pipeline-empty-column {
@@ -868,11 +891,11 @@ a {
 .pipeline-card {
   display: grid;
   align-content: start;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
   border: 1px solid #d8e1de;
   border-radius: 8px;
-  padding: 14px;
+  padding: 13px;
   background: #ffffff;
   box-shadow: 0 6px 18px rgba(23, 32, 42, 0.06);
 }
