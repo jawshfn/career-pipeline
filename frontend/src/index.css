@@ -750,20 +750,59 @@ a {
 
 .pipeline-board {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(270px, 1fr);
+  gap: 18px;
+  min-width: 0;
+}
+
+.pipeline-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pipeline-filter-button {
+  border: 1px solid #cbd6d3;
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: #287c73;
+  background: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.pipeline-filter-button:hover {
+  border-color: #287c73;
+  background: #eef7f5;
+}
+
+.pipeline-filter-button:focus-visible {
+  outline: 3px solid rgba(40, 124, 115, 0.18);
+  outline-offset: 2px;
+}
+
+.pipeline-filter-button-active {
+  border-color: #287c73;
+  color: #ffffff;
+  background: #287c73;
+}
+
+.pipeline-filter-button-active:hover {
+  background: #1f6860;
+}
+
+.pipeline-groups {
+  display: grid;
   gap: 16px;
-  overflow-x: auto;
-  padding-bottom: 10px;
+  min-width: 0;
 }
 
 .pipeline-column {
-  display: flex;
-  flex-direction: column;
-  min-height: 420px;
+  display: grid;
+  align-content: start;
+  min-width: 0;
   border: 1px solid #dce3e1;
   border-radius: 8px;
-  background: #eef3f1;
+  background: #f4f7f6;
 }
 
 .pipeline-column-header {
@@ -798,11 +837,13 @@ a {
 .pipeline-card-list {
   display: grid;
   align-content: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 285px), 1fr));
   gap: 12px;
   padding: 14px;
 }
 
 .pipeline-empty-column {
+  grid-column: 1 / -1;
   margin: 0;
   border: 1px dashed #b7c5c1;
   border-radius: 8px;
@@ -813,9 +854,22 @@ a {
   text-align: center;
 }
 
+.pipeline-empty-board {
+  margin: 0;
+  border: 1px dashed #b7c5c1;
+  border-radius: 8px;
+  padding: 24px 16px;
+  color: #60706d;
+  background: #f9fbfa;
+  font-weight: 700;
+  text-align: center;
+}
+
 .pipeline-card {
   display: grid;
+  align-content: start;
   gap: 12px;
+  min-width: 0;
   border: 1px solid #d8e1de;
   border-radius: 8px;
   padding: 14px;
@@ -833,12 +887,14 @@ a {
   color: #17202a;
   font-size: 1rem;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 .pipeline-card-heading p {
   margin: 4px 0 0;
   color: #52605d;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .pipeline-card-details {
@@ -884,6 +940,7 @@ a {
 
 .pipeline-status-select select {
   width: 100%;
+  min-width: 0;
   border: 1px solid #cbd6d3;
   border-radius: 6px;
   padding: 9px 10px;

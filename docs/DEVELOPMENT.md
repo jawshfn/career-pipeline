@@ -135,6 +135,7 @@ Run this checklist before starting a new product phase or opening a pull request
 - Reactivating a resume version returns it to the active view.
 - Quick Add and Application Detail receive current active resume-version options.
 - Pipeline groups applications by status.
+- Pipeline status filters wrap cleanly and show the expected grouped applications.
 - Pipeline does not show `Archived` as an active column.
 - Changing pipeline status persists after refresh.
 - Moving an application to `Archived` removes it from active Applications.
