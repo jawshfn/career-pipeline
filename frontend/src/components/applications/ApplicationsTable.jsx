@@ -22,6 +22,17 @@ function getResumeLabel(application, resumeVersionsById) {
     : resumeVersion.name;
 }
 
+function getRedFlagCount(application) {
+  return [
+    application.vague_job_description,
+    application.unrealistic_salary,
+    application.asks_for_payment,
+    application.suspicious_contact,
+    application.company_mismatch,
+    application.too_good_to_be_true,
+  ].filter(Boolean).length;
+}
+
 export default function ApplicationsTable({ applications, onOpenDetails, resumeVersions }) {
   if (applications.length === 0) {
     return <EmptyApplicationsState />;
@@ -41,6 +52,7 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
             <th>Resume</th>
             <th>Applied Date</th>
             <th>Follow-Up Date</th>
+            <th>Flags</th>
             <th>Notes</th>
             <th>Actions</th>
           </tr>
@@ -57,6 +69,13 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
               <td>{getResumeLabel(application, resumeVersionsById)}</td>
               <td>{formatValue(application.date_applied)}</td>
               <td>{formatValue(application.follow_up_date)}</td>
+              <td>
+                {getRedFlagCount(application) > 0 ? (
+                  <span className="red-flag-indicator">{getRedFlagCount(application)}</span>
+                ) : (
+                  <span className="muted-table-value">-</span>
+                )}
+              </td>
               <td className="notes-cell">{formatValue(application.notes)}</td>
               <td>
                 <button

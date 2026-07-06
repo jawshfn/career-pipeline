@@ -120,6 +120,8 @@ Run this checklist before starting a new product phase or opening a pull request
 - Applications table displays the follow-up date.
 - Application detail panel opens from an Applications table row.
 - Editing notes in the detail panel persists after save.
+- Editing red flags and red flag notes in the detail panel persists after save.
+- Applications table shows a red flag count only for flagged applications.
 - Editing resume version in the detail panel updates the application.
 - Editing follow-up date in the detail panel updates the Applications table.
 - Editing status in the detail panel updates the Applications table and Pipeline.

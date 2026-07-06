@@ -30,6 +30,13 @@ class ApplicationBase(BaseModel):
     follow_up_date: date | None = None
     resume_version_id: int | None = None
     notes: str | None = None
+    vague_job_description: bool = False
+    unrealistic_salary: bool = False
+    asks_for_payment: bool = False
+    suspicious_contact: bool = False
+    company_mismatch: bool = False
+    too_good_to_be_true: bool = False
+    red_flags_notes: str | None = None
     is_archived: bool = False
 
     allowed_statuses: ClassVar[tuple[str, ...]] = ALLOWED_APPLICATION_STATUSES
@@ -71,6 +78,13 @@ class ApplicationUpdate(BaseModel):
     follow_up_date: date | None = None
     resume_version_id: int | None = None
     notes: str | None = None
+    vague_job_description: bool | None = None
+    unrealistic_salary: bool | None = None
+    asks_for_payment: bool | None = None
+    suspicious_contact: bool | None = None
+    company_mismatch: bool | None = None
+    too_good_to_be_true: bool | None = None
+    red_flags_notes: str | None = None
     is_archived: bool | None = None
 
     @field_validator("status")

@@ -18,6 +18,13 @@ def test_create_application(client):
     assert data["source"] == "LinkedIn"
     assert data["status"] == "Saved"
     assert data["is_archived"] is False
+    assert data["vague_job_description"] is False
+    assert data["unrealistic_salary"] is False
+    assert data["asks_for_payment"] is False
+    assert data["suspicious_contact"] is False
+    assert data["company_mismatch"] is False
+    assert data["too_good_to_be_true"] is False
+    assert data["red_flags_notes"] is None
 
 
 def test_create_application_without_status_defaults_to_saved(client):
@@ -112,6 +119,37 @@ def test_update_application_detail_fields(client):
     assert data["follow_up_date"] == "2026-06-27"
     assert data["resume_version_id"] == resume["id"]
     assert data["notes"] == "Updated through application detail panel."
+
+
+def test_update_application_red_flags(client):
+    created = create_application(client).json()
+
+    response = client.patch(
+        f"/api/applications/{created['id']}",
+        json={
+            "vague_job_description": True,
+            "unrealistic_salary": True,
+            "asks_for_payment": True,
+            "suspicious_contact": False,
+            "company_mismatch": True,
+            "too_good_to_be_true": False,
+            "red_flags_notes": "Recruiter email domain does not match the company.",
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["vague_job_description"] is True
+    assert data["unrealistic_salary"] is True
+    assert data["asks_for_payment"] is True
+    assert data["suspicious_contact"] is False
+    assert data["company_mismatch"] is True
+    assert data["too_good_to_be_true"] is False
+    assert data["red_flags_notes"] == "Recruiter email domain does not match the company."
+
+    get_response = client.get(f"/api/applications/{created['id']}")
+    assert get_response.status_code == 200
+    assert get_response.json()["red_flags_notes"] == "Recruiter email domain does not match the company."
 
 
 def test_archive_application_instead_of_hard_delete(client):

@@ -47,6 +47,13 @@ class Application(Base):
     follow_up_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     resume_version_id: Mapped[int | None] = mapped_column(ForeignKey("resume_versions.id"), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    vague_job_description: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    unrealistic_salary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    asks_for_payment: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    suspicious_contact: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    company_mismatch: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    too_good_to_be_true: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    red_flags_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_archived: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(

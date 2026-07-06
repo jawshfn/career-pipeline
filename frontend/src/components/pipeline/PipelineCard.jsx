@@ -22,8 +22,20 @@ function getNotesPreview(notes) {
   return notes.length > 110 ? `${notes.slice(0, 110)}...` : notes;
 }
 
+function getRedFlagCount(application) {
+  return [
+    application.vague_job_description,
+    application.unrealistic_salary,
+    application.asks_for_payment,
+    application.suspicious_contact,
+    application.company_mismatch,
+    application.too_good_to_be_true,
+  ].filter(Boolean).length;
+}
+
 export default function PipelineCard({ application, isUpdating, onStatusChange, resumeVersion }) {
   const notesPreview = getNotesPreview(application.notes);
+  const redFlagCount = getRedFlagCount(application);
 
   return (
     <article className={`pipeline-card ${isUpdating ? "pipeline-card-saving" : ""}`}>
@@ -33,6 +45,14 @@ export default function PipelineCard({ application, isUpdating, onStatusChange, 
       </div>
 
       <dl className="pipeline-card-details">
+        {redFlagCount > 0 ? (
+          <div>
+            <dt>Flags</dt>
+            <dd>
+              <span className="red-flag-indicator">{redFlagCount}</span>
+            </dd>
+          </div>
+        ) : null}
         <div>
           <dt>Source</dt>
           <dd>{formatValue(application.source)}</dd>

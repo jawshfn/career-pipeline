@@ -18,6 +18,13 @@ const initialFormState = {
   salary_max: "",
   employment_type: "",
   notes: "",
+  vague_job_description: false,
+  unrealistic_salary: false,
+  asks_for_payment: false,
+  suspicious_contact: false,
+  company_mismatch: false,
+  too_good_to_be_true: false,
+  red_flags_notes: "",
 };
 
 const statusOptions = [
@@ -52,6 +59,15 @@ const employmentTypeOptions = [
   "Other",
 ];
 
+const redFlagOptions = [
+  { name: "vague_job_description", label: "Vague job description" },
+  { name: "unrealistic_salary", label: "Unrealistic salary" },
+  { name: "asks_for_payment", label: "Asks for payment" },
+  { name: "suspicious_contact", label: "Suspicious contact" },
+  { name: "company_mismatch", label: "Company mismatch" },
+  { name: "too_good_to_be_true", label: "Too good to be true" },
+];
+
 function toFormState(application) {
   return {
     company_name: application.company_name || "",
@@ -67,6 +83,13 @@ function toFormState(application) {
     salary_max: application.salary_max ?? "",
     employment_type: application.employment_type || "",
     notes: application.notes || "",
+    vague_job_description: Boolean(application.vague_job_description),
+    unrealistic_salary: Boolean(application.unrealistic_salary),
+    asks_for_payment: Boolean(application.asks_for_payment),
+    suspicious_contact: Boolean(application.suspicious_contact),
+    company_mismatch: Boolean(application.company_mismatch),
+    too_good_to_be_true: Boolean(application.too_good_to_be_true),
+    red_flags_notes: application.red_flags_notes || "",
   };
 }
 
@@ -137,8 +160,8 @@ export default function ApplicationDetailPanel({
   const hasUnsavedChanges = JSON.stringify(normalizeFormState(formData)) !== JSON.stringify(normalizeFormState(savedFormData));
 
   function updateField(event) {
-    const { name, value } = event.target;
-    setFormData((current) => ({ ...current, [name]: value }));
+    const { checked, name, type, value } = event.target;
+    setFormData((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
     setSaveMessage("");
   }
 
@@ -173,6 +196,13 @@ export default function ApplicationDetailPanel({
       follow_up_date: formData.follow_up_date || null,
       resume_version_id: formData.resume_version_id ? Number(formData.resume_version_id) : null,
       notes: formData.notes.trim() || null,
+      vague_job_description: formData.vague_job_description,
+      unrealistic_salary: formData.unrealistic_salary,
+      asks_for_payment: formData.asks_for_payment,
+      suspicious_contact: formData.suspicious_contact,
+      company_mismatch: formData.company_mismatch,
+      too_good_to_be_true: formData.too_good_to_be_true,
+      red_flags_notes: formData.red_flags_notes.trim() || null,
     };
 
     try {
@@ -386,6 +416,34 @@ export default function ApplicationDetailPanel({
                 onChange={updateField}
                 rows="5"
                 placeholder="Company context, recruiter notes, interview prep, or next steps"
+              />
+            </label>
+          </div>
+
+          <div className="detail-field-group detail-field-group-wide red-flags-group">
+            <h3>Red flags</h3>
+            <div className="red-flags-checklist">
+              {redFlagOptions.map((option) => (
+                <label className="checkbox-field" key={option.name}>
+                  <input
+                    checked={formData[option.name]}
+                    name={option.name}
+                    onChange={updateField}
+                    type="checkbox"
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+
+            <label className="detail-notes-field">
+              Red flag notes
+              <textarea
+                name="red_flags_notes"
+                value={formData.red_flags_notes}
+                onChange={updateField}
+                rows="4"
+                placeholder="Add context about anything that seems suspicious or worth verifying"
               />
             </label>
           </div>

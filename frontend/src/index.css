@@ -353,6 +353,33 @@ a {
   display: grid;
 }
 
+.red-flags-group {
+  gap: 12px;
+}
+
+.red-flags-checklist {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 10px;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #34413f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.checkbox-field input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  accent-color: #8b2f20;
+}
+
 .detail-actions {
   display: flex;
   flex-wrap: wrap;
@@ -557,7 +584,7 @@ a {
 
 .applications-table {
   width: 100%;
-  min-width: 920px;
+  min-width: 980px;
   border-collapse: collapse;
 }
 
@@ -586,6 +613,24 @@ a {
 
 .notes-cell {
   max-width: 260px;
+}
+
+.muted-table-value {
+  color: #7a8784;
+}
+
+.red-flag-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  color: #8b2f20;
+  background: #fff1ee;
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
 .status-badge {
