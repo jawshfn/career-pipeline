@@ -36,6 +36,7 @@ a {
 
 .applications-page,
 .command-center-page,
+.dashboard-page,
 .pipeline-page,
 .resume-versions-page {
   display: grid;
@@ -47,6 +48,10 @@ a {
 
 .pipeline-page {
   max-width: 1500px;
+}
+
+.dashboard-page {
+  max-width: 1320px;
 }
 
 .page-header {
@@ -702,6 +707,98 @@ a {
   margin: 6px auto 0;
 }
 
+.dashboard-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 12px;
+}
+
+.dashboard-metric-card {
+  min-width: 0;
+  border: 1px solid #dce3e1;
+  border-radius: 8px;
+  padding: 16px;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(23, 32, 42, 0.05);
+}
+
+.dashboard-metric-card p {
+  margin: 0;
+  color: #60706d;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.dashboard-metric-card strong {
+  display: block;
+  margin-top: 8px;
+  color: #17202a;
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.dashboard-sections-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  min-width: 0;
+}
+
+.dashboard-panel {
+  align-content: start;
+}
+
+.dashboard-breakdown-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.dashboard-breakdown-list div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #edf1ef;
+  padding: 7px 0;
+}
+
+.dashboard-breakdown-list div:last-child {
+  border-bottom: 0;
+}
+
+.dashboard-breakdown-list dt {
+  color: #34413f;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-breakdown-list dd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 28px;
+  margin: 0;
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #143d3a;
+  background: #eef3f1;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.dashboard-empty-panel {
+  margin: 0;
+  border: 1px dashed #b7c5c1;
+  border-radius: 8px;
+  padding: 18px 12px;
+  color: #60706d;
+  background: #f9fbfa;
+  font-weight: 700;
+  text-align: center;
+}
+
 .command-center-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1042,6 +1139,10 @@ a {
   }
 
   .command-center-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-sections-grid {
     grid-template-columns: 1fr;
   }
 }

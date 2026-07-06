@@ -1,8 +1,8 @@
 # Career Pipeline Frontend
 
-This is the React/Vite frontend for Career Pipeline. It includes the Daily Command Center, Applications page, quick-add application flow, applications table, application detail panel, Pipeline page for viewing applications by status and updating status, and Resume Versions page for managing reusable resume variants.
+This is the React/Vite frontend for Career Pipeline. It includes the Daily Command Center, Dashboard, Applications page, quick-add application flow, applications table, application detail panel, Pipeline page for viewing applications by status and updating status, and Resume Versions page for managing reusable resume variants.
 
-The quick-add flow supports an optional follow-up date with common presets so users can capture next-step timing without opening a larger form. The application detail panel supports richer edits such as notes, dates, salary range, location, status, and resume-version assignment. The Resume Versions page supports creating, editing, deactivating, and reactivating resume versions. The Daily Command Center surfaces overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications using backend rules. Dashboard metrics, red flags, authentication, deployment, and browser extension features are not part of this phase yet.
+The quick-add flow supports an optional follow-up date with common presets so users can capture next-step timing without opening a larger form. The application detail panel supports richer edits such as notes, dates, salary range, location, status, resume-version assignment, and red-flag tracking. The Resume Versions page supports creating, editing, deactivating, and reactivating resume versions. The Daily Command Center surfaces overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications using backend rules. The Dashboard summarizes active applications by status, source, resume version, follow-up timing, and red flags. Authentication, deployment, and browser extension features are not part of this phase yet.
 
 ## Setup
 

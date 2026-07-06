@@ -111,6 +111,10 @@ Run this checklist before starting a new product phase or opening a pull request
 - Backend server starts with `python -m uvicorn app.main:app --reload`.
 - Frontend dev server starts with `npm run dev`.
 - Full-width and half-width desktop layouts do not require page-level horizontal scrolling for forms or navigation.
+- Dashboard loads and shows active application summary cards.
+- Dashboard status counts match Applications and Pipeline active records.
+- Dashboard excludes archived applications from summary metrics.
+- Dashboard red-flag count updates after flagging or unflagging an application.
 - Applications table loads backend applications.
 - Quick-add creates an application.
 - Quick Add does not offer `Archived` as a status.

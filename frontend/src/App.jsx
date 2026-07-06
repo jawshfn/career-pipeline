@@ -9,6 +9,7 @@ import {
 import AppLayout from "./components/layout/AppLayout.jsx";
 import ApplicationsPage from "./pages/ApplicationsPage.jsx";
 import CommandCenterPage from "./pages/CommandCenterPage.jsx";
+import DashboardPage from "./pages/DashboardPage.jsx";
 import PipelinePage from "./pages/PipelinePage.jsx";
 import ResumeVersionsPage from "./pages/ResumeVersionsPage.jsx";
 
@@ -102,6 +103,13 @@ export default function App() {
     <AppLayout activePage={activePage} onNavigate={setActivePage}>
       {activePage === "command-center" ? (
         <CommandCenterPage />
+      ) : activePage === "dashboard" ? (
+        <DashboardPage
+          applications={activeApplications}
+          error={loadError}
+          isLoading={isLoading}
+          resumeVersions={resumeVersions}
+        />
       ) : activePage === "resume-versions" ? (
         <ResumeVersionsPage
           error={loadError}

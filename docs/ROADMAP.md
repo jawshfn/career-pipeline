@@ -88,17 +88,19 @@ Status: in progress
 
 ## Phase 6: Red-Flag System
 
-- Add red flag catalog
-- Add application-to-red-flag assignment
-- Build checklist UI on application detail
-- Add red-flag filtering in table and dashboard
+Status: in progress
+
+- Phase 6.1 complete: add red flag fields and checklist UI on application detail
+- Show red flag indicators in Applications and Pipeline
+- Later: add red-flag filtering in table and richer red-flag review workflows
 
 ## Phase 7: Dashboard Metrics and Insights
 
-- Add dashboard summary endpoint
-- Show counts by status and source
-- Show response-oriented metrics
-- Show due follow-ups and red-flagged applications
+Status: in progress
+
+- Phase 7.1 complete: add frontend-derived Dashboard metrics page
+- Show counts by status, source, resume-version usage, due follow-ups, and red-flagged applications
+- Later: add backend summary endpoint if metrics need server-side aggregation
 - Keep metrics explanatory and simple
 
 ## Phase 8: Testing, CI, Demo Data, Screenshots, and Polish

@@ -17,6 +17,7 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Product Flow
 
+- Dashboard snapshot for counts, status mix, sources, resume usage, and red flags
 - Quick-add workflow for fast application capture, including optional follow-up date presets
 - Applications table for active applications
 - Application detail panel for editing richer context after quick-add
@@ -24,13 +25,12 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 - Daily Command Center for overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications
 - Resume Versions page for creating, editing, deactivating, and reactivating reusable resume variants
 - Resume-version assignment support from Quick Add and Application Detail
+- Red-flag checklist and notes from Application Detail
 - Archive behavior that hides archived records from active workflow views
 
 ## Planned Future Features
 
 - Full application history and event timeline
-- Red-flag tags for questionable or suspicious postings
-- Dashboard metrics for source, status, and response insights
 - Follow-up completion and rescheduling workflow
 - Deployment, authentication, AI features, and browser extension support are not implemented yet
 
@@ -45,9 +45,9 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Project Status
 
-Career Pipeline currently has a FastAPI backend with SQLite and SQLAlchemy, a React/Vite frontend, backend pytest coverage, and GitHub Actions CI for backend tests and frontend build. The working prototype supports quick-add, application table views, application detail editing, resume-version management and assignment, pipeline status updates, archive behavior, and the Daily Command Center.
+Career Pipeline currently has a FastAPI backend with SQLite and SQLAlchemy, a React/Vite frontend, backend pytest coverage, and GitHub Actions CI for backend tests and frontend build. The working prototype supports quick-add, application table views, application detail editing, resume-version management and assignment, pipeline status updates, red-flag tracking, archive behavior, the Daily Command Center, and Dashboard metrics.
 
-The full product is not complete yet. Red flags, dashboard metrics, full application event history, follow-up completion/rescheduling, deployment, authentication, AI, and browser extension features are still planned or intentionally out of scope.
+The full product is not complete yet. Full application event history, follow-up completion/rescheduling, deployment, authentication, AI, and browser extension features are still planned or intentionally out of scope.
 
 ## Planned Development Phases
 
