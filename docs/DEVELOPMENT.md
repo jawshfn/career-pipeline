@@ -110,6 +110,7 @@ Run this checklist before starting a new product phase or opening a pull request
 - Frontend build passes with `npm run build` from `frontend`.
 - Backend server starts with `python -m uvicorn app.main:app --reload`.
 - Frontend dev server starts with `npm run dev`.
+- Full-width and half-width desktop layouts do not require page-level horizontal scrolling for forms or navigation.
 - Applications table loads backend applications.
 - Quick-add creates an application.
 - Quick Add does not offer `Archived` as a status.

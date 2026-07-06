@@ -7,9 +7,9 @@
 .app-sidebar {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 32px;
-  padding: 32px 24px;
+  justify-content: flex-start;
+  gap: 24px;
+  padding: 24px 20px;
   color: #f7faf9;
   background: #143d3a;
 }
@@ -26,20 +26,20 @@
 .app-sidebar h1 {
   margin: 0;
   color: #ffffff;
-  font-size: 1.7rem;
+  font-size: 1.55rem;
   letter-spacing: 0;
 }
 
 .app-nav {
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .app-nav-item {
   display: block;
   width: 100%;
   border: 0;
-  padding: 10px 12px;
+  padding: 9px 11px;
   border-radius: 6px;
   color: #d9eeea;
   background: rgba(255, 255, 255, 0.08);
@@ -66,6 +66,7 @@
 }
 
 .app-main {
+  min-width: 0;
   width: 100%;
   padding: 32px;
 }
