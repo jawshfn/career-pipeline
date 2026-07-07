@@ -44,6 +44,8 @@ Career Pipeline centralizes that activity into a simple workflow that supports f
 The current prototype includes:
 
 - Dedicated Quick Add page for lightweight opportunity capture
+- Quick Add modes for Manual Entry and Smart Capture paste-review
+- Deterministic Smart Capture helpers that prepare editable suggested fields from pasted job text before save
 - Application create, list, update, detail editing, and archive behavior
 - Applications page with Active, Closed, and All views plus search, filters, sorting, table previews, and detail access
 - Application Detail tabs for Overview, Dates & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
@@ -79,9 +81,9 @@ The current prototype includes:
 
 ### Quick Add an Application
 
-The user opens Quick Add and enters the minimum needed to avoid losing an opportunity.
+The user opens Quick Add and either enters the minimum needed manually or pastes job text into Smart Capture.
 
-Current Quick Add fields include:
+Manual Entry fields include:
 
 - Company
 - Role title
@@ -94,6 +96,8 @@ Current Quick Add fields include:
 - Notes, optional
 
 Follow-up presets help schedule common dates quickly. If the user selects Applied or a later status and Applied Date is empty, the frontend can default Applied Date to today. Existing manually entered applied dates are not overwritten.
+
+Smart Capture is an additional paste-review workflow. The user pastes a job post, recruiter message, or copied listing text, optionally adds a job link and source, then prepares a review form. Suggested fields can include job link, source, location hint, employment type, salary range, and notes containing the pasted text. The user must review and edit the fields before saving. AI-assisted extraction is not implemented yet.
 
 After saving, the application appears in Applications, Pipeline, Dashboard metrics, and other relevant views. The user can open Application Detail later to add richer information.
 

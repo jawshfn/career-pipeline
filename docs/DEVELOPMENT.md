@@ -112,6 +112,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 
 ### Quick Add
 
+- Quick Add shows Manual Entry and Paste Job Text modes.
 - Quick Add creates a new application and shows clear success feedback.
 - Add another clears the success state and leaves the user on Quick Add.
 - View applications navigates to Applications.
@@ -119,6 +120,9 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Follow-up presets fill Tomorrow, In 3 days, In 1 week, and In 2 weeks as `YYYY-MM-DD`.
 - Follow-up Clear removes the follow-up date.
 - Applied or later statuses default an empty Applied Date without overwriting a manually entered date.
+- Paste Job Text prepares a review form without creating an application.
+- Smart Capture review fields can be edited before Save application creates the record.
+- Smart Capture notes include the pasted job text.
 
 ### Applications Filters And Details
 

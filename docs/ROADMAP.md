@@ -129,12 +129,19 @@ Status: complete through Phase 8.9 plus targeted app-shell restoration
 - Targeted UI polish: restore app shell layout constraints, sticky sidebar behavior, page centering, and horizontal overflow protections
 - Documentation refresh: update docs for recent workflow, dashboard, and UI changes
 
+## Phase 9: Smart Capture
+
+Status: started
+
+- Phase 9.0: add Smart Capture paste-review workflow to Quick Add without AI integration
+
 ## Near-Term Future Work
 
 These are realistic polish and presentation steps, not current product claims:
 
 - Demo data and screenshots
 - Public presentation pass for README, screenshots, and walkthrough flow
+- Optional AI-assisted Smart Capture extraction after the deterministic review workflow proves useful
 - Optional red-flag polish, such as clearer review summaries or filtering refinements
 - Optional richer analytics after the dashboard proves useful
 - Optional deployment improvements for a public demo

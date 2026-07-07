@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 
 import QuickAddApplicationForm from "../components/applications/QuickAddApplicationForm.jsx";
+import SmartCaptureForm from "../components/applications/SmartCaptureForm.jsx";
 
 export default function QuickAddPage({ onCreateApplication, onViewApplications, resumeVersions }) {
   const [createdApplication, setCreatedApplication] = useState(null);
+  const [activeMode, setActiveMode] = useState("manual");
 
   function handleAddAnother() {
     setCreatedApplication(null);
@@ -38,11 +40,40 @@ export default function QuickAddPage({ onCreateApplication, onViewApplications, 
         </section>
       ) : null}
 
-      <QuickAddApplicationForm
-        resumeVersions={resumeVersions}
-        onCreateApplication={onCreateApplication}
-        onCreateSuccess={setCreatedApplication}
-      />
+      <div className="quick-add-mode-tabs" role="tablist" aria-label="Quick Add mode">
+        <button
+          className={`quick-add-mode-tab ${activeMode === "manual" ? "is-active" : ""}`}
+          type="button"
+          onClick={() => setActiveMode("manual")}
+          role="tab"
+          aria-selected={activeMode === "manual"}
+        >
+          Manual Entry
+        </button>
+        <button
+          className={`quick-add-mode-tab ${activeMode === "smart-capture" ? "is-active" : ""}`}
+          type="button"
+          onClick={() => setActiveMode("smart-capture")}
+          role="tab"
+          aria-selected={activeMode === "smart-capture"}
+        >
+          Paste Job Text
+        </button>
+      </div>
+
+      {activeMode === "manual" ? (
+        <QuickAddApplicationForm
+          resumeVersions={resumeVersions}
+          onCreateApplication={onCreateApplication}
+          onCreateSuccess={setCreatedApplication}
+        />
+      ) : (
+        <SmartCaptureForm
+          resumeVersions={resumeVersions}
+          onCreateApplication={onCreateApplication}
+          onCreateSuccess={setCreatedApplication}
+        />
+      )}
     </div>
   );
 }

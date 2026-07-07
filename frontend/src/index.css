@@ -145,6 +145,34 @@ a {
   margin-bottom: 16px;
 }
 
+.quick-add-mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.quick-add-mode-tab {
+  border: 1px solid #cbd6d3;
+  border-radius: 999px;
+  padding: 8px 13px;
+  color: #34413f;
+  background: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.quick-add-mode-tab:hover {
+  border-color: #287c73;
+  background: #f3faf8;
+}
+
+.quick-add-mode-tab.is-active {
+  border-color: #287c73;
+  color: #ffffff;
+  background: #287c73;
+}
+
 .quick-add-form {
   display: grid;
   gap: 14px;
@@ -165,6 +193,15 @@ a {
 .quick-add-row-dates {
   align-items: start;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.smart-capture-source-row {
+  grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
+}
+
+.smart-capture-detail-row,
+.smart-capture-salary-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .quick-add-form label {
@@ -206,6 +243,30 @@ a {
 
 .notes-field {
   grid-column: 1 / -1;
+}
+
+.smart-capture-form {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e5edeb;
+}
+
+.smart-capture-text-field textarea {
+  min-height: 210px;
+  resize: vertical;
+}
+
+.smart-capture-review-form {
+  margin-top: 18px;
+}
+
+.smart-capture-review-heading {
+  margin-bottom: 0;
+}
+
+.smart-capture-review-heading h3 {
+  margin: 0;
+  color: #17202a;
+  font-size: 1.05rem;
 }
 
 .follow-up-presets {
@@ -2328,7 +2389,9 @@ textarea:focus-visible {
 
 @media (max-width: 980px) {
   .quick-add-row-primary,
-  .quick-add-row-selects {
+  .quick-add-row-selects,
+  .smart-capture-detail-row,
+  .smart-capture-salary-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2371,7 +2434,10 @@ textarea:focus-visible {
 
   .quick-add-row-primary,
   .quick-add-row-selects,
-  .quick-add-row-dates {
+  .quick-add-row-dates,
+  .smart-capture-source-row,
+  .smart-capture-detail-row,
+  .smart-capture-salary-row {
     grid-template-columns: 1fr;
   }
 
