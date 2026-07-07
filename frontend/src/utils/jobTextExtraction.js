@@ -21,11 +21,17 @@ const initialReviewState = {
 const noisyHeaderLines = new Set([
   "",
   "&nbsp;",
+  "apply",
   "benefits",
   "company",
   "job",
+  "message",
+  "people you can reach out to",
   "pulled from the full job description",
   "1-click apply",
+  "responses managed off linkedin",
+  "save",
+  "show match details",
   "powered by real frontline workers",
   "view more about working here",
 ]);
@@ -35,7 +41,7 @@ function normalizeWhitespace(value) {
 }
 
 function normalizeBulletSeparators(value) {
-  return value.replace(/\s*(?:\u2022|\u00e2\u20ac\u00a2)\s*/gu, " - ").trim();
+  return value.replace(/\s*(?:\u00b7|\u2022|\u00e2\u20ac\u00a2)\s*/gu, " - ").trim();
 }
 
 function normalizeTitle(value) {
@@ -74,7 +80,16 @@ function isPostedAgoLine(line) {
 }
 
 function isNoisyLine(line) {
-  return noisyHeaderLines.has(line.toLowerCase()) || isRatingLine(line) || isPostedAgoLine(line);
+  const normalizedLine = line.toLowerCase();
+
+  return (
+    noisyHeaderLines.has(normalizedLine) ||
+    isRatingLine(line) ||
+    isPostedAgoLine(line) ||
+    /^promoted by hirer(?:\s+-\s+responses managed off linkedin)?$/iu.test(line) ||
+    /^your profile and resume\b/iu.test(line) ||
+    /^beta\s+-\s+is this information helpful\??$/iu.test(line)
+  );
 }
 
 function getEmploymentTypeFromLine(line) {
@@ -162,7 +177,7 @@ function detectLocationHint(rawText) {
 
 function getCompensationFromLine(line) {
   const compensationMatch = line.match(
-    /\$\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:USD\s*)?(?:k|\/hr|hr\b|an hour|per hour|a year|per year|annually)?(?:\s*(?:-|\u2013|\u2014|\u00e2\u20ac\u201c|\u00e2\u20ac\u201d|to)\s*\$?\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:k|\/hr|hr\b|an hour|per hour|a year|per year|annually)?)?/iu,
+    /\$\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:USD\s*)?(?:k(?:\/yr)?|\/yr|yr\b|\/hr|hr\b|an hour|per hour|a year|per year|annually)?(?:\s*(?:-|\u2013|\u2014|\u00e2\u20ac\u201c|\u00e2\u20ac\u201d|to)\s*\$?\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:k(?:\/yr)?|\/yr|yr\b|\/hr|hr\b|an hour|per hour|a year|per year|annually)?)?/iu,
   );
 
   if (compensationMatch) {
@@ -208,14 +223,29 @@ function buildSourceSpecificNotes(rawText, headingPattern) {
   return rawText.slice(match.index).trim();
 }
 
-function getHeaderLines(rawText) {
+function getHeaderLines(rawText, descriptionHeadingPattern = /^(full job description|job description)$/iu) {
   const lines = getCleanLines(rawText).map(normalizeBulletSeparators);
-  const descriptionStartIndex = lines.findIndex((line) =>
-    /^(full job description|job description)$/iu.test(line),
-  );
+  const descriptionStartIndex = lines.findIndex((line) => descriptionHeadingPattern.test(line));
   const headerLines = descriptionStartIndex >= 0 ? lines.slice(0, descriptionStartIndex) : lines;
 
   return headerLines.filter((line) => !isNoisyLine(line));
+}
+
+function isLinkedInLogoLine(line) {
+  return /^company logo for,\s*.+\.?$/iu.test(line);
+}
+
+function getLinkedInCompanyFromLogoLine(line) {
+  const match = line.match(/^company logo for,\s*(.+)$/iu);
+  return match?.[1]?.replace(/\.+$/u, "").trim() || "";
+}
+
+function normalizeComparisonValue(value) {
+  return normalizeWhitespace(value).replace(/\.+$/u, "").toLowerCase();
+}
+
+function isLinkedInSocialMetadataLine(line) {
+  return /\b(?:ago|people clicked apply)\b/iu.test(line) && /\s+-\s+/u.test(normalizeBulletSeparators(line));
 }
 
 function isLocationLine(line) {
@@ -232,18 +262,39 @@ function isCompanyCandidateLine(line) {
   );
 }
 
-function extractHeaderFields(rawText) {
-  const headerLines = getHeaderLines(rawText);
-  const roleTitle = normalizeTitle(headerLines[0] || "");
-  const companyName = headerLines.slice(1).find(isCompanyCandidateLine) || "";
-  const location = detectCityStateLocation(headerLines.slice(2)) || detectLocationHint(rawText);
+function isRoleCandidateLine(line) {
+  return (
+    Boolean(line) &&
+    !isNoisyLine(line) &&
+    !isLinkedInLogoLine(line) &&
+    !isLocationLine(line) &&
+    !getCompensationFromLine(line) &&
+    !getEmploymentTypeFromLine(line) &&
+    !isLinkedInSocialMetadataLine(line)
+  );
+}
+
+function extractHeaderFields(rawText, options = {}) {
+  const headerLines = getHeaderLines(rawText, options.descriptionHeadingPattern);
+  const companyFromLogo = getLinkedInCompanyFromLogoLine(headerLines.find(isLinkedInLogoLine) || "");
+  const normalizedLogoCompany = normalizeComparisonValue(companyFromLogo);
+  const roleLine =
+    headerLines.find(
+      (line) => isRoleCandidateLine(line) && normalizeComparisonValue(line) !== normalizedLogoCompany,
+    ) || "";
+  const roleTitle = normalizeTitle(roleLine);
+  const companyName =
+    companyFromLogo || headerLines.filter((line) => line !== roleLine).find(isCompanyCandidateLine) || "";
+  const roleIndex = headerLines.indexOf(roleLine);
+  const detailLines = roleIndex >= 0 ? headerLines.slice(roleIndex + 1) : headerLines.slice(2);
+  const location = detectCityStateLocation(detailLines) || detectLocationHint(rawText);
 
   return {
     company_name: companyName,
     role_title: roleTitle,
     location,
-    compensation: detectCompensation(headerLines.slice(2, 8)),
-    employment_type: detectEmploymentType(headerLines.slice(2)),
+    compensation: detectCompensation(detailLines),
+    employment_type: detectEmploymentType(detailLines),
   };
 }
 
@@ -258,6 +309,29 @@ function extractZipRecruiterFields(rawText) {
   return {
     ...extractHeaderFields(rawText),
     notes: buildSourceSpecificNotes(rawText, /^\s*Job description\s*$/imu),
+  };
+}
+
+function extractLinkedInFields(rawText) {
+  const headerLines = getHeaderLines(rawText, /^about the job$/iu);
+  const companyFromLogo = getLinkedInCompanyFromLogoLine(headerLines.find(isLinkedInLogoLine) || "");
+  const baseFields = extractHeaderFields(rawText, { descriptionHeadingPattern: /^about the job$/iu });
+  const normalizedCompany = normalizeComparisonValue(companyFromLogo);
+  const companyLineIndex = headerLines.findIndex(
+    (line) => isCompanyCandidateLine(line) && normalizeComparisonValue(line) === normalizedCompany,
+  );
+  const searchStartIndex = companyLineIndex >= 0 ? companyLineIndex + 1 : 0;
+  const roleTitle =
+    headerLines
+      .slice(searchStartIndex)
+      .find((line) => isRoleCandidateLine(line) && normalizeComparisonValue(line) !== normalizedCompany) ||
+    baseFields.role_title;
+
+  return {
+    ...baseFields,
+    company_name: companyFromLogo || baseFields.company_name,
+    role_title: normalizeTitle(roleTitle),
+    notes: buildSourceSpecificNotes(rawText, /^\s*About the job\s*$/imu),
   };
 }
 
@@ -290,6 +364,8 @@ export function buildSmartCaptureReviewState(captureData) {
 
   if (sourceKey === "indeed") {
     extractedFields = { ...extractedFields, ...extractIndeedFields(rawText) };
+  } else if (sourceKey === "linkedin") {
+    extractedFields = { ...extractedFields, ...extractLinkedInFields(rawText) };
   } else if (sourceKey === "ziprecruiter") {
     extractedFields = { ...extractedFields, ...extractZipRecruiterFields(rawText) };
   }
