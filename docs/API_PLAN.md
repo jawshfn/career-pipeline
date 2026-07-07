@@ -138,6 +138,11 @@ Archive behavior:
 - Updating status to `Archived` also sets `is_archived` to `true`.
 - Restoring archived records through this generic endpoint is rejected for now.
 
+Activity behavior:
+
+- Successful status changes create a backend-owned Application Activity entry with activity type `Status Change`.
+- Updating an application without changing status does not create a status-change activity entry.
+
 Status: implemented
 
 ### DELETE /api/applications/{application_id}
@@ -188,6 +193,8 @@ Status: implemented
 ### GET /api/applications/{application_id}/activities
 
 Purpose: list dated activity timeline entries for one application, newest first.
+
+Entries may be created manually through the activity endpoints or by backend-owned workflows such as status-change logging.
 
 Status: implemented
 

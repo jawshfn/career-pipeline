@@ -79,6 +79,7 @@ Backend pytest coverage should protect:
 - Health endpoint
 - Application create, list, retrieve, update, and archive behavior
 - Status updates and archived-record restrictions
+- Automatic status-change activity logging
 - Overdue, upcoming, and stale follow-up action-item rules
 - Resume version create/update/list behavior
 - Red-flag create/update/read behavior
@@ -157,6 +158,8 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Pipeline does not show archived applications in active workflow views.
 - Changing a status in Pipeline updates Applications and Dashboard state.
 - Moving an application to Rejected or Withdrawn removes it from the Applications Active view and shows it in Closed.
+- Meaningful status changes create one `Status Change` Activity Timeline entry.
+- Saving without changing status does not create a duplicate status-change Activity Timeline entry.
 
 ### Command Center Follow-Up Actions
 
@@ -213,6 +216,8 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Activity timeline appears inside Application Detail.
 - Adding an activity saves independently from the main detail form.
 - Adding an activity does not clear unsaved main detail edits.
+- Changing an application status creates a backend-owned `Status Change` entry.
+- Re-saving the same status or editing non-status fields does not create a status-change entry.
 - Activities show activity date, type, and note.
 - Newer activities appear before older activities.
 - Activities persist after closing and reopening Details.

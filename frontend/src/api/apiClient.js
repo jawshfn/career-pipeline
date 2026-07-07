@@ -14,7 +14,7 @@ async function parseResponse(response, fallbackErrorMessage) {
   return response.json();
 }
 
-export async function apiRequest(path, { body, fallbackErrorMessage = "Request failed.", method = "GET" } = {}) {
+async function apiRequest(path, { body, fallbackErrorMessage = "Request failed.", method = "GET" } = {}) {
   const requestOptions = { method };
 
   if (body !== undefined) {

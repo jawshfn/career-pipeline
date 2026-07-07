@@ -113,7 +113,7 @@ Status: complete
 
 ## Phase 8: Dashboard Effectiveness and Visual Polish
 
-Status: complete through Phase 8.3 plus targeted app-shell restoration
+Status: complete through Phase 8.9 plus targeted app-shell restoration
 
 - Phase 8.0: add Source Effectiveness metrics to Dashboard
 - Phase 8.1: add Resume Version Effectiveness metrics to Dashboard
@@ -124,6 +124,8 @@ Status: complete through Phase 8.3 plus targeted app-shell restoration
 - Phase 8.5: add backend Dashboard summary endpoint and render backend-derived dashboard metrics
 - Phase 8.6: centralize repeated application domain constants
 - Phase 8.7: centralize frontend API client boilerplate
+- Phase 8.8: remove stale code and simplify leftover props/helpers after refactors
+- Phase 8.9: automatically log application status changes to Activity Timeline
 - Targeted UI polish: restore app shell layout constraints, sticky sidebar behavior, page centering, and horizontal overflow protections
 - Documentation refresh: update docs for recent workflow, dashboard, and UI changes
 

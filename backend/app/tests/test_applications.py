@@ -8,6 +8,12 @@ def create_application(client, **overrides):
     return client.post("/api/applications", json=payload)
 
 
+def get_activities(client, application_id):
+    response = client.get(f"/api/applications/{application_id}/activities")
+    assert response.status_code == 200
+    return response.json()
+
+
 def test_create_application(client):
     response = create_application(client)
 
@@ -76,6 +82,52 @@ def test_update_application_status(client):
 
     assert response.status_code == 200
     assert response.json()["status"] == "Interview"
+
+
+def test_status_change_creates_activity(client):
+    created = create_application(client, status="Applied").json()
+
+    response = client.patch(f"/api/applications/{created['id']}", json={"status": "Recruiter Screen"})
+
+    assert response.status_code == 200
+    activities = get_activities(client, created["id"])
+    assert len(activities) == 1
+    assert activities[0]["activity_type"] == "Status Change"
+    assert activities[0]["note"] == "Status changed from Applied to Recruiter Screen."
+
+
+def test_unchanged_status_does_not_create_activity(client):
+    created = create_application(client, status="Applied").json()
+
+    response = client.patch(f"/api/applications/{created['id']}", json={"status": "Applied"})
+
+    assert response.status_code == 200
+    assert get_activities(client, created["id"]) == []
+
+
+def test_non_status_update_does_not_create_status_activity(client):
+    created = create_application(client).json()
+
+    response = client.patch(f"/api/applications/{created['id']}", json={"notes": "Updated note."})
+
+    assert response.status_code == 200
+    assert get_activities(client, created["id"]) == []
+
+
+def test_multi_field_status_update_creates_one_activity(client):
+    created = create_application(client, status="Applied").json()
+
+    response = client.patch(
+        f"/api/applications/{created['id']}",
+        json={"status": "Interview", "notes": "Screen moved to interview."},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "Interview"
+    assert response.json()["notes"] == "Screen moved to interview."
+    activities = get_activities(client, created["id"])
+    assert len(activities) == 1
+    assert activities[0]["note"] == "Status changed from Applied to Interview."
 
 
 def test_update_application_detail_fields(client):
@@ -197,6 +249,9 @@ def test_patching_status_to_archived_sets_archive_flag(client):
     data = response.json()
     assert data["status"] == "Archived"
     assert data["is_archived"] is True
+    activities = get_activities(client, created["id"])
+    assert len(activities) == 1
+    assert activities[0]["note"] == "Status changed from Saved to Archived."
 
 
 def test_patch_archived_application_excluded_from_default_list(client):
@@ -238,9 +293,14 @@ def test_search_and_filter_applications(client):
 
 
 def test_invalid_status_validation(client):
+    created = create_application(client).json()
+
     response = create_application(client, status="Follow-up due")
+    update_response = client.patch(f"/api/applications/{created['id']}", json={"status": "Follow-up due"})
 
     assert response.status_code == 422
+    assert update_response.status_code == 422
+    assert get_activities(client, created["id"]) == []
 
 
 def test_create_application_rejects_archived_status(client):

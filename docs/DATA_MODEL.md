@@ -118,6 +118,7 @@ Stores dated Activity Timeline entries for an application.
 
 - Activity entries are saved independently from the main application detail form.
 - Command Center follow-up quick actions can create activity entries for snooze and clear outcomes.
+- Application status changes create backend-owned `Status Change` activity entries.
 
 ## Planned Future Tables
 

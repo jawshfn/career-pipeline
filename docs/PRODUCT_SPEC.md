@@ -53,7 +53,7 @@ The current prototype includes:
 - Daily Command Center with overdue follow-ups, upcoming follow-ups due within 3 days, stale active applications, and follow-up quick actions
 - Backend-derived Command Center action-item rules from `/api/applications/action-items`
 - Follow-up quick actions for Snooze 3 days, Snooze 1 week, and Clear follow-up
-- Activity Timeline entries for manual activity and follow-up quick-action outcomes
+- Activity Timeline entries for manual activity, follow-up quick-action outcomes, and backend-logged status changes
 - No-op snooze prevention when a snooze action would not move the follow-up date later
 - Resume Versions page for creating, editing, deactivating, reactivating, and assigning reusable resume variants
 - Application-scoped contact and prep notes in Application Detail
@@ -130,7 +130,7 @@ Editable areas include company name, role title, job link, source, status, resum
 
 The Contact & Prep tab stores application-scoped contact context and preparation notes. It is intentionally not a shared contacts table or full CRM.
 
-The Activity tab supports dated activity entries with activity type and note. Activity entries are saved independently from the main detail form.
+The Activity tab supports dated activity entries with activity type and note. Activity entries are saved independently from the main detail form. Meaningful status changes are also logged by the backend as `Status Change` activity entries.
 
 ### Track an Application Through the Pipeline
 

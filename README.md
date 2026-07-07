@@ -31,7 +31,7 @@ The product is built around a common job-search problem: opportunities arrive fr
 - Clear applied-date semantics: `date_saved` is when the job was added to Career Pipeline; `date_applied` is when the user actually applied
 - Existing applied dates are not overwritten automatically
 - Unsaved-change warnings when closing or switching selected applications
-- Manual activity timeline with dated entries, activity type, and note, saved independently from the main detail form
+- Activity timeline with manual entries, follow-up quick-action outcomes, and automatic status-change entries, saved independently from the main detail form
 
 ### Pipeline Workflow
 
@@ -135,7 +135,7 @@ Docs-only changes do not require tests. Cross-stack product changes should run b
 
 ## Project Status
 
-Career Pipeline is a working local-first prototype with a FastAPI backend, SQLite database, React/Vite frontend, backend pytest coverage, and GitHub Actions CI. It supports quick capture, application management, tabbed detail editing, pipeline status updates, follow-up actions with activity logging, dashboard effectiveness metrics, resume-version management, red-flag tracking, next actions, and manual activity timelines.
+Career Pipeline is a working local-first prototype with a FastAPI backend, SQLite database, React/Vite frontend, backend pytest coverage, and GitHub Actions CI. It supports quick capture, application management, tabbed detail editing, pipeline status updates, follow-up and status-change activity logging, dashboard effectiveness metrics, resume-version management, red-flag tracking, next actions, and activity timelines.
 
 Deployment, authentication, AI features, scraping, browser extension workflows, and advanced analytics are not implemented. They are optional future directions rather than current product claims.
 

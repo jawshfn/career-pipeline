@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { getDashboardSummary } from "../api/dashboardApi.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
@@ -68,43 +68,39 @@ function EffectivenessGrid({ ariaLabel, firstColumnLabel, items }) {
   );
 }
 
-function getTotalApplications(summary) {
-  return summary.status_breakdown.reduce((total, item) => total + item.count, 0);
-}
-
 export default function DashboardPage() {
   const [dashboardSummary, setDashboardSummary] = useState(emptyDashboardSummary);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadDashboardSummary = useCallback(async () => {
-    setIsLoading(true);
-    setError("");
+  useEffect(() => {
+    async function loadDashboardSummary() {
+      setIsLoading(true);
+      setError("");
 
-    try {
-      const nextSummary = await getDashboardSummary();
-      setDashboardSummary({
-        summary_cards: nextSummary.summary_cards || [],
-        status_breakdown: nextSummary.status_breakdown || [],
-        source_breakdown: nextSummary.source_breakdown || [],
-        resume_usage: nextSummary.resume_usage || [],
-        red_flag_snapshot: nextSummary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
-        source_effectiveness: nextSummary.source_effectiveness || [],
-        resume_version_effectiveness: nextSummary.resume_version_effectiveness || [],
-      });
-    } catch (loadError) {
-      setDashboardSummary(emptyDashboardSummary);
-      setError(loadError.message || "Could not load dashboard summary.");
-    } finally {
-      setIsLoading(false);
+      try {
+        const nextSummary = await getDashboardSummary();
+        setDashboardSummary({
+          summary_cards: nextSummary.summary_cards || [],
+          status_breakdown: nextSummary.status_breakdown || [],
+          source_breakdown: nextSummary.source_breakdown || [],
+          resume_usage: nextSummary.resume_usage || [],
+          red_flag_snapshot: nextSummary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
+          source_effectiveness: nextSummary.source_effectiveness || [],
+          resume_version_effectiveness: nextSummary.resume_version_effectiveness || [],
+        });
+      } catch (loadError) {
+        setDashboardSummary(emptyDashboardSummary);
+        setError(loadError.message || "Could not load dashboard summary.");
+      } finally {
+        setIsLoading(false);
+      }
     }
+
+    loadDashboardSummary();
   }, []);
 
-  useEffect(() => {
-    loadDashboardSummary();
-  }, [loadDashboardSummary]);
-
-  const totalApplications = getTotalApplications(dashboardSummary);
+  const totalApplications = dashboardSummary.status_breakdown.reduce((total, item) => total + item.count, 0);
   const redFlaggedCount = dashboardSummary.red_flag_snapshot.flagged_count;
 
   return (

@@ -5,7 +5,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..domain import ARCHIVED_APPLICATION_STATUS, STALE_EXCLUDED_STATUSES
+from ..domain import ARCHIVED_APPLICATION_STATUS, STALE_EXCLUDED_STATUSES, STATUS_CHANGE_ACTIVITY_TYPE
 from ..models import Application, ApplicationActivity, utc_now
 from ..schemas import (
     ApplicationActionItemsRead,
@@ -32,6 +32,19 @@ def get_existing_activity(application_id: int, activity_id: int, db: Session) ->
     if activity is None or activity.application_id != application_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
     return activity
+
+
+def create_status_change_activity(
+    application: Application, previous_status: str, next_status: str, db: Session
+) -> None:
+    db.add(
+        ApplicationActivity(
+            application_id=application.id,
+            activity_date=date.today(),
+            activity_type=STATUS_CHANGE_ACTIVITY_TYPE,
+            note=f"Status changed from {previous_status} to {next_status}.",
+        )
+    )
 
 
 @router.get("", response_model=list[ApplicationRead])
@@ -196,6 +209,7 @@ def update_application(
     application = get_existing_application(application_id, db)
 
     updates = payload.model_dump(exclude_unset=True)
+    previous_status = application.status
     next_status = updates.get("status")
 
     if application.is_archived and (
@@ -211,6 +225,9 @@ def update_application(
 
     for field, value in updates.items():
         setattr(application, field, value)
+
+    if next_status is not None and next_status != previous_status:
+        create_status_change_activity(application, previous_status, next_status, db)
 
     db.commit()
     db.refresh(application)
