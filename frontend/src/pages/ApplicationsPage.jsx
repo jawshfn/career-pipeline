@@ -224,9 +224,13 @@ export default function ApplicationsPage({
   }
 
   function openDetails(applicationId) {
+    if (selectedApplicationId === applicationId) {
+      requestAnimationFrame(scrollDetailPanelIntoView);
+      return;
+    }
+
     if (
       selectedApplicationId &&
-      selectedApplicationId !== applicationId &&
       hasDetailUnsavedChanges &&
       !window.confirm("You have unsaved changes. Switch applications without saving?")
     ) {
@@ -235,12 +239,6 @@ export default function ApplicationsPage({
 
     shouldScrollToDetailRef.current = true;
     setHasDetailUnsavedChanges(false);
-
-    if (selectedApplicationId === applicationId) {
-      shouldScrollToDetailRef.current = false;
-      requestAnimationFrame(scrollDetailPanelIntoView);
-      return;
-    }
 
     setSelectedApplicationId(applicationId);
   }
