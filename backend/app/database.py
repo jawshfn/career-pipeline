@@ -43,6 +43,9 @@ def add_application_additive_columns() -> None:
     existing_columns = {column["name"] for column in inspector.get_columns("applications")}
     column_definitions = {
         "next_action": "TEXT",
+        "contact_name": "VARCHAR(160)",
+        "contact_info": "TEXT",
+        "prep_notes": "TEXT",
         "vague_job_description": "BOOLEAN NOT NULL DEFAULT 0",
         "unrealistic_salary": "BOOLEAN NOT NULL DEFAULT 0",
         "asks_for_payment": "BOOLEAN NOT NULL DEFAULT 0",

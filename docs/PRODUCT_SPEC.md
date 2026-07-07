@@ -46,7 +46,7 @@ The current prototype includes:
 - Dedicated Quick Add page for lightweight opportunity capture
 - Application create, list, update, detail editing, and archive behavior
 - Applications page with Active, Closed, and All views plus search, filters, sorting, table previews, and detail access
-- Application Detail tabs for Overview, Dates & Follow-up, Job Details, Red Flags, and Activity
+- Application Detail tabs for Overview, Dates & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
 - Optional Next Action field shown in Application Detail and Command Center cards
 - Applied-date behavior that distinguishes saved date from the date the user actually applied
 - Responsive grouped Pipeline with status filtering and persisted status updates
@@ -55,6 +55,7 @@ The current prototype includes:
 - Activity Timeline entries for manual activity and follow-up quick-action outcomes
 - No-op snooze prevention when a snooze action would not move the follow-up date later
 - Resume Versions page for creating, editing, deactivating, reactivating, and assigning reusable resume variants
+- Application-scoped contact and prep notes in Application Detail
 - Red-flag checklist and notes in Application Detail, with compact indicators in Applications and Pipeline
 - Dashboard summary cards, status breakdown, source breakdown, resume-version usage, red-flag snapshot, Source Effectiveness, and Resume Version Effectiveness
 - Sticky responsive app shell with page content centered inside the main content area and no intended page-level horizontal overflow
@@ -118,12 +119,15 @@ Current tabs:
 - Overview
 - Dates & Follow-up
 - Job Details
+- Contact & Prep
 - Red Flags
 - Activity
 
-Editable areas include company name, role title, job link, source, status, resume version, saved date, applied date, follow-up date, next action, location, salary range, employment type, notes, red flags, and red-flag notes.
+Editable areas include company name, role title, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact name, contact info, prep notes, location, salary range, employment type, notes, red flags, and red-flag notes.
 
 `date_saved` means the date the job was added to Career Pipeline. `date_applied` means the date the user actually submitted the application. Changing status to Applied or later can default an empty Applied Date, but existing Applied Date values are not automatically overwritten or cleared.
+
+The Contact & Prep tab stores application-scoped contact context and preparation notes. It is intentionally not a shared contacts table or full CRM.
 
 The Activity tab supports dated activity entries with activity type and note. Activity entries are saved independently from the main detail form.
 

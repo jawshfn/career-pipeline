@@ -26,6 +26,9 @@ def test_create_application(client):
     assert data["too_good_to_be_true"] is False
     assert data["red_flags_notes"] is None
     assert data["next_action"] is None
+    assert data["contact_name"] is None
+    assert data["contact_info"] is None
+    assert data["prep_notes"] is None
 
 
 def test_create_application_without_status_defaults_to_saved(client):
@@ -101,6 +104,9 @@ def test_update_application_detail_fields(client):
             "date_applied": "2026-06-20",
             "follow_up_date": "2026-06-27",
             "next_action": "Prepare recruiter follow-up notes.",
+            "contact_name": "Alex Recruiter",
+            "contact_info": "alex.recruiter@example.com",
+            "prep_notes": "Review backend project talking points before the screen.",
             "resume_version_id": resume["id"],
             "notes": "Updated through application detail panel.",
         },
@@ -120,8 +126,18 @@ def test_update_application_detail_fields(client):
     assert data["date_applied"] == "2026-06-20"
     assert data["follow_up_date"] == "2026-06-27"
     assert data["next_action"] == "Prepare recruiter follow-up notes."
+    assert data["contact_name"] == "Alex Recruiter"
+    assert data["contact_info"] == "alex.recruiter@example.com"
+    assert data["prep_notes"] == "Review backend project talking points before the screen."
     assert data["resume_version_id"] == resume["id"]
     assert data["notes"] == "Updated through application detail panel."
+
+    get_response = client.get(f"/api/applications/{created['id']}")
+    assert get_response.status_code == 200
+    saved = get_response.json()
+    assert saved["contact_name"] == "Alex Recruiter"
+    assert saved["contact_info"] == "alex.recruiter@example.com"
+    assert saved["prep_notes"] == "Review backend project talking points before the screen."
 
 
 def test_update_application_red_flags(client):

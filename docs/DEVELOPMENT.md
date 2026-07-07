@@ -131,7 +131,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Long notes display as compact previews in the table while full notes remain available in Details.
 - Details opens from filtered and sorted results.
 - Selecting Details scrolls the detail panel into view.
-- Detail tabs show Overview, Dates & Follow-up, Job Details, Red Flags, and Activity.
+- Detail tabs show Overview, Dates & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity.
 - Unsaved detail changes warn before closing or switching to a different application.
 - Clicking Details on the currently open application only scrolls and does not clear dirty state.
 - Saving detail changes keeps the panel open and clears the unsaved-change warning.
@@ -146,6 +146,8 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Users can manually edit or clear Applied Date.
 - Next Action can be added, edited, cleared, and saved from Application Detail.
 - Next Action appears on Command Center cards when present.
+- Contact name, Contact info, and Prep notes can be added, edited, cleared, and saved from the Contact & Prep tab.
+- Contact & Prep fields do not appear in Quick Add, Dashboard, Pipeline, Command Center, or Applications table columns.
 - Follow-up date edits persist and update Applications, Command Center, and Dashboard where relevant.
 
 ### Pipeline Sync

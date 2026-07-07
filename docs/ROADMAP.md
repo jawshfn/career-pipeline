@@ -119,6 +119,7 @@ Status: complete through Phase 8.3 plus targeted app-shell restoration
 - Phase 8.1: add Resume Version Effectiveness metrics to Dashboard
 - Phase 8.2: improve visual status distinction and dashboard accents
 - Phase 8.3: polish status visuals, metadata readability, empty states, and pipeline distinction
+- Phase 8.4: add application-scoped Contact & Prep details in Application Detail
 - Targeted UI polish: restore app shell layout constraints, sticky sidebar behavior, page centering, and horizontal overflow protections
 - Documentation refresh: update docs for recent workflow, dashboard, and UI changes
 

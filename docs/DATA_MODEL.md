@@ -1,6 +1,6 @@
 # Data Model
 
-The implemented backend uses SQLite with SQLAlchemy. The model supports quick capture, application tracking, resume-version assignment, follow-up action items, next actions, red-flag fields, activity timeline entries, and archive behavior.
+The implemented backend uses SQLite with SQLAlchemy. The model supports quick capture, application tracking, resume-version assignment, follow-up action items, next actions, application-scoped contact/prep details, red-flag fields, activity timeline entries, and archive behavior.
 
 ## Implemented Tables
 
@@ -26,6 +26,9 @@ Stores the main record for each job opportunity or application.
 - date_applied: optional date the user applied
 - follow_up_date: optional date for next follow-up
 - next_action: optional short user-entered next step
+- contact_name: optional application-scoped contact name
+- contact_info: optional flexible contact detail, such as email, profile link, phone, or recruiter profile
+- prep_notes: optional preparation notes for interviews, assessments, talking points, or questions
 - resume_version_id: optional foreign key to resume_versions
 - notes: general user notes
 - vague_job_description: boolean red-flag field

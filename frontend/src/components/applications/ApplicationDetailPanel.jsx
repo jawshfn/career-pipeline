@@ -16,6 +16,9 @@ const initialFormState = {
   follow_up_date: "",
   next_action: "",
   date_applied: "",
+  contact_name: "",
+  contact_info: "",
+  prep_notes: "",
   location: "",
   salary_min: "",
   salary_max: "",
@@ -75,6 +78,7 @@ const detailTabs = [
   { id: "overview", label: "Overview" },
   { id: "dates", label: "Dates & Follow-up" },
   { id: "job-details", label: "Job Details" },
+  { id: "contact-prep", label: "Contact & Prep" },
   { id: "red-flags", label: "Red Flags" },
   { id: "activity", label: "Activity" },
 ];
@@ -91,6 +95,9 @@ function toFormState(application) {
     follow_up_date: application.follow_up_date || "",
     next_action: application.next_action || "",
     date_applied: application.date_applied || "",
+    contact_name: application.contact_name || "",
+    contact_info: application.contact_info || "",
+    prep_notes: application.prep_notes || "",
     location: application.location || "",
     salary_min: application.salary_min ?? "",
     salary_max: application.salary_max ?? "",
@@ -246,6 +253,9 @@ export default function ApplicationDetailPanel({
       date_applied: formData.date_applied || null,
       follow_up_date: formData.follow_up_date || null,
       next_action: formData.next_action.trim() || null,
+      contact_name: formData.contact_name.trim() || null,
+      contact_info: formData.contact_info.trim() || null,
+      prep_notes: formData.prep_notes.trim() || null,
       resume_version_id: formData.resume_version_id ? Number(formData.resume_version_id) : null,
       notes: formData.notes.trim() || null,
       vague_job_description: formData.vague_job_description,
@@ -505,7 +515,46 @@ export default function ApplicationDetailPanel({
                       value={formData.notes}
                       onChange={updateField}
                       rows="5"
-                      placeholder="Company context, recruiter notes, interview prep, or next steps"
+                      placeholder="General company, role, or posting notes"
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : null}
+
+            {activeTab === "contact-prep" ? (
+              <div className="detail-field-group detail-field-group-wide">
+                <h3>Contact & Prep</h3>
+                <p className="detail-tab-helper">Keep application-specific contact context and preparation notes here.</p>
+                <div className="detail-field-grid">
+                  <label>
+                    Contact name
+                    <input
+                      name="contact_name"
+                      value={formData.contact_name}
+                      onChange={updateField}
+                      placeholder="Recruiter or contact name"
+                    />
+                  </label>
+
+                  <label className="detail-field-grid-span">
+                    Contact info
+                    <input
+                      name="contact_info"
+                      value={formData.contact_info}
+                      onChange={updateField}
+                      placeholder="Email, profile link, phone, or other contact method"
+                    />
+                  </label>
+
+                  <label className="detail-notes-field detail-field-grid-span">
+                    Prep notes
+                    <textarea
+                      name="prep_notes"
+                      value={formData.prep_notes}
+                      onChange={updateField}
+                      rows="5"
+                      placeholder="Interview prep, assessment notes, talking points, or questions to ask"
                     />
                   </label>
                 </div>

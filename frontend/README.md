@@ -16,7 +16,7 @@ This is the React/Vite frontend for Career Pipeline. It provides the user-facing
 - Sticky responsive sidebar navigation
 - Quick Add success flow with Add another and View applications actions
 - Applied-date handling that defaults only when useful and does not overwrite existing dates
-- Tabbed Application Detail editing for richer application context, dates/follow-ups, job details, red flags, and activity timeline entries
+- Tabbed Application Detail editing for richer application context, dates/follow-ups, job details, contact/prep notes, red flags, and activity timeline entries
 - Optional Next Action support in Application Detail and Command Center cards
 - Independent activity timeline add/list/delete behavior inside Application Detail
 - Applications table note truncation with hover/title preview for long notes

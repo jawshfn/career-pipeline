@@ -26,8 +26,8 @@ The product is built around a common job-search problem: opportunities arrive fr
 
 ### Application Detail
 
-- Tabbed detail panel for Overview, Dates & Follow-up, Job Details, Red Flags, and Activity
-- Detail editing for company, role, job link, source, status, resume version, saved date, applied date, follow-up date, next action, location, salary range, employment type, notes, and red flags
+- Tabbed detail panel for Overview, Dates & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
+- Detail editing for company, role, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact context, prep notes, location, salary range, employment type, notes, and red flags
 - Clear applied-date semantics: `date_saved` is when the job was added to Career Pipeline; `date_applied` is when the user actually applied
 - Existing applied dates are not overwritten automatically
 - Unsaved-change warnings when closing or switching selected applications

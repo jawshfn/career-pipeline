@@ -49,6 +49,9 @@ Example response:
     "date_applied": "2026-06-24",
     "follow_up_date": "2026-07-01",
     "next_action": "Send recruiter follow-up.",
+    "contact_name": "Alex Recruiter",
+    "contact_info": "alex.recruiter@example.com",
+    "prep_notes": "Review backend project talking points.",
     "resume_version_id": 2,
     "location": "Remote",
     "salary_range": "$70k-$85k",
@@ -114,7 +117,7 @@ Status: implemented
 
 ### PATCH /api/applications/{application_id}
 
-Purpose: update editable application fields, including status, dates, next action, red flags, and follow_up_date.
+Purpose: update editable application fields, including status, dates, next action, contact/prep details, red flags, and follow_up_date.
 
 Example request:
 
@@ -123,6 +126,9 @@ Example request:
   "status": "Interview",
   "follow_up_date": "2026-07-03",
   "next_action": "Prepare recruiter screen notes.",
+  "contact_name": "Alex Recruiter",
+  "contact_info": "alex.recruiter@example.com",
+  "prep_notes": "Prepare project walkthrough and questions about the team.",
   "notes": "Recruiter replied with screening availability."
 }
 ```
