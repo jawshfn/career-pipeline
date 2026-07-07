@@ -3,10 +3,10 @@ import React, { useState } from "react";
 import {
   DEFAULT_APPLICATION_SOURCE,
   EMPLOYMENT_TYPE_OPTIONS,
-  SAVED_APPLICATION_STATUS,
   SOURCE_OPTIONS,
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
+import { buildSmartCaptureReviewState } from "../../utils/jobTextExtraction.js";
 
 const initialCaptureState = {
   rawText: "",
@@ -14,173 +14,10 @@ const initialCaptureState = {
   source: DEFAULT_APPLICATION_SOURCE,
 };
 
-const initialReviewState = {
-  company_name: "",
-  role_title: "",
-  job_link: "",
-  source: DEFAULT_APPLICATION_SOURCE,
-  status: SAVED_APPLICATION_STATUS,
-  resume_version_id: "",
-  location: "",
-  employment_type: "",
-  salary_min: "",
-  salary_max: "",
-  follow_up_date: "",
-  next_action: "",
-  notes: "",
-};
-
 function getResumeVersionLabel(resumeVersion) {
   return resumeVersion.target_role
     ? `${resumeVersion.name} (${resumeVersion.target_role})`
     : resumeVersion.name;
-}
-
-function stripTrailingUrlPunctuation(value) {
-  return value.replace(/[),.;\]]+$/u, "");
-}
-
-function detectJobLink(rawText, explicitJobLink) {
-  const trimmedLink = explicitJobLink.trim();
-
-  if (trimmedLink) {
-    return trimmedLink;
-  }
-
-  const detectedLink = rawText.match(/https?:\/\/[^\s<>"']+/iu)?.[0] || "";
-  return stripTrailingUrlPunctuation(detectedLink);
-}
-
-function detectLabeledValue(rawText, labels) {
-  const lines = rawText.split(/\r?\n/u);
-  const labelPattern = labels.map((label) => label.replace(/\s+/gu, "\\s+")).join("|");
-  const matcher = new RegExp(`^\\s*(?:${labelPattern})\\s*:\\s*(.+)$`, "iu");
-
-  for (const line of lines) {
-    const match = line.match(matcher);
-
-    if (match?.[1]) {
-      return match[1].trim();
-    }
-  }
-
-  return "";
-}
-
-function detectEmploymentType(rawText) {
-  const normalizedText = rawText.toLowerCase();
-
-  if (/\bfull[-\s]?time\b/u.test(normalizedText)) {
-    return "Full-time";
-  }
-
-  if (/\bpart[-\s]?time\b/u.test(normalizedText)) {
-    return "Part-time";
-  }
-
-  if (/\b(contract|contractor)\b/u.test(normalizedText)) {
-    return "Contract";
-  }
-
-  if (/\bintern(ship)?\b/u.test(normalizedText)) {
-    return "Internship";
-  }
-
-  if (/\btemporary|temp\b/u.test(normalizedText)) {
-    return "Temporary";
-  }
-
-  return "";
-}
-
-function detectLocationHint(rawText) {
-  const labeledLocation = detectLabeledValue(rawText, ["Location", "Job location"]);
-
-  if (labeledLocation) {
-    return labeledLocation;
-  }
-
-  if (/\bremote\b/iu.test(rawText)) {
-    return "Remote";
-  }
-
-  if (/\bhybrid\b/iu.test(rawText)) {
-    return "Hybrid";
-  }
-
-  if (/\bon[-\s]?site\b/iu.test(rawText)) {
-    return "On-site";
-  }
-
-  return "";
-}
-
-function normalizeSalaryNumber(value, hasKMarker) {
-  const numericValue = Number(value.replace(/,/gu, ""));
-
-  if (!Number.isFinite(numericValue)) {
-    return "";
-  }
-
-  if (hasKMarker || numericValue < 1000) {
-    return String(numericValue * 1000);
-  }
-
-  return String(numericValue);
-}
-
-function detectSalaryRange(rawText) {
-  if (!/(salary|compensation|\$)/iu.test(rawText)) {
-    return { salary_min: "", salary_max: "" };
-  }
-
-  const salaryMatch = rawText.match(
-    /\$?\s*(\d{2,3}(?:,\d{3})?)\s*(k)?\s*(?:-|–|—|to)\s*\$?\s*(\d{2,3}(?:,\d{3})?)\s*(k)?/iu,
-  );
-
-  if (!salaryMatch) {
-    return { salary_min: "", salary_max: "" };
-  }
-
-  const [, minimum, minimumKMarker, maximum, maximumKMarker] = salaryMatch;
-
-  return {
-    salary_min: normalizeSalaryNumber(minimum, Boolean(minimumKMarker || maximumKMarker)),
-    salary_max: normalizeSalaryNumber(maximum, Boolean(maximumKMarker || minimumKMarker)),
-  };
-}
-
-function buildSmartCaptureNotes(rawText) {
-  const trimmedText = rawText.trim();
-
-  if (!trimmedText) {
-    return "";
-  }
-
-  return `Pasted job text:\n\n${trimmedText}`;
-}
-
-function buildReviewState(captureData) {
-  const salaryRange = detectSalaryRange(captureData.rawText);
-
-  return {
-    ...initialReviewState,
-    company_name: detectLabeledValue(captureData.rawText, ["Company", "Company name"]),
-    role_title: detectLabeledValue(captureData.rawText, [
-      "Role",
-      "Role title",
-      "Job title",
-      "Position",
-      "Title",
-    ]),
-    job_link: detectJobLink(captureData.rawText, captureData.jobLink),
-    source: captureData.source || DEFAULT_APPLICATION_SOURCE,
-    location: detectLocationHint(captureData.rawText),
-    employment_type: detectEmploymentType(captureData.rawText),
-    salary_min: salaryRange.salary_min,
-    salary_max: salaryRange.salary_max,
-    notes: buildSmartCaptureNotes(captureData.rawText),
-  };
 }
 
 function numberOrNull(value) {
@@ -211,7 +48,7 @@ export default function SmartCaptureForm({ resumeVersions, onCreateApplication, 
   function handlePrepareReview(event) {
     event.preventDefault();
     setError("");
-    setReviewData(buildReviewState(captureData));
+    setReviewData(buildSmartCaptureReviewState(captureData));
   }
 
   async function handleSubmitReview(event) {

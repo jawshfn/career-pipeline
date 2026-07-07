@@ -15,7 +15,7 @@ This is the React/Vite frontend for Career Pipeline. It provides the user-facing
 
 - Sticky responsive sidebar navigation
 - Quick Add success flow with Add another and View applications actions
-- Smart Capture mode that prepares editable suggested fields from pasted job text before saving
+- Smart Capture mode that prepares editable source-aware suggestions from pasted job text before saving
 - Applied-date handling that defaults only when useful and does not overwrite existing dates
 - Tabbed Application Detail editing for richer application context, dates/follow-ups, job details, contact/prep notes, red flags, and activity timeline entries
 - Optional Next Action support in Application Detail and Command Center cards

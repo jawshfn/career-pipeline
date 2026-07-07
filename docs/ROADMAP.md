@@ -134,6 +134,7 @@ Status: complete through Phase 8.9 plus targeted app-shell restoration
 Status: started
 
 - Phase 9.0: add Smart Capture paste-review workflow to Quick Add without AI integration
+- Phase 9.1: improve source-aware rule-based extraction for common job-board pasted text
 
 ## Near-Term Future Work
 
