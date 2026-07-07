@@ -126,6 +126,61 @@ function getSourceEffectiveness(applications) {
   );
 }
 
+function getResumeVersionLabel(resumeVersion) {
+  return resumeVersion.target_role
+    ? `${resumeVersion.name} (${resumeVersion.target_role})`
+    : resumeVersion.name;
+}
+
+function getResumeVersionEffectiveness(applications, resumeVersions) {
+  const resumeVersionsById = new Map(resumeVersions.map((resumeVersion) => [String(resumeVersion.id), resumeVersion]));
+  const metricsByResume = applications.reduce((metrics, application) => {
+    const resumeVersionId = application.resume_version_id ? String(application.resume_version_id) : "unassigned";
+    const resumeVersion = resumeVersionsById.get(resumeVersionId);
+    const label = resumeVersion
+      ? getResumeVersionLabel(resumeVersion)
+      : resumeVersionId === "unassigned"
+        ? "Unassigned"
+        : `Resume #${resumeVersionId}`;
+    const resumeMetrics = metrics.get(resumeVersionId) || {
+      id: resumeVersionId,
+      label,
+      applications: 0,
+      active: 0,
+      interviews: 0,
+      offers: 0,
+      closed: 0,
+    };
+
+    resumeMetrics.applications += 1;
+
+    if (activeStatuses.has(application.status)) {
+      resumeMetrics.active += 1;
+    }
+
+    if (application.status === "Interview") {
+      resumeMetrics.interviews += 1;
+    }
+
+    if (application.status === "Offer") {
+      resumeMetrics.offers += 1;
+    }
+
+    if (closedStatuses.has(application.status)) {
+      resumeMetrics.closed += 1;
+    }
+
+    metrics.set(resumeVersionId, resumeMetrics);
+    return metrics;
+  }, new Map());
+
+  return Array.from(metricsByResume.values()).sort(
+    (firstResume, secondResume) =>
+      secondResume.applications - firstResume.applications ||
+      firstResume.label.localeCompare(secondResume.label),
+  );
+}
+
 function getResumeUsage(applications, resumeVersions) {
   const resumeCounts = countBy(applications, (application) =>
     application.resume_version_id ? String(application.resume_version_id) : "none",
@@ -177,6 +232,31 @@ function BreakdownList({ emptyMessage, items }) {
   );
 }
 
+function EffectivenessGrid({ ariaLabel, firstColumnLabel, items }) {
+  return (
+    <div className="effectiveness-grid" role="table" aria-label={ariaLabel}>
+      <div className="effectiveness-row effectiveness-header" role="row">
+        <span role="columnheader">{firstColumnLabel}</span>
+        <span role="columnheader">Applications</span>
+        <span role="columnheader">Active</span>
+        <span role="columnheader">Interviews</span>
+        <span role="columnheader">Offers</span>
+        <span role="columnheader">Closed</span>
+      </div>
+      {items.map((item) => (
+        <div className="effectiveness-row" role="row" key={item.id || item.source}>
+          <strong role="cell">{item.label || item.source}</strong>
+          <span role="cell" data-label="Applications">{item.applications}</span>
+          <span role="cell" data-label="Active">{item.active}</span>
+          <span role="cell" data-label="Interviews">{item.interviews}</span>
+          <span role="cell" data-label="Offers">{item.offers}</span>
+          <span role="cell" data-label="Closed">{item.closed}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function DashboardPage({ applications, error, isLoading, resumeVersions }) {
   const today = new Date();
   const todayValue = formatLocalDate(today);
@@ -199,6 +279,7 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
   const sourceBreakdown = getOrderedSourceCounts(applications);
   const sourceEffectiveness = getSourceEffectiveness(applications);
   const resumeUsage = getResumeUsage(applications, resumeVersions);
+  const resumeVersionEffectiveness = getResumeVersionEffectiveness(applications, resumeVersions);
   const redFlagTypeCounts = redFlagFields
     .map((field) => ({
       label: field.label,
@@ -276,7 +357,7 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
             </section>
           </div>
 
-          <section className="panel dashboard-panel dashboard-source-effectiveness" aria-labelledby="dashboard-source-effectiveness-title">
+          <section className="panel dashboard-panel dashboard-effectiveness-panel" aria-labelledby="dashboard-source-effectiveness-title">
             <div className="section-heading">
               <h2 id="dashboard-source-effectiveness-title">Source Effectiveness</h2>
               <p>Compare which sources are producing applications, interviews, offers, and closed outcomes.</p>
@@ -285,26 +366,28 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
             {sourceEffectiveness.length === 0 ? (
               <p className="dashboard-empty-panel">No source data yet.</p>
             ) : (
-              <div className="source-effectiveness-grid" role="table" aria-label="Source effectiveness metrics">
-                <div className="source-effectiveness-row source-effectiveness-header" role="row">
-                  <span role="columnheader">Source</span>
-                  <span role="columnheader">Applications</span>
-                  <span role="columnheader">Active</span>
-                  <span role="columnheader">Interviews</span>
-                  <span role="columnheader">Offers</span>
-                  <span role="columnheader">Closed</span>
-                </div>
-                {sourceEffectiveness.map((sourceMetrics) => (
-                  <div className="source-effectiveness-row" role="row" key={sourceMetrics.source}>
-                    <strong role="cell">{sourceMetrics.source}</strong>
-                    <span role="cell" data-label="Applications">{sourceMetrics.applications}</span>
-                    <span role="cell" data-label="Active">{sourceMetrics.active}</span>
-                    <span role="cell" data-label="Interviews">{sourceMetrics.interviews}</span>
-                    <span role="cell" data-label="Offers">{sourceMetrics.offers}</span>
-                    <span role="cell" data-label="Closed">{sourceMetrics.closed}</span>
-                  </div>
-                ))}
-              </div>
+              <EffectivenessGrid
+                ariaLabel="Source effectiveness metrics"
+                firstColumnLabel="Source"
+                items={sourceEffectiveness}
+              />
+            )}
+          </section>
+
+          <section className="panel dashboard-panel dashboard-effectiveness-panel" aria-labelledby="dashboard-resume-effectiveness-title">
+            <div className="section-heading">
+              <h2 id="dashboard-resume-effectiveness-title">Resume Version Effectiveness</h2>
+              <p>Compare how assigned resume versions connect to application progress.</p>
+            </div>
+
+            {resumeVersionEffectiveness.length === 0 ? (
+              <p className="dashboard-empty-panel">No resume-version data yet.</p>
+            ) : (
+              <EffectivenessGrid
+                ariaLabel="Resume version effectiveness metrics"
+                firstColumnLabel="Resume Version"
+                items={resumeVersionEffectiveness}
+              />
             )}
           </section>
         </>

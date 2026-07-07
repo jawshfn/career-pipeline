@@ -1140,18 +1140,18 @@ a {
   text-align: center;
 }
 
-.dashboard-source-effectiveness {
+.dashboard-effectiveness-panel {
   display: grid;
   gap: 14px;
 }
 
-.source-effectiveness-grid {
+.effectiveness-grid {
   display: grid;
   gap: 0;
   min-width: 0;
 }
 
-.source-effectiveness-row {
+.effectiveness-row {
   display: grid;
   grid-template-columns: minmax(140px, 1.6fr) repeat(5, minmax(70px, 0.8fr));
   align-items: center;
@@ -1161,23 +1161,23 @@ a {
   min-width: 0;
 }
 
-.source-effectiveness-row:last-child {
+.effectiveness-row:last-child {
   border-bottom: 0;
 }
 
-.source-effectiveness-header {
+.effectiveness-header {
   color: #60706d;
   font-size: 0.76rem;
   font-weight: 800;
   text-transform: uppercase;
 }
 
-.source-effectiveness-row strong {
+.effectiveness-row strong {
   color: #17202a;
   overflow-wrap: anywhere;
 }
 
-.source-effectiveness-row:not(.source-effectiveness-header) span:not(:first-child) {
+.effectiveness-row:not(.effectiveness-header) span:not(:first-child) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1621,11 +1621,11 @@ a {
     width: 100%;
   }
 
-  .source-effectiveness-header {
+  .effectiveness-header {
     display: none;
   }
 
-  .source-effectiveness-row {
+  .effectiveness-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     border: 1px solid #e1e8e6;
@@ -1633,17 +1633,17 @@ a {
     padding: 12px;
   }
 
-  .source-effectiveness-row strong {
+  .effectiveness-row strong {
     grid-column: 1 / -1;
   }
 
-  .source-effectiveness-row:not(.source-effectiveness-header) span:not(:first-child) {
+  .effectiveness-row:not(.effectiveness-header) span:not(:first-child) {
     justify-content: space-between;
     border-radius: 6px;
     padding: 7px 9px;
   }
 
-  .source-effectiveness-row:not(.source-effectiveness-header) span:not(:first-child)::before {
+  .effectiveness-row:not(.effectiveness-header) span:not(:first-child)::before {
     content: attr(data-label);
     color: #60706d;
     font-weight: 800;
