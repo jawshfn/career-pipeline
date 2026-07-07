@@ -114,6 +114,7 @@ export default function App() {
       ) : activePage === "quick-add" ? (
         <QuickAddPage
           onCreateApplication={handleCreateApplication}
+          onViewApplications={() => setActivePage("applications")}
           resumeVersions={resumeVersions}
         />
       ) : activePage === "resume-versions" ? (

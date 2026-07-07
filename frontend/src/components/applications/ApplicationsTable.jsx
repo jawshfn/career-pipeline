@@ -50,6 +50,7 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
             <th>Source</th>
             <th>Status</th>
             <th>Resume</th>
+            <th>Saved Date</th>
             <th>Applied Date</th>
             <th>Follow-Up Date</th>
             <th>Flags</th>
@@ -67,6 +68,7 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
                 <StatusBadge status={application.status} />
               </td>
               <td>{getResumeLabel(application, resumeVersionsById)}</td>
+              <td>{formatValue(application.date_saved)}</td>
               <td>{formatValue(application.date_applied)}</td>
               <td>{formatValue(application.follow_up_date)}</td>
               <td>

@@ -59,7 +59,7 @@ function getResumeVersionLabel(resumeVersion) {
     : resumeVersion.name;
 }
 
-export default function QuickAddApplicationForm({ resumeVersions, onCreateApplication }) {
+export default function QuickAddApplicationForm({ resumeVersions, onCreateApplication, onCreateSuccess }) {
   const [formData, setFormData] = useState(initialFormState);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,8 +90,9 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
     };
 
     try {
-      await onCreateApplication(payload);
+      const createdApplication = await onCreateApplication(payload);
       setFormData(initialFormState);
+      onCreateSuccess?.(createdApplication);
     } catch (creationError) {
       setError(creationError.message || "Could not create application.");
     } finally {

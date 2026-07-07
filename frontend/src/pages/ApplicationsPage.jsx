@@ -65,20 +65,52 @@ function matchesSearch(application, searchTerm) {
   ].some((value) => normalizeSearchValue(value).includes(searchTerm));
 }
 
-function compareDateStrings(firstValue, secondValue, direction = "desc") {
-  const firstTime = firstValue ? new Date(firstValue).getTime() : 0;
-  const secondTime = secondValue ? new Date(secondValue).getTime() : 0;
-  return direction === "asc" ? firstTime - secondTime : secondTime - firstTime;
+function parseDateValue(value) {
+  if (!value) {
+    return null;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+function compareDatesWithMissingLast(firstValue, secondValue, direction = "desc") {
+  const firstDate = parseDateValue(firstValue);
+  const secondDate = parseDateValue(secondValue);
+
+  if (firstDate === null && secondDate === null) {
+    return 0;
+  }
+
+  if (firstDate === null) {
+    return 1;
+  }
+
+  if (secondDate === null) {
+    return -1;
+  }
+
+  return direction === "asc" ? firstDate - secondDate : secondDate - firstDate;
+}
+
+function compareUpdatedDesc(firstApplication, secondApplication) {
+  return compareDatesWithMissingLast(firstApplication.updated_at, secondApplication.updated_at, "desc");
 }
 
 function sortApplications(applications, sortBy) {
   return [...applications].sort((firstApplication, secondApplication) => {
     if (sortBy === "saved_desc") {
-      return compareDateStrings(firstApplication.date_saved, secondApplication.date_saved, "desc");
+      return (
+        compareDatesWithMissingLast(firstApplication.date_saved, secondApplication.date_saved, "desc") ||
+        compareUpdatedDesc(firstApplication, secondApplication)
+      );
     }
 
     if (sortBy === "saved_asc") {
-      return compareDateStrings(firstApplication.date_saved, secondApplication.date_saved, "asc");
+      return (
+        compareDatesWithMissingLast(firstApplication.date_saved, secondApplication.date_saved, "asc") ||
+        compareUpdatedDesc(firstApplication, secondApplication)
+      );
     }
 
     if (sortBy === "follow_up_asc") {
@@ -97,7 +129,7 @@ function sortApplications(applications, sortBy) {
       return (firstIndex === -1 ? statusOptions.length : firstIndex) - (secondIndex === -1 ? statusOptions.length : secondIndex);
     }
 
-    return compareDateStrings(firstApplication.updated_at, secondApplication.updated_at, "desc");
+    return compareUpdatedDesc(firstApplication, secondApplication);
   });
 }
 

@@ -244,6 +244,35 @@ a {
   margin-bottom: 16px;
 }
 
+.quick-add-success-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-color: #a9d6c8;
+  background: #effaf5;
+}
+
+.quick-add-success-panel h2 {
+  margin: 0;
+  color: #1f5f45;
+  font-size: 1.05rem;
+  letter-spacing: 0;
+}
+
+.quick-add-success-panel p {
+  margin: 4px 0 0;
+  color: #315a4b;
+  font-weight: 700;
+}
+
+.quick-add-success-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .application-filters {
   display: grid;
   grid-template-columns: minmax(min(100%, 280px), 1.4fr) repeat(auto-fit, minmax(min(100%, 170px), 1fr));
@@ -639,7 +668,7 @@ a {
 
 .applications-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 1060px;
   border-collapse: collapse;
 }
 
@@ -1225,6 +1254,15 @@ a {
   .resume-version-card-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .quick-add-success-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quick-add-success-actions {
+    justify-content: flex-start;
   }
 
   .panel {

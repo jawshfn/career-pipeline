@@ -118,8 +118,10 @@ Run this checklist before starting a new product phase or opening a pull request
 - Applications table loads backend applications.
 - Applications page does not show the Quick Add form.
 - Applications search and filters narrow active applications without changing Quick Add.
+- Applications table shows Saved Date, and date-saved newest/oldest sorts place missing dates last.
 - Applications sorting changes table order and Details still opens from filtered results.
-- Quick Add page creates an application and stays ready for another entry.
+- Quick Add page creates an application, shows the created role/company, and stays ready for another entry.
+- Quick Add success actions can clear the success state or navigate to Applications.
 - Quick-add creates an application.
 - Quick Add does not offer `Archived` as a status.
 - Quick-add can create an application with a follow-up date.
