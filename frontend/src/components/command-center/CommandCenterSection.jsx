@@ -5,6 +5,7 @@ import CommandCenterItem from "./CommandCenterItem.jsx";
 export default function CommandCenterSection({
   applications,
   description,
+  getAvailableFollowUpActions,
   onFollowUpAction,
   showUpdatedAt = false,
   title,
@@ -27,6 +28,7 @@ export default function CommandCenterSection({
           {applications.map((application) => (
             <CommandCenterItem
               application={application}
+              availableFollowUpActions={getAvailableFollowUpActions?.(application)}
               isUpdating={updatingApplicationId === application.id}
               key={application.id}
               onFollowUpAction={onFollowUpAction}

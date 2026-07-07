@@ -12,6 +12,7 @@ function formatDate(value) {
 
 export default function CommandCenterItem({
   application,
+  availableFollowUpActions = { snooze3: true, snooze7: true },
   isUpdating = false,
   onFollowUpAction,
   showUpdatedAt,
@@ -53,22 +54,26 @@ export default function CommandCenterItem({
 
       {showFollowUpActions ? (
         <div className="command-center-actions" aria-label={`Follow-up actions for ${application.company_name}`}>
-          <button
-            className="quiet-button"
-            disabled={isUpdating}
-            type="button"
-            onClick={() => onFollowUpAction(application, "snooze-3")}
-          >
-            Snooze 3 days
-          </button>
-          <button
-            className="quiet-button"
-            disabled={isUpdating}
-            type="button"
-            onClick={() => onFollowUpAction(application, "snooze-7")}
-          >
-            Snooze 1 week
-          </button>
+          {availableFollowUpActions.snooze3 ? (
+            <button
+              className="quiet-button"
+              disabled={isUpdating}
+              type="button"
+              onClick={() => onFollowUpAction(application, "snooze-3")}
+            >
+              Snooze 3 days
+            </button>
+          ) : null}
+          {availableFollowUpActions.snooze7 ? (
+            <button
+              className="quiet-button"
+              disabled={isUpdating}
+              type="button"
+              onClick={() => onFollowUpAction(application, "snooze-7")}
+            >
+              Snooze 1 week
+            </button>
+          ) : null}
           <button
             className="quiet-danger-button"
             disabled={isUpdating}

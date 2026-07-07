@@ -33,6 +33,25 @@ function compareDateValues(firstValue, secondValue) {
   return String(firstValue || "").localeCompare(String(secondValue || ""));
 }
 
+function isSnoozeLaterThanCurrent(application, targetDateValue) {
+  if (!application.follow_up_date || !targetDateValue) {
+    return false;
+  }
+
+  return targetDateValue > application.follow_up_date;
+}
+
+function getAvailableFollowUpActions(application) {
+  const today = new Date();
+  const snooze3Date = formatLocalDate(addDays(today, 3));
+  const snooze7Date = formatLocalDate(addDays(today, 7));
+
+  return {
+    snooze3: isSnoozeLaterThanCurrent(application, snooze3Date),
+    snooze7: isSnoozeLaterThanCurrent(application, snooze7Date),
+  };
+}
+
 function getFollowUpActivityNote(baseNote, application) {
   const nextAction = String(application.next_action || "").trim();
   return nextAction ? `${baseNote} Next action: ${nextAction}.` : baseNote;
@@ -135,8 +154,13 @@ export default function CommandCenterPage({
 
   function handleFollowUpAction(application, action) {
     const today = new Date();
+    const availableActions = getAvailableFollowUpActions(application);
 
     if (action === "snooze-3") {
+      if (!availableActions.snooze3) {
+        return;
+      }
+
       updateFollowUp(
         application,
         formatLocalDate(addDays(today, 3)),
@@ -147,6 +171,10 @@ export default function CommandCenterPage({
     }
 
     if (action === "snooze-7") {
+      if (!availableActions.snooze7) {
+        return;
+      }
+
       updateFollowUp(
         application,
         formatLocalDate(addDays(today, 7)),
@@ -193,6 +221,7 @@ export default function CommandCenterPage({
           <CommandCenterSection
             applications={actionItems.overdue_followups}
             description="Follow-up dates before today."
+            getAvailableFollowUpActions={getAvailableFollowUpActions}
             onFollowUpAction={handleFollowUpAction}
             title="Overdue Follow-ups"
             updatingApplicationId={updatingApplicationId}
@@ -200,6 +229,7 @@ export default function CommandCenterPage({
           <CommandCenterSection
             applications={actionItems.upcoming_followups}
             description="Follow-ups due today through the next 3 days."
+            getAvailableFollowUpActions={getAvailableFollowUpActions}
             onFollowUpAction={handleFollowUpAction}
             title="Upcoming Follow-ups"
             updatingApplicationId={updatingApplicationId}
