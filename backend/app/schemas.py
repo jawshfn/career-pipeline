@@ -28,6 +28,7 @@ class ApplicationBase(BaseModel):
     date_saved: date | None = None
     date_applied: date | None = None
     follow_up_date: date | None = None
+    next_action: str | None = None
     resume_version_id: int | None = None
     notes: str | None = None
     vague_job_description: bool = False
@@ -76,6 +77,7 @@ class ApplicationUpdate(BaseModel):
     date_saved: date | None = None
     date_applied: date | None = None
     follow_up_date: date | None = None
+    next_action: str | None = None
     resume_version_id: int | None = None
     notes: str | None = None
     vague_job_description: bool | None = None

@@ -32,16 +32,17 @@ def get_db() -> Generator[Session, None, None]:
 
 def create_db_and_tables() -> None:
     Base.metadata.create_all(bind=engine)
-    add_application_red_flag_columns()
+    add_application_additive_columns()
 
 
-def add_application_red_flag_columns() -> None:
+def add_application_additive_columns() -> None:
     inspector = inspect(engine)
     if not inspector.has_table("applications"):
         return
 
     existing_columns = {column["name"] for column in inspector.get_columns("applications")}
     column_definitions = {
+        "next_action": "TEXT",
         "vague_job_description": "BOOLEAN NOT NULL DEFAULT 0",
         "unrealistic_salary": "BOOLEAN NOT NULL DEFAULT 0",
         "asks_for_payment": "BOOLEAN NOT NULL DEFAULT 0",

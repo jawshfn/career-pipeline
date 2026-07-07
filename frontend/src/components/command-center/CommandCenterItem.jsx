@@ -43,6 +43,12 @@ export default function CommandCenterItem({
             <dd>{formatDate(application.updated_at)}</dd>
           </div>
         ) : null}
+        {application.next_action ? (
+          <div className="command-center-next-action">
+            <dt>Next action</dt>
+            <dd>{application.next_action}</dd>
+          </div>
+        ) : null}
       </dl>
 
       {showFollowUpActions ? (

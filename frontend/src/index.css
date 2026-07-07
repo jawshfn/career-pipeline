@@ -1265,6 +1265,14 @@ a {
   overflow-wrap: anywhere;
 }
 
+.command-center-item-details .command-center-next-action {
+  grid-template-columns: 86px minmax(0, 1fr);
+}
+
+.command-center-next-action dd {
+  font-weight: 700;
+}
+
 .command-center-actions {
   display: flex;
   flex-wrap: wrap;

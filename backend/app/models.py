@@ -45,6 +45,7 @@ class Application(Base):
     date_saved: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
     date_applied: Mapped[date | None] = mapped_column(Date, nullable=True)
     follow_up_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    next_action: Mapped[str | None] = mapped_column(Text, nullable=True)
     resume_version_id: Mapped[int | None] = mapped_column(ForeignKey("resume_versions.id"), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     vague_job_description: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

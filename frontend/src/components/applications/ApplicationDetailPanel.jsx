@@ -14,6 +14,7 @@ const initialFormState = {
   resume_version_id: "",
   date_saved: "",
   follow_up_date: "",
+  next_action: "",
   date_applied: "",
   location: "",
   salary_min: "",
@@ -88,6 +89,7 @@ function toFormState(application) {
     resume_version_id: application.resume_version_id ? String(application.resume_version_id) : "",
     date_saved: application.date_saved || "",
     follow_up_date: application.follow_up_date || "",
+    next_action: application.next_action || "",
     date_applied: application.date_applied || "",
     location: application.location || "",
     salary_min: application.salary_min ?? "",
@@ -243,6 +245,7 @@ export default function ApplicationDetailPanel({
       date_saved: formData.date_saved,
       date_applied: formData.date_applied || null,
       follow_up_date: formData.follow_up_date || null,
+      next_action: formData.next_action.trim() || null,
       resume_version_id: formData.resume_version_id ? Number(formData.resume_version_id) : null,
       notes: formData.notes.trim() || null,
       vague_job_description: formData.vague_job_description,
@@ -428,6 +431,17 @@ export default function ApplicationDetailPanel({
                       value={formData.follow_up_date}
                       onChange={updateField}
                     />
+                  </label>
+
+                  <label className="detail-field-grid-span">
+                    Next Action
+                    <input
+                      name="next_action"
+                      value={formData.next_action}
+                      onChange={updateField}
+                      placeholder="Follow up with recruiter, prepare for interview, check portal..."
+                    />
+                    <span className="field-helper">The next thing you plan to do for this opportunity.</span>
                   </label>
                 </div>
               </div>

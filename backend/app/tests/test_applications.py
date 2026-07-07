@@ -25,6 +25,7 @@ def test_create_application(client):
     assert data["company_mismatch"] is False
     assert data["too_good_to_be_true"] is False
     assert data["red_flags_notes"] is None
+    assert data["next_action"] is None
 
 
 def test_create_application_without_status_defaults_to_saved(client):
@@ -99,6 +100,7 @@ def test_update_application_detail_fields(client):
             "employment_type": "Full-time",
             "date_applied": "2026-06-20",
             "follow_up_date": "2026-06-27",
+            "next_action": "Prepare recruiter follow-up notes.",
             "resume_version_id": resume["id"],
             "notes": "Updated through application detail panel.",
         },
@@ -117,6 +119,7 @@ def test_update_application_detail_fields(client):
     assert data["employment_type"] == "Full-time"
     assert data["date_applied"] == "2026-06-20"
     assert data["follow_up_date"] == "2026-06-27"
+    assert data["next_action"] == "Prepare recruiter follow-up notes."
     assert data["resume_version_id"] == resume["id"]
     assert data["notes"] == "Updated through application detail panel."
 
