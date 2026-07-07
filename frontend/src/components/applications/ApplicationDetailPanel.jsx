@@ -128,6 +128,7 @@ export default function ApplicationDetailPanel({
   applicationId,
   onClose,
   onSaveApplication,
+  onUnsavedChangesChange,
   resumeVersions,
 }) {
   const [formData, setFormData] = useState(initialFormState);
@@ -173,6 +174,14 @@ export default function ApplicationDetailPanel({
   }, [applicationId]);
 
   const hasUnsavedChanges = JSON.stringify(normalizeFormState(formData)) !== JSON.stringify(normalizeFormState(savedFormData));
+
+  useEffect(() => {
+    onUnsavedChangesChange?.(hasUnsavedChanges);
+
+    return () => {
+      onUnsavedChangesChange?.(false);
+    };
+  }, [hasUnsavedChanges, onUnsavedChangesChange]);
 
   function updateField(event) {
     const { checked, name, type, value } = event.target;

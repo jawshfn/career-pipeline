@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import ApplicationDetailPanel from "../components/applications/ApplicationDetailPanel.jsx";
 import ApplicationsTable from "../components/applications/ApplicationsTable.jsx";
@@ -189,9 +189,25 @@ export default function ApplicationsPage({
   resumeVersions,
 }) {
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
+  const [hasDetailUnsavedChanges, setHasDetailUnsavedChanges] = useState(false);
   const [filters, setFilters] = useState(initialFilters);
+  const detailPanelRef = useRef(null);
+  const shouldScrollToDetailRef = useRef(false);
   const filteredApplications = getFilteredApplications(applications, filters);
   const sourceOptions = getSourceOptions(applications);
+
+  function scrollDetailPanelIntoView() {
+    detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  useEffect(() => {
+    if (!selectedApplicationId || !shouldScrollToDetailRef.current) {
+      return;
+    }
+
+    shouldScrollToDetailRef.current = false;
+    requestAnimationFrame(scrollDetailPanelIntoView);
+  }, [selectedApplicationId]);
 
   function updateFilter(event) {
     const { name, value } = event.target;
@@ -200,6 +216,33 @@ export default function ApplicationsPage({
 
   function clearFilters() {
     setFilters(initialFilters);
+  }
+
+  function closeDetails() {
+    setSelectedApplicationId(null);
+    setHasDetailUnsavedChanges(false);
+  }
+
+  function openDetails(applicationId) {
+    if (
+      selectedApplicationId &&
+      selectedApplicationId !== applicationId &&
+      hasDetailUnsavedChanges &&
+      !window.confirm("You have unsaved changes. Switch applications without saving?")
+    ) {
+      return;
+    }
+
+    shouldScrollToDetailRef.current = true;
+    setHasDetailUnsavedChanges(false);
+
+    if (selectedApplicationId === applicationId) {
+      shouldScrollToDetailRef.current = false;
+      requestAnimationFrame(scrollDetailPanelIntoView);
+      return;
+    }
+
+    setSelectedApplicationId(applicationId);
   }
 
   return (
@@ -213,12 +256,15 @@ export default function ApplicationsPage({
       </header>
 
       {selectedApplicationId ? (
-        <ApplicationDetailPanel
-          applicationId={selectedApplicationId}
-          onClose={() => setSelectedApplicationId(null)}
-          onSaveApplication={onUpdateApplication}
-          resumeVersions={resumeVersions}
-        />
+        <div ref={detailPanelRef}>
+          <ApplicationDetailPanel
+            applicationId={selectedApplicationId}
+            onClose={closeDetails}
+            onSaveApplication={onUpdateApplication}
+            onUnsavedChangesChange={setHasDetailUnsavedChanges}
+            resumeVersions={resumeVersions}
+          />
+        </div>
       ) : null}
 
       <section className="panel applications-panel" aria-labelledby="applications-table-title">
@@ -309,7 +355,7 @@ export default function ApplicationsPage({
         {!isLoading && !error ? (
           <ApplicationsTable
             applications={filteredApplications}
-            onOpenDetails={setSelectedApplicationId}
+            onOpenDetails={openDetails}
             resumeVersions={resumeVersions}
           />
         ) : null}
