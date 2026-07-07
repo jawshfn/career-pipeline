@@ -130,84 +130,89 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
       ) : null}
 
       <form className="quick-add-form" onSubmit={handleSubmit}>
-        <label>
-          Company name
-          <input
-            name="company_name"
-            value={formData.company_name}
-            onChange={updateField}
-            required
-            placeholder="Example Company"
-          />
-        </label>
+        <div className="quick-add-row quick-add-row-primary">
+          <label>
+            Company name
+            <input
+              name="company_name"
+              value={formData.company_name}
+              onChange={updateField}
+              required
+              placeholder="Example Company"
+            />
+          </label>
 
-        <label>
-          Role title
-          <input
-            name="role_title"
-            value={formData.role_title}
-            onChange={updateField}
-            required
-            placeholder="Associate Software Engineer"
-          />
-        </label>
+          <label>
+            Role title
+            <input
+              name="role_title"
+              value={formData.role_title}
+              onChange={updateField}
+              required
+              placeholder="Associate Software Engineer"
+            />
+          </label>
 
-        <label>
-          Job link
-          <input
-            name="job_link"
-            value={formData.job_link}
-            onChange={updateField}
-            placeholder="https://..."
-          />
-        </label>
+          <label>
+            Job link
+            <input
+              name="job_link"
+              value={formData.job_link}
+              onChange={updateField}
+              placeholder="https://..."
+            />
+          </label>
+        </div>
 
-        <label>
-          Source
-          <select name="source" value={formData.source} onChange={updateField}>
-            {sourceOptions.map((source) => (
-              <option key={source} value={source}>
-                {source}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="quick-add-row quick-add-row-selects">
+          <label>
+            Source
+            <select name="source" value={formData.source} onChange={updateField}>
+              {sourceOptions.map((source) => (
+                <option key={source} value={source}>
+                  {source}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label>
-          Status
-          <select name="status" value={formData.status} onChange={updateField}>
-            {statusOptions.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-        </label>
+          <label>
+            Status
+            <select name="status" value={formData.status} onChange={updateField}>
+              {statusOptions.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label>
-          Resume version
-          <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
-            <option value="">No resume selected</option>
-            {resumeVersions.map((resumeVersion) => (
-              <option key={resumeVersion.id} value={resumeVersion.id}>
-                {getResumeVersionLabel(resumeVersion)}
-              </option>
-            ))}
-          </select>
-        </label>
+          <label>
+            Resume version
+            <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
+              <option value="">No resume selected</option>
+              {resumeVersions.map((resumeVersion) => (
+                <option key={resumeVersion.id} value={resumeVersion.id}>
+                  {getResumeVersionLabel(resumeVersion)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-        <label>
-          Applied date
-          <input
-            name="date_applied"
-            type="date"
-            value={formData.date_applied}
-            onChange={updateField}
-          />
-          <span className="field-helper">Use the date you actually submitted the application.</span>
-        </label>
+        <div className="quick-add-row quick-add-row-dates">
+          <label className="quick-add-date-field">
+            Applied date
+            <input
+              name="date_applied"
+              type="date"
+              value={formData.date_applied}
+              onChange={updateField}
+            />
+            <span className="field-helper">Date you submitted the application.</span>
+          </label>
 
-        <div className="follow-up-date-field">
+          <div className="follow-up-date-field">
           <label>
             Follow-up date
             <input
@@ -231,6 +236,7 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
               Clear
             </button>
           </div>
+        </div>
         </div>
 
         <label className="notes-field">
