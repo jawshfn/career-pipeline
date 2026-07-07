@@ -315,6 +315,34 @@ a {
   gap: 10px;
 }
 
+.application-view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.application-view-tab {
+  border: 1px solid #cbd6d3;
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: #287c73;
+  background: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.application-view-tab:hover {
+  border-color: #287c73;
+  background: #eef7f5;
+}
+
+.application-view-tab.is-active {
+  border-color: #287c73;
+  color: #ffffff;
+  background: #287c73;
+}
+
 .application-filters {
   display: grid;
   grid-template-columns: minmax(min(100%, 280px), 1.4fr) repeat(auto-fit, minmax(min(100%, 170px), 1fr));

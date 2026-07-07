@@ -25,6 +25,23 @@ const sortOptions = [
   { value: "status_asc", label: "Status" },
 ];
 
+const applicationViewOptions = [
+  { value: "active", label: "Active" },
+  { value: "closed", label: "Closed" },
+  { value: "all", label: "All" },
+];
+
+const activeStatuses = new Set([
+  "Saved",
+  "Applied",
+  "Assessment",
+  "Recruiter Screen",
+  "Interview",
+  "Offer",
+]);
+
+const closedStatuses = new Set(["Rejected", "Withdrawn"]);
+
 const initialFilters = {
   search: "",
   status: "all",
@@ -175,6 +192,18 @@ function getFilteredApplications(applications, filters) {
   return sortApplications(filteredApplications, filters.sortBy);
 }
 
+function getApplicationsForView(applications, applicationView) {
+  if (applicationView === "closed") {
+    return applications.filter((application) => closedStatuses.has(application.status));
+  }
+
+  if (applicationView === "all") {
+    return applications;
+  }
+
+  return applications.filter((application) => activeStatuses.has(application.status));
+}
+
 function getSourceOptions(applications) {
   return Array.from(new Set(applications.map((application) => application.source || "Other"))).sort((first, second) =>
     first.localeCompare(second),
@@ -190,11 +219,13 @@ export default function ApplicationsPage({
 }) {
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
   const [hasDetailUnsavedChanges, setHasDetailUnsavedChanges] = useState(false);
+  const [applicationView, setApplicationView] = useState("active");
   const [filters, setFilters] = useState(initialFilters);
   const detailPanelRef = useRef(null);
   const shouldScrollToDetailRef = useRef(false);
-  const filteredApplications = getFilteredApplications(applications, filters);
-  const sourceOptions = getSourceOptions(applications);
+  const viewedApplications = getApplicationsForView(applications, applicationView);
+  const filteredApplications = getFilteredApplications(viewedApplications, filters);
+  const sourceOptions = getSourceOptions(viewedApplications);
 
   function scrollDetailPanelIntoView() {
     detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -269,8 +300,23 @@ export default function ApplicationsPage({
         <div className="section-heading">
           <h2 id="applications-table-title">Application List</h2>
           <p>
-            Showing {filteredApplications.length} of {applications.length} application{applications.length === 1 ? "" : "s"}.
+            Showing {filteredApplications.length} of {viewedApplications.length} {applicationView} application
+            {viewedApplications.length === 1 ? "" : "s"}.
           </p>
+        </div>
+
+        <div className="application-view-tabs" aria-label="Application view">
+          {applicationViewOptions.map((option) => (
+            <button
+              aria-pressed={applicationView === option.value}
+              className={`application-view-tab${applicationView === option.value ? " is-active" : ""}`}
+              key={option.value}
+              type="button"
+              onClick={() => setApplicationView(option.value)}
+            >
+              {option.label}
+            </button>
+          ))}
         </div>
 
         <div className="application-filters" aria-label="Search, filter, and sort applications">
