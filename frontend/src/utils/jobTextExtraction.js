@@ -22,6 +22,8 @@ const noisyHeaderLines = new Set([
   "",
   "&nbsp;",
   "benefits",
+  "company",
+  "job",
   "pulled from the full job description",
   "1-click apply",
   "powered by real frontline workers",
@@ -49,7 +51,11 @@ function getExplicitJobLink(explicitJobLink) {
 }
 
 function getSelectedSource(explicitSource) {
-  return explicitSource || DEFAULT_APPLICATION_SOURCE;
+  return String(explicitSource || "").trim() || DEFAULT_APPLICATION_SOURCE;
+}
+
+function getSourceKey(source) {
+  return source.toLowerCase().replace(/\s+/gu, "");
 }
 
 function getCleanLines(rawText) {
@@ -71,6 +77,30 @@ function isNoisyLine(line) {
   return noisyHeaderLines.has(line.toLowerCase()) || isRatingLine(line) || isPostedAgoLine(line);
 }
 
+function getEmploymentTypeFromLine(line) {
+  if (/^full[-\s]?time$/iu.test(line)) {
+    return "Full-time";
+  }
+
+  if (/^part[-\s]?time$/iu.test(line)) {
+    return "Part-time";
+  }
+
+  if (/^(contract|contractor|freelance)$/iu.test(line)) {
+    return "Contract";
+  }
+
+  if (/^intern(ship)?$/iu.test(line)) {
+    return "Internship";
+  }
+
+  if (/^(temporary|temp)$/iu.test(line)) {
+    return "Temporary";
+  }
+
+  return "";
+}
+
 function detectLabeledValue(rawText, labels) {
   const lines = rawText.split(/\r?\n/u);
   const labelPattern = labels.map((label) => label.replace(/\s+/gu, "\\s+")).join("|");
@@ -88,29 +118,7 @@ function detectLabeledValue(rawText, labels) {
 }
 
 function detectEmploymentType(lines) {
-  const normalizedText = lines.join("\n").toLowerCase();
-
-  if (/\bfull[-\s]?time\b/u.test(normalizedText)) {
-    return "Full-time";
-  }
-
-  if (/\bpart[-\s]?time\b/u.test(normalizedText)) {
-    return "Part-time";
-  }
-
-  if (/\b(contract|contractor|freelance)\b/u.test(normalizedText)) {
-    return "Contract";
-  }
-
-  if (/\bintern(ship)?\b/u.test(normalizedText)) {
-    return "Internship";
-  }
-
-  if (/\btemporary|temp\b/u.test(normalizedText)) {
-    return "Temporary";
-  }
-
-  return "";
+  return lines.map(getEmploymentTypeFromLine).find(Boolean) || "";
 }
 
 function detectCityStateLocation(lines) {
@@ -152,18 +160,28 @@ function detectLocationHint(rawText) {
   return "";
 }
 
+function getCompensationFromLine(line) {
+  const compensationMatch = line.match(
+    /\$\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:USD\s*)?(?:k|\/hr|hr\b|an hour|per hour|a year|per year|annually)?(?:\s*(?:-|\u2013|\u2014|\u00e2\u20ac\u201c|\u00e2\u20ac\u201d|to)\s*\$?\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:k|\/hr|hr\b|an hour|per hour|a year|per year|annually)?)?/iu,
+  );
+
+  if (compensationMatch) {
+    return normalizeWhitespace(compensationMatch[0]);
+  }
+
+  if (/^(competitive salary|depends on experience|compensation depends on experience)$/iu.test(line)) {
+    return line;
+  }
+
+  return "";
+}
+
 function detectCompensation(lines) {
   for (const line of lines) {
-    const compensationMatch = line.match(
-      /\$\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:USD\s*)?(?:k|\/hr|hr\b|an hour|per hour|a year|per year|annually)?(?:\s*(?:-|\u2013|\u2014|\u00e2\u20ac\u201c|\u00e2\u20ac\u201d|to)\s*\$?\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:k|\/hr|hr\b|an hour|per hour|a year|per year|annually)?)?/iu,
-    );
+    const compensation = getCompensationFromLine(line);
 
-    if (compensationMatch) {
-      return normalizeWhitespace(compensationMatch[0]);
-    }
-
-    if (/^(competitive salary|depends on experience|compensation depends on experience)$/iu.test(line)) {
-      return line;
+    if (compensation) {
+      return compensation;
     }
   }
 
@@ -200,10 +218,24 @@ function getHeaderLines(rawText) {
   return headerLines.filter((line) => !isNoisyLine(line));
 }
 
-function extractIndeedFields(rawText) {
+function isLocationLine(line) {
+  return Boolean(detectCityStateLocation([line]));
+}
+
+function isCompanyCandidateLine(line) {
+  return (
+    Boolean(line) &&
+    !isNoisyLine(line) &&
+    !isLocationLine(line) &&
+    !getCompensationFromLine(line) &&
+    !getEmploymentTypeFromLine(line)
+  );
+}
+
+function extractHeaderFields(rawText) {
   const headerLines = getHeaderLines(rawText);
   const roleTitle = normalizeTitle(headerLines[0] || "");
-  const companyName = headerLines[1] || "";
+  const companyName = headerLines.slice(1).find(isCompanyCandidateLine) || "";
   const location = detectCityStateLocation(headerLines.slice(2)) || detectLocationHint(rawText);
 
   return {
@@ -212,27 +244,25 @@ function extractIndeedFields(rawText) {
     location,
     compensation: detectCompensation(headerLines.slice(2, 8)),
     employment_type: detectEmploymentType(headerLines.slice(2, 8)),
+  };
+}
+
+function extractIndeedFields(rawText) {
+  return {
+    ...extractHeaderFields(rawText),
     notes: buildSourceSpecificNotes(rawText, /^\s*Full job description\s*$/imu),
   };
 }
 
 function extractZipRecruiterFields(rawText) {
-  const headerLines = getHeaderLines(rawText);
-  const roleTitle = normalizeTitle(headerLines[0] || "");
-  const companyName = headerLines[1] || "";
-  const location = detectCityStateLocation(headerLines.slice(2)) || detectLocationHint(rawText);
-
   return {
-    company_name: companyName,
-    role_title: roleTitle,
-    location,
-    compensation: detectCompensation(headerLines.slice(2, 8)),
-    employment_type: detectEmploymentType(headerLines.slice(2, 8)),
+    ...extractHeaderFields(rawText),
     notes: buildSourceSpecificNotes(rawText, /^\s*Job description\s*$/imu),
   };
 }
 
 function getGenericFallbackFields(rawText) {
+  const headerFields = extractHeaderFields(rawText);
   const companyName = detectLabeledValue(rawText, ["Company", "Company name"]);
   const roleTitle = detectLabeledValue(rawText, [
     "Role",
@@ -243,11 +273,9 @@ function getGenericFallbackFields(rawText) {
   ]);
 
   return {
-    company_name: companyName,
-    role_title: roleTitle,
-    location: detectLocationHint(rawText),
-    compensation: "",
-    employment_type: "",
+    ...headerFields,
+    company_name: headerFields.company_name || companyName,
+    role_title: headerFields.role_title || roleTitle,
     notes: buildGenericNotes(rawText),
   };
 }
@@ -256,12 +284,13 @@ export function buildSmartCaptureReviewState(captureData) {
   const rawText = captureData.rawText || "";
   const jobLink = getExplicitJobLink(captureData.jobLink || "");
   const source = getSelectedSource(captureData.source);
+  const sourceKey = getSourceKey(source);
 
   let extractedFields = getGenericFallbackFields(rawText);
 
-  if (source === "Indeed") {
+  if (sourceKey === "indeed") {
     extractedFields = { ...extractedFields, ...extractIndeedFields(rawText) };
-  } else if (source === "ZipRecruiter") {
+  } else if (sourceKey === "ziprecruiter") {
     extractedFields = { ...extractedFields, ...extractZipRecruiterFields(rawText) };
   }
 
