@@ -43,6 +43,7 @@ The product is built around a common job-search problem: opportunities arrive fr
 ### Follow-Up Command Center
 
 - Daily Command Center for overdue follow-ups, upcoming follow-ups, and stale active applications
+- Action-item sections are backend-derived from `/api/applications/action-items`
 - Next Action appears on Command Center cards when present
 - Quick follow-up actions: Snooze 3 days, Snooze 1 week, and Clear follow-up
 - Follow-up quick actions log Activity Timeline entries and prevent no-op snoozes

@@ -1,11 +1,16 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { createApplicationActivity } from "../api/applicationActivitiesApi.js";
+import { getApplicationActionItems } from "../api/applicationsApi.js";
 import CommandCenterSection from "../components/command-center/CommandCenterSection.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
-const staleExcludedStatuses = new Set(["Offer", "Rejected", "Withdrawn", "Archived"]);
+const emptyActionItems = {
+  overdue_followups: [],
+  upcoming_followups: [],
+  stale_applications: [],
+};
 
 function formatLocalDate(date) {
   const year = date.getFullYear();
@@ -18,19 +23,6 @@ function addDays(date, days) {
   const nextDate = new Date(date);
   nextDate.setDate(nextDate.getDate() + days);
   return nextDate;
-}
-
-function parseTimestamp(value) {
-  if (!value) {
-    return null;
-  }
-
-  const timestamp = Date.parse(value);
-  return Number.isNaN(timestamp) ? null : timestamp;
-}
-
-function compareDateValues(firstValue, secondValue) {
-  return String(firstValue || "").localeCompare(String(secondValue || ""));
 }
 
 function isSnoozeLaterThanCurrent(application, targetDateValue) {
@@ -57,65 +49,41 @@ function getFollowUpActivityNote(baseNote, application) {
   return nextAction ? `${baseNote} Next action: ${nextAction}.` : baseNote;
 }
 
-function getActionItems(applications) {
-  const today = new Date();
-  const todayValue = formatLocalDate(today);
-  const upcomingCutoffValue = formatLocalDate(addDays(today, 3));
-  const staleCutoffTimestamp = addDays(today, -14).getTime();
-
-  const overdueFollowups = applications
-    .filter((application) => application.follow_up_date && application.follow_up_date < todayValue)
-    .sort(
-      (firstApplication, secondApplication) =>
-        compareDateValues(firstApplication.follow_up_date, secondApplication.follow_up_date) ||
-        compareDateValues(secondApplication.updated_at, firstApplication.updated_at),
-    );
-
-  const upcomingFollowups = applications
-    .filter(
-      (application) =>
-        application.follow_up_date &&
-        application.follow_up_date >= todayValue &&
-        application.follow_up_date <= upcomingCutoffValue,
-    )
-    .sort(
-      (firstApplication, secondApplication) =>
-        compareDateValues(firstApplication.follow_up_date, secondApplication.follow_up_date) ||
-        compareDateValues(secondApplication.updated_at, firstApplication.updated_at),
-    );
-
-  const staleApplications = applications
-    .filter((application) => {
-      const updatedTimestamp = parseTimestamp(application.updated_at);
-      return (
-        !application.follow_up_date &&
-        !staleExcludedStatuses.has(application.status) &&
-        updatedTimestamp !== null &&
-        updatedTimestamp < staleCutoffTimestamp
-      );
-    })
-    .sort((firstApplication, secondApplication) =>
-      compareDateValues(firstApplication.updated_at, secondApplication.updated_at),
-    );
-
-  return {
-    overdue_followups: overdueFollowups,
-    upcoming_followups: upcomingFollowups,
-    stale_applications: staleApplications,
-  };
-}
-
-export default function CommandCenterPage({
-  applications,
-  error,
-  isLoading,
-  onUpdateApplication,
-}) {
+export default function CommandCenterPage({ onUpdateApplication }) {
+  const [actionItems, setActionItems] = useState(emptyActionItems);
+  const [actionItemsError, setActionItemsError] = useState("");
+  const [isActionItemsLoading, setIsActionItemsLoading] = useState(true);
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [updatingApplicationId, setUpdatingApplicationId] = useState(null);
   const actionInFlightRef = useRef(new Set());
-  const actionItems = useMemo(() => getActionItems(applications), [applications]);
+
+  const loadActionItems = useCallback(async ({ showLoading = true } = {}) => {
+    if (showLoading) {
+      setIsActionItemsLoading(true);
+    }
+    setActionItemsError("");
+
+    try {
+      const nextActionItems = await getApplicationActionItems();
+      setActionItems({
+        overdue_followups: nextActionItems.overdue_followups || [],
+        upcoming_followups: nextActionItems.upcoming_followups || [],
+        stale_applications: nextActionItems.stale_applications || [],
+      });
+    } catch (error) {
+      setActionItems(emptyActionItems);
+      setActionItemsError(error.message || "Could not load Command Center action items.");
+    } finally {
+      if (showLoading) {
+        setIsActionItemsLoading(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    loadActionItems();
+  }, [loadActionItems]);
 
   async function logFollowUpActivity(application, note) {
     await createApplicationActivity(application.id, {
@@ -135,8 +103,11 @@ export default function CommandCenterPage({
     setActionMessage("");
     setUpdatingApplicationId(application.id);
 
+    let didUpdate = false;
+
     try {
       await onUpdateApplication(application.id, { follow_up_date: nextFollowUpDate });
+      didUpdate = true;
       setActionMessage(message);
 
       try {
@@ -147,6 +118,9 @@ export default function CommandCenterPage({
     } catch (updateError) {
       setActionError(updateError.message || "Could not update follow-up date.");
     } finally {
+      if (didUpdate) {
+        await loadActionItems({ showLoading: false });
+      }
       actionInFlightRef.current.delete(application.id);
       setUpdatingApplicationId(null);
     }
@@ -202,21 +176,21 @@ export default function CommandCenterPage({
         </div>
       </header>
 
-      {isLoading ? <LoadingState message="Loading action items..." /> : null}
-      {!isLoading && error ? <ErrorMessage message={error} /> : null}
-      {!isLoading && actionError ? <ErrorMessage message={actionError} /> : null}
-      {!isLoading && actionMessage ? (
+      {isActionItemsLoading ? <LoadingState message="Loading action items..." /> : null}
+      {!isActionItemsLoading && actionItemsError ? <ErrorMessage message={actionItemsError} /> : null}
+      {!isActionItemsLoading && actionError ? <ErrorMessage message={actionError} /> : null}
+      {!isActionItemsLoading && actionMessage ? (
         <div className="message message-success command-center-message" role="status">
           {actionMessage}
         </div>
       ) : null}
-      {!isLoading && !error && !hasActionItems ? (
+      {!isActionItemsLoading && !actionItemsError && !hasActionItems ? (
         <div className="empty-state">
           <h3>No urgent follow-ups today</h3>
           <p>Add follow-up dates and next actions to keep your search moving.</p>
         </div>
       ) : null}
-      {!isLoading && !error && hasActionItems ? (
+      {!isActionItemsLoading && !actionItemsError && hasActionItems ? (
         <div className="command-center-grid">
           <CommandCenterSection
             accent="overdue"

@@ -155,7 +155,7 @@ Status: implemented
 
 ### GET /api/applications/action-items
 
-Purpose: power the Daily Command Center.
+Purpose: power the Daily Command Center as the source of truth for overdue follow-ups, upcoming follow-ups, and stale applications.
 
 Rules:
 

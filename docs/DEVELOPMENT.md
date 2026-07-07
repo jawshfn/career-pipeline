@@ -160,6 +160,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 
 ### Command Center Follow-Up Actions
 
+- Command Center action-item sections load from `/api/applications/action-items`.
 - Overdue follow-ups appear in the overdue section.
 - Today through three-days-out follow-ups appear in upcoming.
 - Four-days-out follow-ups do not appear in Command Center.
@@ -173,6 +174,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - No-op snooze attempts do not create duplicate or pointless Activity Timeline entries.
 - Clear follow-up remains available when a follow-up date exists.
 - Follow-up quick actions update Applications and Dashboard after navigation or refresh.
+- Follow-up quick actions refresh backend action items so cards move or disappear according to backend rules.
 
 ### Dashboard Metrics
 

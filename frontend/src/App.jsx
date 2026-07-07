@@ -104,9 +104,6 @@ export default function App() {
     <AppLayout activePage={activePage} onNavigate={setActivePage}>
       {activePage === "command-center" ? (
         <CommandCenterPage
-          applications={activeApplications}
-          error={loadError}
-          isLoading={isLoading}
           onUpdateApplication={handleUpdateApplication}
         />
       ) : activePage === "dashboard" ? (

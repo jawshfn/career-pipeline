@@ -51,6 +51,7 @@ The current prototype includes:
 - Applied-date behavior that distinguishes saved date from the date the user actually applied
 - Responsive grouped Pipeline with status filtering and persisted status updates
 - Daily Command Center with overdue follow-ups, upcoming follow-ups due within 3 days, stale active applications, and follow-up quick actions
+- Backend-derived Command Center action-item rules from `/api/applications/action-items`
 - Follow-up quick actions for Snooze 3 days, Snooze 1 week, and Clear follow-up
 - Activity Timeline entries for manual activity and follow-up quick-action outcomes
 - No-op snooze prevention when a snooze action would not move the follow-up date later
@@ -160,6 +161,8 @@ It shows:
 - Overdue follow-ups
 - Upcoming follow-ups due today through the next 3 days
 - Stale active applications without a follow-up and without a recent update
+
+These action-item sections come from the backend `/api/applications/action-items` endpoint so follow-up and stale-application rules stay consistent across the app.
 
 Cards show enough context to act quickly, including company, role, source, status, follow-up date, and Next Action when present.
 
