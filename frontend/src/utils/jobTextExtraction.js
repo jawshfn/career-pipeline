@@ -11,9 +11,8 @@ const initialReviewState = {
   status: SAVED_APPLICATION_STATUS,
   resume_version_id: "",
   location: "",
+  compensation: "",
   employment_type: "",
-  salary_min: "",
-  salary_max: "",
   follow_up_date: "",
   next_action: "",
   notes: "",
@@ -28,10 +27,6 @@ const noisyHeaderLines = new Set([
   "powered by real frontline workers",
   "view more about working here",
 ]);
-
-function stripTrailingUrlPunctuation(value) {
-  return value.replace(/[),.;\]]+$/u, "");
-}
 
 function normalizeWhitespace(value) {
   return value.replace(/\s+/gu, " ").trim();
@@ -49,55 +44,12 @@ function normalizeTitle(value) {
   );
 }
 
-function normalizeSalaryNumber(value) {
-  const numericValue = Number(value.replace(/,/gu, ""));
-  return Number.isFinite(numericValue) ? String(numericValue) : "";
+function getExplicitJobLink(explicitJobLink) {
+  return explicitJobLink.trim();
 }
 
-function detectJobLink(rawText, explicitJobLink) {
-  const trimmedLink = explicitJobLink.trim();
-
-  if (trimmedLink) {
-    return stripTrailingUrlPunctuation(trimmedLink);
-  }
-
-  const detectedLink = rawText.match(/https?:\/\/[^\s<>"']+/iu)?.[0] || "";
-  return stripTrailingUrlPunctuation(detectedLink);
-}
-
-function getHostname(jobLink) {
-  try {
-    return new URL(jobLink).hostname.toLowerCase();
-  } catch {
-    return "";
-  }
-}
-
-function detectSource(rawText, jobLink, explicitSource) {
-  const hostname = getHostname(jobLink || detectJobLink(rawText, ""));
-  const selectedSource = explicitSource || DEFAULT_APPLICATION_SOURCE;
-
-  if (selectedSource !== DEFAULT_APPLICATION_SOURCE) {
-    return selectedSource;
-  }
-
-  if (hostname.includes("indeed.com")) {
-    return "Indeed";
-  }
-
-  if (hostname.includes("ziprecruiter.com")) {
-    return "ZipRecruiter";
-  }
-
-  if (hostname.includes("linkedin.com")) {
-    return "LinkedIn";
-  }
-
-  if (hostname) {
-    return "Company Website";
-  }
-
-  return selectedSource;
+function getSelectedSource(explicitSource) {
+  return explicitSource || DEFAULT_APPLICATION_SOURCE;
 }
 
 function getCleanLines(rawText) {
@@ -135,8 +87,8 @@ function detectLabeledValue(rawText, labels) {
   return "";
 }
 
-function detectEmploymentType(rawText) {
-  const normalizedText = rawText.toLowerCase();
+function detectEmploymentType(lines) {
+  const normalizedText = lines.join("\n").toLowerCase();
 
   if (/\bfull[-\s]?time\b/u.test(normalizedText)) {
     return "Full-time";
@@ -200,56 +152,22 @@ function detectLocationHint(rawText) {
   return "";
 }
 
-function maybeAnnualSalary(value, hasKMarker, rawText) {
-  const normalizedValue = normalizeSalaryNumber(value);
+function detectCompensation(lines) {
+  for (const line of lines) {
+    const compensationMatch = line.match(
+      /\$\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:USD\s*)?(?:k|\/hr|hr\b|an hour|per hour|a year|per year|annually)?(?:\s*(?:-|\u2013|\u2014|\u00e2\u20ac\u201c|\u00e2\u20ac\u201d|to)\s*\$?\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:k|\/hr|hr\b|an hour|per hour|a year|per year|annually)?)?/iu,
+    );
 
-  if (!normalizedValue) {
-    return "";
+    if (compensationMatch) {
+      return normalizeWhitespace(compensationMatch[0]);
+    }
+
+    if (/^(competitive salary|depends on experience|compensation depends on experience)$/iu.test(line)) {
+      return line;
+    }
   }
 
-  const numericValue = Number(normalizedValue);
-  const hasHourlyUnit = /\b(hour|hourly|hr|per hour)\b/iu.test(rawText);
-
-  if (hasKMarker) {
-    return String(numericValue * 1000);
-  }
-
-  return hasHourlyUnit ? normalizedValue : normalizedValue;
-}
-
-function detectSalaryRange(rawText) {
-  if (!/(salary|compensation|\$)/iu.test(rawText)) {
-    return { salary_min: "", salary_max: "" };
-  }
-
-  const salaryRangeMatch = rawText.match(
-    /\$\s*(\d+(?:,\d{3})?(?:\.\d{1,2})?)\s*(k)?\s*(?:-|\u2013|\u2014|\u00e2\u20ac\u201c|\u00e2\u20ac\u201d|to)\s*\$?\s*(\d+(?:,\d{3})?(?:\.\d{1,2})?)\s*(k)?(?:\s*(?:a year|per year|annually|an hour|per hour|\/hr|hr))?/iu,
-  );
-
-  if (salaryRangeMatch) {
-    const [, minimum, minimumKMarker, maximum, maximumKMarker] = salaryRangeMatch;
-
-    return {
-      salary_min: maybeAnnualSalary(minimum, Boolean(minimumKMarker || maximumKMarker), rawText),
-      salary_max: maybeAnnualSalary(maximum, Boolean(maximumKMarker || minimumKMarker), rawText),
-    };
-  }
-
-  const singleSalaryMatch = rawText.match(
-    /\$\s*(\d+(?:,\d{3})?(?:\.\d{1,2})?)\s*(k)?\s*(?:USD\s*)?(?:\/hr|hr\b|an hour|per hour|a year|per year|annually)?/iu,
-  );
-
-  if (!singleSalaryMatch) {
-    return { salary_min: "", salary_max: "" };
-  }
-
-  const [, salaryValue, kMarker] = singleSalaryMatch;
-  const normalizedSalary = maybeAnnualSalary(salaryValue, Boolean(kMarker), rawText);
-
-  return {
-    salary_min: normalizedSalary,
-    salary_max: normalizedSalary,
-  };
+  return "";
 }
 
 function buildGenericNotes(rawText) {
@@ -273,9 +191,13 @@ function buildSourceSpecificNotes(rawText, headingPattern) {
 }
 
 function getHeaderLines(rawText) {
-  return getCleanLines(rawText)
-    .map(normalizeBulletSeparators)
-    .filter((line) => !isNoisyLine(line));
+  const lines = getCleanLines(rawText).map(normalizeBulletSeparators);
+  const descriptionStartIndex = lines.findIndex((line) =>
+    /^(full job description|job description)$/iu.test(line),
+  );
+  const headerLines = descriptionStartIndex >= 0 ? lines.slice(0, descriptionStartIndex) : lines;
+
+  return headerLines.filter((line) => !isNoisyLine(line));
 }
 
 function extractIndeedFields(rawText) {
@@ -288,7 +210,8 @@ function extractIndeedFields(rawText) {
     company_name: companyName,
     role_title: roleTitle,
     location,
-    employment_type: detectEmploymentType(rawText),
+    compensation: detectCompensation(headerLines.slice(2, 8)),
+    employment_type: detectEmploymentType(headerLines.slice(2, 8)),
     notes: buildSourceSpecificNotes(rawText, /^\s*Full job description\s*$/imu),
   };
 }
@@ -303,7 +226,8 @@ function extractZipRecruiterFields(rawText) {
     company_name: companyName,
     role_title: roleTitle,
     location,
-    employment_type: detectEmploymentType(rawText),
+    compensation: detectCompensation(headerLines.slice(2, 8)),
+    employment_type: detectEmploymentType(headerLines.slice(2, 8)),
     notes: buildSourceSpecificNotes(rawText, /^\s*Job description\s*$/imu),
   };
 }
@@ -322,16 +246,16 @@ function getGenericFallbackFields(rawText) {
     company_name: companyName,
     role_title: roleTitle,
     location: detectLocationHint(rawText),
-    employment_type: detectEmploymentType(rawText),
+    compensation: "",
+    employment_type: "",
     notes: buildGenericNotes(rawText),
   };
 }
 
 export function buildSmartCaptureReviewState(captureData) {
   const rawText = captureData.rawText || "";
-  const jobLink = detectJobLink(rawText, captureData.jobLink || "");
-  const source = detectSource(rawText, jobLink, captureData.source);
-  const salaryRange = detectSalaryRange(rawText);
+  const jobLink = getExplicitJobLink(captureData.jobLink || "");
+  const source = getSelectedSource(captureData.source);
 
   let extractedFields = getGenericFallbackFields(rawText);
 
@@ -346,7 +270,5 @@ export function buildSmartCaptureReviewState(captureData) {
     ...extractedFields,
     job_link: jobLink,
     source,
-    salary_min: salaryRange.salary_min,
-    salary_max: salaryRange.salary_max,
   };
 }

@@ -135,6 +135,7 @@ Status: started
 
 - Phase 9.0: add Smart Capture paste-review workflow to Quick Add without AI integration
 - Phase 9.1: improve source-aware rule-based extraction for common job-board pasted text
+- Phase 9.2: simplify Smart Capture extraction and add flexible compensation capture
 
 ## Near-Term Future Work
 

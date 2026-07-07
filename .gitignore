@@ -227,3 +227,4 @@ __marimo__/
 # Private planning notes
 private/
 *.private.md
+local-examples/

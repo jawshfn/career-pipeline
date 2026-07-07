@@ -40,6 +40,7 @@ class Application(Base):
     source: Mapped[str] = mapped_column(String(80), default="Other", nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(40), default=SAVED_APPLICATION_STATUS, nullable=False, index=True)
     location: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    compensation: Mapped[str | None] = mapped_column(String(160), nullable=True)
     salary_min: Mapped[float | None] = mapped_column(Float, nullable=True)
     salary_max: Mapped[float | None] = mapped_column(Float, nullable=True)
     employment_type: Mapped[str | None] = mapped_column(String(80), nullable=True)

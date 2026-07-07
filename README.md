@@ -12,7 +12,7 @@ The product is built around a common job-search problem: opportunities arrive fr
 
 - Dedicated Quick Add page for quickly saving a job opportunity
 - Manual Entry and Paste Job Text modes
-- Smart Capture paste-review workflow with source-aware rule-based suggestions before saving
+- Smart Capture paste-review workflow with conservative rule-based suggestions before saving
 - Optional status, resume version, applied date, follow-up date, source, job link, and notes
 - Follow-up presets for common next-step dates
 - Applied-date defaulting when a user selects Applied or a later status and no applied date is set
@@ -29,7 +29,7 @@ The product is built around a common job-search problem: opportunities arrive fr
 ### Application Detail
 
 - Tabbed detail panel for Overview, Dates & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
-- Detail editing for company, role, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact context, prep notes, location, salary range, employment type, notes, and red flags
+- Detail editing for company, role, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact context, prep notes, location, compensation, salary range, employment type, notes, and red flags
 - Clear applied-date semantics: `date_saved` is when the job was added to Career Pipeline; `date_applied` is when the user actually applied
 - Existing applied dates are not overwritten automatically
 - Unsaved-change warnings when closing or switching selected applications
@@ -139,7 +139,7 @@ Docs-only changes do not require tests. Cross-stack product changes should run b
 
 Career Pipeline is a working local-first prototype with a FastAPI backend, SQLite database, React/Vite frontend, backend pytest coverage, and GitHub Actions CI. It supports quick capture, application management, tabbed detail editing, pipeline status updates, follow-up and status-change activity logging, dashboard effectiveness metrics, resume-version management, red-flag tracking, next actions, and activity timelines.
 
-Deployment, authentication, AI features, scraping, browser extension workflows, and advanced analytics are not implemented. Smart Capture uses deterministic, source-aware paste-review helpers today; AI-assisted extraction is an optional future direction rather than a current product claim.
+Deployment, authentication, AI features, scraping, browser extension workflows, and advanced analytics are not implemented. Smart Capture uses conservative deterministic paste-review helpers today; AI-assisted extraction is an optional future direction rather than a current product claim.
 
 ## Documentation
 

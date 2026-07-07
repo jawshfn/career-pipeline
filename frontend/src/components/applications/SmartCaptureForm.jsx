@@ -20,15 +20,6 @@ function getResumeVersionLabel(resumeVersion) {
     : resumeVersion.name;
 }
 
-function numberOrNull(value) {
-  if (value === "") {
-    return null;
-  }
-
-  const numericValue = Number(value);
-  return Number.isFinite(numericValue) ? numericValue : null;
-}
-
 export default function SmartCaptureForm({ resumeVersions, onCreateApplication, onCreateSuccess }) {
   const [captureData, setCaptureData] = useState(initialCaptureState);
   const [reviewData, setReviewData] = useState(null);
@@ -65,8 +56,7 @@ export default function SmartCaptureForm({ resumeVersions, onCreateApplication, 
       resume_version_id: reviewData.resume_version_id ? Number(reviewData.resume_version_id) : null,
       location: reviewData.location.trim() || null,
       employment_type: reviewData.employment_type || null,
-      salary_min: numberOrNull(reviewData.salary_min),
-      salary_max: numberOrNull(reviewData.salary_max),
+      compensation: reviewData.compensation.trim() || null,
       follow_up_date: reviewData.follow_up_date || null,
       next_action: reviewData.next_action.trim() || null,
       notes: reviewData.notes.trim() || null,
@@ -248,30 +238,14 @@ export default function SmartCaptureForm({ resumeVersions, onCreateApplication, 
             </label>
           </div>
 
-          <div className="quick-add-row smart-capture-salary-row">
+          <div className="quick-add-row smart-capture-compensation-row">
             <label>
-              Salary min
+              Compensation
               <input
-                name="salary_min"
-                type="number"
-                min="0"
-                step="1000"
-                value={reviewData.salary_min}
+                name="compensation"
+                value={reviewData.compensation}
                 onChange={updateReviewField}
-                placeholder="70000"
-              />
-            </label>
-
-            <label>
-              Salary max
-              <input
-                name="salary_max"
-                type="number"
-                min="0"
-                step="1000"
-                value={reviewData.salary_max}
-                onChange={updateReviewField}
-                placeholder="90000"
+                placeholder="$29/hr, $60,000 - $70,000 a year, competitive"
               />
             </label>
 

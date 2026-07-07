@@ -123,7 +123,9 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Paste Job Text prepares a review form without creating an application.
 - Smart Capture review fields can be edited before Save application creates the record.
 - Smart Capture notes include the pasted job text.
-- Smart Capture extracts useful Indeed and ZipRecruiter header fields without adding AI claims or auto-saving.
+- Smart Capture leaves Job link blank unless the user enters an explicit link.
+- Smart Capture keeps Source user-selected instead of inferring it from pasted URLs.
+- Smart Capture captures obvious header-level compensation as editable text instead of numeric salary guesses.
 
 ### Applications Filters And Details
 

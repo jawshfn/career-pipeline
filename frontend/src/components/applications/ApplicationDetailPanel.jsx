@@ -29,6 +29,7 @@ const initialFormState = {
   contact_info: "",
   prep_notes: "",
   location: "",
+  compensation: "",
   salary_min: "",
   salary_max: "",
   employment_type: "",
@@ -67,6 +68,7 @@ function toFormState(application) {
     contact_info: application.contact_info || "",
     prep_notes: application.prep_notes || "",
     location: application.location || "",
+    compensation: application.compensation || "",
     salary_min: application.salary_min ?? "",
     salary_max: application.salary_max ?? "",
     employment_type: application.employment_type || "",
@@ -214,6 +216,7 @@ export default function ApplicationDetailPanel({
       source: formData.source,
       status: formData.status,
       location: formData.location.trim() || null,
+      compensation: formData.compensation.trim() || null,
       salary_min: numberOrNull(formData.salary_min),
       salary_max: numberOrNull(formData.salary_max),
       employment_type: formData.employment_type || null,
@@ -436,6 +439,16 @@ export default function ApplicationDetailPanel({
                       value={formData.location}
                       onChange={updateField}
                       placeholder="Remote, city, or region"
+                    />
+                  </label>
+
+                  <label>
+                    Compensation
+                    <input
+                      name="compensation"
+                      value={formData.compensation}
+                      onChange={updateField}
+                      placeholder="$70,000 - $90,000, $29/hr, competitive"
                     />
                   </label>
 

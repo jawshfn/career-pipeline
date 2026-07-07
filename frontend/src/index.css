@@ -200,7 +200,7 @@ a {
 }
 
 .smart-capture-detail-row,
-.smart-capture-salary-row {
+.smart-capture-compensation-row {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
@@ -2391,7 +2391,7 @@ textarea:focus-visible {
   .quick-add-row-primary,
   .quick-add-row-selects,
   .smart-capture-detail-row,
-  .smart-capture-salary-row {
+  .smart-capture-compensation-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -2437,7 +2437,7 @@ textarea:focus-visible {
   .quick-add-row-dates,
   .smart-capture-source-row,
   .smart-capture-detail-row,
-  .smart-capture-salary-row {
+  .smart-capture-compensation-row {
     grid-template-columns: 1fr;
   }
 

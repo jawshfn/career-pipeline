@@ -45,7 +45,7 @@ The current prototype includes:
 
 - Dedicated Quick Add page for lightweight opportunity capture
 - Quick Add modes for Manual Entry and Smart Capture paste-review
-- Deterministic, source-aware Smart Capture helpers that prepare editable suggested fields from pasted job text before save
+- Deterministic Smart Capture helpers that prepare conservative editable suggested fields from pasted job text before save
 - Application create, list, update, detail editing, and archive behavior
 - Applications page with Active, Closed, and All views plus search, filters, sorting, table previews, and detail access
 - Application Detail tabs for Overview, Dates & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
@@ -97,7 +97,7 @@ Manual Entry fields include:
 
 Follow-up presets help schedule common dates quickly. If the user selects Applied or a later status and Applied Date is empty, the frontend can default Applied Date to today. Existing manually entered applied dates are not overwritten.
 
-Smart Capture is an additional paste-review workflow. The user pastes a job post, recruiter message, or copied listing text, optionally adds a job link and source, then prepares a review form. Rule-based suggestions can include job link, source, role title, company name, location hint, employment type, salary range, and notes containing the relevant pasted text. Source-aware rules currently improve common Indeed and ZipRecruiter pasted text. The user must review and edit the fields before saving. AI-assisted extraction is not implemented yet.
+Smart Capture is an additional paste-review workflow. The user pastes a job post, recruiter message, or copied listing text, optionally adds a job link and source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, and notes containing the relevant pasted text. Job link and source stay user-controlled rather than being guessed from arbitrary pasted URLs. The user must review and edit the fields before saving. AI-assisted extraction is not implemented yet.
 
 After saving, the application appears in Applications, Pipeline, Dashboard metrics, and other relevant views. The user can open Application Detail later to add richer information.
 
@@ -128,7 +128,7 @@ Current tabs:
 - Red Flags
 - Activity
 
-Editable areas include company name, role title, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact name, contact info, prep notes, location, salary range, employment type, notes, red flags, and red-flag notes.
+Editable areas include company name, role title, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact name, contact info, prep notes, location, compensation, salary range, employment type, notes, red flags, and red-flag notes.
 
 `date_saved` means the date the job was added to Career Pipeline. `date_applied` means the date the user actually submitted the application. Changing status to Applied or later can default an empty Applied Date, but existing Applied Date values are not automatically overwritten or cleared.
 

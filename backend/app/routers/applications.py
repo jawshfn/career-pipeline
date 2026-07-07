@@ -69,6 +69,9 @@ def list_applications(
             or_(
                 Application.company_name.ilike(search_pattern),
                 Application.role_title.ilike(search_pattern),
+                Application.source.ilike(search_pattern),
+                Application.location.ilike(search_pattern),
+                Application.compensation.ilike(search_pattern),
                 Application.notes.ilike(search_pattern),
             )
         )

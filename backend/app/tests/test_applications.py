@@ -32,6 +32,7 @@ def test_create_application(client):
     assert data["too_good_to_be_true"] is False
     assert data["red_flags_notes"] is None
     assert data["next_action"] is None
+    assert data["compensation"] is None
     assert data["contact_name"] is None
     assert data["contact_info"] is None
     assert data["prep_notes"] is None
@@ -150,6 +151,7 @@ def test_update_application_detail_fields(client):
             "source": "Company Website",
             "status": "Assessment",
             "location": "Remote",
+            "compensation": "$62,000 - $78,000 a year",
             "salary_min": 62000,
             "salary_max": 78000,
             "employment_type": "Full-time",
@@ -172,6 +174,7 @@ def test_update_application_detail_fields(client):
     assert data["source"] == "Company Website"
     assert data["status"] == "Assessment"
     assert data["location"] == "Remote"
+    assert data["compensation"] == "$62,000 - $78,000 a year"
     assert data["salary_min"] == 62000
     assert data["salary_max"] == 78000
     assert data["employment_type"] == "Full-time"
@@ -187,6 +190,7 @@ def test_update_application_detail_fields(client):
     get_response = client.get(f"/api/applications/{created['id']}")
     assert get_response.status_code == 200
     saved = get_response.json()
+    assert saved["compensation"] == "$62,000 - $78,000 a year"
     assert saved["contact_name"] == "Alex Recruiter"
     assert saved["contact_info"] == "alex.recruiter@example.com"
     assert saved["prep_notes"] == "Review backend project talking points before the screen."
@@ -279,7 +283,13 @@ def test_archived_application_cannot_be_restored_with_status_patch(client):
 
 def test_search_and_filter_applications(client):
     create_application(client, company_name="Northstar Labs", source="LinkedIn", status="Applied")
-    create_application(client, company_name="Cedar Metrics", source="Referral", status="Interview")
+    create_application(
+        client,
+        company_name="Cedar Metrics",
+        compensation="Competitive salary",
+        source="Referral",
+        status="Interview",
+    )
 
     search_response = client.get("/api/applications?search=cedar")
     assert search_response.status_code == 200
@@ -290,6 +300,11 @@ def test_search_and_filter_applications(client):
     assert filter_response.status_code == 200
     assert len(filter_response.json()) == 1
     assert filter_response.json()[0]["status"] == "Applied"
+
+    compensation_search_response = client.get("/api/applications?search=competitive")
+    assert compensation_search_response.status_code == 200
+    assert len(compensation_search_response.json()) == 1
+    assert compensation_search_response.json()[0]["company_name"] == "Cedar Metrics"
 
 
 def test_invalid_status_validation(client):

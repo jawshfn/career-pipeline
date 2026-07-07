@@ -54,6 +54,7 @@ function matchesSearch(application, searchTerm) {
     application.role_title,
     application.source,
     application.location,
+    application.compensation,
     application.notes,
   ].some((value) => normalizeSearchValue(value).includes(searchTerm));
 }
