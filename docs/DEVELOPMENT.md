@@ -178,6 +178,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 
 ### Dashboard Metrics
 
+- Dashboard metrics load from `/api/dashboard/summary`.
 - Dashboard loads and shows summary cards.
 - Active application count excludes archived applications.
 - Follow-up metrics match current follow-up dates.

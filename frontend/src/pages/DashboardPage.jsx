@@ -1,210 +1,21 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
+import { getDashboardSummary } from "../api/dashboardApi.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
-const statusOptions = [
-  "Saved",
-  "Applied",
-  "Assessment",
-  "Recruiter Screen",
-  "Interview",
-  "Offer",
-  "Rejected",
-  "Withdrawn",
-];
-
-const activeStatuses = new Set([
-  "Saved",
-  "Applied",
-  "Assessment",
-  "Recruiter Screen",
-  "Interview",
-  "Offer",
-]);
-
-const closedStatuses = new Set(["Rejected", "Withdrawn"]);
-
-const sourceOrder = [
-  "LinkedIn",
-  "Indeed",
-  "ZipRecruiter",
-  "Company Website",
-  "Referral",
-  "Other",
-];
-
-const redFlagFields = [
-  { key: "vague_job_description", label: "Vague job description" },
-  { key: "unrealistic_salary", label: "Unrealistic salary" },
-  { key: "asks_for_payment", label: "Asks for payment" },
-  { key: "suspicious_contact", label: "Suspicious contact" },
-  { key: "company_mismatch", label: "Company mismatch" },
-  { key: "too_good_to_be_true", label: "Too good to be true" },
-];
-
-function formatLocalDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function addDays(date, days) {
-  const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + days);
-  return nextDate;
-}
-
-function hasRedFlag(application) {
-  return redFlagFields.some((field) => Boolean(application[field.key]));
-}
-
-function countBy(items, getKey) {
-  return items.reduce((counts, item) => {
-    const key = getKey(item);
-    counts.set(key, (counts.get(key) || 0) + 1);
-    return counts;
-  }, new Map());
-}
-
-function getOrderedSourceCounts(applications) {
-  const sourceCounts = countBy(applications, (application) => getSourceLabel(application.source));
-  const orderedSources = [
-    ...sourceOrder.filter((source) => sourceCounts.has(source)),
-    ...Array.from(sourceCounts.keys())
-      .filter((source) => !sourceOrder.includes(source))
-      .sort((first, second) => first.localeCompare(second)),
-  ];
-
-  return orderedSources.map((source) => ({ label: source, count: sourceCounts.get(source) }));
-}
-
-function getSourceLabel(source) {
-  const normalizedSource = String(source || "").trim();
-  return normalizedSource || "Unspecified";
-}
-
-function getSourceEffectiveness(applications) {
-  const metricsBySource = applications.reduce((metrics, application) => {
-    const source = getSourceLabel(application.source);
-    const sourceMetrics = metrics.get(source) || {
-      source,
-      applications: 0,
-      active: 0,
-      interviews: 0,
-      offers: 0,
-      closed: 0,
-    };
-
-    sourceMetrics.applications += 1;
-
-    if (activeStatuses.has(application.status)) {
-      sourceMetrics.active += 1;
-    }
-
-    if (application.status === "Interview") {
-      sourceMetrics.interviews += 1;
-    }
-
-    if (application.status === "Offer") {
-      sourceMetrics.offers += 1;
-    }
-
-    if (closedStatuses.has(application.status)) {
-      sourceMetrics.closed += 1;
-    }
-
-    metrics.set(source, sourceMetrics);
-    return metrics;
-  }, new Map());
-
-  return Array.from(metricsBySource.values()).sort(
-    (firstSource, secondSource) =>
-      secondSource.applications - firstSource.applications ||
-      firstSource.source.localeCompare(secondSource.source),
-  );
-}
-
-function getResumeVersionLabel(resumeVersion) {
-  return resumeVersion.target_role
-    ? `${resumeVersion.name} (${resumeVersion.target_role})`
-    : resumeVersion.name;
-}
-
-function getResumeVersionEffectiveness(applications, resumeVersions) {
-  const resumeVersionsById = new Map(resumeVersions.map((resumeVersion) => [String(resumeVersion.id), resumeVersion]));
-  const metricsByResume = applications.reduce((metrics, application) => {
-    const resumeVersionId = application.resume_version_id ? String(application.resume_version_id) : "unassigned";
-    const resumeVersion = resumeVersionsById.get(resumeVersionId);
-    const label = resumeVersion
-      ? getResumeVersionLabel(resumeVersion)
-      : resumeVersionId === "unassigned"
-        ? "Unassigned"
-        : `Resume #${resumeVersionId}`;
-    const resumeMetrics = metrics.get(resumeVersionId) || {
-      id: resumeVersionId,
-      label,
-      applications: 0,
-      active: 0,
-      interviews: 0,
-      offers: 0,
-      closed: 0,
-    };
-
-    resumeMetrics.applications += 1;
-
-    if (activeStatuses.has(application.status)) {
-      resumeMetrics.active += 1;
-    }
-
-    if (application.status === "Interview") {
-      resumeMetrics.interviews += 1;
-    }
-
-    if (application.status === "Offer") {
-      resumeMetrics.offers += 1;
-    }
-
-    if (closedStatuses.has(application.status)) {
-      resumeMetrics.closed += 1;
-    }
-
-    metrics.set(resumeVersionId, resumeMetrics);
-    return metrics;
-  }, new Map());
-
-  return Array.from(metricsByResume.values()).sort(
-    (firstResume, secondResume) =>
-      secondResume.applications - firstResume.applications ||
-      firstResume.label.localeCompare(secondResume.label),
-  );
-}
-
-function getResumeUsage(applications, resumeVersions) {
-  const resumeCounts = countBy(applications, (application) =>
-    application.resume_version_id ? String(application.resume_version_id) : "none",
-  );
-  const resumeVersionsById = new Map(resumeVersions.map((resumeVersion) => [String(resumeVersion.id), resumeVersion]));
-  const usedResumeIds = Array.from(resumeCounts.keys()).filter((resumeVersionId) => resumeVersionId !== "none");
-  const knownResumeIds = resumeVersions.map((resumeVersion) => String(resumeVersion.id));
-  const unknownUsedResumeIds = usedResumeIds.filter((resumeVersionId) => !resumeVersionsById.has(resumeVersionId));
-
-  return [
-    ...knownResumeIds.map((resumeVersionId) => ({
-      label: resumeVersionsById.get(resumeVersionId).name,
-      count: resumeCounts.get(resumeVersionId) || 0,
-    })),
-    ...unknownUsedResumeIds.map((resumeVersionId) => ({
-      label: `Resume #${resumeVersionId}`,
-      count: resumeCounts.get(resumeVersionId),
-    })),
-    {
-      label: "No resume version",
-      count: resumeCounts.get("none") || 0,
-    },
-  ].filter((item) => item.count > 0);
-}
+const emptyDashboardSummary = {
+  summary_cards: [],
+  status_breakdown: [],
+  source_breakdown: [],
+  resume_usage: [],
+  red_flag_snapshot: {
+    flagged_count: 0,
+    items: [],
+  },
+  source_effectiveness: [],
+  resume_version_effectiveness: [],
+};
 
 function MetricCard({ label, tone, value }) {
   return (
@@ -257,43 +68,44 @@ function EffectivenessGrid({ ariaLabel, firstColumnLabel, items }) {
   );
 }
 
-export default function DashboardPage({ applications, error, isLoading, resumeVersions }) {
-  const today = new Date();
-  const todayValue = formatLocalDate(today);
-  const upcomingCutoff = formatLocalDate(addDays(today, 3));
-  const overdueFollowUps = applications.filter(
-    (application) => application.follow_up_date && application.follow_up_date < todayValue,
-  );
-  const upcomingFollowUps = applications.filter(
-    (application) =>
-      application.follow_up_date &&
-      application.follow_up_date >= todayValue &&
-      application.follow_up_date <= upcomingCutoff,
-  );
-  const redFlaggedApplications = applications.filter(hasRedFlag);
-  const statusCounts = countBy(applications, (application) => application.status || "Saved");
-  const statusBreakdown = statusOptions.map((status) => ({
-    label: status,
-    count: statusCounts.get(status) || 0,
-  }));
-  const sourceBreakdown = getOrderedSourceCounts(applications);
-  const sourceEffectiveness = getSourceEffectiveness(applications);
-  const resumeUsage = getResumeUsage(applications, resumeVersions);
-  const resumeVersionEffectiveness = getResumeVersionEffectiveness(applications, resumeVersions);
-  const redFlagTypeCounts = redFlagFields
-    .map((field) => ({
-      label: field.label,
-      count: applications.filter((application) => Boolean(application[field.key])).length,
-    }))
-    .filter((item) => item.count > 0);
-  const metricCards = [
-    { label: "Active applications", tone: "active", value: applications.length },
-    { label: "Overdue follow-ups", tone: "overdue", value: overdueFollowUps.length },
-    { label: "Upcoming follow-ups", tone: "upcoming", value: upcomingFollowUps.length },
-    { label: "Red-flagged applications", tone: "flags", value: redFlaggedApplications.length },
-    { label: "Interviews", tone: "interviews", value: statusCounts.get("Interview") || 0 },
-    { label: "Offers", tone: "offers", value: statusCounts.get("Offer") || 0 },
-  ];
+function getTotalApplications(summary) {
+  return summary.status_breakdown.reduce((total, item) => total + item.count, 0);
+}
+
+export default function DashboardPage() {
+  const [dashboardSummary, setDashboardSummary] = useState(emptyDashboardSummary);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  const loadDashboardSummary = useCallback(async () => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const nextSummary = await getDashboardSummary();
+      setDashboardSummary({
+        summary_cards: nextSummary.summary_cards || [],
+        status_breakdown: nextSummary.status_breakdown || [],
+        source_breakdown: nextSummary.source_breakdown || [],
+        resume_usage: nextSummary.resume_usage || [],
+        red_flag_snapshot: nextSummary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
+        source_effectiveness: nextSummary.source_effectiveness || [],
+        resume_version_effectiveness: nextSummary.resume_version_effectiveness || [],
+      });
+    } catch (loadError) {
+      setDashboardSummary(emptyDashboardSummary);
+      setError(loadError.message || "Could not load dashboard summary.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDashboardSummary();
+  }, [loadDashboardSummary]);
+
+  const totalApplications = getTotalApplications(dashboardSummary);
+  const redFlaggedCount = dashboardSummary.red_flag_snapshot.flagged_count;
 
   return (
     <div className="dashboard-page">
@@ -308,18 +120,18 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
       {isLoading ? <LoadingState message="Loading dashboard..." /> : null}
       {!isLoading && error ? <ErrorMessage message={error} /> : null}
 
-      {!isLoading && !error && applications.length === 0 ? (
+      {!isLoading && !error && totalApplications === 0 ? (
         <div className="empty-state">
           <h3>No applications yet</h3>
           <p>Add applications to start seeing job-search trends.</p>
         </div>
       ) : null}
 
-      {!isLoading && !error && applications.length > 0 ? (
+      {!isLoading && !error && totalApplications > 0 ? (
         <>
           <section className="dashboard-metric-grid" aria-label="Summary metrics">
-            {metricCards.map((metric) => (
-              <MetricCard key={metric.label} label={metric.label} tone={metric.tone} value={metric.value} />
+            {dashboardSummary.summary_cards.map((metric) => (
+              <MetricCard key={metric.key} label={metric.label} tone={metric.tone} value={metric.value} />
             ))}
           </section>
 
@@ -327,33 +139,36 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
             <section className="panel dashboard-panel" aria-labelledby="dashboard-status-title">
               <div className="section-heading">
                 <h2 id="dashboard-status-title">Status Breakdown</h2>
-                <p>Active applications by current stage.</p>
+                <p>Applications by current stage.</p>
               </div>
-              <BreakdownList emptyMessage="No status data yet." items={statusBreakdown} />
+              <BreakdownList emptyMessage="No status data yet." items={dashboardSummary.status_breakdown} />
             </section>
 
             <section className="panel dashboard-panel" aria-labelledby="dashboard-source-title">
               <div className="section-heading">
                 <h2 id="dashboard-source-title">Source Breakdown</h2>
-                <p>Where active opportunities came from.</p>
+                <p>Where opportunities came from.</p>
               </div>
-              <BreakdownList emptyMessage="No source data yet." items={sourceBreakdown} />
+              <BreakdownList emptyMessage="No source data yet." items={dashboardSummary.source_breakdown} />
             </section>
 
             <section className="panel dashboard-panel" aria-labelledby="dashboard-resume-title">
               <div className="section-heading">
                 <h2 id="dashboard-resume-title">Resume Version Usage</h2>
-                <p>Resume variants attached to active applications.</p>
+                <p>Resume variants attached to applications.</p>
               </div>
-              <BreakdownList emptyMessage="No resume versions are assigned yet." items={resumeUsage} />
+              <BreakdownList emptyMessage="No resume versions are assigned yet." items={dashboardSummary.resume_usage} />
             </section>
 
             <section className="panel dashboard-panel" aria-labelledby="dashboard-red-flags-title">
               <div className="section-heading">
                 <h2 id="dashboard-red-flags-title">Red Flag Snapshot</h2>
-                <p>{redFlaggedApplications.length} active application{redFlaggedApplications.length === 1 ? "" : "s"} flagged.</p>
+                <p>{redFlaggedCount} application{redFlaggedCount === 1 ? "" : "s"} flagged.</p>
               </div>
-              <BreakdownList emptyMessage="No red flags marked on active applications." items={redFlagTypeCounts} />
+              <BreakdownList
+                emptyMessage="No red flags marked on applications."
+                items={dashboardSummary.red_flag_snapshot.items}
+              />
             </section>
           </div>
 
@@ -363,13 +178,13 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
               <p>Compare which sources are producing applications, interviews, offers, and closed outcomes.</p>
             </div>
 
-            {sourceEffectiveness.length === 0 ? (
+            {dashboardSummary.source_effectiveness.length === 0 ? (
               <p className="dashboard-empty-panel">No source data yet.</p>
             ) : (
               <EffectivenessGrid
                 ariaLabel="Source effectiveness metrics"
                 firstColumnLabel="Source"
-                items={sourceEffectiveness}
+                items={dashboardSummary.source_effectiveness}
               />
             )}
           </section>
@@ -380,13 +195,13 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
               <p>Compare how assigned resume versions connect to application progress.</p>
             </div>
 
-            {resumeVersionEffectiveness.length === 0 ? (
+            {dashboardSummary.resume_version_effectiveness.length === 0 ? (
               <p className="dashboard-empty-panel">No resume-version data yet.</p>
             ) : (
               <EffectivenessGrid
                 ariaLabel="Resume version effectiveness metrics"
                 firstColumnLabel="Resume Version"
-                items={resumeVersionEffectiveness}
+                items={dashboardSummary.resume_version_effectiveness}
               />
             )}
           </section>

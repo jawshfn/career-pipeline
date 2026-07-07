@@ -221,7 +221,21 @@ Status: implemented
 
 ## Dashboard Metrics
 
-Dashboard metrics are currently derived in the frontend from loaded applications and resume versions. There is no dedicated dashboard summary endpoint yet.
+### GET /api/dashboard/summary
+
+Purpose: provide backend-derived dashboard metrics for non-archived applications.
+
+The response includes:
+
+- summary_cards
+- status_breakdown
+- source_breakdown
+- resume_usage
+- red_flag_snapshot
+- source_effectiveness
+- resume_version_effectiveness
+
+Status: implemented
 
 ## Resume Versions
 
@@ -276,11 +290,3 @@ Possible endpoints:
 Purpose: mark follow-ups complete, reschedule them, or clear follow_up_date in a dedicated workflow.
 
 Current follow-up quick actions are implemented in the frontend using the existing application update API and activity timeline API.
-
-### Dedicated Dashboard Summary
-
-Possible endpoint:
-
-- GET /api/dashboard/summary
-
-Purpose: provide server-derived dashboard metrics if the frontend-derived dashboard becomes too expensive or complex.

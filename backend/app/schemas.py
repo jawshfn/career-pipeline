@@ -121,6 +121,52 @@ class ApplicationActionItemsRead(BaseModel):
     stale_applications: list[ApplicationRead]
 
 
+class DashboardSummaryCardRead(BaseModel):
+    key: str
+    label: str
+    tone: str
+    value: int
+
+
+class DashboardBreakdownItemRead(BaseModel):
+    label: str
+    count: int
+
+
+class DashboardRedFlagSnapshotRead(BaseModel):
+    flagged_count: int
+    items: list[DashboardBreakdownItemRead]
+
+
+class DashboardSourceEffectivenessRead(BaseModel):
+    source: str
+    applications: int
+    active: int
+    interviews: int
+    offers: int
+    closed: int
+
+
+class DashboardResumeVersionEffectivenessRead(BaseModel):
+    id: str
+    label: str
+    applications: int
+    active: int
+    interviews: int
+    offers: int
+    closed: int
+
+
+class DashboardSummaryRead(BaseModel):
+    summary_cards: list[DashboardSummaryCardRead]
+    status_breakdown: list[DashboardBreakdownItemRead]
+    source_breakdown: list[DashboardBreakdownItemRead]
+    resume_usage: list[DashboardBreakdownItemRead]
+    red_flag_snapshot: DashboardRedFlagSnapshotRead
+    source_effectiveness: list[DashboardSourceEffectivenessRead]
+    resume_version_effectiveness: list[DashboardResumeVersionEffectivenessRead]
+
+
 class ApplicationActivityBase(BaseModel):
     activity_date: date
     activity_type: str = Field(min_length=1)

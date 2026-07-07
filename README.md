@@ -55,7 +55,7 @@ The product is built around a common job-search problem: opportunities arrive fr
 - Status, source, resume-version usage, and red-flag snapshots
 - Source Effectiveness metrics by source for applications, active count, interviews, offers, and closed outcomes
 - Resume Version Effectiveness metrics for assigned resume variants
-- Metrics are frontend-derived from loaded application and resume-version data
+- Metrics are backend-derived from `/api/dashboard/summary`
 
 ### Resume Version Management
 

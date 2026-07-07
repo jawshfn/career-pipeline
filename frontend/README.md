@@ -5,7 +5,7 @@ This is the React/Vite frontend for Career Pipeline. It provides the user-facing
 ## Page Structure
 
 - Command Center: backend-derived overdue follow-ups, upcoming follow-ups, stale applications, Next Action display, and follow-up quick actions
-- Dashboard: job-search summary metrics, source/resume breakdowns, Source Effectiveness, and Resume Version Effectiveness
+- Dashboard: backend-derived job-search summary metrics, source/resume breakdowns, Source Effectiveness, and Resume Version Effectiveness
 - Quick Add: lightweight application capture workflow
 - Applications: Active, Closed, and All views with search, filters, sorting, table previews, and Details access
 - Pipeline: responsive grouped application status workflow with status filters

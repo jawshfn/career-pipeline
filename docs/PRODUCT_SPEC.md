@@ -58,7 +58,7 @@ The current prototype includes:
 - Resume Versions page for creating, editing, deactivating, reactivating, and assigning reusable resume variants
 - Application-scoped contact and prep notes in Application Detail
 - Red-flag checklist and notes in Application Detail, with compact indicators in Applications and Pipeline
-- Dashboard summary cards, status breakdown, source breakdown, resume-version usage, red-flag snapshot, Source Effectiveness, and Resume Version Effectiveness
+- Backend-derived Dashboard summary cards, status breakdown, source breakdown, resume-version usage, red-flag snapshot, Source Effectiveness, and Resume Version Effectiveness
 - Sticky responsive app shell with page content centered inside the main content area and no intended page-level horizontal overflow
 - Archive behavior that stores `Archived` status while hiding archived records from normal active workflow views
 
@@ -206,7 +206,7 @@ Applications and Pipeline show compact indicators when flags exist. Normal appli
 
 ### Review Dashboard Insights
 
-The Dashboard provides summary-focused metrics from loaded application and resume-version data.
+The Dashboard provides summary-focused metrics from the backend `/api/dashboard/summary` endpoint.
 
 Current sections include:
 

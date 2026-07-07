@@ -56,7 +56,7 @@ export default function App() {
 
   useEffect(() => {
     loadWorkspaceData();
-  }, [activePage, loadWorkspaceData]);
+  }, [loadWorkspaceData]);
 
   async function handleCreateApplication(applicationData) {
     const createdApplication = await createApplication(applicationData);
@@ -107,12 +107,7 @@ export default function App() {
           onUpdateApplication={handleUpdateApplication}
         />
       ) : activePage === "dashboard" ? (
-        <DashboardPage
-          applications={activeApplications}
-          error={loadError}
-          isLoading={isLoading}
-          resumeVersions={resumeVersions}
-        />
+        <DashboardPage />
       ) : activePage === "quick-add" ? (
         <QuickAddPage
           onCreateApplication={handleCreateApplication}
