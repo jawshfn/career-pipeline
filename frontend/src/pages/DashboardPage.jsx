@@ -14,6 +14,17 @@ const statusOptions = [
   "Withdrawn",
 ];
 
+const activeStatuses = new Set([
+  "Saved",
+  "Applied",
+  "Assessment",
+  "Recruiter Screen",
+  "Interview",
+  "Offer",
+]);
+
+const closedStatuses = new Set(["Rejected", "Withdrawn"]);
+
 const sourceOrder = [
   "LinkedIn",
   "Indeed",
@@ -58,7 +69,7 @@ function countBy(items, getKey) {
 }
 
 function getOrderedSourceCounts(applications) {
-  const sourceCounts = countBy(applications, (application) => application.source || "Other");
+  const sourceCounts = countBy(applications, (application) => getSourceLabel(application.source));
   const orderedSources = [
     ...sourceOrder.filter((source) => sourceCounts.has(source)),
     ...Array.from(sourceCounts.keys())
@@ -67,6 +78,52 @@ function getOrderedSourceCounts(applications) {
   ];
 
   return orderedSources.map((source) => ({ label: source, count: sourceCounts.get(source) }));
+}
+
+function getSourceLabel(source) {
+  const normalizedSource = String(source || "").trim();
+  return normalizedSource || "Unspecified";
+}
+
+function getSourceEffectiveness(applications) {
+  const metricsBySource = applications.reduce((metrics, application) => {
+    const source = getSourceLabel(application.source);
+    const sourceMetrics = metrics.get(source) || {
+      source,
+      applications: 0,
+      active: 0,
+      interviews: 0,
+      offers: 0,
+      closed: 0,
+    };
+
+    sourceMetrics.applications += 1;
+
+    if (activeStatuses.has(application.status)) {
+      sourceMetrics.active += 1;
+    }
+
+    if (application.status === "Interview") {
+      sourceMetrics.interviews += 1;
+    }
+
+    if (application.status === "Offer") {
+      sourceMetrics.offers += 1;
+    }
+
+    if (closedStatuses.has(application.status)) {
+      sourceMetrics.closed += 1;
+    }
+
+    metrics.set(source, sourceMetrics);
+    return metrics;
+  }, new Map());
+
+  return Array.from(metricsBySource.values()).sort(
+    (firstSource, secondSource) =>
+      secondSource.applications - firstSource.applications ||
+      firstSource.source.localeCompare(secondSource.source),
+  );
 }
 
 function getResumeUsage(applications, resumeVersions) {
@@ -140,6 +197,7 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
     count: statusCounts.get(status) || 0,
   }));
   const sourceBreakdown = getOrderedSourceCounts(applications);
+  const sourceEffectiveness = getSourceEffectiveness(applications);
   const resumeUsage = getResumeUsage(applications, resumeVersions);
   const redFlagTypeCounts = redFlagFields
     .map((field) => ({
@@ -217,6 +275,38 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
               <BreakdownList emptyMessage="No red flags marked on active applications." items={redFlagTypeCounts} />
             </section>
           </div>
+
+          <section className="panel dashboard-panel dashboard-source-effectiveness" aria-labelledby="dashboard-source-effectiveness-title">
+            <div className="section-heading">
+              <h2 id="dashboard-source-effectiveness-title">Source Effectiveness</h2>
+              <p>Compare which sources are producing applications, interviews, offers, and closed outcomes.</p>
+            </div>
+
+            {sourceEffectiveness.length === 0 ? (
+              <p className="dashboard-empty-panel">No source data yet.</p>
+            ) : (
+              <div className="source-effectiveness-grid" role="table" aria-label="Source effectiveness metrics">
+                <div className="source-effectiveness-row source-effectiveness-header" role="row">
+                  <span role="columnheader">Source</span>
+                  <span role="columnheader">Applications</span>
+                  <span role="columnheader">Active</span>
+                  <span role="columnheader">Interviews</span>
+                  <span role="columnheader">Offers</span>
+                  <span role="columnheader">Closed</span>
+                </div>
+                {sourceEffectiveness.map((sourceMetrics) => (
+                  <div className="source-effectiveness-row" role="row" key={sourceMetrics.source}>
+                    <strong role="cell">{sourceMetrics.source}</strong>
+                    <span role="cell" data-label="Applications">{sourceMetrics.applications}</span>
+                    <span role="cell" data-label="Active">{sourceMetrics.active}</span>
+                    <span role="cell" data-label="Interviews">{sourceMetrics.interviews}</span>
+                    <span role="cell" data-label="Offers">{sourceMetrics.offers}</span>
+                    <span role="cell" data-label="Closed">{sourceMetrics.closed}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </>
       ) : null}
     </div>
