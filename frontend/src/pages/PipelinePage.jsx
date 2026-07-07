@@ -3,16 +3,10 @@ import React, { useState } from "react";
 import PipelineBoard from "../components/pipeline/PipelineBoard.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
-
-const appliedOrLaterStatuses = [
-  "Applied",
-  "Assessment",
-  "Recruiter Screen",
-  "Interview",
-  "Offer",
-  "Rejected",
-  "Withdrawn",
-];
+import {
+  APPLIED_OR_LATER_APPLICATION_STATUSES,
+  SAVED_APPLICATION_STATUS,
+} from "../constants/applicationConstants.js";
 
 function formatLocalDate(date) {
   const year = date.getFullYear();
@@ -23,8 +17,8 @@ function formatLocalDate(date) {
 
 function shouldDefaultAppliedDate(application, nextStatus) {
   return (
-    application.status === "Saved" &&
-    appliedOrLaterStatuses.includes(nextStatus) &&
+    application.status === SAVED_APPLICATION_STATUS &&
+    APPLIED_OR_LATER_APPLICATION_STATUSES.includes(nextStatus) &&
     !application.date_applied
   );
 }

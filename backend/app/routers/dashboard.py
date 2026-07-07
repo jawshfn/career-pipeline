@@ -5,33 +5,21 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..domain import (
+    ACTIVE_APPLICATION_STATUSES,
+    CLOSED_APPLICATION_STATUSES,
+    INTERVIEW_APPLICATION_STATUS,
+    OFFER_APPLICATION_STATUS,
+    RED_FLAG_FIELDS,
+    SAVED_APPLICATION_STATUS,
+    SOURCE_ORDER,
+    USER_SELECTABLE_APPLICATION_STATUSES,
+)
 from ..models import Application, ResumeVersion
 from ..schemas import DashboardSummaryRead
 
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
-
-STATUS_OPTIONS = (
-    "Saved",
-    "Applied",
-    "Assessment",
-    "Recruiter Screen",
-    "Interview",
-    "Offer",
-    "Rejected",
-    "Withdrawn",
-)
-ACTIVE_STATUSES = {"Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"}
-CLOSED_STATUSES = {"Rejected", "Withdrawn"}
-SOURCE_ORDER = ("LinkedIn", "Indeed", "ZipRecruiter", "Company Website", "Referral", "Other")
-RED_FLAG_FIELDS = (
-    ("vague_job_description", "Vague job description"),
-    ("unrealistic_salary", "Unrealistic salary"),
-    ("asks_for_payment", "Asks for payment"),
-    ("suspicious_contact", "Suspicious contact"),
-    ("company_mismatch", "Company mismatch"),
-    ("too_good_to_be_true", "Too good to be true"),
-)
 
 
 def get_source_label(source: str | None) -> str:
@@ -132,16 +120,16 @@ def get_resume_version_effectiveness(
 def update_effectiveness_metrics(metrics: dict[str, int | str], application: Application) -> None:
     metrics["applications"] = int(metrics["applications"]) + 1
 
-    if application.status in ACTIVE_STATUSES:
+    if application.status in ACTIVE_APPLICATION_STATUSES:
         metrics["active"] = int(metrics["active"]) + 1
 
-    if application.status == "Interview":
+    if application.status == INTERVIEW_APPLICATION_STATUS:
         metrics["interviews"] = int(metrics["interviews"]) + 1
 
-    if application.status == "Offer":
+    if application.status == OFFER_APPLICATION_STATUS:
         metrics["offers"] = int(metrics["offers"]) + 1
 
-    if application.status in CLOSED_STATUSES:
+    if application.status in CLOSED_APPLICATION_STATUSES:
         metrics["closed"] = int(metrics["closed"]) + 1
 
 
@@ -158,8 +146,8 @@ def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
 
     today = date.today()
     upcoming_cutoff = today + timedelta(days=3)
-    status_counts = Counter(application.status or "Saved" for application in applications)
-    active_application_count = sum(1 for application in applications if application.status in ACTIVE_STATUSES)
+    status_counts = Counter(application.status or SAVED_APPLICATION_STATUS for application in applications)
+    active_application_count = sum(1 for application in applications if application.status in ACTIVE_APPLICATION_STATUSES)
     overdue_followup_count = sum(
         1 for application in applications if application.follow_up_date and application.follow_up_date < today
     )
@@ -203,12 +191,22 @@ def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
                 "tone": "flags",
                 "value": red_flagged_count,
             },
-            {"key": "interviews", "label": "Interviews", "tone": "interviews", "value": status_counts.get("Interview", 0)},
-            {"key": "offers", "label": "Offers", "tone": "offers", "value": status_counts.get("Offer", 0)},
+            {
+                "key": "interviews",
+                "label": "Interviews",
+                "tone": "interviews",
+                "value": status_counts.get(INTERVIEW_APPLICATION_STATUS, 0),
+            },
+            {
+                "key": "offers",
+                "label": "Offers",
+                "tone": "offers",
+                "value": status_counts.get(OFFER_APPLICATION_STATUS, 0),
+            },
         ],
         "status_breakdown": [
             {"label": status, "count": status_counts.get(status, 0)}
-            for status in STATUS_OPTIONS
+            for status in USER_SELECTABLE_APPLICATION_STATUSES
         ],
         "source_breakdown": get_ordered_source_breakdown(applications),
         "resume_usage": get_resume_usage(applications, resume_versions_by_id),

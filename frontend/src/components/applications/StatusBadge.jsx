@@ -1,5 +1,10 @@
 import React from "react";
 
+import {
+  APPLICATION_STATUSES,
+  SAVED_APPLICATION_STATUS,
+} from "../../constants/applicationConstants.js";
+
 const statusClassNames = {
   Saved: "status-saved",
   Applied: "status-applied",
@@ -12,10 +17,8 @@ const statusClassNames = {
   Archived: "status-archived",
 };
 
-const allowedStatuses = Object.keys(statusClassNames);
-
 export default function StatusBadge({ status }) {
-  const displayStatus = allowedStatuses.includes(status) ? status : "Saved";
+  const displayStatus = APPLICATION_STATUSES.includes(status) ? status : SAVED_APPLICATION_STATUS;
   const className = statusClassNames[displayStatus] || "status-default";
 
   return <span className={`status-badge ${className}`}>{displayStatus}</span>;

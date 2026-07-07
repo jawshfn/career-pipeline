@@ -4,17 +4,13 @@ import ApplicationDetailPanel from "../components/applications/ApplicationDetail
 import ApplicationsTable from "../components/applications/ApplicationsTable.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
-
-const statusOptions = [
-  "Saved",
-  "Applied",
-  "Assessment",
-  "Recruiter Screen",
-  "Interview",
-  "Offer",
-  "Rejected",
-  "Withdrawn",
-];
+import {
+  ACTIVE_APPLICATION_STATUSES,
+  CLOSED_APPLICATION_STATUSES,
+  DEFAULT_APPLICATION_SOURCE,
+  RED_FLAG_FIELD_NAMES,
+  USER_SELECTABLE_APPLICATION_STATUSES,
+} from "../constants/applicationConstants.js";
 
 const sortOptions = [
   { value: "updated_desc", label: "Recently updated" },
@@ -31,17 +27,6 @@ const applicationViewOptions = [
   { value: "all", label: "All" },
 ];
 
-const activeStatuses = new Set([
-  "Saved",
-  "Applied",
-  "Assessment",
-  "Recruiter Screen",
-  "Interview",
-  "Offer",
-]);
-
-const closedStatuses = new Set(["Rejected", "Withdrawn"]);
-
 const initialFilters = {
   search: "",
   status: "all",
@@ -51,17 +36,8 @@ const initialFilters = {
   sortBy: "updated_desc",
 };
 
-const redFlagFields = [
-  "vague_job_description",
-  "unrealistic_salary",
-  "asks_for_payment",
-  "suspicious_contact",
-  "company_mismatch",
-  "too_good_to_be_true",
-];
-
 function hasRedFlag(application) {
-  return redFlagFields.some((field) => Boolean(application[field]));
+  return RED_FLAG_FIELD_NAMES.some((field) => Boolean(application[field]));
 }
 
 function normalizeSearchValue(value) {
@@ -141,9 +117,9 @@ function sortApplications(applications, sortBy) {
     }
 
     if (sortBy === "status_asc") {
-      const firstIndex = statusOptions.indexOf(firstApplication.status);
-      const secondIndex = statusOptions.indexOf(secondApplication.status);
-      return (firstIndex === -1 ? statusOptions.length : firstIndex) - (secondIndex === -1 ? statusOptions.length : secondIndex);
+      const firstIndex = USER_SELECTABLE_APPLICATION_STATUSES.indexOf(firstApplication.status);
+      const secondIndex = USER_SELECTABLE_APPLICATION_STATUSES.indexOf(secondApplication.status);
+      return (firstIndex === -1 ? USER_SELECTABLE_APPLICATION_STATUSES.length : firstIndex) - (secondIndex === -1 ? USER_SELECTABLE_APPLICATION_STATUSES.length : secondIndex);
     }
 
     return compareUpdatedDesc(firstApplication, secondApplication);
@@ -162,7 +138,7 @@ function getFilteredApplications(applications, filters) {
       return false;
     }
 
-    if (filters.source !== "all" && (application.source || "Other") !== filters.source) {
+    if (filters.source !== "all" && (application.source || DEFAULT_APPLICATION_SOURCE) !== filters.source) {
       return false;
     }
 
@@ -194,20 +170,20 @@ function getFilteredApplications(applications, filters) {
 
 function getApplicationsForView(applications, applicationView) {
   if (applicationView === "closed") {
-    return applications.filter((application) => closedStatuses.has(application.status));
+    return applications.filter((application) => CLOSED_APPLICATION_STATUSES.has(application.status));
   }
 
   if (applicationView === "all") {
     return applications;
   }
 
-  return applications.filter((application) => activeStatuses.has(application.status));
+  return applications.filter((application) => ACTIVE_APPLICATION_STATUSES.has(application.status));
 }
 
 function getSourceOptions(applications) {
-  return Array.from(new Set(applications.map((application) => application.source || "Other"))).sort((first, second) =>
-    first.localeCompare(second),
-  );
+  return Array.from(
+    new Set(applications.map((application) => application.source || DEFAULT_APPLICATION_SOURCE)),
+  ).sort((first, second) => first.localeCompare(second));
 }
 
 export default function ApplicationsPage({
@@ -334,7 +310,7 @@ export default function ApplicationsPage({
             Status
             <select name="status" onChange={updateFilter} value={filters.status}>
               <option value="all">All statuses</option>
-              {statusOptions.map((status) => (
+              {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {status}
                 </option>

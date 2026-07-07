@@ -1,38 +1,24 @@
 import React, { useState } from "react";
 
+import {
+  APPLIED_OR_LATER_APPLICATION_STATUSES,
+  DEFAULT_APPLICATION_SOURCE,
+  SAVED_APPLICATION_STATUS,
+  SOURCE_OPTIONS,
+  USER_SELECTABLE_APPLICATION_STATUSES,
+} from "../../constants/applicationConstants.js";
+
 const initialFormState = {
   company_name: "",
   role_title: "",
   job_link: "",
-  source: "Other",
-  status: "Saved",
+  source: DEFAULT_APPLICATION_SOURCE,
+  status: SAVED_APPLICATION_STATUS,
   resume_version_id: "",
   date_applied: "",
   follow_up_date: "",
   notes: "",
 };
-
-const statusOptions = [
-  "Saved",
-  "Applied",
-  "Assessment",
-  "Recruiter Screen",
-  "Interview",
-  "Offer",
-  "Rejected",
-  "Withdrawn",
-];
-
-const sourceOptions = [
-  "LinkedIn",
-  "Indeed",
-  "ZipRecruiter",
-  "Company Website",
-  "Recruiter",
-  "Referral",
-  "Handshake",
-  "Other",
-];
 
 const followUpPresets = [
   { label: "Tomorrow", daysFromToday: 1 },
@@ -65,7 +51,7 @@ function getTodayValue() {
 }
 
 function isAppliedOrLater(status) {
-  return statusOptions.includes(status) && status !== "Saved";
+  return APPLIED_OR_LATER_APPLICATION_STATUSES.includes(status);
 }
 
 export default function QuickAddApplicationForm({ resumeVersions, onCreateApplication, onCreateSuccess }) {
@@ -168,7 +154,7 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
           <label>
             Source
             <select name="source" value={formData.source} onChange={updateField}>
-              {sourceOptions.map((source) => (
+              {SOURCE_OPTIONS.map((source) => (
                 <option key={source} value={source}>
                   {source}
                 </option>
@@ -179,7 +165,7 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
           <label>
             Status
             <select name="status" value={formData.status} onChange={updateField}>
-              {statusOptions.map((status) => (
+              {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
                 <option key={status} value={status}>
                   {status}
                 </option>

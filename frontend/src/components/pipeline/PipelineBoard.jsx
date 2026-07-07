@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 
+import {
+  SAVED_APPLICATION_STATUS,
+  USER_SELECTABLE_APPLICATION_STATUSES,
+} from "../../constants/applicationConstants.js";
 import PipelineColumn from "./PipelineColumn.jsx";
-import { PIPELINE_STATUSES } from "./PipelineStatusSelect.jsx";
 
 const ALL_STATUSES_FILTER = "All";
-const statusFilters = [ALL_STATUSES_FILTER, ...PIPELINE_STATUSES];
+const statusFilters = [ALL_STATUSES_FILTER, ...USER_SELECTABLE_APPLICATION_STATUSES];
 
 export default function PipelineBoard({
   applications,
@@ -14,19 +17,21 @@ export default function PipelineBoard({
 }) {
   const [selectedStatus, setSelectedStatus] = useState(ALL_STATUSES_FILTER);
   const resumeVersionsById = new Map(resumeVersions.map((resumeVersion) => [resumeVersion.id, resumeVersion]));
-  const applicationsByStatus = PIPELINE_STATUSES.reduce((groupedApplications, status) => {
+  const applicationsByStatus = USER_SELECTABLE_APPLICATION_STATUSES.reduce((groupedApplications, status) => {
     groupedApplications[status] = [];
     return groupedApplications;
   }, {});
 
   applications.forEach((application) => {
-    const status = PIPELINE_STATUSES.includes(application.status) ? application.status : "Saved";
+    const status = USER_SELECTABLE_APPLICATION_STATUSES.includes(application.status)
+      ? application.status
+      : SAVED_APPLICATION_STATUS;
     applicationsByStatus[status].push({ ...application, status });
   });
 
   const visibleStatuses =
     selectedStatus === ALL_STATUSES_FILTER
-      ? PIPELINE_STATUSES.filter((status) => applicationsByStatus[status].length > 0)
+      ? USER_SELECTABLE_APPLICATION_STATUSES.filter((status) => applicationsByStatus[status].length > 0)
       : [selectedStatus];
 
   return (

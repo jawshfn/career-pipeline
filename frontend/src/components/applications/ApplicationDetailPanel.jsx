@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from "react";
 
 import { getApplication } from "../../api/applicationsApi.js";
+import {
+  APPLIED_OR_LATER_APPLICATION_STATUSES,
+  DEFAULT_APPLICATION_SOURCE,
+  EMPLOYMENT_TYPE_OPTIONS,
+  RED_FLAG_OPTIONS,
+  SAVED_APPLICATION_STATUS,
+  SOURCE_OPTIONS,
+  USER_SELECTABLE_APPLICATION_STATUSES,
+} from "../../constants/applicationConstants.js";
 import ApplicationActivityTimeline from "./ApplicationActivityTimeline.jsx";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
@@ -9,8 +18,8 @@ const initialFormState = {
   company_name: "",
   role_title: "",
   job_link: "",
-  source: "Other",
-  status: "Saved",
+  source: DEFAULT_APPLICATION_SOURCE,
+  status: SAVED_APPLICATION_STATUS,
   resume_version_id: "",
   date_saved: "",
   follow_up_date: "",
@@ -33,47 +42,6 @@ const initialFormState = {
   red_flags_notes: "",
 };
 
-const statusOptions = [
-  "Saved",
-  "Applied",
-  "Assessment",
-  "Recruiter Screen",
-  "Interview",
-  "Offer",
-  "Rejected",
-  "Withdrawn",
-];
-
-const sourceOptions = [
-  "LinkedIn",
-  "Indeed",
-  "ZipRecruiter",
-  "Company Website",
-  "Recruiter",
-  "Referral",
-  "Handshake",
-  "Other",
-];
-
-const employmentTypeOptions = [
-  "",
-  "Full-time",
-  "Part-time",
-  "Contract",
-  "Internship",
-  "Temporary",
-  "Other",
-];
-
-const redFlagOptions = [
-  { name: "vague_job_description", label: "Vague job description" },
-  { name: "unrealistic_salary", label: "Unrealistic salary" },
-  { name: "asks_for_payment", label: "Asks for payment" },
-  { name: "suspicious_contact", label: "Suspicious contact" },
-  { name: "company_mismatch", label: "Company mismatch" },
-  { name: "too_good_to_be_true", label: "Too good to be true" },
-];
-
 const detailTabs = [
   { id: "overview", label: "Overview" },
   { id: "dates", label: "Dates & Follow-up" },
@@ -88,8 +56,8 @@ function toFormState(application) {
     company_name: application.company_name || "",
     role_title: application.role_title || "",
     job_link: application.job_link || "",
-    source: application.source || "Other",
-    status: statusOptions.includes(application.status) ? application.status : "Saved",
+    source: application.source || DEFAULT_APPLICATION_SOURCE,
+    status: USER_SELECTABLE_APPLICATION_STATUSES.includes(application.status) ? application.status : SAVED_APPLICATION_STATUS,
     resume_version_id: application.resume_version_id ? String(application.resume_version_id) : "",
     date_saved: application.date_saved || "",
     follow_up_date: application.follow_up_date || "",
@@ -141,7 +109,7 @@ function getTodayValue() {
 }
 
 function isAppliedOrLater(status) {
-  return statusOptions.includes(status) && status !== "Saved";
+  return APPLIED_OR_LATER_APPLICATION_STATUSES.includes(status);
 }
 
 export default function ApplicationDetailPanel({
@@ -210,7 +178,7 @@ export default function ApplicationDetailPanel({
     setFormData((current) => {
       if (
         name === "status" &&
-        current.status === "Saved" &&
+        current.status === SAVED_APPLICATION_STATUS &&
         isAppliedOrLater(value) &&
         !current.date_applied
       ) {
@@ -362,7 +330,7 @@ export default function ApplicationDetailPanel({
                   <label>
                     Status
                     <select name="status" value={formData.status} onChange={updateField}>
-                      {statusOptions.map((status) => (
+                      {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
                         <option key={status} value={status}>
                           {status}
                         </option>
@@ -373,7 +341,7 @@ export default function ApplicationDetailPanel({
                   <label>
                     Source
                     <select name="source" value={formData.source} onChange={updateField}>
-                      {sourceOptions.map((source) => (
+                      {SOURCE_OPTIONS.map((source) => (
                         <option key={source} value={source}>
                           {source}
                         </option>
@@ -474,7 +442,7 @@ export default function ApplicationDetailPanel({
                   <label>
                     Employment type
                     <select name="employment_type" value={formData.employment_type} onChange={updateField}>
-                      {employmentTypeOptions.map((employmentType) => (
+                      {EMPLOYMENT_TYPE_OPTIONS.map((employmentType) => (
                         <option key={employmentType || "blank"} value={employmentType}>
                           {employmentType || "Not specified"}
                         </option>
@@ -565,7 +533,7 @@ export default function ApplicationDetailPanel({
               <div className="detail-field-group detail-field-group-wide red-flags-group">
                 <h3>Red flags</h3>
                 <div className="red-flags-checklist">
-                  {redFlagOptions.map((option) => (
+                  {RED_FLAG_OPTIONS.map((option) => (
                     <label className="checkbox-field" key={option.name}>
                       <input
                         checked={formData[option.name]}

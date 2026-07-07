@@ -3,24 +3,17 @@ from typing import ClassVar
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-
-ALLOWED_APPLICATION_STATUSES: tuple[str, ...] = (
-    "Saved",
-    "Applied",
-    "Assessment",
-    "Recruiter Screen",
-    "Interview",
-    "Offer",
-    "Rejected",
-    "Withdrawn",
-    "Archived",
+from .domain import (
+    ALLOWED_APPLICATION_STATUSES,
+    ARCHIVED_APPLICATION_STATUS,
+    SAVED_APPLICATION_STATUS,
 )
 
 
 class ApplicationBase(BaseModel):
     job_link: str | None = None
     source: str = "Other"
-    status: str = "Saved"
+    status: str = SAVED_APPLICATION_STATUS
     location: str | None = None
     salary_min: float | None = None
     salary_max: float | None = None
@@ -62,7 +55,7 @@ class ApplicationCreate(ApplicationBase):
     @classmethod
     def validate_create_status(cls, value: str) -> str:
         value = super().validate_status(value)
-        if value == "Archived":
+        if value == ARCHIVED_APPLICATION_STATUS:
             raise ValueError("applications must be archived through archive behavior")
         return value
 

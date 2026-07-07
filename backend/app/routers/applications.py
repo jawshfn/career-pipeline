@@ -5,6 +5,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..domain import ARCHIVED_APPLICATION_STATUS, STALE_EXCLUDED_STATUSES
 from ..models import Application, ApplicationActivity, utc_now
 from ..schemas import (
     ApplicationActionItemsRead,
@@ -17,8 +18,6 @@ from ..schemas import (
 )
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
-
-STALE_EXCLUDED_STATUSES = ("Offer", "Rejected", "Withdrawn", "Archived")
 
 
 def get_existing_application(application_id: int, db: Session) -> Application:
@@ -200,14 +199,14 @@ def update_application(
     next_status = updates.get("status")
 
     if application.is_archived and (
-        (next_status is not None and next_status != "Archived") or updates.get("is_archived") is False
+        (next_status is not None and next_status != ARCHIVED_APPLICATION_STATUS) or updates.get("is_archived") is False
     ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Archived applications cannot be restored through this endpoint",
         )
 
-    if next_status == "Archived":
+    if next_status == ARCHIVED_APPLICATION_STATUS:
         updates["is_archived"] = True
 
     for field, value in updates.items():
@@ -223,7 +222,7 @@ def archive_application(application_id: int, db: Session = Depends(get_db)) -> A
     application = get_existing_application(application_id, db)
 
     application.is_archived = True
-    application.status = "Archived"
+    application.status = ARCHIVED_APPLICATION_STATUS
     db.commit()
     db.refresh(application)
     return application

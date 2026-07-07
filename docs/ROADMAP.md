@@ -122,6 +122,7 @@ Status: complete through Phase 8.3 plus targeted app-shell restoration
 - Phase 8.4: add application-scoped Contact & Prep details in Application Detail
 - Command Center source-of-truth cleanup: use backend action-item rules for overdue, upcoming, and stale sections
 - Phase 8.5: add backend Dashboard summary endpoint and render backend-derived dashboard metrics
+- Phase 8.6: centralize repeated application domain constants
 - Targeted UI polish: restore app shell layout constraints, sticky sidebar behavior, page centering, and horizontal overflow protections
 - Documentation refresh: update docs for recent workflow, dashboard, and UI changes
 
