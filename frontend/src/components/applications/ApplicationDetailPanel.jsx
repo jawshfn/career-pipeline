@@ -12,6 +12,7 @@ const initialFormState = {
   source: "Other",
   status: "Saved",
   resume_version_id: "",
+  date_saved: "",
   follow_up_date: "",
   date_applied: "",
   location: "",
@@ -69,6 +70,14 @@ const redFlagOptions = [
   { name: "too_good_to_be_true", label: "Too good to be true" },
 ];
 
+const detailTabs = [
+  { id: "overview", label: "Overview" },
+  { id: "dates", label: "Dates & Follow-up" },
+  { id: "job-details", label: "Job Details" },
+  { id: "red-flags", label: "Red Flags" },
+  { id: "activity", label: "Activity" },
+];
+
 function toFormState(application) {
   return {
     company_name: application.company_name || "",
@@ -77,6 +86,7 @@ function toFormState(application) {
     source: application.source || "Other",
     status: statusOptions.includes(application.status) ? application.status : "Saved",
     resume_version_id: application.resume_version_id ? String(application.resume_version_id) : "",
+    date_saved: application.date_saved || "",
     follow_up_date: application.follow_up_date || "",
     date_applied: application.date_applied || "",
     location: application.location || "",
@@ -137,6 +147,7 @@ export default function ApplicationDetailPanel({
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -155,6 +166,7 @@ export default function ApplicationDetailPanel({
           const nextFormState = toFormState(application);
           setFormData(nextFormState);
           setSavedFormData(nextFormState);
+          setActiveTab("overview");
         }
       } catch (error) {
         if (isCurrent) {
@@ -228,6 +240,7 @@ export default function ApplicationDetailPanel({
       salary_min: numberOrNull(formData.salary_min),
       salary_max: numberOrNull(formData.salary_max),
       employment_type: formData.employment_type || null,
+      date_saved: formData.date_saved,
       date_applied: formData.date_applied || null,
       follow_up_date: formData.follow_up_date || null,
       resume_version_id: formData.resume_version_id ? Number(formData.resume_version_id) : null,
@@ -284,205 +297,240 @@ export default function ApplicationDetailPanel({
             </div>
           ) : null}
 
-          <div className="detail-field-group detail-field-group-wide">
-            <h3>Core details</h3>
-            <div className="detail-field-grid">
-              <label>
-                Company name
-                <input
-                  name="company_name"
-                  value={formData.company_name}
-                  onChange={updateField}
-                  required
-                  placeholder="Company name"
-                />
-              </label>
-
-              <label>
-                Role title
-                <input
-                  name="role_title"
-                  value={formData.role_title}
-                  onChange={updateField}
-                  required
-                  placeholder="Role title"
-                />
-              </label>
-
-              <label>
-                Location
-                <input
-                  name="location"
-                  value={formData.location}
-                  onChange={updateField}
-                  placeholder="Remote, city, or region"
-                />
-              </label>
-            </div>
+          <div className="detail-tabs" role="tablist" aria-label="Application detail sections">
+            {detailTabs.map((tab) => (
+              <button
+                aria-controls={`application-detail-tab-${tab.id}`}
+                aria-selected={activeTab === tab.id}
+                className={`detail-tab${activeTab === tab.id ? " is-active" : ""}`}
+                id={`application-detail-tab-button-${tab.id}`}
+                key={tab.id}
+                role="tab"
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          <div className="detail-field-group detail-field-group-status">
-            <h3>Application status</h3>
-            <div className="detail-field-grid">
-              <label>
-                Status
-                <select name="status" value={formData.status} onChange={updateField}>
-                  {statusOptions.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
+          <div
+            className="detail-tab-panel"
+            id={`application-detail-tab-${activeTab}`}
+            role="tabpanel"
+            aria-labelledby={`application-detail-tab-button-${activeTab}`}
+          >
+            {activeTab === "overview" ? (
+              <div className="detail-field-group detail-field-group-wide">
+                <h3>Overview</h3>
+                <div className="detail-field-grid">
+                  <label>
+                    Company name
+                    <input
+                      name="company_name"
+                      value={formData.company_name}
+                      onChange={updateField}
+                      required
+                      placeholder="Company name"
+                    />
+                  </label>
+
+                  <label>
+                    Role title
+                    <input
+                      name="role_title"
+                      value={formData.role_title}
+                      onChange={updateField}
+                      required
+                      placeholder="Role title"
+                    />
+                  </label>
+
+                  <label>
+                    Status
+                    <select name="status" value={formData.status} onChange={updateField}>
+                      {statusOptions.map((status) => (
+                        <option key={status} value={status}>
+                          {status}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label>
+                    Source
+                    <select name="source" value={formData.source} onChange={updateField}>
+                      {sourceOptions.map((source) => (
+                        <option key={source} value={source}>
+                          {source}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label>
+                    Resume version
+                    <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
+                      <option value="">No resume selected</option>
+                      {resumeVersions.map((resumeVersion) => (
+                        <option key={resumeVersion.id} value={resumeVersion.id}>
+                          {getResumeVersionLabel(resumeVersion)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label>
+                    Job link
+                    <input
+                      name="job_link"
+                      value={formData.job_link}
+                      onChange={updateField}
+                      placeholder="https://..."
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : null}
+
+            {activeTab === "dates" ? (
+              <div className="detail-field-group detail-field-group-wide">
+                <h3>Dates & Follow-up</h3>
+                <p className="detail-tab-helper">Saved Date is when the job was added. Applied Date is when you submitted the application.</p>
+                <div className="detail-field-grid">
+                  <label>
+                    Saved date
+                    <input
+                      name="date_saved"
+                      type="date"
+                      value={formData.date_saved}
+                      onChange={updateField}
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Date applied
+                    <input
+                      name="date_applied"
+                      type="date"
+                      value={formData.date_applied}
+                      onChange={updateField}
+                    />
+                    <span className="field-helper">Use the date you actually submitted the application.</span>
+                  </label>
+
+                  <label>
+                    Follow-up date
+                    <input
+                      name="follow_up_date"
+                      type="date"
+                      value={formData.follow_up_date}
+                      onChange={updateField}
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : null}
+
+            {activeTab === "job-details" ? (
+              <div className="detail-field-group detail-field-group-wide">
+                <h3>Job Details</h3>
+                <div className="detail-field-grid">
+                  <label>
+                    Location
+                    <input
+                      name="location"
+                      value={formData.location}
+                      onChange={updateField}
+                      placeholder="Remote, city, or region"
+                    />
+                  </label>
+
+                  <label>
+                    Employment type
+                    <select name="employment_type" value={formData.employment_type} onChange={updateField}>
+                      {employmentTypeOptions.map((employmentType) => (
+                        <option key={employmentType || "blank"} value={employmentType}>
+                          {employmentType || "Not specified"}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label>
+                    Salary min
+                    <input
+                      min="0"
+                      name="salary_min"
+                      placeholder="Minimum"
+                      step="1"
+                      type="number"
+                      value={formData.salary_min}
+                      onChange={updateField}
+                    />
+                  </label>
+
+                  <label>
+                    Salary max
+                    <input
+                      min="0"
+                      name="salary_max"
+                      placeholder="Maximum"
+                      step="1"
+                      type="number"
+                      value={formData.salary_max}
+                      onChange={updateField}
+                    />
+                  </label>
+
+                  <label className="detail-notes-field detail-field-grid-span">
+                    Notes
+                    <textarea
+                      name="notes"
+                      value={formData.notes}
+                      onChange={updateField}
+                      rows="5"
+                      placeholder="Company context, recruiter notes, interview prep, or next steps"
+                    />
+                  </label>
+                </div>
+              </div>
+            ) : null}
+
+            {activeTab === "red-flags" ? (
+              <div className="detail-field-group detail-field-group-wide red-flags-group">
+                <h3>Red flags</h3>
+                <div className="red-flags-checklist">
+                  {redFlagOptions.map((option) => (
+                    <label className="checkbox-field" key={option.name}>
+                      <input
+                        checked={formData[option.name]}
+                        name={option.name}
+                        onChange={updateField}
+                        type="checkbox"
+                      />
+                      {option.label}
+                    </label>
                   ))}
-                </select>
-              </label>
+                </div>
 
-              <label>
-                Date applied
-                <input
-                  name="date_applied"
-                  type="date"
-                  value={formData.date_applied}
-                  onChange={updateField}
-                />
-                <span className="field-helper">Use the date you actually submitted the application.</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="detail-field-group">
-            <h3>Follow-up</h3>
-            <div className="detail-field-grid">
-              <label>
-                Follow-up date
-                <input
-                  name="follow_up_date"
-                  type="date"
-                  value={formData.follow_up_date}
-                  onChange={updateField}
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="detail-field-group detail-field-group-wide">
-            <h3>Resume/source details</h3>
-            <div className="detail-field-grid">
-              <label>
-                Source
-                <select name="source" value={formData.source} onChange={updateField}>
-                  {sourceOptions.map((source) => (
-                    <option key={source} value={source}>
-                      {source}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Resume version
-                <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
-                  <option value="">No resume selected</option>
-                  {resumeVersions.map((resumeVersion) => (
-                    <option key={resumeVersion.id} value={resumeVersion.id}>
-                      {getResumeVersionLabel(resumeVersion)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Job link
-                <input
-                  name="job_link"
-                  value={formData.job_link}
-                  onChange={updateField}
-                  placeholder="https://..."
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="detail-field-group detail-field-group-wide">
-            <h3>Compensation/context</h3>
-            <div className="detail-field-grid">
-              <label>
-                Salary min
-                <input
-                  min="0"
-                  name="salary_min"
-                  placeholder="Minimum"
-                  step="1"
-                  type="number"
-                  value={formData.salary_min}
-                  onChange={updateField}
-                />
-              </label>
-
-              <label>
-                Salary max
-                <input
-                  min="0"
-                  name="salary_max"
-                  placeholder="Maximum"
-                  step="1"
-                  type="number"
-                  value={formData.salary_max}
-                  onChange={updateField}
-                />
-              </label>
-
-              <label>
-                Employment type
-                <select name="employment_type" value={formData.employment_type} onChange={updateField}>
-                  {employmentTypeOptions.map((employmentType) => (
-                    <option key={employmentType || "blank"} value={employmentType}>
-                      {employmentType || "Not specified"}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </div>
-
-          <div className="detail-field-group detail-field-group-wide">
-            <h3>Notes</h3>
-            <label className="detail-notes-field">
-              Notes
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={updateField}
-                rows="5"
-                placeholder="Company context, recruiter notes, interview prep, or next steps"
-              />
-            </label>
-          </div>
-
-          <div className="detail-field-group detail-field-group-wide red-flags-group">
-            <h3>Red flags</h3>
-            <div className="red-flags-checklist">
-              {redFlagOptions.map((option) => (
-                <label className="checkbox-field" key={option.name}>
-                  <input
-                    checked={formData[option.name]}
-                    name={option.name}
+                <label className="detail-notes-field">
+                  Red flag notes
+                  <textarea
+                    name="red_flags_notes"
+                    value={formData.red_flags_notes}
                     onChange={updateField}
-                    type="checkbox"
+                    rows="4"
+                    placeholder="Add context about anything that seems suspicious or worth verifying"
                   />
-                  {option.label}
                 </label>
-              ))}
-            </div>
+              </div>
+            ) : null}
 
-            <label className="detail-notes-field">
-              Red flag notes
-              <textarea
-                name="red_flags_notes"
-                value={formData.red_flags_notes}
-                onChange={updateField}
-                rows="4"
-                placeholder="Add context about anything that seems suspicious or worth verifying"
-              />
-            </label>
+            {activeTab === "activity" ? (
+              <ApplicationActivityTimeline applicationId={applicationId} />
+            ) : null}
           </div>
 
           <div className="detail-actions">
@@ -495,8 +543,6 @@ export default function ApplicationDetailPanel({
           </div>
         </form>
       ) : null}
-
-      {!isLoading && !loadError ? <ApplicationActivityTimeline applicationId={applicationId} /> : null}
     </section>
   );
 }
