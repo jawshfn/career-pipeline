@@ -78,23 +78,23 @@ function isNoisyLine(line) {
 }
 
 function getEmploymentTypeFromLine(line) {
-  if (/^full[-\s]?time$/iu.test(line)) {
+  if (/\bfull[-\s]?time\b/iu.test(line)) {
     return "Full-time";
   }
 
-  if (/^part[-\s]?time$/iu.test(line)) {
+  if (/\bpart[-\s]?time\b/iu.test(line)) {
     return "Part-time";
   }
 
-  if (/^(contract|contractor|freelance)$/iu.test(line)) {
+  if (/\b(contract|contractor|freelance)\b/iu.test(line)) {
     return "Contract";
   }
 
-  if (/^intern(ship)?$/iu.test(line)) {
+  if (/\binternship\b/iu.test(line)) {
     return "Internship";
   }
 
-  if (/^(temporary|temp)$/iu.test(line)) {
+  if (/\b(temporary|temp)\b/iu.test(line)) {
     return "Temporary";
   }
 
@@ -243,7 +243,7 @@ function extractHeaderFields(rawText) {
     role_title: roleTitle,
     location,
     compensation: detectCompensation(headerLines.slice(2, 8)),
-    employment_type: detectEmploymentType(headerLines.slice(2, 8)),
+    employment_type: detectEmploymentType(headerLines.slice(2)),
   };
 }
 
