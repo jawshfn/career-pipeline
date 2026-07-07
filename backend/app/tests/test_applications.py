@@ -1,3 +1,6 @@
+from datetime import date
+
+
 def create_application(client, **overrides):
     payload = {
         "company_name": "Northstar Labs",
@@ -45,6 +48,37 @@ def test_create_application_without_status_defaults_to_saved(client):
     assert response.json()["status"] == "Saved"
 
 
+def test_create_saved_application_without_date_applied_keeps_date_blank(client):
+    response = create_application(client, status="Saved")
+
+    assert response.status_code == 201
+    assert response.json()["date_applied"] is None
+
+
+def test_create_applied_application_without_date_applied_defaults_to_today(client):
+    response = create_application(client, status="Applied")
+
+    assert response.status_code == 201
+    assert response.json()["date_applied"] == date.today().isoformat()
+
+
+def test_create_later_active_application_without_date_applied_defaults_to_today(client):
+    assessment_response = create_application(client, status="Assessment")
+    interview_response = create_application(client, status="Interview")
+
+    assert assessment_response.status_code == 201
+    assert assessment_response.json()["date_applied"] == date.today().isoformat()
+    assert interview_response.status_code == 201
+    assert interview_response.json()["date_applied"] == date.today().isoformat()
+
+
+def test_create_applied_application_preserves_explicit_date_applied(client):
+    response = create_application(client, status="Applied", date_applied="2026-06-15")
+
+    assert response.status_code == 201
+    assert response.json()["date_applied"] == "2026-06-15"
+
+
 def test_blank_status_validation(client):
     response = create_application(client, status="")
 
@@ -83,6 +117,57 @@ def test_update_application_status(client):
 
     assert response.status_code == 200
     assert response.json()["status"] == "Interview"
+
+
+def test_update_saved_application_to_applied_defaults_date_applied(client):
+    created = create_application(client, status="Saved").json()
+
+    response = client.patch(f"/api/applications/{created['id']}", json={"status": "Applied"})
+
+    assert response.status_code == 200
+    assert response.json()["date_applied"] == date.today().isoformat()
+
+
+def test_update_to_applied_preserves_existing_date_applied(client):
+    created = create_application(client, status="Saved", date_applied="2026-06-10").json()
+
+    response = client.patch(f"/api/applications/{created['id']}", json={"status": "Applied"})
+
+    assert response.status_code == 200
+    assert response.json()["date_applied"] == "2026-06-10"
+
+
+def test_update_to_applied_preserves_explicit_date_applied(client):
+    created = create_application(client, status="Saved").json()
+
+    response = client.patch(
+        f"/api/applications/{created['id']}",
+        json={"status": "Applied", "date_applied": "2026-06-20"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["date_applied"] == "2026-06-20"
+
+
+def test_update_to_applied_preserves_explicit_cleared_date_applied(client):
+    created = create_application(client, status="Saved").json()
+
+    response = client.patch(
+        f"/api/applications/{created['id']}",
+        json={"status": "Applied", "date_applied": None},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["date_applied"] is None
+
+
+def test_update_back_to_saved_does_not_clear_date_applied(client):
+    created = create_application(client, status="Applied").json()
+
+    response = client.patch(f"/api/applications/{created['id']}", json={"status": "Saved"})
+
+    assert response.status_code == 200
+    assert response.json()["date_applied"] == date.today().isoformat()
 
 
 def test_status_change_creates_activity(client):

@@ -23,6 +23,7 @@ USER_SELECTABLE_APPLICATION_STATUSES: tuple[str, ...] = tuple(
 ACTIVE_APPLICATION_STATUSES = frozenset(
     ("Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer")
 )
+APPLIED_OR_LATER_APPLICATION_STATUSES = ACTIVE_APPLICATION_STATUSES - {SAVED_APPLICATION_STATUS}
 CLOSED_APPLICATION_STATUSES = frozenset(("Rejected", "Withdrawn"))
 STALE_EXCLUDED_STATUSES = frozenset(("Offer", "Rejected", "Withdrawn", "Archived"))
 
@@ -43,3 +44,7 @@ RED_FLAG_FIELDS: tuple[tuple[str, str], ...] = (
     ("company_mismatch", "Company mismatch"),
     ("too_good_to_be_true", "Too good to be true"),
 )
+
+
+def should_default_date_applied(status: str | None) -> bool:
+    return status in APPLIED_OR_LATER_APPLICATION_STATUSES

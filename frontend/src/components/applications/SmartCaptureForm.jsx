@@ -78,7 +78,10 @@ export default function SmartCaptureForm({ resumeVersions, onCreateApplication, 
     <section className="panel quick-add-panel smart-capture-panel" aria-labelledby="smart-capture-title">
       <div className="section-heading">
         <h2 id="smart-capture-title">Paste Job Text</h2>
-        <p>Paste a job post or recruiter message, then review the suggested fields before saving.</p>
+        <p>
+          Best with LinkedIn, Indeed, and ZipRecruiter. Company career pages are best-effort, so review and
+          edit fields before saving.
+        </p>
       </div>
 
       {error ? (

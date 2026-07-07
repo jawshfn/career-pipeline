@@ -5,7 +5,12 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..domain import ARCHIVED_APPLICATION_STATUS, STALE_EXCLUDED_STATUSES, STATUS_CHANGE_ACTIVITY_TYPE
+from ..domain import (
+    ARCHIVED_APPLICATION_STATUS,
+    STALE_EXCLUDED_STATUSES,
+    STATUS_CHANGE_ACTIVITY_TYPE,
+    should_default_date_applied,
+)
 from ..models import Application, ApplicationActivity, utc_now
 from ..schemas import (
     ApplicationActionItemsRead,
@@ -129,7 +134,12 @@ def get_action_items(db: Session = Depends(get_db)) -> dict[str, list[Applicatio
 
 @router.post("", response_model=ApplicationRead, status_code=status.HTTP_201_CREATED)
 def create_application(payload: ApplicationCreate, db: Session = Depends(get_db)) -> Application:
-    application = Application(**payload.model_dump(exclude_none=True))
+    create_data = payload.model_dump(exclude_none=True)
+
+    if should_default_date_applied(create_data.get("status")) and "date_applied" not in create_data:
+        create_data["date_applied"] = date.today()
+
+    application = Application(**create_data)
     db.add(application)
     db.commit()
     db.refresh(application)
@@ -225,6 +235,13 @@ def update_application(
 
     if next_status == ARCHIVED_APPLICATION_STATUS:
         updates["is_archived"] = True
+
+    if (
+        should_default_date_applied(next_status)
+        and application.date_applied is None
+        and "date_applied" not in updates
+    ):
+        updates["date_applied"] = date.today()
 
     for field, value in updates.items():
         setattr(application, field, value)
