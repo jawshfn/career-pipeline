@@ -1,14 +1,6 @@
-const API_BASE_URL = "http://127.0.0.1:8000";
+import { apiGet, apiPatch, apiPost } from "./apiClient.js";
 
-async function parseResponse(response) {
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => null);
-    const message = errorBody?.detail || "Application request failed.";
-    throw new Error(Array.isArray(message) ? "Application request failed." : message);
-  }
-
-  return response.json();
-}
+const APPLICATION_ERROR = "Application request failed.";
 
 export async function getApplications(options = {}) {
   const searchParams = new URLSearchParams();
@@ -18,40 +10,21 @@ export async function getApplications(options = {}) {
   }
 
   const queryString = searchParams.toString();
-  const response = await fetch(`${API_BASE_URL}/api/applications${queryString ? `?${queryString}` : ""}`);
-  return parseResponse(response);
+  return apiGet(`/api/applications${queryString ? `?${queryString}` : ""}`, APPLICATION_ERROR);
 }
 
-export async function getApplication(applicationId) {
-  const response = await fetch(`${API_BASE_URL}/api/applications/${applicationId}`);
-  return parseResponse(response);
+export function getApplication(applicationId) {
+  return apiGet(`/api/applications/${applicationId}`, APPLICATION_ERROR);
 }
 
-export async function createApplication(applicationData) {
-  const response = await fetch(`${API_BASE_URL}/api/applications`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(applicationData),
-  });
-
-  return parseResponse(response);
+export function createApplication(applicationData) {
+  return apiPost("/api/applications", applicationData, APPLICATION_ERROR);
 }
 
-export async function updateApplication(applicationId, applicationData) {
-  const response = await fetch(`${API_BASE_URL}/api/applications/${applicationId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(applicationData),
-  });
-
-  return parseResponse(response);
+export function updateApplication(applicationId, applicationData) {
+  return apiPatch(`/api/applications/${applicationId}`, applicationData, APPLICATION_ERROR);
 }
 
-export async function getApplicationActionItems() {
-  const response = await fetch(`${API_BASE_URL}/api/applications/action-items`);
-  return parseResponse(response);
+export function getApplicationActionItems() {
+  return apiGet("/api/applications/action-items", APPLICATION_ERROR);
 }
