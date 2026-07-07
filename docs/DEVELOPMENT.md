@@ -5,20 +5,21 @@ Career Pipeline should be built as a serious product prototype with a small, rel
 ## Development Principles
 
 - Build the smallest complete workflow before adding breadth.
-- Keep quick-add fast and central.
+- Keep Quick Add lightweight and separate from richer management workflows.
 - Prefer clear data models and predictable endpoints.
 - Make local development easy.
 - Keep public documentation professional and product-focused.
-- Avoid adding private strategy, personal job-search examples, or monetization plans to the public repo.
+- Avoid private strategy, personal job-search examples, or sensitive job-search data in the public repo.
+- Treat red flags as user-managed caution tags, not automated fraud detection.
 
 ## Product-First Engineering Guidelines
 
 - Start features from the user workflow, not the database table.
 - Optimize for reducing repeated manual tracking.
-- Keep forms short unless the user explicitly opens a detail or edit view.
-- Preserve context: status changes, follow-ups, resume assignment, and red flags should be visible where they help decision-making.
+- Keep forms short unless the user intentionally opens a detail or edit view.
+- Preserve context across pages: status changes, follow-ups, resume assignment, red flags, and activity entries should stay synced where they are shown.
 - Use simple language in the UI and documentation.
-- Treat red flags as user-managed caution tags, not automated fraud detection.
+- Keep archived records hidden from normal active workflows unless a future archive-management phase explicitly changes that.
 
 ## Commit Style Recommendations
 
@@ -33,139 +34,185 @@ area: concise change summary
 Examples:
 
 ```text
-docs: add product spec and roadmap
-api: add application quick-add endpoint
-ui: build applications table filters
-test: cover status updates
+docs: refresh project documentation
+api: add application activity routes
+ui: polish command center follow-up actions
+test: cover activity timeline endpoints
 ```
 
-## Testing Expectations
+## Verification Commands
 
-Backend testing should use pytest.
+Backend tests:
 
-Expected backend coverage:
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m pytest
+```
+
+Frontend production build:
+
+```powershell
+cd frontend
+npm run build
+```
+
+Local backend server:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+```
+
+Local frontend dev server:
+
+```powershell
+cd frontend
+npm run dev
+```
+
+Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend build, and manual QA for the affected workflows. Frontend-only behavior changes should at least run `npm run build` and relevant browser QA.
+
+## Backend Testing Expectations
+
+Backend pytest coverage should protect:
 
 - Health endpoint
-- Application create, list, retrieve, update, and archive
-- Status updates
-- Overdue and upcoming follow-up action items based on follow_up_date
-- Resume version assignment
-- Archive status and is_archived consistency
-
-Future backend coverage:
-
-- Red-flag assignment and removal
-- Dashboard summary calculations
-- Application event history
-
-Frontend testing can start with smoke tests and focused interaction tests once the frontend structure exists.
+- Application create, list, retrieve, update, and archive behavior
+- Status updates and archived-record restrictions
+- Overdue, upcoming, and stale follow-up action-item rules
+- Resume version create/update/list behavior
+- Red-flag create/update/read behavior
+- Application activity timeline create/list/update/delete behavior
+- 404 and cross-record isolation cases where applicable
 
 ## GitHub Actions CI Expectations
 
 The current CI workflow should:
 
 - Install backend dependencies
-- Run pytest
+- Run backend pytest
 - Install frontend dependencies
 - Run the frontend production build
 - Fail clearly on test or build errors
 
-Later CI can add:
-
-- Linting or formatting checks
-- Lightweight frontend tests
-
-## Demo Data Expectations
-
-Demo data should be realistic but fictional.
-
-Demo records should include:
-
-- Multiple sources such as LinkedIn, Indeed, referrals, recruiter calls, and company sites
-- A range of statuses across the pipeline
-- Several follow-ups due and overdue
-- Multiple resume versions
-- Future red-flagged postings after red flags are implemented
-
-Do not use personal job-search data, real recruiter names, private company notes, or sensitive contact details.
-
-## Documentation Expectations
-
-Documentation should stay aligned with the implemented product.
-
-Update docs when:
-
-- MVP scope changes
-- API paths or request shapes change
-- Database fields change
-- Workflow decisions change
-- Screenshots become available
-- Local setup, test, or deployment instructions become real
+Later CI can add linting, formatting, or lightweight frontend tests if those checks become useful.
 
 ## Manual QA Checklist
 
-Run this checklist before starting a new product phase or opening a pull request:
+Run the relevant parts of this checklist before starting a new product phase or opening a pull request.
 
-- Backend tests pass with `python -m pytest` from `backend`.
-- Frontend build passes with `npm run build` from `frontend`.
-- Backend server starts with `python -m uvicorn app.main:app --reload`.
-- Frontend dev server starts with `npm run dev`.
-- Full-width and half-width desktop layouts do not require page-level horizontal scrolling for forms or navigation.
-- Dashboard loads and shows active application summary cards.
-- Dashboard status counts match Applications and Pipeline active records.
-- Dashboard excludes archived applications from summary metrics.
-- Dashboard red-flag count updates after flagging or unflagging an application.
-- Applications table loads backend applications.
-- Applications page does not show the Quick Add form.
-- Applications search and filters narrow active applications without changing Quick Add.
-- Applications table shows Saved Date, and date-saved newest/oldest sorts place missing dates last.
-- Applications sorting changes table order and Details still opens from filtered results.
-- Quick Add page creates an application, shows the created role/company, and stays ready for another entry.
-- Quick Add success actions can clear the success state or navigate to Applications.
-- Quick-add creates an application.
+### Responsive Shell
+
+- Full-width and half-width desktop layouts avoid page-level horizontal scrolling from forms, filters, or navigation.
+- Sticky sidebar navigation remains visible on desktop while scrolling.
+- Narrower layouts do not let navigation cover page content.
+
+### Quick Add
+
+- Quick Add creates a new application and shows clear success feedback.
+- Add another clears the success state and leaves the user on Quick Add.
+- View applications navigates to Applications.
 - Quick Add does not offer `Archived` as a status.
-- Quick-add can create an application with a follow-up date.
-- Quick-add can set Applied Date, and applied/later statuses default it only when empty.
-- Quick-add follow-up presets fill Tomorrow, In 3 days, In 1 week, and In 2 weeks as `YYYY-MM-DD`.
-- Quick-add follow-up Clear removes the follow-up date.
-- Applications table displays the follow-up date.
-- Application detail panel opens from an Applications table row.
-- Editing notes in the detail panel persists after save.
-- Editing red flags and red flag notes in the detail panel persists after save.
-- Applications table shows a red flag count only for flagged applications.
-- Editing resume version in the detail panel updates the application.
-- Editing follow-up date in the detail panel updates the Applications table.
-- Changing status from Saved to Applied or later defaults an empty Applied Date without overwriting or clearing it.
-- Editing status in the detail panel updates the Applications table and Pipeline.
-- Closing the detail panel with no unsaved changes closes immediately.
-- Closing the detail panel with unsaved changes prompts before discarding changes.
-- Saving detail panel changes keeps the panel open and clears the unsaved-change warning.
-- Detail panel status options do not include `Archived`.
-- Resume Versions page loads active resume versions by default.
-- Resume Versions page can create a resume version.
-- Resume Versions page can edit name, target role, and description.
+- Follow-up presets fill Tomorrow, In 3 days, In 1 week, and In 2 weeks as `YYYY-MM-DD`.
+- Follow-up Clear removes the follow-up date.
+- Applied or later statuses default an empty Applied Date without overwriting a manually entered date.
+
+### Applications Filters And Details
+
+- Applications defaults to the Active view.
+- Active shows Saved, Applied, Assessment, Recruiter Screen, Interview, and Offer.
+- Closed shows Rejected and Withdrawn.
+- All shows active and closed applications while still excluding archived records.
+- Search works for company, role, source, location, and full notes text.
+- Status, source, resume version, and red-flag filters work within the selected view.
+- Sorting works for recently updated, saved date newest/oldest, follow-up date, company, and status.
+- Long notes display as compact previews in the table while full notes remain available in Details.
+- Details opens from filtered and sorted results.
+- Selecting Details scrolls the detail panel into view.
+- Unsaved detail changes warn before closing or switching to a different application.
+- Clicking Details on the currently open application only scrolls and does not clear dirty state.
+- Saving detail changes keeps the panel open and clears the unsaved-change warning.
+
+### Applied Dates And Detail Fields
+
+- `date_saved` represents when the job was added to Career Pipeline.
+- `date_applied` represents when the user actually applied.
+- Changing status from Saved to Applied or later defaults an empty Applied Date to today.
+- Existing Applied Date is not overwritten by status changes.
+- Applied Date is not automatically cleared when changing status back to Saved.
+- Users can manually edit or clear Applied Date.
+- Follow-up date edits persist and update Applications, Command Center, and Dashboard where relevant.
+
+### Pipeline Sync
+
+- Pipeline groups applications by status and supports status filtering.
+- Pipeline cards remain readable at full-width and half-screen desktop widths.
+- Pipeline does not show archived applications in active workflow views.
+- Changing a status in Pipeline updates Applications and Dashboard state.
+- Moving an application to Rejected or Withdrawn removes it from the Applications Active view and shows it in Closed.
+
+### Command Center Follow-Up Actions
+
+- Overdue follow-ups appear in the overdue section.
+- Today through three-days-out follow-ups appear in upcoming.
+- Four-days-out follow-ups do not appear in Command Center.
+- Stale active applications appear when they have no follow-up and no recent update.
+- Rejected, Withdrawn, and Archived applications do not appear as stale.
+- Snooze 3 days sets the follow-up date to today plus 3 days.
+- Snooze 1 week sets the follow-up date to today plus 7 days.
+- Clear follow-up sets the follow-up date to empty/null.
+- Follow-up quick actions update Applications and Dashboard after navigation or refresh.
+
+### Dashboard Metrics
+
+- Dashboard loads and shows summary cards.
+- Active application count excludes archived applications.
+- Follow-up metrics match current follow-up dates.
+- Red-flag count updates after flagging or unflagging an application.
+- Status, source, and resume-version usage sections match the loaded application data.
+- Empty or minimal data states remain clear.
+
+### Resume Versions
+
+- Resume Versions loads active resume versions by default.
+- Users can create a resume version.
+- Users can edit name, target role, description, and active state.
 - Deactivating a resume version removes it from the active-only view.
 - Including inactive resume versions shows inactive versions.
 - Reactivating a resume version returns it to the active view.
 - Quick Add and Application Detail receive current active resume-version options.
-- Pipeline groups applications by status.
-- Pipeline status filters wrap cleanly and show the expected grouped applications.
-- Pipeline does not show `Archived` as an active column.
-- Changing pipeline status persists after refresh.
-- Moving an application to `Archived` removes it from active Applications.
-- Moving an application to `Archived` removes it from active Pipeline.
-- Archived applications do not appear in the Daily Command Center.
-- Archived records remain available through the backend `include_archived=true` behavior.
-- Applications page reflects pipeline status changes.
-- Overdue follow-up appears separately in the Daily Command Center.
-- Today follow-up appears under Upcoming Follow-ups.
-- Tomorrow follow-up appears under Upcoming Follow-ups.
-- Three-days-out follow-up appears under Upcoming Follow-ups.
-- Four-days-out follow-up does not appear in the Daily Command Center.
-- Stale active application appears in the Daily Command Center.
-- Rejected, withdrawn, and archived applications do not appear as stale.
-- No `Follow-up Due` or `Follow-up due` status exists.
+
+### Red Flags
+
+- Red-flag checklist values save from Application Detail.
+- Red-flag notes save from Application Detail.
+- Applications table shows a compact count only when flags exist.
+- Pipeline cards show red-flag indicators where applicable.
+- Normal applications without flags remain visually clean.
+
+### Activity Timeline
+
+- Activity timeline appears inside Application Detail.
+- Adding an activity saves independently from the main detail form.
+- Adding an activity does not clear unsaved main detail edits.
+- Activities show activity date, type, and note.
+- Newer activities appear before older activities.
+- Activities persist after closing and reopening Details.
+- Deleting an activity removes it from the timeline.
+- Activities for one application do not appear on another application.
+
+### Archive Behavior
+
+- Moving an application to `Archived` hides it from normal active workflow views.
+- Archived applications do not appear in Applications, Pipeline, Command Center, or Dashboard metrics by default.
+- Archived records remain available through backend `include_archived=true` behavior.
+- Do not introduce a dedicated Archived page unless a future phase explicitly calls for it.
+
+### Demo Data And Screenshots
+
 - Demo data and screenshots contain no private or personal job-search data.
+- Use fictional company, recruiter, and note examples.
+- Screenshots should show the current navigation structure: Command Center, Dashboard, Quick Add, Applications, Pipeline, Resume Versions.
 
 ## Local QA Data Cleanup
 
@@ -185,7 +232,7 @@ Remove-Item -LiteralPath backend/career_pipeline.db
 
 The database will be recreated the next time the backend starts. Use this only for local development data.
 
-## Definition of Done for a Feature
+## Definition Of Done For A Feature
 
 A feature is done when:
 
@@ -195,4 +242,4 @@ A feature is done when:
 - Empty, loading, and error states are handled where relevant.
 - Demo data can show the feature clearly.
 - Documentation is updated if behavior, setup, API, or data model changed.
-- The feature does not make quick-add slower or more complex unless the user intentionally opens an advanced view.
+- The feature does not make Quick Add slower or more complex unless the user intentionally opens an advanced view.

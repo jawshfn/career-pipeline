@@ -2,68 +2,84 @@
 
 [![CI](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml)
 
-Career Pipeline is a full-stack job-search command center prototype for capturing opportunities, tracking applications, managing follow-ups, and understanding job-search progress across multiple sources.
+Career Pipeline is a full-stack job-search workspace for capturing opportunities, tracking application status, managing follow-ups, and reviewing job-search progress from one place.
 
-## Product Goal
+The product is built around a common job-search problem: opportunities arrive from many sources, each application has different dates and context, and follow-up work is easy to lose in a spreadsheet. Career Pipeline keeps the fast capture workflow separate from richer application management so users can move quickly without losing detail.
 
-Help new grads, early-career applicants, career switchers, and active job seekers quickly capture job opportunities, track each application through a clear pipeline, remember which resume version was used, record company and recruiter notes, and manage follow-up work. Planned future capabilities include red-flag tags for questionable postings and response/source insights.
+## Current Features
 
-## Target Users
+### Quick Capture
 
-- New graduates managing many entry-level applications
-- Early-career applicants applying across several job boards
-- Career switchers tracking role fit, resume variants, and outreach
-- Job seekers using LinkedIn, Indeed, ZipRecruiter, company sites, referrals, recruiter calls, and direct outreach
+- Dedicated Quick Add page for quickly saving a job opportunity
+- Optional status, resume version, applied date, follow-up date, source, job link, and notes
+- Follow-up presets for common next-step dates
+- Applied-date defaulting when a user selects Applied or a later status and no applied date is set
 
-## Current Product Flow
+### Application Management
 
-- Dashboard snapshot for counts, status mix, sources, resume usage, and red flags
-- Dedicated Quick Add page for fast application capture, including optional follow-up date presets
-- Applications table for active applications
-- Application detail panel for editing richer context after quick-add
-- Pipeline board with persisted status updates
-- Daily Command Center for overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications
-- Resume Versions page for creating, editing, deactivating, and reactivating reusable resume variants
-- Resume-version assignment support from Quick Add and Application Detail
-- Red-flag checklist and notes from Application Detail
-- Manual activity timeline entries from Application Detail
-- Archive behavior that hides archived records from active workflow views
+- Applications page focused on searching, filtering, sorting, and managing existing applications
+- Active, Closed, and All views for separating open opportunities from Rejected and Withdrawn outcomes
+- Search across company, role, source, location, and notes
+- Filters for status, source, resume version, and red-flag state
+- Sort options for recently updated, saved date, follow-up date, company, and status
+- Applications table with saved date, applied date, follow-up date, red-flag indicators, and compact truncated notes previews
 
-## Planned Future Features
+### Application Detail
 
-- Timeline automation and richer follow-up workflows
-- Deployment, authentication, AI features, and browser extension support are not implemented yet
+- Detail panel for editing company, role, job link, source, status, resume version, saved date, applied date, follow-up date, location, salary range, employment type, notes, and red flags
+- Clear applied-date semantics: `date_saved` is when the job was added to Career Pipeline; `date_applied` is when the user actually applied
+- Existing applied dates are not overwritten automatically
+- Unsaved-change warnings when closing or switching selected applications
+- Manual activity timeline with dated entries, activity type, and note, saved independently from the main detail form
+
+### Pipeline Workflow
+
+- Responsive grouped pipeline layout with status filters
+- Status updates stay synced with Applications and Dashboard data
+- Red-flag indicators appear on application cards where useful
+- Archived records remain hidden from normal active workflow views
+
+### Follow-Up Command Center
+
+- Daily Command Center for overdue follow-ups, upcoming follow-ups, and stale active applications
+- Quick follow-up actions: Snooze 3 days, Snooze 1 week, and Clear follow-up
+- Action results update shared frontend state so Applications and Dashboard remain consistent
+
+### Dashboard Metrics
+
+- Summary cards for active applications, follow-ups, red-flagged applications, interviews, and offers
+- Status, source, resume-version usage, and red-flag snapshots
+- Metrics are frontend-derived from loaded application and resume-version data
+
+### Resume Version Management
+
+- Resume Versions page for creating, editing, deactivating, reactivating, and viewing reusable resume variants
+- Resume versions can be assigned from Quick Add and Application Detail
+
+### Red Flag Tracking
+
+- Application Detail red-flag checklist and notes
+- Compact red-flag counts in Applications and Pipeline
+- Red flags are user-managed caution tags, not automated scoring
+
+## App Pages
+
+- Command Center
+- Dashboard
+- Quick Add
+- Applications
+- Pipeline
+- Resume Versions
+
+The sidebar navigation is sticky on desktop and responsive for narrower desktop layouts. Recent UI polish focuses on full-width and half-screen desktop usability.
 
 ## Tech Stack
 
-- Frontend: React, JavaScript, HTML/CSS
-- Backend: FastAPI, Python
-- Database: SQLite
-- Testing: pytest
-- CI: GitHub Actions
-- Deployment: GitHub Pages for the frontend initially; backend local-first at first
-
-## Current Project Status
-
-Career Pipeline currently has a FastAPI backend with SQLite and SQLAlchemy, a React/Vite frontend, backend pytest coverage, and GitHub Actions CI for backend tests and frontend build. The working prototype supports quick-add, application table views, application detail editing, manual activity timeline entries, resume-version management and assignment, pipeline status updates, red-flag tracking, archive behavior, the Daily Command Center, and Dashboard metrics.
-
-The full product is not complete yet. Timeline automation, richer follow-up workflows, deployment, authentication, AI, and browser extension features are still planned or intentionally out of scope.
-
-## Planned Development Phases
-
-1. Phase 0: Documentation and product planning
-2. Phase 1: Backend foundation
-3. Phase 2: Quick-add and applications table
-4. Phase 3: Pipeline board
-5. Phase 4: Follow-up queue / daily command center
-6. Phase 5: Application detail / resume version workflow
-7. Phase 6: Red-flag system
-8. Phase 7: Dashboard metrics and insights
-9. Phase 8: Testing, CI, demo data, screenshots, and polish
-
-## Screenshots
-
-Screenshots have not been added yet. They should be captured from the working frontend after the next UI polish pass.
+- Frontend: React, Vite, JavaScript, CSS
+- Backend: FastAPI, Python, SQLAlchemy
+- Database: SQLite for local-first development
+- Testing: pytest for backend coverage, Vite production build for frontend verification
+- CI: GitHub Actions runs backend tests and frontend build
 
 ## Run Locally
 
@@ -85,29 +101,37 @@ npm install
 npm run dev
 ```
 
+The frontend expects the backend at:
+
+```text
+http://127.0.0.1:8000
+```
+
 Additional setup details are available in [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md).
 
-## Tests
+## Verification
 
-Backend:
+Backend tests:
 
 ```powershell
 cd backend
-python -m pytest
+.\.venv\Scripts\python.exe -m pytest
 ```
 
-Frontend:
+Frontend build:
 
 ```powershell
 cd frontend
 npm run build
 ```
 
-GitHub Actions CI runs backend pytest and the frontend production build on push and pull request.
+Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend build, and manual QA for the affected workflows.
 
-## Deployment
+## Project Status
 
-Deployment notes will be added when the frontend is ready for GitHub Pages and the backend local-first workflow is documented.
+Career Pipeline is a working local-first prototype with a FastAPI backend, SQLite database, React/Vite frontend, backend pytest coverage, and GitHub Actions CI. It supports quick capture, application management, detail editing, pipeline status updates, follow-up actions, dashboard metrics, resume-version management, red-flag tracking, and manual activity timelines.
+
+Deployment, authentication, AI features, scraping, browser extension workflows, and advanced analytics are not implemented. They are optional future directions rather than current product claims.
 
 ## Documentation
 
