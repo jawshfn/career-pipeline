@@ -109,6 +109,21 @@ function getResumeVersionLabel(resumeVersion) {
     : resumeVersion.name;
 }
 
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getTodayValue() {
+  return formatLocalDate(new Date());
+}
+
+function isAppliedOrLater(status) {
+  return statusOptions.includes(status) && status !== "Saved";
+}
+
 export default function ApplicationDetailPanel({
   applicationId,
   onClose,
@@ -161,7 +176,18 @@ export default function ApplicationDetailPanel({
 
   function updateField(event) {
     const { checked, name, type, value } = event.target;
-    setFormData((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
+    setFormData((current) => {
+      if (
+        name === "status" &&
+        current.status === "Saved" &&
+        isAppliedOrLater(value) &&
+        !current.date_applied
+      ) {
+        return { ...current, status: value, date_applied: getTodayValue() };
+      }
+
+      return { ...current, [name]: type === "checkbox" ? checked : value };
+    });
     setSaveMessage("");
   }
 
@@ -307,6 +333,7 @@ export default function ApplicationDetailPanel({
                   value={formData.date_applied}
                   onChange={updateField}
                 />
+                <span className="field-helper">Use the date you actually submitted the application.</span>
               </label>
             </div>
           </div>

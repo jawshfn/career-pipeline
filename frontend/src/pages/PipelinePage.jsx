@@ -4,6 +4,31 @@ import PipelineBoard from "../components/pipeline/PipelineBoard.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
+const appliedOrLaterStatuses = [
+  "Applied",
+  "Assessment",
+  "Recruiter Screen",
+  "Interview",
+  "Offer",
+  "Rejected",
+  "Withdrawn",
+];
+
+function formatLocalDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function shouldDefaultAppliedDate(application, nextStatus) {
+  return (
+    application.status === "Saved" &&
+    appliedOrLaterStatuses.includes(nextStatus) &&
+    !application.date_applied
+  );
+}
+
 export default function PipelinePage({
   applications,
   error,
@@ -23,7 +48,12 @@ export default function PipelinePage({
     setUpdatingApplicationId(application.id);
 
     try {
-      await onUpdateApplication(application.id, { status: nextStatus });
+      const payload = { status: nextStatus };
+      if (shouldDefaultAppliedDate(application, nextStatus)) {
+        payload.date_applied = formatLocalDate(new Date());
+      }
+
+      await onUpdateApplication(application.id, payload);
     } catch (updateError) {
       setStatusUpdateError(updateError.message || "Could not update application status.");
     } finally {

@@ -125,6 +125,7 @@ Run this checklist before starting a new product phase or opening a pull request
 - Quick-add creates an application.
 - Quick Add does not offer `Archived` as a status.
 - Quick-add can create an application with a follow-up date.
+- Quick-add can set Applied Date, and applied/later statuses default it only when empty.
 - Quick-add follow-up presets fill Tomorrow, In 3 days, In 1 week, and In 2 weeks as `YYYY-MM-DD`.
 - Quick-add follow-up Clear removes the follow-up date.
 - Applications table displays the follow-up date.
@@ -134,6 +135,7 @@ Run this checklist before starting a new product phase or opening a pull request
 - Applications table shows a red flag count only for flagged applications.
 - Editing resume version in the detail panel updates the application.
 - Editing follow-up date in the detail panel updates the Applications table.
+- Changing status from Saved to Applied or later defaults an empty Applied Date without overwriting or clearing it.
 - Editing status in the detail panel updates the Applications table and Pipeline.
 - Closing the detail panel with no unsaved changes closes immediately.
 - Closing the detail panel with unsaved changes prompts before discarding changes.

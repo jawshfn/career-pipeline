@@ -266,6 +266,12 @@ a {
   font-weight: 700;
 }
 
+.field-helper {
+  color: #60706d;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
 .quick-add-success-actions {
   display: flex;
   flex-wrap: wrap;

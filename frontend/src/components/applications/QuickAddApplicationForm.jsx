@@ -7,6 +7,7 @@ const initialFormState = {
   source: "Other",
   status: "Saved",
   resume_version_id: "",
+  date_applied: "",
   follow_up_date: "",
   notes: "",
 };
@@ -59,6 +60,14 @@ function getResumeVersionLabel(resumeVersion) {
     : resumeVersion.name;
 }
 
+function getTodayValue() {
+  return formatLocalDate(new Date());
+}
+
+function isAppliedOrLater(status) {
+  return statusOptions.includes(status) && status !== "Saved";
+}
+
 export default function QuickAddApplicationForm({ resumeVersions, onCreateApplication, onCreateSuccess }) {
   const [formData, setFormData] = useState(initialFormState);
   const [error, setError] = useState("");
@@ -66,7 +75,13 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
 
   function updateField(event) {
     const { name, value } = event.target;
-    setFormData((current) => ({ ...current, [name]: value }));
+    setFormData((current) => {
+      if (name === "status" && isAppliedOrLater(value) && !current.date_applied) {
+        return { ...current, status: value, date_applied: getTodayValue() };
+      }
+
+      return { ...current, [name]: value };
+    });
   }
 
   function setFollowUpDate(value) {
@@ -85,6 +100,7 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
       source: formData.source,
       status: formData.status,
       resume_version_id: formData.resume_version_id ? Number(formData.resume_version_id) : null,
+      date_applied: formData.date_applied || null,
       follow_up_date: formData.follow_up_date || null,
       notes: formData.notes.trim() || null,
     };
@@ -178,6 +194,17 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
               </option>
             ))}
           </select>
+        </label>
+
+        <label>
+          Applied date
+          <input
+            name="date_applied"
+            type="date"
+            value={formData.date_applied}
+            onChange={updateField}
+          />
+          <span className="field-helper">Use the date you actually submitted the application.</span>
         </label>
 
         <div className="follow-up-date-field">
