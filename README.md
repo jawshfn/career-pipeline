@@ -26,12 +26,12 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 - Resume Versions page for creating, editing, deactivating, and reactivating reusable resume variants
 - Resume-version assignment support from Quick Add and Application Detail
 - Red-flag checklist and notes from Application Detail
+- Manual activity timeline entries from Application Detail
 - Archive behavior that hides archived records from active workflow views
 
 ## Planned Future Features
 
-- Full application history and event timeline
-- Follow-up completion and rescheduling workflow
+- Timeline automation and richer follow-up workflows
 - Deployment, authentication, AI features, and browser extension support are not implemented yet
 
 ## Tech Stack
@@ -45,9 +45,9 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 
 ## Current Project Status
 
-Career Pipeline currently has a FastAPI backend with SQLite and SQLAlchemy, a React/Vite frontend, backend pytest coverage, and GitHub Actions CI for backend tests and frontend build. The working prototype supports quick-add, application table views, application detail editing, resume-version management and assignment, pipeline status updates, red-flag tracking, archive behavior, the Daily Command Center, and Dashboard metrics.
+Career Pipeline currently has a FastAPI backend with SQLite and SQLAlchemy, a React/Vite frontend, backend pytest coverage, and GitHub Actions CI for backend tests and frontend build. The working prototype supports quick-add, application table views, application detail editing, manual activity timeline entries, resume-version management and assignment, pipeline status updates, red-flag tracking, archive behavior, the Daily Command Center, and Dashboard metrics.
 
-The full product is not complete yet. Full application event history, follow-up completion/rescheduling, deployment, authentication, AI, and browser extension features are still planned or intentionally out of scope.
+The full product is not complete yet. Timeline automation, richer follow-up workflows, deployment, authentication, AI, and browser extension features are still planned or intentionally out of scope.
 
 ## Planned Development Phases
 

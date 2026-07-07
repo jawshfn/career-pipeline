@@ -84,7 +84,7 @@ Status: in progress
 - Phase 5.2 complete: add Resume Versions page for create, edit, deactivate, and reactivate workflows
 - Support editing richer application context without making Quick Add heavier
 - Support resume-version assignment from Quick Add and Application Detail
-- Prepare for timeline/event history
+- Activity timeline foundation added in Phase 7.5 for manual dated application events
 
 ## Phase 6: Red-Flag System
 

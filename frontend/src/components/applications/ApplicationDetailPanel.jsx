@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { getApplication } from "../../api/applicationsApi.js";
+import ApplicationActivityTimeline from "./ApplicationActivityTimeline.jsx";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
 
@@ -494,6 +495,8 @@ export default function ApplicationDetailPanel({
           </div>
         </form>
       ) : null}
+
+      {!isLoading && !loadError ? <ApplicationActivityTimeline applicationId={applicationId} /> : null}
     </section>
   );
 }

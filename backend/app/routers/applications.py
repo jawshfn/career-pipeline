@@ -5,12 +5,34 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..models import Application, utc_now
-from ..schemas import ApplicationActionItemsRead, ApplicationCreate, ApplicationRead, ApplicationUpdate
+from ..models import Application, ApplicationActivity, utc_now
+from ..schemas import (
+    ApplicationActionItemsRead,
+    ApplicationActivityCreate,
+    ApplicationActivityRead,
+    ApplicationActivityUpdate,
+    ApplicationCreate,
+    ApplicationRead,
+    ApplicationUpdate,
+)
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
 
 STALE_EXCLUDED_STATUSES = ("Offer", "Rejected", "Withdrawn", "Archived")
+
+
+def get_existing_application(application_id: int, db: Session) -> Application:
+    application = db.get(Application, application_id)
+    if application is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+    return application
+
+
+def get_existing_activity(application_id: int, activity_id: int, db: Session) -> ApplicationActivity:
+    activity = db.get(ApplicationActivity, activity_id)
+    if activity is None or activity.application_id != application_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
+    return activity
 
 
 @router.get("", response_model=list[ApplicationRead])
@@ -99,12 +121,71 @@ def create_application(payload: ApplicationCreate, db: Session = Depends(get_db)
     return application
 
 
+@router.get("/{application_id}/activities", response_model=list[ApplicationActivityRead])
+def list_application_activities(application_id: int, db: Session = Depends(get_db)) -> list[ApplicationActivity]:
+    get_existing_application(application_id, db)
+    return (
+        db.query(ApplicationActivity)
+        .filter(ApplicationActivity.application_id == application_id)
+        .order_by(ApplicationActivity.activity_date.desc(), ApplicationActivity.created_at.desc())
+        .all()
+    )
+
+
+@router.post(
+    "/{application_id}/activities",
+    response_model=ApplicationActivityRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_application_activity(
+    application_id: int,
+    payload: ApplicationActivityCreate,
+    db: Session = Depends(get_db),
+) -> ApplicationActivity:
+    get_existing_application(application_id, db)
+    activity = ApplicationActivity(application_id=application_id, **payload.model_dump())
+    db.add(activity)
+    db.commit()
+    db.refresh(activity)
+    return activity
+
+
+@router.patch(
+    "/{application_id}/activities/{activity_id}",
+    response_model=ApplicationActivityRead,
+)
+def update_application_activity(
+    application_id: int,
+    activity_id: int,
+    payload: ApplicationActivityUpdate,
+    db: Session = Depends(get_db),
+) -> ApplicationActivity:
+    get_existing_application(application_id, db)
+    activity = get_existing_activity(application_id, activity_id, db)
+
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(activity, field, value)
+
+    db.commit()
+    db.refresh(activity)
+    return activity
+
+
+@router.delete("/{application_id}/activities/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_application_activity(
+    application_id: int,
+    activity_id: int,
+    db: Session = Depends(get_db),
+) -> None:
+    get_existing_application(application_id, db)
+    activity = get_existing_activity(application_id, activity_id, db)
+    db.delete(activity)
+    db.commit()
+
+
 @router.get("/{application_id}", response_model=ApplicationRead)
 def get_application(application_id: int, db: Session = Depends(get_db)) -> Application:
-    application = db.get(Application, application_id)
-    if application is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
-    return application
+    return get_existing_application(application_id, db)
 
 
 @router.patch("/{application_id}", response_model=ApplicationRead)
@@ -113,9 +194,7 @@ def update_application(
     payload: ApplicationUpdate,
     db: Session = Depends(get_db),
 ) -> Application:
-    application = db.get(Application, application_id)
-    if application is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+    application = get_existing_application(application_id, db)
 
     updates = payload.model_dump(exclude_unset=True)
     next_status = updates.get("status")
@@ -141,9 +220,7 @@ def update_application(
 
 @router.delete("/{application_id}", response_model=ApplicationRead)
 def archive_application(application_id: int, db: Session = Depends(get_db)) -> Application:
-    application = db.get(Application, application_id)
-    if application is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application not found")
+    application = get_existing_application(application_id, db)
 
     application.is_archived = True
     application.status = "Archived"

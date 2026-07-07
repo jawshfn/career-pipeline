@@ -113,6 +113,31 @@ class ApplicationActionItemsRead(BaseModel):
     stale_applications: list[ApplicationRead]
 
 
+class ApplicationActivityBase(BaseModel):
+    activity_date: date
+    activity_type: str = Field(min_length=1)
+    note: str = Field(min_length=1)
+
+
+class ApplicationActivityCreate(ApplicationActivityBase):
+    pass
+
+
+class ApplicationActivityUpdate(BaseModel):
+    activity_date: date | None = None
+    activity_type: str | None = Field(default=None, min_length=1)
+    note: str | None = Field(default=None, min_length=1)
+
+
+class ApplicationActivityRead(ApplicationActivityBase):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    application_id: int
+    created_at: datetime
+    updated_at: datetime
+
+
 class ResumeVersionCreate(BaseModel):
     name: str = Field(min_length=1)
     target_role: str | None = None

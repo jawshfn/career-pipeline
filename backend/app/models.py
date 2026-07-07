@@ -64,3 +64,23 @@ class Application(Base):
     )
 
     resume_version: Mapped[ResumeVersion | None] = relationship(back_populates="applications")
+    activities: Mapped[list["ApplicationActivity"]] = relationship(back_populates="application")
+
+
+class ApplicationActivity(Base):
+    __tablename__ = "application_activities"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    application_id: Mapped[int] = mapped_column(ForeignKey("applications.id"), nullable=False, index=True)
+    activity_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    activity_type: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    note: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=utc_now,
+        onupdate=utc_now,
+        nullable=False,
+    )
+
+    application: Mapped[Application] = relationship(back_populates="activities")

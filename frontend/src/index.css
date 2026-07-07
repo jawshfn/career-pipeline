@@ -543,6 +543,124 @@ a {
   accent-color: #8b2f20;
 }
 
+.activity-timeline-section {
+  margin-top: 14px;
+}
+
+.activity-timeline-heading h3,
+.activity-timeline-heading p {
+  margin: 0;
+}
+
+.activity-timeline-heading p {
+  margin-top: 4px;
+  color: #60706d;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.activity-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 180px) minmax(0, 220px) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  min-width: 0;
+}
+
+.activity-form-grid label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: #34413f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.activity-form-grid input,
+.activity-form-grid select,
+.activity-form-grid textarea {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid #cbd6d3;
+  border-radius: 6px;
+  padding: 9px 10px;
+  color: #17202a;
+  background: #ffffff;
+}
+
+.activity-form-grid input:focus,
+.activity-form-grid select:focus,
+.activity-form-grid textarea:focus {
+  border-color: #287c73;
+  outline: 3px solid rgba(40, 124, 115, 0.14);
+}
+
+.activity-form-actions {
+  display: flex;
+  min-width: 0;
+}
+
+.activity-empty-state {
+  margin: 0;
+  border: 1px dashed #b7c5c1;
+  border-radius: 8px;
+  padding: 14px 12px;
+  color: #60706d;
+  background: #f9fbfa;
+  font-weight: 700;
+}
+
+.activity-list {
+  display: grid;
+  gap: 10px;
+}
+
+.activity-item {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #e1e8e6;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+
+.activity-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.activity-item-header > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.activity-item time {
+  color: #202a33;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.activity-type-badge {
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: #315a4b;
+  background: #eef3f1;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.activity-item p {
+  margin: 0;
+  color: #34413f;
+  overflow-wrap: anywhere;
+}
+
 .detail-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1327,6 +1445,15 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .activity-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .activity-note-field,
+  .activity-form-actions {
+    grid-column: 1 / -1;
+  }
+
   .resume-version-form,
   .resume-version-edit-form {
     grid-template-columns: 1fr;
@@ -1365,6 +1492,19 @@ a {
 
   .detail-field-grid {
     grid-template-columns: 1fr;
+  }
+
+  .activity-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-note-field,
+  .activity-form-actions {
+    grid-column: auto;
+  }
+
+  .activity-form-actions button {
+    width: 100%;
   }
 
   .resume-version-list-heading,
