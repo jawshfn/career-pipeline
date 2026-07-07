@@ -38,6 +38,7 @@ a {
 .command-center-page,
 .dashboard-page,
 .pipeline-page,
+.quick-add-page,
 .resume-versions-page {
   display: grid;
   gap: 20px;

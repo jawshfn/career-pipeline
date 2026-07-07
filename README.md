@@ -18,7 +18,7 @@ Help new grads, early-career applicants, career switchers, and active job seeker
 ## Current Product Flow
 
 - Dashboard snapshot for counts, status mix, sources, resume usage, and red flags
-- Quick-add workflow for fast application capture, including optional follow-up date presets
+- Dedicated Quick Add page for fast application capture, including optional follow-up date presets
 - Applications table for active applications
 - Application detail panel for editing richer context after quick-add
 - Pipeline board with persisted status updates

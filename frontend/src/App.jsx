@@ -11,6 +11,7 @@ import ApplicationsPage from "./pages/ApplicationsPage.jsx";
 import CommandCenterPage from "./pages/CommandCenterPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import PipelinePage from "./pages/PipelinePage.jsx";
+import QuickAddPage from "./pages/QuickAddPage.jsx";
 import ResumeVersionsPage from "./pages/ResumeVersionsPage.jsx";
 
 export default function App() {
@@ -110,6 +111,11 @@ export default function App() {
           isLoading={isLoading}
           resumeVersions={resumeVersions}
         />
+      ) : activePage === "quick-add" ? (
+        <QuickAddPage
+          onCreateApplication={handleCreateApplication}
+          resumeVersions={resumeVersions}
+        />
       ) : activePage === "resume-versions" ? (
         <ResumeVersionsPage
           error={loadError}
@@ -132,7 +138,6 @@ export default function App() {
           applications={activeApplications}
           error={loadError}
           isLoading={isLoading}
-          onCreateApplication={handleCreateApplication}
           onUpdateApplication={handleUpdateApplication}
           resumeVersions={resumeVersions}
         />

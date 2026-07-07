@@ -2,7 +2,6 @@ import React, { useState } from "react";
 
 import ApplicationDetailPanel from "../components/applications/ApplicationDetailPanel.jsx";
 import ApplicationsTable from "../components/applications/ApplicationsTable.jsx";
-import QuickAddApplicationForm from "../components/applications/QuickAddApplicationForm.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
@@ -154,7 +153,6 @@ export default function ApplicationsPage({
   applications,
   error,
   isLoading,
-  onCreateApplication,
   onUpdateApplication,
   resumeVersions,
 }) {
@@ -178,14 +176,9 @@ export default function ApplicationsPage({
         <div>
           <p className="eyebrow">Application tracker</p>
           <h2>Applications</h2>
-          <p>Capture opportunities quickly, then open details when you need more context.</p>
+          <p>Search, filter, sort, and manage the opportunities you have already captured.</p>
         </div>
       </header>
-
-      <QuickAddApplicationForm
-        resumeVersions={resumeVersions}
-        onCreateApplication={onCreateApplication}
-      />
 
       {selectedApplicationId ? (
         <ApplicationDetailPanel
