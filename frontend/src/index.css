@@ -42,6 +42,19 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  max-width: 100%;
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -70,7 +83,9 @@ a {
 .quick-add-page,
 .resume-versions-page {
   display: grid;
+  align-content: start;
   gap: 20px;
+  width: 100%;
   min-width: 0;
   max-width: 1240px;
   margin: 0 auto;
@@ -1898,6 +1913,417 @@ textarea:focus-visible {
 .pipeline-card-notes,
 .muted-table-value {
   color: var(--color-muted-strong);
+}
+
+/* Phase 8.3: status visuals, accents, metadata, and empty states */
+.status-badge {
+  border: 1px solid transparent;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+}
+
+.status-saved,
+.status-default {
+  border-color: #d4dde1;
+  color: #40515c;
+  background: #eef3f5;
+}
+
+.status-applied {
+  border-color: #b9d9d4;
+  color: #185f57;
+  background: #e2f4f1;
+}
+
+.status-assessment {
+  border-color: #d5ccef;
+  color: #55418c;
+  background: #f0ebfb;
+}
+
+.status-screen {
+  border-color: #bee1e6;
+  color: #1c6570;
+  background: #e5f6f8;
+}
+
+.status-interview {
+  border-color: #ead59a;
+  color: #725312;
+  background: #fff2cc;
+}
+
+.status-offer {
+  border-color: #addbc4;
+  color: #1e6847;
+  background: #e3f7ed;
+}
+
+.status-closed {
+  border-color: #e7c7c1;
+  color: #873c31;
+  background: #f8e8e5;
+}
+
+.status-archived {
+  border-color: #d4d9dc;
+  color: #5b666b;
+  background: #f0f2f3;
+}
+
+.status-withdrawn {
+  border-color: #d8d2c7;
+  color: #65584a;
+  background: #f3f0ea;
+}
+
+.command-center-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.command-center-section::before,
+.pipeline-card::before,
+.activity-item::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  background: var(--color-border-strong);
+}
+
+.command-center-section::before {
+  height: 100%;
+}
+
+.command-center-section-overdue::before {
+  background: #c75d4d;
+}
+
+.command-center-section-upcoming::before {
+  background: var(--color-accent);
+}
+
+.command-center-section-stale::before {
+  background: #d39b2a;
+}
+
+.command-center-section-overdue .command-center-section-header span {
+  color: #873c31;
+  background: #f8e8e5;
+}
+
+.command-center-section-upcoming .command-center-section-header span {
+  color: #185f57;
+  background: #e2f4f1;
+}
+
+.command-center-section-stale .command-center-section-header span {
+  color: #725312;
+  background: #fff2cc;
+}
+
+.command-center-item {
+  position: relative;
+  box-shadow: 0 5px 16px rgba(23, 32, 42, 0.045);
+}
+
+.command-center-item-details dt,
+.pipeline-card-details dt,
+.resume-version-meta dt {
+  color: var(--color-muted);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.command-center-item-details dd,
+.pipeline-card-details dd,
+.resume-version-meta dd {
+  color: var(--color-text-soft);
+}
+
+.pipeline-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.pipeline-card-saved::before {
+  background: #9aa9b1;
+}
+
+.pipeline-card-applied::before {
+  background: var(--color-accent);
+}
+
+.pipeline-card-assessment::before {
+  background: #7d68c4;
+}
+
+.pipeline-card-recruiter-screen::before {
+  background: #3997a4;
+}
+
+.pipeline-card-interview::before {
+  background: #d39b2a;
+}
+
+.pipeline-card-offer::before {
+  background: #36a36c;
+}
+
+.pipeline-card-rejected::before {
+  background: #c75d4d;
+}
+
+.pipeline-card-withdrawn::before,
+.pipeline-card-archived::before {
+  background: #9aa0a4;
+}
+
+.red-flag-indicator {
+  border: 1px solid #efc4bc;
+  font-weight: 900;
+}
+
+.empty-state,
+.dashboard-empty-panel,
+.command-center-empty,
+.pipeline-empty-column,
+.pipeline-empty-board,
+.activity-empty-state {
+  position: relative;
+  box-shadow: none;
+}
+
+.empty-state h3 {
+  font-size: 1.05rem;
+}
+
+.activity-list {
+  position: relative;
+  gap: 12px;
+}
+
+.activity-item {
+  position: relative;
+  margin-left: 10px;
+  padding-left: 16px;
+}
+
+.activity-item::before {
+  top: 14px;
+  left: -10px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--color-surface);
+  border-radius: 999px;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-border-strong);
+}
+
+.activity-item-header {
+  border-bottom: 1px solid #edf2f0;
+  padding-bottom: 7px;
+}
+
+.activity-type-badge {
+  border: 1px solid #b9d9d4;
+  color: #185f57;
+  background: #e2f4f1;
+}
+
+.effectiveness-row:not(.effectiveness-header):hover,
+.dashboard-breakdown-list div:hover {
+  background: var(--color-accent-surface);
+}
+
+/* Targeted color distinction polish */
+.status-applied {
+  border-color: #b8d4f3;
+  color: #245f9f;
+  background: #e8f2ff;
+}
+
+.status-assessment {
+  border-color: #cec4f1;
+  color: #5a43a0;
+  background: #f0ecff;
+}
+
+.status-screen {
+  border-color: #afe0e9;
+  color: #176b78;
+  background: #e1f7fb;
+}
+
+.status-interview {
+  border-color: #edcf8f;
+  color: #81560d;
+  background: #fff0c2;
+}
+
+.status-offer {
+  border-color: #a8d9bc;
+  color: #1f713f;
+  background: #ddf7e8;
+}
+
+.status-closed {
+  border-color: #e8bdb7;
+  color: #913d31;
+  background: #fae5e1;
+}
+
+.dashboard-metric-card {
+  border-top: 1px solid var(--color-border);
+}
+
+.dashboard-metric-card::before {
+  width: 5px;
+}
+
+.dashboard-metric-card-active::before,
+.dashboard-metric-card-active strong {
+  color: var(--color-accent);
+  background: var(--color-accent);
+}
+
+.dashboard-metric-card-overdue::before,
+.dashboard-metric-card-overdue strong {
+  color: #b9473a;
+  background: #c75d4d;
+}
+
+.dashboard-metric-card-upcoming::before,
+.dashboard-metric-card-upcoming strong {
+  color: #2867a8;
+  background: #5b9dde;
+}
+
+.dashboard-metric-card-flags::before,
+.dashboard-metric-card-flags strong {
+  color: #9a5f12;
+  background: #d39b2a;
+}
+
+.dashboard-metric-card-interviews::before,
+.dashboard-metric-card-interviews strong {
+  color: #6a4bb0;
+  background: #7d68c4;
+}
+
+.dashboard-metric-card-offers::before,
+.dashboard-metric-card-offers strong {
+  color: #287a49;
+  background: #36a36c;
+}
+
+.dashboard-metric-card strong {
+  background: transparent;
+}
+
+.effectiveness-row:not(.effectiveness-header) span:nth-child(2) {
+  color: #40515c;
+  background: #eef3f5;
+}
+
+.effectiveness-row:not(.effectiveness-header) span:nth-child(3) {
+  color: #245f9f;
+  background: #e8f2ff;
+}
+
+.effectiveness-row:not(.effectiveness-header) span:nth-child(4) {
+  color: #81560d;
+  background: #fff0c2;
+}
+
+.effectiveness-row:not(.effectiveness-header) span:nth-child(5) {
+  color: #1f713f;
+  background: #ddf7e8;
+}
+
+.effectiveness-row:not(.effectiveness-header) span:nth-child(6) {
+  color: #6a4a44;
+  background: #f1edeb;
+}
+
+.pipeline-column::before {
+  content: "";
+  display: block;
+  height: 4px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: #9aa9b1;
+}
+
+.pipeline-column-saved::before {
+  background: #9aa9b1;
+}
+
+.pipeline-column-applied::before {
+  background: #5b9dde;
+}
+
+.pipeline-column-assessment::before {
+  background: #7d68c4;
+}
+
+.pipeline-column-recruiter-screen::before {
+  background: #3997a4;
+}
+
+.pipeline-column-interview::before {
+  background: #d39b2a;
+}
+
+.pipeline-column-offer::before {
+  background: #36a36c;
+}
+
+.pipeline-column-rejected::before {
+  background: #c75d4d;
+}
+
+.pipeline-column-withdrawn::before {
+  background: #9aa0a4;
+}
+
+.pipeline-column-applied .pipeline-column-header span {
+  color: #245f9f;
+  background: #e8f2ff;
+}
+
+.pipeline-column-assessment .pipeline-column-header span {
+  color: #5a43a0;
+  background: #f0ecff;
+}
+
+.pipeline-column-recruiter-screen .pipeline-column-header span {
+  color: #176b78;
+  background: #e1f7fb;
+}
+
+.pipeline-column-interview .pipeline-column-header span {
+  color: #81560d;
+  background: #fff0c2;
+}
+
+.pipeline-column-offer .pipeline-column-header span {
+  color: #1f713f;
+  background: #ddf7e8;
+}
+
+.pipeline-column-rejected .pipeline-column-header span {
+  color: #913d31;
+  background: #fae5e1;
+}
+
+.pipeline-column-withdrawn .pipeline-column-header span {
+  color: #5b666b;
+  background: #f0f2f3;
+}
+
+.pipeline-card-applied::before {
+  background: #5b9dde;
 }
 
 @media (max-width: 980px) {

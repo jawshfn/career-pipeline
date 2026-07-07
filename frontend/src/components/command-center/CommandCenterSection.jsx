@@ -4,6 +4,7 @@ import CommandCenterItem from "./CommandCenterItem.jsx";
 
 export default function CommandCenterSection({
   applications,
+  accent = "default",
   description,
   getAvailableFollowUpActions,
   onFollowUpAction,
@@ -11,8 +12,15 @@ export default function CommandCenterSection({
   title,
   updatingApplicationId,
 }) {
+  const emptyMessages = {
+    overdue: "No urgent follow-ups today.",
+    upcoming: "No upcoming follow-ups in the next 3 days.",
+    stale: "No stale applications right now.",
+    default: "Nothing needs attention here.",
+  };
+
   return (
-    <section className="panel command-center-section" aria-labelledby={`command-center-${title}`}>
+    <section className={`panel command-center-section command-center-section-${accent}`} aria-labelledby={`command-center-${title}`}>
       <div className="command-center-section-header">
         <div>
           <h3 id={`command-center-${title}`}>{title}</h3>
@@ -22,7 +30,7 @@ export default function CommandCenterSection({
       </div>
 
       {applications.length === 0 ? (
-        <p className="command-center-empty">Nothing needs attention here.</p>
+        <p className="command-center-empty">{emptyMessages[accent] || emptyMessages.default}</p>
       ) : (
         <div className="command-center-list">
           {applications.map((application) => (

@@ -224,7 +224,7 @@ export default function ResumeVersionsPage({
         {!isLoading && !error && visibleResumeVersions.length === 0 ? (
           <div className="empty-state">
             <h3>No resume versions yet</h3>
-            <p>Create a resume version to make assignment easier in Quick Add and Application Detail.</p>
+            <p>Create resume versions to track which resume is tied to each opportunity.</p>
           </div>
         ) : null}
 

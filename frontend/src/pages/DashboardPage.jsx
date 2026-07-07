@@ -206,9 +206,9 @@ function getResumeUsage(applications, resumeVersions) {
   ].filter((item) => item.count > 0);
 }
 
-function MetricCard({ label, value }) {
+function MetricCard({ label, tone, value }) {
   return (
-    <article className="dashboard-metric-card">
+    <article className={`dashboard-metric-card dashboard-metric-card-${tone}`}>
       <p>{label}</p>
       <strong>{value}</strong>
     </article>
@@ -287,12 +287,12 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
     }))
     .filter((item) => item.count > 0);
   const metricCards = [
-    { label: "Active applications", value: applications.length },
-    { label: "Overdue follow-ups", value: overdueFollowUps.length },
-    { label: "Upcoming follow-ups", value: upcomingFollowUps.length },
-    { label: "Red-flagged applications", value: redFlaggedApplications.length },
-    { label: "Interviews", value: statusCounts.get("Interview") || 0 },
-    { label: "Offers", value: statusCounts.get("Offer") || 0 },
+    { label: "Active applications", tone: "active", value: applications.length },
+    { label: "Overdue follow-ups", tone: "overdue", value: overdueFollowUps.length },
+    { label: "Upcoming follow-ups", tone: "upcoming", value: upcomingFollowUps.length },
+    { label: "Red-flagged applications", tone: "flags", value: redFlaggedApplications.length },
+    { label: "Interviews", tone: "interviews", value: statusCounts.get("Interview") || 0 },
+    { label: "Offers", tone: "offers", value: statusCounts.get("Offer") || 0 },
   ];
 
   return (
@@ -311,7 +311,7 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
       {!isLoading && !error && applications.length === 0 ? (
         <div className="empty-state">
           <h3>No applications yet</h3>
-          <p>Add your first application from Applications to start building dashboard metrics.</p>
+          <p>Add applications to start seeing job-search trends.</p>
         </div>
       ) : null}
 
@@ -319,7 +319,7 @@ export default function DashboardPage({ applications, error, isLoading, resumeVe
         <>
           <section className="dashboard-metric-grid" aria-label="Summary metrics">
             {metricCards.map((metric) => (
-              <MetricCard key={metric.label} label={metric.label} value={metric.value} />
+              <MetricCard key={metric.label} label={metric.label} tone={metric.tone} value={metric.value} />
             ))}
           </section>
 

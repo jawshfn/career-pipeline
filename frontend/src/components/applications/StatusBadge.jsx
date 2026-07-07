@@ -8,7 +8,7 @@ const statusClassNames = {
   Interview: "status-interview",
   Offer: "status-offer",
   Rejected: "status-closed",
-  Withdrawn: "status-closed",
+  Withdrawn: "status-withdrawn",
   Archived: "status-archived",
 };
 

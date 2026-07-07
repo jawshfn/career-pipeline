@@ -212,13 +212,14 @@ export default function CommandCenterPage({
       ) : null}
       {!isLoading && !error && !hasActionItems ? (
         <div className="empty-state">
-          <h3>No action items right now</h3>
-          <p>Add follow-up dates or update stale applications to keep this view useful.</p>
+          <h3>No urgent follow-ups today</h3>
+          <p>Add follow-up dates and next actions to keep your search moving.</p>
         </div>
       ) : null}
       {!isLoading && !error && hasActionItems ? (
         <div className="command-center-grid">
           <CommandCenterSection
+            accent="overdue"
             applications={actionItems.overdue_followups}
             description="Follow-up dates before today."
             getAvailableFollowUpActions={getAvailableFollowUpActions}
@@ -227,6 +228,7 @@ export default function CommandCenterPage({
             updatingApplicationId={updatingApplicationId}
           />
           <CommandCenterSection
+            accent="upcoming"
             applications={actionItems.upcoming_followups}
             description="Follow-ups due today through the next 3 days."
             getAvailableFollowUpActions={getAvailableFollowUpActions}
@@ -235,6 +237,7 @@ export default function CommandCenterPage({
             updatingApplicationId={updatingApplicationId}
           />
           <CommandCenterSection
+            accent="stale"
             applications={actionItems.stale_applications}
             description="Active applications without a follow-up and no recent update."
             title="Stale Applications"

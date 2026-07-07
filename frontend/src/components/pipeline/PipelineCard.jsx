@@ -33,12 +33,16 @@ function getRedFlagCount(application) {
   ].filter(Boolean).length;
 }
 
+function getStatusAccentClass(status) {
+  return `pipeline-card-${String(status || "default").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
 export default function PipelineCard({ application, isUpdating, onStatusChange, resumeVersion }) {
   const notesPreview = getNotesPreview(application.notes);
   const redFlagCount = getRedFlagCount(application);
 
   return (
-    <article className={`pipeline-card ${isUpdating ? "pipeline-card-saving" : ""}`}>
+    <article className={`pipeline-card ${getStatusAccentClass(application.status)} ${isUpdating ? "pipeline-card-saving" : ""}`}>
       <div className="pipeline-card-heading">
         <h4>{application.company_name}</h4>
         <p>{application.role_title}</p>
