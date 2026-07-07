@@ -733,6 +733,16 @@ a {
   max-width: 260px;
 }
 
+.notes-preview {
+  display: -webkit-box;
+  max-width: 260px;
+  overflow: hidden;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+
 .muted-table-value {
   color: #7a8784;
 }

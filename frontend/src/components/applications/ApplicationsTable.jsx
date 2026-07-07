@@ -3,8 +3,25 @@ import React from "react";
 import EmptyApplicationsState from "./EmptyApplicationsState.jsx";
 import StatusBadge from "./StatusBadge.jsx";
 
+const notesPreviewLimit = 100;
+
 function formatValue(value) {
   return value || "-";
+}
+
+function getNotesPreview(notes) {
+  if (!notes) {
+    return "-";
+  }
+
+  const normalizedNotes = notes.trim();
+  if (!normalizedNotes) {
+    return "-";
+  }
+
+  return normalizedNotes.length > notesPreviewLimit
+    ? `${normalizedNotes.slice(0, notesPreviewLimit).trimEnd()}...`
+    : normalizedNotes;
 }
 
 function getResumeLabel(application, resumeVersionsById) {
@@ -78,7 +95,11 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
                   <span className="muted-table-value">-</span>
                 )}
               </td>
-              <td className="notes-cell">{formatValue(application.notes)}</td>
+              <td className="notes-cell">
+                <span className="notes-preview" title={application.notes || ""}>
+                  {getNotesPreview(application.notes)}
+                </span>
+              </td>
               <td>
                 <button
                   className="table-action-button"
