@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 
+import { createApplicationActivity } from "../api/applicationActivitiesApi.js";
 import CommandCenterSection from "../components/command-center/CommandCenterSection.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
@@ -30,6 +31,11 @@ function parseTimestamp(value) {
 
 function compareDateValues(firstValue, secondValue) {
   return String(firstValue || "").localeCompare(String(secondValue || ""));
+}
+
+function getFollowUpActivityNote(baseNote, application) {
+  const nextAction = String(application.next_action || "").trim();
+  return nextAction ? `${baseNote} Next action: ${nextAction}.` : baseNote;
 }
 
 function getActionItems(applications) {
@@ -89,9 +95,23 @@ export default function CommandCenterPage({
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [updatingApplicationId, setUpdatingApplicationId] = useState(null);
+  const actionInFlightRef = useRef(new Set());
   const actionItems = useMemo(() => getActionItems(applications), [applications]);
 
-  async function updateFollowUp(application, nextFollowUpDate, message) {
+  async function logFollowUpActivity(application, note) {
+    await createApplicationActivity(application.id, {
+      activity_date: formatLocalDate(new Date()),
+      activity_type: "Follow-up",
+      note: getFollowUpActivityNote(note, application),
+    });
+  }
+
+  async function updateFollowUp(application, nextFollowUpDate, message, activityNote) {
+    if (actionInFlightRef.current.has(application.id)) {
+      return;
+    }
+
+    actionInFlightRef.current.add(application.id);
     setActionError("");
     setActionMessage("");
     setUpdatingApplicationId(application.id);
@@ -99,9 +119,16 @@ export default function CommandCenterPage({
     try {
       await onUpdateApplication(application.id, { follow_up_date: nextFollowUpDate });
       setActionMessage(message);
+
+      try {
+        await logFollowUpActivity(application, activityNote);
+      } catch (activityError) {
+        setActionError(activityError.message || "Follow-up updated, but activity could not be logged.");
+      }
     } catch (updateError) {
       setActionError(updateError.message || "Could not update follow-up date.");
     } finally {
+      actionInFlightRef.current.delete(application.id);
       setUpdatingApplicationId(null);
     }
   }
@@ -110,16 +137,26 @@ export default function CommandCenterPage({
     const today = new Date();
 
     if (action === "snooze-3") {
-      updateFollowUp(application, formatLocalDate(addDays(today, 3)), "Follow-up snoozed for 3 days.");
+      updateFollowUp(
+        application,
+        formatLocalDate(addDays(today, 3)),
+        "Follow-up snoozed for 3 days.",
+        "Snoozed follow-up 3 days.",
+      );
       return;
     }
 
     if (action === "snooze-7") {
-      updateFollowUp(application, formatLocalDate(addDays(today, 7)), "Follow-up snoozed for 1 week.");
+      updateFollowUp(
+        application,
+        formatLocalDate(addDays(today, 7)),
+        "Follow-up snoozed for 1 week.",
+        "Snoozed follow-up 1 week.",
+      );
       return;
     }
 
-    updateFollowUp(application, null, "Follow-up cleared.");
+    updateFollowUp(application, null, "Follow-up cleared.", "Cleared follow-up date.");
   }
 
   const hasActionItems =
