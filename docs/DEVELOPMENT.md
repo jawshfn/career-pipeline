@@ -105,6 +105,8 @@ Run the relevant parts of this checklist before starting a new product phase or 
 
 - Full-width and half-width desktop layouts avoid page-level horizontal scrolling from forms, filters, or navigation.
 - Sticky sidebar navigation remains visible on desktop while scrolling.
+- Page content is centered inside the main content area, not the full browser viewport.
+- Page headers start near the top of the main content area with normal padding.
 - Narrower layouts do not let navigation cover page content.
 
 ### Quick Add
@@ -129,6 +131,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Long notes display as compact previews in the table while full notes remain available in Details.
 - Details opens from filtered and sorted results.
 - Selecting Details scrolls the detail panel into view.
+- Detail tabs show Overview, Dates & Follow-up, Job Details, Red Flags, and Activity.
 - Unsaved detail changes warn before closing or switching to a different application.
 - Clicking Details on the currently open application only scrolls and does not clear dirty state.
 - Saving detail changes keeps the panel open and clears the unsaved-change warning.
@@ -141,6 +144,8 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Existing Applied Date is not overwritten by status changes.
 - Applied Date is not automatically cleared when changing status back to Saved.
 - Users can manually edit or clear Applied Date.
+- Next Action can be added, edited, cleared, and saved from Application Detail.
+- Next Action appears on Command Center cards when present.
 - Follow-up date edits persist and update Applications, Command Center, and Dashboard where relevant.
 
 ### Pipeline Sync
@@ -161,6 +166,10 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Snooze 3 days sets the follow-up date to today plus 3 days.
 - Snooze 1 week sets the follow-up date to today plus 7 days.
 - Clear follow-up sets the follow-up date to empty/null.
+- Valid follow-up quick actions create Activity Timeline entries.
+- Snooze buttons are hidden or disabled when the target date would not move the current follow-up date later.
+- No-op snooze attempts do not create duplicate or pointless Activity Timeline entries.
+- Clear follow-up remains available when a follow-up date exists.
 - Follow-up quick actions update Applications and Dashboard after navigation or refresh.
 
 ### Dashboard Metrics
@@ -170,6 +179,10 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Follow-up metrics match current follow-up dates.
 - Red-flag count updates after flagging or unflagging an application.
 - Status, source, and resume-version usage sections match the loaded application data.
+- Source Effectiveness groups non-archived applications by source and shows applications, active count, interviews, offers, and closed outcomes.
+- Blank or missing sources appear as `Unspecified`.
+- Resume Version Effectiveness groups non-archived applications by assigned resume version and includes unassigned applications.
+- Dashboard effectiveness sections remain readable with small datasets and at narrow widths.
 - Empty or minimal data states remain clear.
 
 ### Resume Versions

@@ -4,8 +4,8 @@ This is the React/Vite frontend for Career Pipeline. It provides the user-facing
 
 ## Page Structure
 
-- Command Center: overdue follow-ups, upcoming follow-ups, stale applications, and follow-up quick actions
-- Dashboard: job-search summary metrics derived from loaded applications and resume versions
+- Command Center: overdue follow-ups, upcoming follow-ups, stale applications, Next Action display, and follow-up quick actions
+- Dashboard: job-search summary metrics, source/resume breakdowns, Source Effectiveness, and Resume Version Effectiveness
 - Quick Add: lightweight application capture workflow
 - Applications: Active, Closed, and All views with search, filters, sorting, table previews, and Details access
 - Pipeline: responsive grouped application status workflow with status filters
@@ -16,11 +16,14 @@ This is the React/Vite frontend for Career Pipeline. It provides the user-facing
 - Sticky responsive sidebar navigation
 - Quick Add success flow with Add another and View applications actions
 - Applied-date handling that defaults only when useful and does not overwrite existing dates
-- Application Detail editing for richer application context, red flags, and activity timeline entries
+- Tabbed Application Detail editing for richer application context, dates/follow-ups, job details, red flags, and activity timeline entries
+- Optional Next Action support in Application Detail and Command Center cards
 - Independent activity timeline add/list/delete behavior inside Application Detail
 - Applications table note truncation with hover/title preview for long notes
-- Command Center follow-up actions for Snooze 3 days, Snooze 1 week, and Clear follow-up
+- Command Center follow-up actions for Snooze 3 days, Snooze 1 week, and Clear follow-up, with activity logging and no-op snooze prevention
+- Visual readability polish for status colors, dashboard accents, pipeline distinction, and empty states
 - Responsive layout polish for normal full-screen and half-screen desktop widths
+- App shell constraints that keep desktop navigation sticky, center pages in the main content area, and avoid page-level horizontal overflow
 
 ## Local Backend Requirement
 

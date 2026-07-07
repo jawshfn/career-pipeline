@@ -1,6 +1,6 @@
 # Data Model
 
-The implemented backend uses SQLite with SQLAlchemy. The model supports quick capture, application tracking, resume-version assignment, follow-up action items, and archive behavior.
+The implemented backend uses SQLite with SQLAlchemy. The model supports quick capture, application tracking, resume-version assignment, follow-up action items, next actions, red-flag fields, activity timeline entries, and archive behavior.
 
 ## Implemented Tables
 
@@ -25,8 +25,16 @@ Stores the main record for each job opportunity or application.
 - date_saved: date the opportunity was saved
 - date_applied: optional date the user applied
 - follow_up_date: optional date for next follow-up
+- next_action: optional short user-entered next step
 - resume_version_id: optional foreign key to resume_versions
 - notes: general user notes
+- vague_job_description: boolean red-flag field
+- unrealistic_salary: boolean red-flag field
+- asks_for_payment: boolean red-flag field
+- suspicious_contact: boolean red-flag field
+- company_mismatch: boolean red-flag field
+- too_good_to_be_true: boolean red-flag field
+- red_flags_notes: optional notes about user-managed red flags
 - is_archived: boolean for hiding inactive records from active workflow views
 - created_at: creation timestamp
 - updated_at: last update timestamp
@@ -60,6 +68,7 @@ Allowed stored statuses:
 - Archiving through DELETE sets `status` to `Archived` and `is_archived` to true.
 - Updating status to `Archived` also sets `is_archived` to true.
 - Restoring archived records is intentionally not implemented yet.
+- Red flags are stored directly on the application record for the current prototype.
 
 ## resume_versions
 
@@ -81,39 +90,39 @@ Stores named resume variants so users can remember which resume they used for ea
 
 - One resume version can be assigned to many applications.
 
+## application_activities
+
+### Purpose
+
+Stores dated Activity Timeline entries for an application.
+
+### Fields
+
+- id: primary key
+- application_id: foreign key to applications
+- activity_date: date the activity occurred
+- activity_type: short activity category, such as Follow-up or Interview
+- note: user-entered activity note
+- created_at: creation timestamp
+- updated_at: last update timestamp
+
+### Important Relationships
+
+- application_activities.application_id references applications.id
+- Activities are scoped to one application and do not appear on other applications.
+
+### Implementation Notes
+
+- Activity entries are saved independently from the main application detail form.
+- Command Center follow-up quick actions can create activity entries for snooze and clear outcomes.
+
 ## Planned Future Tables
 
 The following tables are still planned and are not implemented yet.
 
-## red_flags
-
-Purpose: reusable red-flag tags for questionable, suspicious, or low-quality postings.
-
-Potential fields:
-
-- id
-- label
-- description
-- severity
-- is_active
-- created_at
-- updated_at
-
-## application_red_flags
-
-Purpose: join table connecting applications to selected red flags.
-
-Potential fields:
-
-- id
-- application_id
-- red_flag_id
-- note
-- created_at
-
 ## application_events
 
-Purpose: timeline of meaningful actions and changes for an application.
+Purpose: possible later audit log of automatic field changes, separate from user-entered activity notes.
 
 Potential fields:
 

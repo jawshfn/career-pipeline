@@ -45,8 +45,21 @@ Example response:
     "job_link": "https://example.com/jobs/123",
     "source": "LinkedIn",
     "status": "Applied",
+    "date_saved": "2026-06-24",
+    "date_applied": "2026-06-24",
     "follow_up_date": "2026-07-01",
+    "next_action": "Send recruiter follow-up.",
     "resume_version_id": 2,
+    "location": "Remote",
+    "salary_range": "$70k-$85k",
+    "employment_type": "Full-time",
+    "vague_job_description": false,
+    "unrealistic_salary": false,
+    "asks_for_payment": false,
+    "suspicious_contact": false,
+    "company_mismatch": false,
+    "too_good_to_be_true": false,
+    "red_flags_notes": null,
     "is_archived": false,
     "created_at": "2026-06-24T12:00:00",
     "updated_at": "2026-06-24T12:00:00"
@@ -79,6 +92,7 @@ Example request:
   "source": "LinkedIn",
   "job_link": "https://example.com/jobs/123",
   "status": "Saved",
+  "date_applied": null,
   "follow_up_date": "2026-07-01",
   "resume_version_id": 2,
   "notes": "Review posting and tailor resume."
@@ -100,7 +114,7 @@ Status: implemented
 
 ### PATCH /api/applications/{application_id}
 
-Purpose: update editable application fields, including status and follow_up_date.
+Purpose: update editable application fields, including status, dates, next action, red flags, and follow_up_date.
 
 Example request:
 
@@ -108,6 +122,7 @@ Example request:
 {
   "status": "Interview",
   "follow_up_date": "2026-07-03",
+  "next_action": "Prepare recruiter screen notes.",
   "notes": "Recruiter replied with screening availability."
 }
 ```
@@ -162,6 +177,46 @@ Example response:
 
 Status: implemented
 
+## Application Activities
+
+### GET /api/applications/{application_id}/activities
+
+Purpose: list dated activity timeline entries for one application, newest first.
+
+Status: implemented
+
+### POST /api/applications/{application_id}/activities
+
+Purpose: create a dated activity entry for one application.
+
+Example request:
+
+```json
+{
+  "activity_date": "2026-07-01",
+  "activity_type": "Follow-up",
+  "note": "Sent a follow-up email."
+}
+```
+
+Status: implemented
+
+### PATCH /api/applications/{application_id}/activities/{activity_id}
+
+Purpose: update one activity entry for the selected application.
+
+Status: implemented
+
+### DELETE /api/applications/{application_id}/activities/{activity_id}
+
+Purpose: delete one activity entry for the selected application.
+
+Status: implemented
+
+## Dashboard Metrics
+
+Dashboard metrics are currently derived in the frontend from loaded applications and resume versions. There is no dedicated dashboard summary endpoint yet.
+
 ## Resume Versions
 
 ### GET /api/resume-versions
@@ -206,15 +261,6 @@ Status: implemented
 
 These endpoints are planned or possible future work and are not implemented yet.
 
-### Application Detail and Timeline
-
-Possible endpoints:
-
-- GET /api/applications/{application_id}/events
-- POST /api/applications/{application_id}/events
-
-Purpose: show application history, notes, and timeline events.
-
 ### Follow-Up Completion and Rescheduling
 
 Possible endpoints:
@@ -223,21 +269,12 @@ Possible endpoints:
 
 Purpose: mark follow-ups complete, reschedule them, or clear follow_up_date in a dedicated workflow.
 
-### Red Flags
+Current follow-up quick actions are implemented in the frontend using the existing application update API and activity timeline API.
 
-Possible endpoints:
-
-- GET /api/red-flags
-- POST /api/red-flags
-- POST /api/applications/{application_id}/red-flags
-- DELETE /api/applications/{application_id}/red-flags/{red_flag_id}
-
-Purpose: apply user-managed caution tags to questionable postings.
-
-### Dashboard Metrics
+### Dedicated Dashboard Summary
 
 Possible endpoint:
 
 - GET /api/dashboard/summary
 
-Purpose: provide source, response, and pipeline metrics after the core workflows are stable.
+Purpose: provide server-derived dashboard metrics if the frontend-derived dashboard becomes too expensive or complex.

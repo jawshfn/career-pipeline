@@ -26,7 +26,8 @@ The product is built around a common job-search problem: opportunities arrive fr
 
 ### Application Detail
 
-- Detail panel for editing company, role, job link, source, status, resume version, saved date, applied date, follow-up date, location, salary range, employment type, notes, and red flags
+- Tabbed detail panel for Overview, Dates & Follow-up, Job Details, Red Flags, and Activity
+- Detail editing for company, role, job link, source, status, resume version, saved date, applied date, follow-up date, next action, location, salary range, employment type, notes, and red flags
 - Clear applied-date semantics: `date_saved` is when the job was added to Career Pipeline; `date_applied` is when the user actually applied
 - Existing applied dates are not overwritten automatically
 - Unsaved-change warnings when closing or switching selected applications
@@ -42,13 +43,17 @@ The product is built around a common job-search problem: opportunities arrive fr
 ### Follow-Up Command Center
 
 - Daily Command Center for overdue follow-ups, upcoming follow-ups, and stale active applications
+- Next Action appears on Command Center cards when present
 - Quick follow-up actions: Snooze 3 days, Snooze 1 week, and Clear follow-up
+- Follow-up quick actions log Activity Timeline entries and prevent no-op snoozes
 - Action results update shared frontend state so Applications and Dashboard remain consistent
 
 ### Dashboard Metrics
 
 - Summary cards for active applications, follow-ups, red-flagged applications, interviews, and offers
 - Status, source, resume-version usage, and red-flag snapshots
+- Source Effectiveness metrics by source for applications, active count, interviews, offers, and closed outcomes
+- Resume Version Effectiveness metrics for assigned resume variants
 - Metrics are frontend-derived from loaded application and resume-version data
 
 ### Resume Version Management
@@ -71,7 +76,7 @@ The product is built around a common job-search problem: opportunities arrive fr
 - Pipeline
 - Resume Versions
 
-The sidebar navigation is sticky on desktop and responsive for narrower desktop layouts. Recent UI polish focuses on full-width and half-screen desktop usability.
+The sidebar navigation is sticky on desktop and responsive for narrower desktop layouts. Recent UI polish focuses on full-width and half-screen desktop usability, clearer status colors, dashboard metric accents, and avoiding page-level horizontal overflow.
 
 ## Tech Stack
 
@@ -129,7 +134,7 @@ Docs-only changes do not require tests. Cross-stack product changes should run b
 
 ## Project Status
 
-Career Pipeline is a working local-first prototype with a FastAPI backend, SQLite database, React/Vite frontend, backend pytest coverage, and GitHub Actions CI. It supports quick capture, application management, detail editing, pipeline status updates, follow-up actions, dashboard metrics, resume-version management, red-flag tracking, and manual activity timelines.
+Career Pipeline is a working local-first prototype with a FastAPI backend, SQLite database, React/Vite frontend, backend pytest coverage, and GitHub Actions CI. It supports quick capture, application management, tabbed detail editing, pipeline status updates, follow-up actions with activity logging, dashboard effectiveness metrics, resume-version management, red-flag tracking, next actions, and manual activity timelines.
 
 Deployment, authentication, AI features, scraping, browser extension workflows, and advanced analytics are not implemented. They are optional future directions rather than current product claims.
 

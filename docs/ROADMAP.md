@@ -92,7 +92,7 @@ Status: complete
 
 ## Phase 7: Dashboard, Search, Follow-Ups, and CRM Polish
 
-Status: complete through Phase 7.6
+Status: complete
 
 - Phase 7.1: Dashboard Metrics Foundation
 - Phase 7.2: Applications search, filters, and sorting
@@ -106,6 +106,21 @@ Status: complete through Phase 7.6
 - Phase 7.4: add Active, Closed, and All Applications views
 - Phase 7.5: add manual Application Activity Timeline
 - Phase 7.6: refresh project documentation
+- Phase 7.7: organize Application Detail into tabs
+- Phase 7.8: add optional Next Action support
+- Phase 7.9: log follow-up quick-action outcomes to Activity Timeline
+- Phase 7.9.1: prevent no-op follow-up snoozes
+
+## Phase 8: Dashboard Effectiveness and Visual Polish
+
+Status: complete through Phase 8.3 plus targeted app-shell restoration
+
+- Phase 8.0: add Source Effectiveness metrics to Dashboard
+- Phase 8.1: add Resume Version Effectiveness metrics to Dashboard
+- Phase 8.2: improve visual status distinction and dashboard accents
+- Phase 8.3: polish status visuals, metadata readability, empty states, and pipeline distinction
+- Targeted UI polish: restore app shell layout constraints, sticky sidebar behavior, page centering, and horizontal overflow protections
+- Documentation refresh: update docs for recent workflow, dashboard, and UI changes
 
 ## Near-Term Future Work
 
@@ -117,6 +132,7 @@ These are realistic polish and presentation steps, not current product claims:
 - Optional richer analytics after the dashboard proves useful
 - Optional deployment improvements for a public demo
 - Optional import/export workflows
+- Optional contact/recruiter organization if the core workflow needs it
 - Lightweight frontend smoke tests if the UI stabilizes enough to justify them
 
 ## Later Possible Enhancements

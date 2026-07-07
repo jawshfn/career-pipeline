@@ -2,15 +2,15 @@
 
 ## Product Vision
 
-Career Pipeline is a job-search command center that helps applicants capture opportunities quickly, track applications consistently, manage follow-ups, and understand which sources and actions are producing responses.
+Career Pipeline is a job-search command center that helps applicants capture opportunities quickly, track applications consistently, manage follow-ups, and understand which sources and resume strategies are producing progress.
 
-The product should feel like a practical daily workspace, not a data-entry chore. The first experience should be quick-add oriented, with richer organization available after an opportunity has been captured.
+The product should feel like a practical daily workspace, not a data-entry chore. Quick Add stays lightweight, while richer details, risk tracking, follow-up actions, and metrics live in focused views.
 
 ## Problem Statement
 
-Job seekers often apply across many platforms and conversations at once. Important details get scattered across browser tabs, email, spreadsheets, job boards, recruiter calls, and notes apps. As volume grows, users lose track of application status, follow-up timing, resume variants, recruiter details, and warning signs in questionable postings.
+Job seekers often apply across many platforms and conversations at once. Important details get scattered across browser tabs, email, spreadsheets, job boards, recruiter calls, and notes apps. As volume grows, users lose track of application status, follow-up timing, resume variants, next actions, warning signs, and which sources are actually creating momentum.
 
-Career Pipeline aims to centralize that activity into a simple, trustworthy workflow that supports fast capture first and structured tracking second.
+Career Pipeline centralizes that activity into a simple workflow that supports fast capture first and structured tracking second.
 
 ## Target Users
 
@@ -22,78 +22,114 @@ Career Pipeline aims to centralize that activity into a simple, trustworthy work
 ## Core User Pain Points
 
 - Capturing a job opportunity takes too long when the user is in the middle of applying.
-- Application statuses are hard to remember once there are many active opportunities.
-- Follow-up dates are easy to miss.
+- Application statuses are hard to remember once there are many opportunities.
+- Follow-up dates and next actions are easy to miss.
 - Users forget which resume version they submitted.
 - Company, recruiter, and role notes are scattered.
 - Questionable postings are hard to compare or flag consistently.
-- Users lack simple visibility into which sources produce replies.
+- Users lack simple visibility into which sources and resume versions produce interviews, offers, or closed outcomes.
 
 ## Product Principles
 
 - Quick-add first: the main workflow should not start as a giant manual form.
 - Capture now, enrich later: users should be able to save partial information and improve it later.
-- Local-first early prototype: the initial backend should work well as a local development app with SQLite.
+- Action-focused Command Center: daily attention items should be visible and quick to act on.
+- Summary-focused Dashboard: metrics should explain activity and progress without becoming heavy analytics.
+- Local-first early prototype: the backend should work well as a local development app with SQLite.
 - Transparent status tracking: pipeline states should be clear and easy to update.
-- Practical over comprehensive: v0.1 should support a real job-search workflow without trying to cover every recruiting edge case.
 - Public-repo appropriate: documentation should focus on product, architecture, and development, not private strategy or personal examples.
 
 ## Current Implemented Scope
 
 The current prototype includes:
 
-- Create, view, update, and archive job applications
-- Quick-add form with required company and role fields, optional resume version, follow-up date, and follow-up date presets
-- Applications table for active records
-- Pipeline board with persisted status updates
-- Daily Command Center with overdue follow-ups, upcoming follow-ups due within 3 days, and stale active applications
-- Resume-version backend records and quick-add assignment support
-- Archive behavior that stores `Archived` status while hiding archived records from active workflow views
+- Dedicated Quick Add page for lightweight opportunity capture
+- Application create, list, update, detail editing, and archive behavior
+- Applications page with Active, Closed, and All views plus search, filters, sorting, table previews, and detail access
+- Application Detail tabs for Overview, Dates & Follow-up, Job Details, Red Flags, and Activity
+- Optional Next Action field shown in Application Detail and Command Center cards
+- Applied-date behavior that distinguishes saved date from the date the user actually applied
+- Responsive grouped Pipeline with status filtering and persisted status updates
+- Daily Command Center with overdue follow-ups, upcoming follow-ups due within 3 days, stale active applications, and follow-up quick actions
+- Follow-up quick actions for Snooze 3 days, Snooze 1 week, and Clear follow-up
+- Activity Timeline entries for manual activity and follow-up quick-action outcomes
+- No-op snooze prevention when a snooze action would not move the follow-up date later
+- Resume Versions page for creating, editing, deactivating, reactivating, and assigning reusable resume variants
+- Red-flag checklist and notes in Application Detail, with compact indicators in Applications and Pipeline
+- Dashboard summary cards, status breakdown, source breakdown, resume-version usage, red-flag snapshot, Source Effectiveness, and Resume Version Effectiveness
+- Sticky responsive app shell with page content centered inside the main content area and no intended page-level horizontal overflow
+- Archive behavior that stores `Archived` status while hiding archived records from normal active workflow views
 
-## Planned Future Scope
-
-Planned future work includes:
-
-- Application detail workflow
-- Application event history and timeline
-- Follow-up completion and rescheduling
-- Resume-version management UI
-- Red-flag tags assignable to applications
-- Dashboard summary by status, source, response, and follow-up state
-
-## Non-Goals for v0.1
+## Non-Goals for Current Prototype
 
 - Browser extensions
 - Automated scraping from job boards
 - Email inbox integration
 - Calendar integration
 - Authentication or multi-user accounts
-- Cloud-hosted backend
-- AI-generated resumes or cover letters
+- Cloud-hosted production deployment
+- AI-generated resumes, scoring, or recommendations
+- Full contact-management CRM
+- Import/export workflows
 - Private business strategy, monetization plans, or competitor analysis
-- Highly customized workflow automation
 
 ## Core Workflows
 
 ### Quick Add an Application
 
-The user sees a compact quick-add form and enters the minimum needed to avoid losing the opportunity.
+The user opens Quick Add and enters the minimum needed to avoid losing an opportunity.
 
-Minimum useful fields:
+Current Quick Add fields include:
 
 - Company
 - Role title
+- Job link
 - Source
-- Job URL
 - Current status
+- Resume version, optional
+- Applied date, optional
 - Follow-up date, optional
 - Notes, optional
 
-After saving, the application appears in the applications table and pipeline board. The user can open the detail page later to add resume version, red flags, recruiter notes, or timeline details.
+Follow-up presets help schedule common dates quickly. If the user selects Applied or a later status and Applied Date is empty, the frontend can default Applied Date to today. Existing manually entered applied dates are not overwritten.
+
+After saving, the application appears in Applications, Pipeline, Dashboard metrics, and other relevant views. The user can open Application Detail later to add richer information.
+
+### Manage Applications
+
+The Applications page is focused on finding and managing existing opportunities.
+
+Current controls include:
+
+- Active, Closed, and All view filters
+- Search across company, role, source, location, and full notes text
+- Filters for status, source, resume version, and red-flag state
+- Sorting by recently updated, saved date, follow-up date, company, and status
+- Table columns for saved date, applied date, follow-up date, red flags, notes preview, and actions
+
+Long notes are truncated in the table for scanability, while full notes remain readable and editable in Application Detail.
+
+### Edit Application Detail
+
+Application Detail is a tabbed panel opened from Applications.
+
+Current tabs:
+
+- Overview
+- Dates & Follow-up
+- Job Details
+- Red Flags
+- Activity
+
+Editable areas include company name, role title, job link, source, status, resume version, saved date, applied date, follow-up date, next action, location, salary range, employment type, notes, red flags, and red-flag notes.
+
+`date_saved` means the date the job was added to Career Pipeline. `date_applied` means the date the user actually submitted the application. Changing status to Applied or later can default an empty Applied Date, but existing Applied Date values are not automatically overwritten or cleared.
+
+The Activity tab supports dated activity entries with activity type and note. Activity entries are saved independently from the main detail form.
 
 ### Track an Application Through the Pipeline
 
-The user updates the status as an opportunity moves through the process.
+The user updates status as an opportunity moves through the process.
 
 Stored statuses:
 
@@ -107,55 +143,84 @@ Stored statuses:
 - Withdrawn
 - Archived
 
-Archived is stored for archived records but is not an active pipeline stage. Active pipeline controls show only non-archived workflow statuses.
+Archived is stored for archived records but is not an active pipeline stage. Active pipeline views show non-archived applications and preserve Rejected and Withdrawn as closed outcomes.
 
-Application event history is planned future work.
-
-Follow-up due is not a pipeline status. It is a computed action state based on follow_up_date, such as due today, overdue, upcoming, or not scheduled.
+Follow-up due is not a pipeline status. It is a computed action state based on `follow_up_date`, such as overdue, upcoming, or not scheduled.
 
 ### Review Follow-Ups Due
 
-The user opens the daily command center and sees applications with overdue follow-ups, upcoming follow-ups due within the next 3 days, and stale active applications. Each item should show enough context to act quickly: company, role, source, status, due date, and latest note.
+The Command Center answers "what needs my attention today?"
 
-Follow-up completion, rescheduling, and application detail actions are planned future work.
+It shows:
 
-### Assign Resume Versions
+- Overdue follow-ups
+- Upcoming follow-ups due today through the next 3 days
+- Stale active applications without a follow-up and without a recent update
 
-The backend supports named resume versions, and quick-add can assign a resume version to an application. This helps answer: "Which resume did I send for this role?"
+Cards show enough context to act quickly, including company, role, source, status, follow-up date, and Next Action when present.
 
-Resume version management UI and richer editing are planned future work.
+Follow-up quick actions:
+
+- Snooze 3 days
+- Snooze 1 week
+- Clear follow-up
+
+Snooze actions only appear or run when they would move the follow-up date later than the current follow-up date. Valid quick actions update the application and log an Activity Timeline entry. Clear follow-up remains available whenever a follow-up date exists.
+
+### Manage Resume Versions
+
+Resume Versions supports reusable resume variants for different roles or application strategies.
+
+Users can:
+
+- Create a resume version
+- Edit name, target role, description, and active state
+- Deactivate and reactivate versions
+- Include inactive versions in the list
+- Assign active resume versions from Quick Add and Application Detail
+
+Dashboard usage and effectiveness sections help show how assigned resume versions connect to application progress.
 
 ### Flag Questionable Postings
 
-Red flags are planned future work. The intended workflow is that the user can apply red-flag tags to applications when something looks suspicious or low quality.
+Red flags are user-managed caution tags, not automated scoring.
 
-Example red flags:
+Current red-flag fields include:
 
-- Vague company details
-- Unclear compensation
-- Suspicious contact method
-- Requires payment or equipment purchase
-- Inconsistent job description
-- Too-good-to-be-true offer language
+- Vague job description
+- Unrealistic salary
+- Asks for payment
+- Suspicious contact
+- Company mismatch
+- Too good to be true
+- Red-flag notes
 
-Red flags should help the user notice risk patterns without making automated claims about legitimacy.
+Applications and Pipeline show compact indicators when flags exist. Normal applications without flags remain visually quiet.
 
 ### Review Dashboard Insights
 
-Dashboard metrics are planned future work. The dashboard should eventually answer practical questions:
+The Dashboard provides summary-focused metrics from loaded application and resume-version data.
 
-- How many applications are active?
-- Which follow-ups are due or overdue?
-- Which sources are generating responses?
-- How many applications are in each status?
-- Which applications have red flags?
+Current sections include:
 
-## Success Criteria for v0.1
+- Summary metric cards for active applications, follow-ups, red-flagged applications, interviews, and offers
+- Status breakdown
+- Source breakdown
+- Resume-version usage
+- Red flag snapshot
+- Source Effectiveness, showing applications, active count, interviews, offers, and closed count by source
+- Resume Version Effectiveness, showing applications, active count, interviews, offers, and closed count by resume version
+
+Archived applications are excluded from normal dashboard metrics.
+
+## Success Criteria for Current Prototype
 
 - A user can add a job opportunity in under a minute.
 - A user can track at least 25 applications without losing important context.
+- A user can distinguish active opportunities from closed outcomes.
 - A user can identify overdue follow-ups and upcoming follow-ups due within 3 days.
-- A user can assign a resume version during quick-add.
-- Future work should allow a user to flag suspicious or questionable postings.
-- Future work should show basic response and source insights.
-- The app remains simple enough that quick capture is still the primary workflow.
+- A user can snooze or clear follow-ups directly from Command Center without creating no-op activity logs.
+- A user can record next actions and activity timeline entries.
+- A user can assign resume versions and review usage/effectiveness patterns.
+- A user can flag suspicious or concerning postings without automated scoring.
+- The app remains readable at normal full-screen and half-screen desktop widths.
