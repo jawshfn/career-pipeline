@@ -116,6 +116,8 @@ Run this checklist before starting a new product phase or opening a pull request
 - Dashboard excludes archived applications from summary metrics.
 - Dashboard red-flag count updates after flagging or unflagging an application.
 - Applications table loads backend applications.
+- Applications search and filters narrow active applications without changing Quick Add.
+- Applications sorting changes table order and Details still opens from filtered results.
 - Quick-add creates an application.
 - Quick Add does not offer `Archived` as a status.
 - Quick-add can create an application with a follow-up date.
