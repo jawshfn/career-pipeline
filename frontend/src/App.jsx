@@ -103,7 +103,12 @@ export default function App() {
   return (
     <AppLayout activePage={activePage} onNavigate={setActivePage}>
       {activePage === "command-center" ? (
-        <CommandCenterPage />
+        <CommandCenterPage
+          applications={activeApplications}
+          error={loadError}
+          isLoading={isLoading}
+          onUpdateApplication={handleUpdateApplication}
+        />
       ) : activePage === "dashboard" ? (
         <DashboardPage
           applications={activeApplications}

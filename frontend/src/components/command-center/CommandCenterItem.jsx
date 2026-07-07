@@ -10,7 +10,14 @@ function formatDate(value) {
   return value.slice(0, 10);
 }
 
-export default function CommandCenterItem({ application, showUpdatedAt }) {
+export default function CommandCenterItem({
+  application,
+  isUpdating = false,
+  onFollowUpAction,
+  showUpdatedAt,
+}) {
+  const showFollowUpActions = Boolean(onFollowUpAction && application.follow_up_date);
+
   return (
     <article className="command-center-item">
       <div className="command-center-item-heading">
@@ -37,6 +44,35 @@ export default function CommandCenterItem({ application, showUpdatedAt }) {
           </div>
         ) : null}
       </dl>
+
+      {showFollowUpActions ? (
+        <div className="command-center-actions" aria-label={`Follow-up actions for ${application.company_name}`}>
+          <button
+            className="quiet-button"
+            disabled={isUpdating}
+            type="button"
+            onClick={() => onFollowUpAction(application, "snooze-3")}
+          >
+            Snooze 3 days
+          </button>
+          <button
+            className="quiet-button"
+            disabled={isUpdating}
+            type="button"
+            onClick={() => onFollowUpAction(application, "snooze-7")}
+          >
+            Snooze 1 week
+          </button>
+          <button
+            className="quiet-danger-button"
+            disabled={isUpdating}
+            type="button"
+            onClick={() => onFollowUpAction(application, "clear")}
+          >
+            Clear follow-up
+          </button>
+        </div>
+      ) : null}
     </article>
   );
 }

@@ -220,6 +220,8 @@ a {
 }
 
 .secondary-button,
+.quiet-button,
+.quiet-danger-button,
 .table-action-button {
   border: 1px solid #cbd6d3;
   border-radius: 6px;
@@ -238,10 +240,25 @@ a {
   white-space: nowrap;
 }
 
+.quiet-button,
+.quiet-danger-button {
+  min-height: 32px;
+  padding: 6px 9px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
 .secondary-button:hover,
+.quiet-button:hover,
 .table-action-button:hover {
   border-color: #287c73;
   background: #eef7f5;
+}
+
+.quiet-button:disabled,
+.quiet-danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .quiet-danger-button {
@@ -928,6 +945,10 @@ a {
   gap: 16px;
 }
 
+.command-center-message {
+  margin: 0;
+}
+
 .command-center-section {
   display: grid;
   align-content: start;
@@ -1041,6 +1062,12 @@ a {
   color: #202a33;
   font-size: 0.88rem;
   overflow-wrap: anywhere;
+}
+
+.command-center-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .pipeline-board {

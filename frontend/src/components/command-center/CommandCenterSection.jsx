@@ -2,7 +2,14 @@ import React from "react";
 
 import CommandCenterItem from "./CommandCenterItem.jsx";
 
-export default function CommandCenterSection({ applications, description, showUpdatedAt = false, title }) {
+export default function CommandCenterSection({
+  applications,
+  description,
+  onFollowUpAction,
+  showUpdatedAt = false,
+  title,
+  updatingApplicationId,
+}) {
   return (
     <section className="panel command-center-section" aria-labelledby={`command-center-${title}`}>
       <div className="command-center-section-header">
@@ -20,7 +27,9 @@ export default function CommandCenterSection({ applications, description, showUp
           {applications.map((application) => (
             <CommandCenterItem
               application={application}
+              isUpdating={updatingApplicationId === application.id}
               key={application.id}
+              onFollowUpAction={onFollowUpAction}
               showUpdatedAt={showUpdatedAt}
             />
           ))}
