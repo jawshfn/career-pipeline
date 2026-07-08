@@ -346,9 +346,6 @@ export default function ApplicationDetailPanel({
     !formData.notes.trim()
       ? ["Job details are light", "Add posting notes or pasted context if helpful.", "job-details"]
       : null,
-    redFlagCount === 0
-      ? ["No red flags marked", "Review red flags only if anything about the posting seems unusual.", "red-flags"]
-      : null,
   ].filter(Boolean);
 
   return (

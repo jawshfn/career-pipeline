@@ -162,6 +162,7 @@ Status: complete through Phase 11.0
 
 - Phase 11.0: reorganize Application Detail so Overview is a read-only command snapshot and editable fields live in focused tabs
 - Phase 11.0b: remove repetitive Overview Quick edit shortcuts and keep contextual Needs attention actions
+- Phase 11.0c: treat no red flags marked as a neutral Overview state instead of an attention item
 
 ## Near-Term Future Work
 
