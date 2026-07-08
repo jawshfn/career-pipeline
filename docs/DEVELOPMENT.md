@@ -128,6 +128,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Smart Capture can internally detect common LinkedIn, Indeed, ZipRecruiter, or generic pasted-text formats to choose the best deterministic extraction profile.
 - Smart Capture review guardrails appear after Prepare review and show best-match parser, captured-field statuses, and Source/Job link reminders.
 - Smart Capture captures obvious header-level compensation as editable text instead of numeric salary guesses.
+- Explicit Job link values can normalize bare domains like `example.com` to `https://example.com`, but pasted job text is never scanned for links.
 - Company career pages remain best-effort and should be reviewed manually before saving.
 
 ### Applications Filters And Details
@@ -148,8 +149,10 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Detail tabs show Overview, Status & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity.
 - Overview is read-only and shows a scannable command snapshot with contextual Needs attention suggestions.
 - Overview does not show a static Quick edit button row because the main tabs already provide broad navigation.
+- Overview hides the persistent top summary strip; focused edit tabs keep it for orientation.
 - When there are no attention suggestions, Overview shows a calm organized empty state.
 - Company name, role title, Source, Job link, location, compensation, employment type, and notes edit from Job Details.
+- Job link values with full `http://` or `https://` protocols open as entered; obvious bare domains open with `https://`; incomplete text does not render as an external link.
 - Status, Applied Date, Follow-up Date, and Next Action edit from Status & Follow-up.
 - Resume Version edits from Contact & Prep.
 - Unsaved detail changes warn before closing or switching to a different application.

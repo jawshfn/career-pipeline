@@ -7,6 +7,7 @@ import {
   SOURCE_OPTIONS,
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
+import { normalizeExplicitJobLink } from "../../utils/jobLinks.js";
 
 const initialFormState = {
   company_name: "",
@@ -82,7 +83,7 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
     const payload = {
       company_name: formData.company_name.trim(),
       role_title: formData.role_title.trim(),
-      job_link: formData.job_link.trim() || null,
+      job_link: normalizeExplicitJobLink(formData.job_link) || null,
       source: formData.source,
       status: formData.status,
       resume_version_id: formData.resume_version_id ? Number(formData.resume_version_id) : null,

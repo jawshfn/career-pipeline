@@ -7,6 +7,7 @@ import {
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
 import { buildSmartCaptureReviewState } from "../../utils/jobTextExtraction.js";
+import { normalizeExplicitJobLink } from "../../utils/jobLinks.js";
 
 const initialCaptureState = {
   rawText: "",
@@ -114,7 +115,7 @@ export default function SmartCaptureForm({ resumeVersions, onCreateApplication, 
     const payload = {
       company_name: reviewData.company_name.trim(),
       role_title: reviewData.role_title.trim(),
-      job_link: reviewData.job_link.trim() || null,
+      job_link: normalizeExplicitJobLink(reviewData.job_link) || null,
       source: reviewData.source || DEFAULT_APPLICATION_SOURCE,
       status: reviewData.status,
       resume_version_id: reviewData.resume_version_id ? Number(reviewData.resume_version_id) : null,

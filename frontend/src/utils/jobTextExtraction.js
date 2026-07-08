@@ -2,6 +2,7 @@ import {
   DEFAULT_APPLICATION_SOURCE,
   SAVED_APPLICATION_STATUS,
 } from "../constants/applicationConstants.js";
+import { normalizeExplicitJobLink } from "./jobLinks.js";
 
 const initialReviewState = {
   parser_format: "generic",
@@ -54,7 +55,7 @@ function normalizeTitle(value) {
 }
 
 function getExplicitJobLink(explicitJobLink) {
-  return explicitJobLink.trim();
+  return normalizeExplicitJobLink(explicitJobLink);
 }
 
 function getSelectedSource(explicitSource) {

@@ -100,7 +100,7 @@ Manual Entry fields include:
 
 Follow-up presets help schedule common dates quickly. If the user selects Applied or a later status and Applied Date is empty, the frontend can default Applied Date to today. Existing manually entered applied dates are not overwritten.
 
-Smart Capture is an additional paste-review workflow. The user pastes a job post, recruiter message, or copied listing text, optionally adds an explicit job link, selects a source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, employment type, and notes containing the relevant pasted text. The parser can internally recognize common LinkedIn, Indeed, ZipRecruiter, or generic paste formats to improve extraction quality, but it does not change the saved Source. Job link also stays user-controlled and is not guessed from arbitrary pasted URLs. A compact review guardrails panel summarizes the best-match parser, captured-field status, and Source/Job link reminders before saving. Company career pages can still be pasted, but they are best-effort and should be reviewed carefully before saving. AI-assisted extraction is not implemented yet.
+Smart Capture is an additional paste-review workflow. The user pastes a job post, recruiter message, or copied listing text, optionally adds an explicit job link, selects a source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, employment type, and notes containing the relevant pasted text. The parser can internally recognize common LinkedIn, Indeed, ZipRecruiter, or generic paste formats to improve extraction quality, but it does not change the saved Source. Job link also stays user-controlled and is not guessed from arbitrary pasted URLs. Explicit user-entered bare domains can be normalized to `https://` for safe opening. A compact review guardrails panel summarizes the best-match parser, captured-field status, and Source/Job link reminders before saving. Company career pages can still be pasted, but they are best-effort and should be reviewed carefully before saving. AI-assisted extraction is not implemented yet.
 
 After saving, the application appears in Applications, Pipeline, Dashboard metrics, and other relevant views. The user can open Application Detail later to add richer information.
 
@@ -131,7 +131,7 @@ Current tabs:
 - Red Flags
 - Activity
 
-Overview is a read-only command snapshot with compact opportunity context and contextual Needs attention shortcuts into the focused editing tabs. When nothing needs attention, it shows a calm organized state instead of duplicating the main tab navigation.
+Overview is a read-only command snapshot with compact opportunity context and contextual Needs attention shortcuts into the focused editing tabs. When nothing needs attention, it shows a calm organized state instead of duplicating the main tab navigation. The persistent top summary strip appears on focused edit tabs, but stays hidden on Overview so the summary is not repeated.
 
 Editable areas include company name, role title, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact name, contact info, prep notes, location, compensation, salary range, employment type, notes, red flags, and red-flag notes.
 

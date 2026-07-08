@@ -11,6 +11,7 @@ import {
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
 import { formatDisplayDate, parseLocalDateValue } from "../../utils/dateFormatting.js";
+import { getOpenableJobLink, normalizeExplicitJobLink } from "../../utils/jobLinks.js";
 import ApplicationActivityTimeline from "./ApplicationActivityTimeline.jsx";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
@@ -271,7 +272,7 @@ export default function ApplicationDetailPanel({
     const payload = {
       company_name: formData.company_name.trim(),
       role_title: formData.role_title.trim(),
-      job_link: formData.job_link.trim() || null,
+      job_link: normalizeExplicitJobLink(formData.job_link) || null,
       source: formData.source,
       status: formData.status,
       location: formData.location.trim() || null,
@@ -322,6 +323,7 @@ export default function ApplicationDetailPanel({
   const resumeSummary = selectedResumeVersion ? getResumeVersionLabel(selectedResumeVersion) : "No resume selected";
   const redFlagCount = getRedFlagCount(formData);
   const jobLinkValue = formData.job_link.trim();
+  const openableJobLink = getOpenableJobLink(jobLinkValue);
   const overviewSnapshotItems = [
     ["Company / role", opportunityTitle],
     ["Status", getDisplayValue(formData.status)],
@@ -330,7 +332,7 @@ export default function ApplicationDetailPanel({
     ["Resume", resumeSummary],
     ["Source", getDisplayValue(formData.source)],
     ["Location", getDisplayValue(formData.location, "No location saved")],
-    ["Job link", jobLinkValue ? "Saved" : "No link saved"],
+    ["Job link", openableJobLink ? "Saved" : "No link saved"],
     ["Red flags", redFlagCount ? `${redFlagCount} marked` : "None marked"],
   ];
   const attentionItems = [
@@ -340,7 +342,7 @@ export default function ApplicationDetailPanel({
     !formData.resume_version_id
       ? ["No resume selected", "Choose the resume version used for this application.", "contact-prep"]
       : null,
-    !jobLinkValue ? ["No job link saved", "Add the posting link if you want fast access later.", "job-details"] : null,
+    !openableJobLink ? ["No job link saved", "Add the posting link if you want fast access later.", "job-details"] : null,
     !formData.next_action.trim()
       ? ["No next action written", "Capture the next step when there is one.", "dates"]
       : null,
@@ -397,10 +399,10 @@ export default function ApplicationDetailPanel({
                 <span>Resume</span>
                 <strong>{resumeSummary}</strong>
               </div>
-              {jobLinkValue ? (
+              {openableJobLink ? (
                 <a
                   className="secondary-button detail-job-link-action"
-                  href={jobLinkValue}
+                  href={openableJobLink}
                   rel="noreferrer"
                   target="_blank"
                 >
@@ -445,8 +447,8 @@ export default function ApplicationDetailPanel({
                     <div className="detail-overview-card" key={label}>
                       <span>{label}</span>
                       <strong>{value}</strong>
-                      {label === "Job link" && jobLinkValue ? (
-                        <a href={jobLinkValue} rel="noreferrer" target="_blank">
+                      {label === "Job link" && openableJobLink ? (
+                        <a href={openableJobLink} rel="noreferrer" target="_blank">
                           Open posting
                         </a>
                       ) : null}
@@ -611,6 +613,7 @@ export default function ApplicationDetailPanel({
                       onChange={updateField}
                       placeholder="https://..."
                     />
+                    <span className="field-helper">Use a full posting URL. Bare domains are opened with https://.</span>
                   </label>
 
                   <label>
