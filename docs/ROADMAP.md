@@ -158,12 +158,18 @@ Status: complete through Phase 10.5
 
 ## Phase 11: Application Detail Reorganization
 
-Status: complete through Phase 11.0
+Status: complete through Phase 11.0d
 
 - Phase 11.0: reorganize Application Detail so Overview is a read-only command snapshot and editable fields live in focused tabs
 - Phase 11.0b: remove repetitive Overview Quick edit shortcuts and keep contextual Needs attention actions
 - Phase 11.0c: treat no red flags marked as a neutral Overview state instead of an attention item
 - Phase 11.0d: hide the persistent summary strip on Overview and normalize explicit user-entered job links
+
+## Phase 12: Capture Quality Guardrails
+
+Status: complete through Phase 12.0
+
+- Phase 12.0: add advisory duplicate and similar-opportunity warnings to Manual Entry and Smart Capture Review
 
 ## Near-Term Future Work
 

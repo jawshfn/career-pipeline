@@ -110,6 +110,7 @@ export default function App() {
         <DashboardPage />
       ) : activePage === "quick-add" ? (
         <QuickAddPage
+          existingApplications={activeApplications}
           onCreateApplication={handleCreateApplication}
           onViewApplications={() => setActivePage("applications")}
           resumeVersions={resumeVersions}

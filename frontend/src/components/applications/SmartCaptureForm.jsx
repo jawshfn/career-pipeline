@@ -8,6 +8,8 @@ import {
 } from "../../constants/applicationConstants.js";
 import { buildSmartCaptureReviewState } from "../../utils/jobTextExtraction.js";
 import { normalizeExplicitJobLink } from "../../utils/jobLinks.js";
+import { findSimilarOpportunities } from "../../utils/opportunityDuplicates.js";
+import DuplicateOpportunityWarning from "./DuplicateOpportunityWarning.jsx";
 
 const initialCaptureState = {
   rawText: "",
@@ -85,7 +87,12 @@ function SmartCaptureGuardrails({ reviewData }) {
   );
 }
 
-export default function SmartCaptureForm({ resumeVersions, onCreateApplication, onCreateSuccess }) {
+export default function SmartCaptureForm({
+  existingApplications = [],
+  resumeVersions,
+  onCreateApplication,
+  onCreateSuccess,
+}) {
   const [captureData, setCaptureData] = useState(initialCaptureState);
   const [reviewData, setReviewData] = useState(null);
   const [error, setError] = useState("");
@@ -138,6 +145,18 @@ export default function SmartCaptureForm({ resumeVersions, onCreateApplication, 
       setIsSubmitting(false);
     }
   }
+
+  const duplicateMatches = reviewData
+    ? findSimilarOpportunities(
+        {
+          company_name: reviewData.company_name,
+          role_title: reviewData.role_title,
+          job_link: reviewData.job_link,
+          location: reviewData.location,
+        },
+        existingApplications,
+      )
+    : [];
 
   return (
     <section className="panel quick-add-panel smart-capture-panel" aria-labelledby="smart-capture-title">
@@ -204,6 +223,8 @@ export default function SmartCaptureForm({ resumeVersions, onCreateApplication, 
           </div>
 
           <SmartCaptureGuardrails reviewData={reviewData} />
+
+          <DuplicateOpportunityWarning matches={duplicateMatches} />
 
           <div className="quick-add-row quick-add-row-primary">
             <label>

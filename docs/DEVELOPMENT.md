@@ -130,6 +130,11 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Smart Capture captures obvious header-level compensation as editable text instead of numeric salary guesses.
 - Explicit Job link values can normalize bare domains like `example.com` to `https://example.com`, but pasted job text is never scanned for links.
 - Company career pages remain best-effort and should be reviewed manually before saving.
+- Manual Entry and Smart Capture Review show advisory duplicate/similar-opportunity warnings without blocking save.
+- Same normalized job link appears as a likely duplicate.
+- Same or similar company, role, and location appears as a likely duplicate.
+- Same or similar company and role with missing or different location appears as a similar opportunity.
+- Archived applications do not trigger duplicate warnings.
 
 ### Applications Filters And Details
 

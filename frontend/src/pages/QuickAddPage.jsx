@@ -3,7 +3,12 @@ import React, { useState } from "react";
 import QuickAddApplicationForm from "../components/applications/QuickAddApplicationForm.jsx";
 import SmartCaptureForm from "../components/applications/SmartCaptureForm.jsx";
 
-export default function QuickAddPage({ onCreateApplication, onViewApplications, resumeVersions }) {
+export default function QuickAddPage({
+  existingApplications,
+  onCreateApplication,
+  onViewApplications,
+  resumeVersions,
+}) {
   const [createdApplication, setCreatedApplication] = useState(null);
   const [activeMode, setActiveMode] = useState("manual");
 
@@ -63,12 +68,14 @@ export default function QuickAddPage({ onCreateApplication, onViewApplications, 
 
       {activeMode === "manual" ? (
         <QuickAddApplicationForm
+          existingApplications={existingApplications}
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}
           onCreateSuccess={setCreatedApplication}
         />
       ) : (
         <SmartCaptureForm
+          existingApplications={existingApplications}
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}
           onCreateSuccess={setCreatedApplication}

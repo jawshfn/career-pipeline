@@ -8,6 +8,8 @@ import {
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
 import { normalizeExplicitJobLink } from "../../utils/jobLinks.js";
+import { findSimilarOpportunities } from "../../utils/opportunityDuplicates.js";
+import DuplicateOpportunityWarning from "./DuplicateOpportunityWarning.jsx";
 
 const initialFormState = {
   company_name: "",
@@ -55,7 +57,12 @@ function isAppliedOrLater(status) {
   return APPLIED_OR_LATER_APPLICATION_STATUSES.includes(status);
 }
 
-export default function QuickAddApplicationForm({ resumeVersions, onCreateApplication, onCreateSuccess }) {
+export default function QuickAddApplicationForm({
+  existingApplications = [],
+  resumeVersions,
+  onCreateApplication,
+  onCreateSuccess,
+}) {
   const [formData, setFormData] = useState(initialFormState);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,6 +109,16 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
       setIsSubmitting(false);
     }
   }
+
+  const duplicateMatches = findSimilarOpportunities(
+    {
+      company_name: formData.company_name,
+      role_title: formData.role_title,
+      job_link: formData.job_link,
+      location: "",
+    },
+    existingApplications,
+  );
 
   return (
     <section className="panel quick-add-panel" aria-labelledby="quick-add-title">
@@ -236,6 +253,8 @@ export default function QuickAddApplicationForm({ resumeVersions, onCreateApplic
             placeholder="Optional context, next step, or recruiter note"
           />
         </label>
+
+        <DuplicateOpportunityWarning matches={duplicateMatches} />
 
         <div className="form-actions">
           <button type="submit" disabled={isSubmitting}>

@@ -2,6 +2,16 @@ const HTTP_URL_PATTERN = /^https?:\/\//iu;
 const BARE_DOMAIN_PATTERN =
   /^(?:www\.)?[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+(?:[/?#][^\s]*)?$/iu;
 
+function isOpenableHttpUrl(value) {
+  try {
+    const url = new URL(value);
+
+    return ["http:", "https:"].includes(url.protocol) && url.hostname.includes(".");
+  } catch {
+    return false;
+  }
+}
+
 export function normalizeExplicitJobLink(value) {
   const trimmedValue = String(value || "").trim();
 
@@ -23,5 +33,5 @@ export function normalizeExplicitJobLink(value) {
 export function getOpenableJobLink(value) {
   const normalizedValue = normalizeExplicitJobLink(value);
 
-  return HTTP_URL_PATTERN.test(normalizedValue) ? normalizedValue : "";
+  return isOpenableHttpUrl(normalizedValue) ? normalizedValue : "";
 }
