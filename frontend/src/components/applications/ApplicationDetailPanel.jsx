@@ -347,7 +347,7 @@ export default function ApplicationDetailPanel({
       ? ["Job details are light", "Add posting notes or pasted context if helpful.", "job-details"]
       : null,
     redFlagCount === 0
-      ? ["Red flags are quiet", "Review only if anything about the posting seems unusual.", "red-flags"]
+      ? ["No red flags marked", "Review red flags only if anything about the posting seems unusual.", "red-flags"]
       : null,
   ].filter(Boolean);
 
@@ -452,47 +452,35 @@ export default function ApplicationDetailPanel({
                 <div className="detail-overview-section">
                   <div className="detail-overview-section-heading">
                     <h4>Needs attention</h4>
-                    <span>{attentionItems.length} suggestions</span>
+                    <span>
+                      {attentionItems.length === 1
+                        ? "1 suggestion"
+                        : `${attentionItems.length} suggestions`}
+                    </span>
                   </div>
-                  <div className="detail-attention-list">
-                    {attentionItems.map(([title, description, tabId]) => (
-                      <button
-                        className="detail-attention-item"
-                        key={title}
-                        type="button"
-                        onClick={() => setActiveTab(tabId)}
-                      >
-                        <span>
-                          <strong>{title}</strong>
-                          <small>{description}</small>
-                        </span>
-                        <em>Open</em>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="detail-overview-section">
-                  <div className="detail-overview-section-heading">
-                    <h4>Quick edit</h4>
-                  </div>
-                  <div className="detail-shortcut-actions">
-                    <button type="button" onClick={() => setActiveTab("dates")}>
-                      Edit status & follow-up
-                    </button>
-                    <button type="button" onClick={() => setActiveTab("job-details")}>
-                      Edit job details
-                    </button>
-                    <button type="button" onClick={() => setActiveTab("contact-prep")}>
-                      Add contact/prep notes
-                    </button>
-                    <button type="button" onClick={() => setActiveTab("red-flags")}>
-                      Review red flags
-                    </button>
-                    <button type="button" onClick={() => setActiveTab("activity")}>
-                      View activity
-                    </button>
-                  </div>
+                  {attentionItems.length > 0 ? (
+                    <div className="detail-attention-list">
+                      {attentionItems.map(([title, description, tabId]) => (
+                        <button
+                          className="detail-attention-item"
+                          key={title}
+                          type="button"
+                          onClick={() => setActiveTab(tabId)}
+                        >
+                          <span>
+                            <strong>{title}</strong>
+                            <small>{description}</small>
+                          </span>
+                          <em>Open</em>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="detail-overview-empty-state">
+                      <strong>Looks organized</strong>
+                      <p>All key details have been filled in. Use the tabs above if you want to make changes.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : null}

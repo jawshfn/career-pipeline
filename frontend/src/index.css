@@ -898,26 +898,26 @@ a {
   font-weight: 900;
 }
 
-.detail-shortcut-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 0;
-}
-
-.detail-shortcut-actions button {
-  border: 1px solid #cbd6d3;
-  border-radius: 999px;
-  padding: 7px 11px;
-  color: #287c73;
+.detail-overview-empty-state {
+  display: grid;
+  gap: 4px;
+  border: 1px dashed #cbd6d3;
+  border-radius: 8px;
+  padding: 12px;
+  color: #40504d;
   background: #ffffff;
-  font-size: 0.84rem;
-  font-weight: 800;
 }
 
-.detail-shortcut-actions button:hover {
-  border-color: #287c73;
-  background: #eef7f5;
+.detail-overview-empty-state strong {
+  color: #17202a;
+  font-size: 0.92rem;
+}
+
+.detail-overview-empty-state p {
+  margin: 0;
+  color: #60706d;
+  font-size: 0.84rem;
+  line-height: 1.4;
 }
 
 .detail-field-grid {

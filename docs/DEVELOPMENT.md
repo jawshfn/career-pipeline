@@ -146,7 +146,9 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Details opens Application Detail on the Overview tab.
 - Selecting Details scrolls the detail panel into view.
 - Detail tabs show Overview, Status & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity.
-- Overview is read-only and shows a scannable command snapshot, needs-attention suggestions, and shortcuts into focused edit tabs.
+- Overview is read-only and shows a scannable command snapshot with contextual Needs attention suggestions.
+- Overview does not show a static Quick edit button row because the main tabs already provide broad navigation.
+- When there are no attention suggestions, Overview shows a calm organized empty state.
 - Company name, role title, Source, Job link, location, compensation, employment type, and notes edit from Job Details.
 - Status, Applied Date, Follow-up Date, and Next Action edit from Status & Follow-up.
 - Resume Version edits from Contact & Prep.

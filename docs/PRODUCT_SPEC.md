@@ -51,7 +51,7 @@ The current prototype includes:
 - Application create, list, update, detail editing, and archive behavior
 - Applications page with Active, Closed, and All views plus search, filters, sorting, opportunity-focused table rows, Notes shortcut, and detail access
 - Application Detail tabs for Overview, Status & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
-- Read-only Application Detail Overview command snapshot with missing-data signals and shortcuts into focused editing tabs
+- Read-only Application Detail Overview command snapshot with contextual Needs attention shortcuts into focused editing tabs
 - Optional Next Action field shown in Application Detail and Command Center cards
 - Applied-date behavior that distinguishes saved date from the date the user actually applied
 - Responsive grouped Pipeline with status filtering and persisted status updates
@@ -131,7 +131,7 @@ Current tabs:
 - Red Flags
 - Activity
 
-Overview is a read-only command snapshot with compact opportunity context, missing-data signals, and shortcut buttons into the focused editing tabs. It does not duplicate the editable basics form.
+Overview is a read-only command snapshot with compact opportunity context and contextual Needs attention shortcuts into the focused editing tabs. When nothing needs attention, it shows a calm organized state instead of duplicating the main tab navigation.
 
 Editable areas include company name, role title, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact name, contact info, prep notes, location, compensation, salary range, employment type, notes, red flags, and red-flag notes.
 
