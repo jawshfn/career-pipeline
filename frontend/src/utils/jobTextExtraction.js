@@ -64,6 +64,10 @@ function getSourceKey(source) {
   return source.toLowerCase().replace(/\s+/gu, "");
 }
 
+function isSupportedParserFormat(format) {
+  return ["indeed", "linkedin", "ziprecruiter"].includes(format);
+}
+
 function getCleanLines(rawText) {
   return rawText
     .split(/\r?\n/u)
@@ -77,6 +81,47 @@ function isRatingLine(line) {
 
 function isPostedAgoLine(line) {
   return /^posted\s+.+\s+ago$/iu.test(line);
+}
+
+function detectParserFormat(rawText) {
+  const normalizedText = normalizeBulletSeparators(rawText);
+  const normalizedLines = getCleanLines(rawText).map(normalizeBulletSeparators);
+  const lowerText = normalizedText.toLowerCase();
+  const lowerLines = normalizedLines.map((line) => line.toLowerCase());
+  const linkedInClues = [
+    lowerText.includes("company logo for,"),
+    lowerText.includes("responses managed off linkedin"),
+    lowerText.includes("people clicked apply"),
+    normalizedLines.some(getLinkedInLocationFromMetadataLine),
+  ].filter(Boolean).length;
+
+  if (linkedInClues > 0) {
+    return "linkedin";
+  }
+
+  const indeedClues = [
+    normalizedLines.slice(0, 4).some((line) => /\bjob post$/iu.test(normalizeTitle(line))),
+    lowerText.includes("job details"),
+    lowerText.includes("how the job details align with your profile"),
+    lowerText.includes("job address"),
+    lowerText.includes("estimated commute"),
+  ].filter(Boolean).length;
+
+  if (indeedClues >= 2 || normalizedLines.slice(0, 4).some((line) => /\bjob post$/iu.test(line))) {
+    return "indeed";
+  }
+
+  const zipRecruiterClues = [
+    lowerLines.includes("job description"),
+    normalizedLines.some(isPostedAgoLine),
+    normalizedLines.slice(0, 10).some((line) => Boolean(getCompensationFromLine(line))),
+  ].filter(Boolean).length;
+
+  if (zipRecruiterClues >= 2) {
+    return "ziprecruiter";
+  }
+
+  return "generic";
 }
 
 function isNoisyLine(line) {
@@ -404,14 +449,20 @@ export function buildSmartCaptureReviewState(captureData) {
   const jobLink = getExplicitJobLink(captureData.jobLink || "");
   const source = getSelectedSource(captureData.source);
   const sourceKey = getSourceKey(source);
+  const detectedParserFormat = detectParserFormat(rawText);
+  const extractionFormat = isSupportedParserFormat(detectedParserFormat)
+    ? detectedParserFormat
+    : isSupportedParserFormat(sourceKey)
+      ? sourceKey
+      : "generic";
 
   let extractedFields = getGenericFallbackFields(rawText);
 
-  if (sourceKey === "indeed") {
+  if (extractionFormat === "indeed") {
     extractedFields = { ...extractedFields, ...extractIndeedFields(rawText) };
-  } else if (sourceKey === "linkedin") {
+  } else if (extractionFormat === "linkedin") {
     extractedFields = { ...extractedFields, ...extractLinkedInFields(rawText) };
-  } else if (sourceKey === "ziprecruiter") {
+  } else if (extractionFormat === "ziprecruiter") {
     extractedFields = { ...extractedFields, ...extractZipRecruiterFields(rawText) };
   }
 
