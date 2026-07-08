@@ -145,7 +145,7 @@ Status: complete through Phase 9.8
 
 ## Phase 10: Detail and Applications Table Polish
 
-Status: complete through Phase 10.4
+Status: complete through Phase 10.5
 
 - Phase 10.0: strengthen Application Detail action header, summary context, job-link action, and follow-up presets
 - Phase 10.1: improve date display consistency across detail and table surfaces
@@ -154,6 +154,7 @@ Status: complete through Phase 10.4
 - Phase 10.3b: make the Notes shortcut open Application Detail on the Job Details tab
 - Phase 10.3c: prevent tab shortcuts from reloading application data or discarding unsaved edits
 - Phase 10.4: refresh documentation for the current MVP behavior
+- Phase 10.5: add Smart Capture review guardrails for detected format, captured fields, and user-controlled Source/Job link reminders
 
 ## Near-Term Future Work
 

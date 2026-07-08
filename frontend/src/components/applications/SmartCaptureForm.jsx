@@ -20,6 +20,70 @@ function getResumeVersionLabel(resumeVersion) {
     : resumeVersion.name;
 }
 
+function getParserFormatLabel(format) {
+  const labels = {
+    generic: "Generic",
+    indeed: "Indeed",
+    linkedin: "LinkedIn",
+    ziprecruiter: "ZipRecruiter",
+  };
+
+  return labels[format] || "Generic";
+}
+
+function getReviewStatus(value, missingLabel = "Missing") {
+  return String(value || "").trim() ? "Captured" : missingLabel;
+}
+
+function getReviewStatusClass(status) {
+  if (status === "Captured") {
+    return "is-captured";
+  }
+
+  if (status === "Review") {
+    return "is-review";
+  }
+
+  return "is-missing";
+}
+
+function SmartCaptureGuardrails({ reviewData }) {
+  const fieldStatuses = [
+    ["Company", getReviewStatus(reviewData.company_name)],
+    ["Role/title", getReviewStatus(reviewData.role_title)],
+    ["Location", getReviewStatus(reviewData.location, "Review")],
+    ["Job details", getReviewStatus(reviewData.notes, "Review")],
+  ];
+
+  return (
+    <aside className="smart-capture-guardrails" aria-label="Smart Capture review guardrails">
+      <div className="smart-capture-guardrails-header">
+        <div>
+          <p className="eyebrow">Review guardrails</p>
+          <h4>Check the suggested fields before saving</h4>
+        </div>
+        <span className="smart-capture-format-pill">
+          Best match parser: {getParserFormatLabel(reviewData.parser_format)}
+        </span>
+      </div>
+
+      <div className="smart-capture-checklist" aria-label="Captured field checklist">
+        {fieldStatuses.map(([label, status]) => (
+          <div className="smart-capture-check-item" key={label}>
+            <span>{label}</span>
+            <strong className={getReviewStatusClass(status)}>{status}</strong>
+          </div>
+        ))}
+      </div>
+
+      <p className="smart-capture-guardrails-note">
+        Smart Capture gives you a starting point. Source stays manually selected, and Job Link is saved only
+        when entered in the job link field.
+      </p>
+    </aside>
+  );
+}
+
 export default function SmartCaptureForm({ resumeVersions, onCreateApplication, onCreateSuccess }) {
   const [captureData, setCaptureData] = useState(initialCaptureState);
   const [reviewData, setReviewData] = useState(null);
@@ -137,6 +201,8 @@ export default function SmartCaptureForm({ resumeVersions, onCreateApplication, 
             <h3>Review suggested fields</h3>
             <p>Edit anything before saving this application.</p>
           </div>
+
+          <SmartCaptureGuardrails reviewData={reviewData} />
 
           <div className="quick-add-row quick-add-row-primary">
             <label>

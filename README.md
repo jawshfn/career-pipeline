@@ -14,6 +14,7 @@ The product is built around a common job-search problem: opportunities arrive fr
 - Manual Entry and Paste Job Text modes
 - Smart Capture paste-review workflow with conservative rule-based suggestions before saving
 - Parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while keeping Source user-selected
+- Compact review guardrails showing detected format, captured-field checklist, and user-controlled Source/Job link reminders
 - Explicit Job link input; pasted URLs are not captured automatically
 - Optional status, resume version, applied date, follow-up date, source, job link, and notes
 - Follow-up presets for common next-step dates

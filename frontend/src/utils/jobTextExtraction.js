@@ -4,6 +4,7 @@ import {
 } from "../constants/applicationConstants.js";
 
 const initialReviewState = {
+  parser_format: "generic",
   company_name: "",
   role_title: "",
   job_link: "",
@@ -469,6 +470,7 @@ export function buildSmartCaptureReviewState(captureData) {
   return {
     ...initialReviewState,
     ...extractedFields,
+    parser_format: extractionFormat,
     job_link: jobLink,
     source,
   };

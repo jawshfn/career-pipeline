@@ -126,6 +126,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Smart Capture leaves Job link blank unless the user enters an explicit link.
 - Smart Capture keeps Source user-selected instead of inferring or overwriting it from pasted text or URLs.
 - Smart Capture can internally detect common LinkedIn, Indeed, ZipRecruiter, or generic pasted-text formats to choose the best deterministic extraction profile.
+- Smart Capture review guardrails appear after Prepare review and show detected format, captured-field statuses, and Source/Job link reminders.
 - Smart Capture captures obvious header-level compensation as editable text instead of numeric salary guesses.
 - Company career pages remain best-effort and should be reviewed manually before saving.
 
