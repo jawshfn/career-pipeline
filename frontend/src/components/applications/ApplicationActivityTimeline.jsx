@@ -36,13 +36,19 @@ function getInitialActivityForm() {
   };
 }
 
+export { getInitialActivityForm };
+
 function formatDate(value) {
   return value || "-";
 }
 
-export default function ApplicationActivityTimeline({ applicationId }) {
+export default function ApplicationActivityTimeline({
+  applicationId,
+  draftData,
+  onDraftChange,
+  onResetDraft,
+}) {
   const [activities, setActivities] = useState([]);
-  const [formData, setFormData] = useState(getInitialActivityForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingActivityId, setDeletingActivityId] = useState(null);
@@ -61,7 +67,6 @@ export default function ApplicationActivityTimeline({ applicationId }) {
         const data = await getApplicationActivities(applicationId);
         if (isCurrent) {
           setActivities(data);
-          setFormData(getInitialActivityForm());
         }
       } catch (loadError) {
         if (isCurrent) {
@@ -83,12 +88,12 @@ export default function ApplicationActivityTimeline({ applicationId }) {
 
   function updateField(event) {
     const { name, value } = event.target;
-    setFormData((currentFormData) => ({ ...currentFormData, [name]: value }));
+    onDraftChange((currentDraftData) => ({ ...currentDraftData, [name]: value }));
     setMessage("");
   }
 
   async function handleAddActivity() {
-    if (!formData.note.trim()) {
+    if (!draftData.note.trim()) {
       setError("Add a note before saving activity.");
       return;
     }
@@ -99,9 +104,9 @@ export default function ApplicationActivityTimeline({ applicationId }) {
 
     try {
       const createdActivity = await createApplicationActivity(applicationId, {
-        activity_date: formData.activity_date,
-        activity_type: formData.activity_type,
-        note: formData.note.trim(),
+        activity_date: draftData.activity_date,
+        activity_type: draftData.activity_type,
+        note: draftData.note.trim(),
       });
       setActivities((currentActivities) =>
         [createdActivity, ...currentActivities].sort((firstActivity, secondActivity) =>
@@ -109,7 +114,7 @@ export default function ApplicationActivityTimeline({ applicationId }) {
           secondActivity.created_at.localeCompare(firstActivity.created_at),
         ),
       );
-      setFormData(getInitialActivityForm());
+      onResetDraft();
       setMessage("Activity added.");
     } catch (saveError) {
       setError(saveError.message || "Could not add activity.");
@@ -162,13 +167,13 @@ export default function ApplicationActivityTimeline({ applicationId }) {
           <input
             name="activity_date"
             type="date"
-            value={formData.activity_date}
+            value={draftData.activity_date}
             onChange={updateField}
           />
         </label>
         <label>
           Activity type
-          <select name="activity_type" value={formData.activity_type} onChange={updateField}>
+          <select name="activity_type" value={draftData.activity_type} onChange={updateField}>
             {activityTypeOptions.map((activityType) => (
               <option key={activityType} value={activityType}>
                 {activityType}
@@ -181,7 +186,7 @@ export default function ApplicationActivityTimeline({ applicationId }) {
           <textarea
             name="note"
             rows="3"
-            value={formData.note}
+            value={draftData.note}
             onChange={updateField}
             placeholder="Recruiter replied, assessment completed, interview scheduled..."
           />

@@ -12,7 +12,7 @@ import {
 } from "../../constants/applicationConstants.js";
 import { formatDisplayDate, parseLocalDateValue } from "../../utils/dateFormatting.js";
 import { getOpenableJobLink, normalizeExplicitJobLink } from "../../utils/jobLinks.js";
-import ApplicationActivityTimeline from "./ApplicationActivityTimeline.jsx";
+import ApplicationActivityTimeline, { getInitialActivityForm } from "./ApplicationActivityTimeline.jsx";
 import ApplicationDetailOverview from "./ApplicationDetailOverview.jsx";
 import ApplicationDetailSummaryStrip from "./ApplicationDetailSummaryStrip.jsx";
 import ContactPrepTab from "./ContactPrepTab.jsx";
@@ -184,6 +184,7 @@ export default function ApplicationDetailPanel({
   const [saveError, setSaveError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
   const [activeTab, setActiveTab] = useState(getValidDetailTab(initialTab));
+  const [activityDraft, setActivityDraft] = useState(getInitialActivityForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -202,6 +203,7 @@ export default function ApplicationDetailPanel({
           const nextFormState = toFormState(application);
           setFormData(nextFormState);
           setSavedFormData(nextFormState);
+          setActivityDraft(getInitialActivityForm());
           setActiveTab(getValidDetailTab(initialTab));
         }
       } catch (error) {
@@ -467,7 +469,12 @@ export default function ApplicationDetailPanel({
             ) : null}
 
             {activeTab === "activity" ? (
-              <ApplicationActivityTimeline applicationId={applicationId} />
+              <ApplicationActivityTimeline
+                applicationId={applicationId}
+                draftData={activityDraft}
+                onDraftChange={setActivityDraft}
+                onResetDraft={() => setActivityDraft(getInitialActivityForm())}
+              />
             ) : null}
           </div>
 

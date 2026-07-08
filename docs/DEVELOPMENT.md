@@ -252,6 +252,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 ### Activity Timeline
 
 - Activity timeline appears inside Application Detail.
+- Activity draft input is preserved when switching away from and back to the Activity tab.
 - Adding an activity saves independently from the main detail form.
 - Adding an activity does not clear unsaved main detail edits.
 - Changing an application status creates a backend-owned `Status Change` entry.
