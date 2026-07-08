@@ -100,6 +100,7 @@ The current CI workflow should:
 - Install backend dependencies
 - Run backend pytest
 - Install frontend dependencies
+- Run frontend Vitest utility tests
 - Run the frontend production build
 - Fail clearly on test or build errors
 

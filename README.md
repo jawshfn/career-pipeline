@@ -2,97 +2,31 @@
 
 [![CI](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml)
 
-Career Pipeline is a full-stack job-search workspace for capturing opportunities, tracking application status, managing follow-ups, and reviewing job-search progress from one place.
+Career Pipeline is a full-stack job-search command center for capturing opportunities, tracking applications, managing follow-ups, and reviewing job-search progress from one place.
 
-The product is built around a common job-search problem: opportunities arrive from many sources, each application has different dates and context, and follow-up work is easy to lose in a spreadsheet. Career Pipeline keeps the fast capture workflow separate from richer application management so users can move quickly without losing detail.
+## Why I Built It
 
-## Current Features
+Job searches spread across LinkedIn, Indeed, ZipRecruiter, company career pages, recruiters, referrals, and notes. A spreadsheet can track rows, but it often loses the context that matters later: follow-up timing, resume versions, next actions, pasted job details, and warning signs.
 
-### Quick Capture
+Career Pipeline is built as a practical local-first workflow tool, not just a CRUD demo. Quick capture stays lightweight, while richer application management, follow-ups, activity history, and metrics live in focused views.
 
-- Dedicated Quick Add page for quickly saving a job opportunity
-- Manual Entry and Paste Job Text modes
-- Smart Capture paste-review workflow with conservative rule-based suggestions before saving
-- Parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while keeping Source user-selected
-- Compact review guardrails showing best-match parser, captured-field checklist, and user-controlled Source/Job link reminders
-- Explicit Job link input; pasted URLs are not captured automatically
-- Optional status, resume version, applied date, follow-up date, source, job link, and notes
-- Follow-up presets for common next-step dates
-- Applied-date defaulting when a user selects Applied or a later status and no applied date is set
+## Highlights
 
-### Application Management
-
-- Applications page focused on searching, filtering, sorting, and managing existing applications
-- Active, Closed, and All views for separating open opportunities from Rejected and Withdrawn outcomes
-- Search across company, role, source, location, and notes
-- Filters for status, source, resume version, and red-flag state
-- Sort options for recently updated, saved date, follow-up date, company, and status
-- Opportunity-focused Applications table with status, follow-up urgency, resume assignment, red-flag indicators, Notes shortcut, and Details action
-- Notes badge opens the Job Details tab while full notes remain editable in Application Detail
-
-### Application Detail
-
-- Tabbed detail panel for Overview, Status & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
-- Read-only Overview command snapshot with attention prompts and shortcuts into focused editing tabs
-- Detail editing for company, role, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact context, prep notes, location, compensation, salary range, employment type, notes, and red flags
-- Clear applied-date semantics: `date_saved` is when the job was added to Career Pipeline; `date_applied` is when the user actually applied
-- Existing applied dates are not overwritten automatically
-- Unsaved-change warnings when closing or switching selected applications
-- Activity timeline with manual entries, follow-up quick-action outcomes, and automatic status-change entries, saved independently from the main detail form
-
-### Pipeline Workflow
-
-- Responsive grouped pipeline layout with status filters
-- Status updates stay synced with Applications and Dashboard data
-- Red-flag indicators appear on application cards where useful
-- Archived records remain hidden from normal active workflow views
-
-### Follow-Up Command Center
-
-- Daily Command Center for overdue follow-ups, upcoming follow-ups, and stale active applications
-- Action-item sections are backend-derived from `/api/applications/action-items`
-- Next Action appears on Command Center cards when present
-- Quick follow-up actions: Snooze 3 days, Snooze 1 week, and Clear follow-up
-- Follow-up quick actions log Activity Timeline entries and prevent no-op snoozes
-- Action results update shared frontend state so Applications and Dashboard remain consistent
-
-### Dashboard Metrics
-
-- Summary cards for active applications, follow-ups, red-flagged applications, interviews, and offers
-- Status, source, resume-version usage, and red-flag snapshots
-- Source Effectiveness metrics by source for applications, active count, interviews, offers, and closed outcomes
-- Resume Version Effectiveness metrics for assigned resume variants
-- Metrics are backend-derived from `/api/dashboard/summary`
-
-### Resume Version Management
-
-- Resume Versions page for creating, editing, deactivating, reactivating, and viewing reusable resume variants
-- Resume versions can be assigned from Quick Add and Application Detail
-
-### Red Flag Tracking
-
-- Application Detail red-flag checklist and notes
-- Compact red-flag counts in Applications and Pipeline
-- Red flags are user-managed caution tags, not automated scoring
-
-## App Pages
-
-- Command Center
-- Dashboard
-- Quick Add
-- Applications
-- Pipeline
-- Resume Versions
-
-The sidebar navigation is sticky on desktop and responsive for narrower desktop layouts. Recent UI polish focuses on full-width and half-screen desktop usability, clearer status colors, dashboard metric accents, and avoiding page-level horizontal overflow.
+- Quick Add with Manual Entry and deterministic Smart Capture / Paste Job Text.
+- Smart Capture is review-first: Source remains user-selected and Job Link is saved only from the explicit input.
+- Application management with Active, Closed, and All views, search, filters, sorting, and detail editing.
+- Command Center for overdue follow-ups, upcoming follow-ups, and stale applications.
+- Application Detail with status/follow-up, job details, contact/prep notes, red flags, and activity timeline.
+- Dashboard metrics for application status, sources, resume versions, red flags, and effectiveness snapshots.
+- Tested full-stack foundation with FastAPI, SQLite, React/Vite, pytest, Vitest, and GitHub Actions.
 
 ## Tech Stack
 
 - Frontend: React, Vite, JavaScript, CSS
 - Backend: FastAPI, Python, SQLAlchemy
-- Database: SQLite for local-first development
-- Testing: pytest for backend coverage, Vite production build for frontend verification
-- CI: GitHub Actions runs backend tests and frontend build
+- Database: SQLite
+- Testing: pytest, Vitest
+- CI: GitHub Actions
 
 ## Run Locally
 
@@ -114,37 +48,32 @@ npm install
 npm run dev
 ```
 
-The frontend expects the backend at:
-
-```text
-http://127.0.0.1:8000
-```
-
-Additional setup details are available in [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md).
+The frontend expects the backend at `http://127.0.0.1:8000`.
 
 ## Verification
 
-Backend tests:
+Backend:
 
 ```powershell
 cd backend
 .\.venv\Scripts\python.exe -m pytest
 ```
 
-Frontend build:
+Frontend:
 
 ```powershell
 cd frontend
+npm test
 npm run build
 ```
 
-Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend build, and manual QA for the affected workflows.
+Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend tests, frontend build, and manual QA for the affected workflows.
 
 ## Project Status
 
-Career Pipeline is a working local-first prototype with a FastAPI backend, SQLite database, React/Vite frontend, backend pytest coverage, and GitHub Actions CI. It supports quick capture with Smart Capture review, application management, tabbed detail editing, pipeline status updates, follow-up and status-change activity logging, dashboard effectiveness metrics, resume-version management, red-flag tracking, next actions, and activity timelines.
+Career Pipeline is a working local-first prototype. It supports quick capture, application management, follow-up workflows, activity logging, dashboard metrics, resume-version management, and red-flag tracking.
 
-Deployment, authentication, AI features, scraping, browser extension workflows, and advanced analytics are not implemented. Smart Capture uses conservative deterministic paste-review helpers with internal parser-format detection today; AI-assisted extraction is an optional future direction rather than a current product claim.
+Not implemented: authentication, deployment, scraping, browser extension workflows, AI extraction, import/export, or external integrations. Smart Capture is deterministic and review-first.
 
 ## Documentation
 
@@ -152,5 +81,5 @@ Deployment, authentication, AI features, scraping, browser extension workflows, 
 - [Roadmap](docs/ROADMAP.md)
 - [Data Model](docs/DATA_MODEL.md)
 - [API Plan](docs/API_PLAN.md)
-- [Wireframes](docs/WIREFRAMES.md)
 - [Development Guide](docs/DEVELOPMENT.md)
+- [Wireframes](docs/WIREFRAMES.md)
