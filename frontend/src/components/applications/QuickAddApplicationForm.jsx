@@ -7,7 +7,13 @@ import {
   SOURCE_OPTIONS,
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
-import { normalizeExplicitJobLink } from "../../utils/jobLinks.js";
+import {
+  normalizeOptionalDate,
+  normalizeOptionalId,
+  normalizeOptionalJobLink,
+  normalizeOptionalText,
+  normalizeRequiredText,
+} from "../../utils/applicationPayloads.js";
 import { findSimilarOpportunities } from "../../utils/opportunityDuplicates.js";
 import DuplicateOpportunityWarning from "./DuplicateOpportunityWarning.jsx";
 
@@ -88,15 +94,15 @@ export default function QuickAddApplicationForm({
     setIsSubmitting(true);
 
     const payload = {
-      company_name: formData.company_name.trim(),
-      role_title: formData.role_title.trim(),
-      job_link: normalizeExplicitJobLink(formData.job_link) || null,
+      company_name: normalizeRequiredText(formData.company_name),
+      role_title: normalizeRequiredText(formData.role_title),
+      job_link: normalizeOptionalJobLink(formData.job_link),
       source: formData.source,
       status: formData.status,
-      resume_version_id: formData.resume_version_id ? Number(formData.resume_version_id) : null,
-      date_applied: formData.date_applied || null,
-      follow_up_date: formData.follow_up_date || null,
-      notes: formData.notes.trim() || null,
+      resume_version_id: normalizeOptionalId(formData.resume_version_id),
+      date_applied: normalizeOptionalDate(formData.date_applied),
+      follow_up_date: normalizeOptionalDate(formData.follow_up_date),
+      notes: normalizeOptionalText(formData.notes),
     };
 
     try {

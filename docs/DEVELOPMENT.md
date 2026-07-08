@@ -104,7 +104,7 @@ The current CI workflow should:
 - Fail clearly on test or build errors
 
 Later CI can add linting, formatting, or broader frontend interaction tests if those checks become useful.
-Current frontend utility tests cover explicit job link normalization/openable links and duplicate/similar opportunity detection.
+Current frontend utility tests cover explicit job link normalization/openable links, duplicate/similar opportunity detection, and shared application payload normalization.
 
 ## Manual QA Checklist
 
@@ -139,6 +139,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Explicit Job link values can normalize bare domains like `example.com` to `https://example.com`, but pasted job text is never scanned for links.
 - Company career pages remain best-effort and should be reviewed manually before saving.
 - Manual Entry and Smart Capture Review show advisory duplicate/similar-opportunity warnings without blocking save.
+- Manual Entry, Smart Capture Review, and Application Detail Save use shared payload normalization helpers for common application fields.
 - Same normalized job link appears as a likely duplicate.
 - Same or similar company, role, and location appears as a likely duplicate.
 - Same or similar company and role with missing or different location appears as a similar opportunity.

@@ -6,8 +6,14 @@ import {
   SOURCE_OPTIONS,
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
+import {
+  normalizeOptionalDate,
+  normalizeOptionalId,
+  normalizeOptionalJobLink,
+  normalizeOptionalText,
+  normalizeRequiredText,
+} from "../../utils/applicationPayloads.js";
 import { buildSmartCaptureReviewState } from "../../utils/jobTextExtraction.js";
-import { normalizeExplicitJobLink } from "../../utils/jobLinks.js";
 import { findSimilarOpportunities } from "../../utils/opportunityDuplicates.js";
 import DuplicateOpportunityWarning from "./DuplicateOpportunityWarning.jsx";
 
@@ -120,18 +126,18 @@ export default function SmartCaptureForm({
     setIsSubmitting(true);
 
     const payload = {
-      company_name: reviewData.company_name.trim(),
-      role_title: reviewData.role_title.trim(),
-      job_link: normalizeExplicitJobLink(reviewData.job_link) || null,
+      company_name: normalizeRequiredText(reviewData.company_name),
+      role_title: normalizeRequiredText(reviewData.role_title),
+      job_link: normalizeOptionalJobLink(reviewData.job_link),
       source: reviewData.source || DEFAULT_APPLICATION_SOURCE,
       status: reviewData.status,
-      resume_version_id: reviewData.resume_version_id ? Number(reviewData.resume_version_id) : null,
-      location: reviewData.location.trim() || null,
-      employment_type: reviewData.employment_type || null,
-      compensation: reviewData.compensation.trim() || null,
-      follow_up_date: reviewData.follow_up_date || null,
-      next_action: reviewData.next_action.trim() || null,
-      notes: reviewData.notes.trim() || null,
+      resume_version_id: normalizeOptionalId(reviewData.resume_version_id),
+      location: normalizeOptionalText(reviewData.location),
+      employment_type: normalizeOptionalText(reviewData.employment_type),
+      compensation: normalizeOptionalText(reviewData.compensation),
+      follow_up_date: normalizeOptionalDate(reviewData.follow_up_date),
+      next_action: normalizeOptionalText(reviewData.next_action),
+      notes: normalizeOptionalText(reviewData.notes),
     };
 
     try {

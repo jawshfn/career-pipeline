@@ -10,8 +10,16 @@ import {
   SOURCE_OPTIONS,
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
+import {
+  normalizeOptionalDate,
+  normalizeOptionalId,
+  normalizeOptionalJobLink,
+  normalizeOptionalNumber,
+  normalizeOptionalText,
+  normalizeRequiredText,
+} from "../../utils/applicationPayloads.js";
 import { formatDisplayDate, parseLocalDateValue } from "../../utils/dateFormatting.js";
-import { getOpenableJobLink, normalizeExplicitJobLink } from "../../utils/jobLinks.js";
+import { getOpenableJobLink } from "../../utils/jobLinks.js";
 import ApplicationActivityTimeline, { getInitialActivityForm } from "./ApplicationActivityTimeline.jsx";
 import ApplicationDetailOverview from "./ApplicationDetailOverview.jsx";
 import ApplicationDetailSummaryStrip from "./ApplicationDetailSummaryStrip.jsx";
@@ -99,10 +107,6 @@ function toFormState(application) {
     too_good_to_be_true: Boolean(application.too_good_to_be_true),
     red_flags_notes: application.red_flags_notes || "",
   };
-}
-
-function numberOrNull(value) {
-  return value === "" ? null : Number(value);
 }
 
 function normalizeFormState(formState) {
@@ -321,32 +325,32 @@ export default function ApplicationDetailPanel({
     setSaveMessage("");
 
     const payload = {
-      company_name: formData.company_name.trim(),
-      role_title: formData.role_title.trim(),
-      job_link: normalizeExplicitJobLink(formData.job_link) || null,
+      company_name: normalizeRequiredText(formData.company_name),
+      role_title: normalizeRequiredText(formData.role_title),
+      job_link: normalizeOptionalJobLink(formData.job_link),
       source: formData.source,
       status: formData.status,
-      location: formData.location.trim() || null,
-      compensation: formData.compensation.trim() || null,
-      salary_min: numberOrNull(formData.salary_min),
-      salary_max: numberOrNull(formData.salary_max),
-      employment_type: formData.employment_type || null,
+      location: normalizeOptionalText(formData.location),
+      compensation: normalizeOptionalText(formData.compensation),
+      salary_min: normalizeOptionalNumber(formData.salary_min),
+      salary_max: normalizeOptionalNumber(formData.salary_max),
+      employment_type: normalizeOptionalText(formData.employment_type),
       date_saved: formData.date_saved,
-      date_applied: formData.date_applied || null,
-      follow_up_date: formData.follow_up_date || null,
-      next_action: formData.next_action.trim() || null,
-      contact_name: formData.contact_name.trim() || null,
-      contact_info: formData.contact_info.trim() || null,
-      prep_notes: formData.prep_notes.trim() || null,
-      resume_version_id: formData.resume_version_id ? Number(formData.resume_version_id) : null,
-      notes: formData.notes.trim() || null,
+      date_applied: normalizeOptionalDate(formData.date_applied),
+      follow_up_date: normalizeOptionalDate(formData.follow_up_date),
+      next_action: normalizeOptionalText(formData.next_action),
+      contact_name: normalizeOptionalText(formData.contact_name),
+      contact_info: normalizeOptionalText(formData.contact_info),
+      prep_notes: normalizeOptionalText(formData.prep_notes),
+      resume_version_id: normalizeOptionalId(formData.resume_version_id),
+      notes: normalizeOptionalText(formData.notes),
       vague_job_description: formData.vague_job_description,
       unrealistic_salary: formData.unrealistic_salary,
       asks_for_payment: formData.asks_for_payment,
       suspicious_contact: formData.suspicious_contact,
       company_mismatch: formData.company_mismatch,
       too_good_to_be_true: formData.too_good_to_be_true,
-      red_flags_notes: formData.red_flags_notes.trim() || null,
+      red_flags_notes: normalizeOptionalText(formData.red_flags_notes),
     };
 
     try {
