@@ -253,6 +253,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 
 - Activity timeline appears inside Application Detail.
 - Activity draft input is preserved when switching away from and back to the Activity tab.
+- Unsaved Activity drafts show the detail warning and protect closing or switching applications.
 - Adding an activity saves independently from the main detail form.
 - Adding an activity does not clear unsaved main detail edits.
 - Changing an application status creates a backend-owned `Status Change` entry.

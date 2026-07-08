@@ -167,12 +167,13 @@ Status: complete through Phase 11.0d
 
 ## Phase 12: Capture Quality Guardrails
 
-Status: complete through Phase 12.2
+Status: complete through Phase 12.2c
 
 - Phase 12.0: add advisory duplicate and similar-opportunity warnings to Manual Entry and Smart Capture Review
 - Phase 12.1: add Vitest frontend utility tests for job link normalization and duplicate/similar opportunity detection
 - Phase 12.2: split Application Detail into focused presentational components while preserving parent orchestration
 - Phase 12.2b: preserve Activity tab draft input across Application Detail tab switches
+- Phase 12.2c: include unsaved Activity drafts in detail warning and navigation protection
 
 ## Near-Term Future Work
 

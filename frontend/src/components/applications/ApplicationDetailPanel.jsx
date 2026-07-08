@@ -170,6 +170,38 @@ function getRedFlagCount(formData) {
   return RED_FLAG_OPTIONS.filter((option) => formData[option.name]).length;
 }
 
+function isActivityDraftDirty(activityDraft, baselineDraft) {
+  return (
+    String(activityDraft.note || "").trim() !== String(baselineDraft.note || "").trim() ||
+    String(activityDraft.activity_type || "") !== String(baselineDraft.activity_type || "") ||
+    String(activityDraft.activity_date || "") !== String(baselineDraft.activity_date || "")
+  );
+}
+
+function getUnsavedWarningTitle(hasUnsavedApplicationChanges, hasUnsavedActivityDraft) {
+  if (hasUnsavedApplicationChanges && hasUnsavedActivityDraft) {
+    return "Unsaved changes and activity draft";
+  }
+
+  if (hasUnsavedActivityDraft) {
+    return "Unsaved activity draft";
+  }
+
+  return "Unsaved changes";
+}
+
+function getCloseConfirmationMessage(hasUnsavedApplicationChanges, hasUnsavedActivityDraft) {
+  if (hasUnsavedApplicationChanges && hasUnsavedActivityDraft) {
+    return "You have unsaved changes and an unsaved activity draft. Close without saving or adding them?";
+  }
+
+  if (hasUnsavedActivityDraft) {
+    return "You have an unsaved activity draft. Close without adding it?";
+  }
+
+  return "You have unsaved changes. Close without saving?";
+}
+
 export default function ApplicationDetailPanel({
   applicationId,
   initialTab,
@@ -185,8 +217,15 @@ export default function ApplicationDetailPanel({
   const [saveMessage, setSaveMessage] = useState("");
   const [activeTab, setActiveTab] = useState(getValidDetailTab(initialTab));
   const [activityDraft, setActivityDraft] = useState(getInitialActivityForm);
+  const [activityDraftBaseline, setActivityDraftBaseline] = useState(getInitialActivityForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+
+  function resetActivityDraft() {
+    const nextActivityDraft = getInitialActivityForm();
+    setActivityDraft(nextActivityDraft);
+    setActivityDraftBaseline(nextActivityDraft);
+  }
 
   useEffect(() => {
     let isCurrent = true;
@@ -203,7 +242,7 @@ export default function ApplicationDetailPanel({
           const nextFormState = toFormState(application);
           setFormData(nextFormState);
           setSavedFormData(nextFormState);
-          setActivityDraft(getInitialActivityForm());
+          resetActivityDraft();
           setActiveTab(getValidDetailTab(initialTab));
         }
       } catch (error) {
@@ -228,7 +267,11 @@ export default function ApplicationDetailPanel({
     setActiveTab(getValidDetailTab(initialTab));
   }, [initialTab]);
 
-  const hasUnsavedChanges = JSON.stringify(normalizeFormState(formData)) !== JSON.stringify(normalizeFormState(savedFormData));
+  const hasUnsavedApplicationChanges =
+    JSON.stringify(normalizeFormState(formData)) !== JSON.stringify(normalizeFormState(savedFormData));
+  const hasUnsavedActivityDraft = isActivityDraftDirty(activityDraft, activityDraftBaseline);
+  const hasUnsavedChanges = hasUnsavedApplicationChanges || hasUnsavedActivityDraft;
+  const unsavedWarningTitle = getUnsavedWarningTitle(hasUnsavedApplicationChanges, hasUnsavedActivityDraft);
 
   useEffect(() => {
     onUnsavedChangesChange?.(hasUnsavedChanges);
@@ -263,7 +306,7 @@ export default function ApplicationDetailPanel({
   function handleClose() {
     if (
       hasUnsavedChanges &&
-      !window.confirm("You have unsaved changes. Close without saving?")
+      !window.confirm(getCloseConfirmationMessage(hasUnsavedApplicationChanges, hasUnsavedActivityDraft))
     ) {
       return;
     }
@@ -383,9 +426,12 @@ export default function ApplicationDetailPanel({
               {saveMessage}
             </div>
           ) : null}
-          {hasUnsavedChanges && !saveMessage ? (
+          {hasUnsavedChanges ? (
             <div className="message message-warning" role="status">
-              Unsaved changes
+              <strong>{unsavedWarningTitle}</strong>
+              {hasUnsavedActivityDraft ? (
+                <p>Use Add activity to save the draft, or clear it before leaving.</p>
+              ) : null}
             </div>
           ) : null}
 
@@ -473,7 +519,7 @@ export default function ApplicationDetailPanel({
                 applicationId={applicationId}
                 draftData={activityDraft}
                 onDraftChange={setActivityDraft}
-                onResetDraft={() => setActivityDraft(getInitialActivityForm())}
+                onResetDraft={resetActivityDraft}
               />
             ) : null}
           </div>
