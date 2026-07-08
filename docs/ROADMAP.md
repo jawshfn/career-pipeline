@@ -167,9 +167,10 @@ Status: complete through Phase 11.0d
 
 ## Phase 12: Capture Quality Guardrails
 
-Status: complete through Phase 12.0
+Status: complete through Phase 12.1
 
 - Phase 12.0: add advisory duplicate and similar-opportunity warnings to Manual Entry and Smart Capture Review
+- Phase 12.1: add Vitest frontend utility tests for job link normalization and duplicate/similar opportunity detection
 
 ## Near-Term Future Work
 

@@ -56,6 +56,13 @@ cd frontend
 npm run build
 ```
 
+Frontend utility tests:
+
+```powershell
+cd frontend
+npm test
+```
+
 Local backend server:
 
 ```powershell
@@ -70,7 +77,7 @@ cd frontend
 npm run dev
 ```
 
-Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend build, and manual QA for the affected workflows. Frontend-only behavior changes should at least run `npm run build` and relevant browser QA.
+Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend tests, frontend build, and manual QA for the affected workflows. Frontend-only behavior changes should at least run `npm test`, `npm run build`, and relevant browser QA.
 
 ## Backend Testing Expectations
 
@@ -96,7 +103,8 @@ The current CI workflow should:
 - Run the frontend production build
 - Fail clearly on test or build errors
 
-Later CI can add linting, formatting, or lightweight frontend tests if those checks become useful.
+Later CI can add linting, formatting, or broader frontend interaction tests if those checks become useful.
+Current frontend utility tests cover explicit job link normalization/openable links and duplicate/similar opportunity detection.
 
 ## Manual QA Checklist
 
