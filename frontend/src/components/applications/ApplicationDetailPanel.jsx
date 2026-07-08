@@ -10,6 +10,7 @@ import {
   SOURCE_OPTIONS,
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
+import { formatDisplayDate, parseLocalDateValue } from "../../utils/dateFormatting.js";
 import ApplicationActivityTimeline from "./ApplicationActivityTimeline.jsx";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
@@ -127,42 +128,14 @@ function isAppliedOrLater(status) {
   return APPLIED_OR_LATER_APPLICATION_STATUSES.includes(status);
 }
 
-function parseDateValue(value) {
-  if (!value) {
-    return null;
-  }
-
-  const [year, month, day] = value.split("-").map(Number);
-
-  if (!year || !month || !day) {
-    return null;
-  }
-
-  return new Date(year, month - 1, day);
-}
-
-function formatDisplayDate(value) {
-  const date = parseDateValue(value);
-
-  if (!date) {
-    return "";
-  }
-
-  return date.toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 function getFollowUpSummary(value) {
-  const followUpDate = parseDateValue(value);
+  const followUpDate = parseLocalDateValue(value);
 
   if (!followUpDate) {
     return "No follow-up set";
   }
 
-  const today = parseDateValue(getTodayValue());
+  const today = parseLocalDateValue(getTodayValue());
 
   if (followUpDate.getTime() === today.getTime()) {
     return "Due today";
@@ -172,7 +145,7 @@ function getFollowUpSummary(value) {
     return "Overdue";
   }
 
-  return formatDisplayDate(value);
+  return formatDisplayDate(value, "");
 }
 
 export default function ApplicationDetailPanel({
@@ -321,7 +294,7 @@ export default function ApplicationDetailPanel({
     formData.role_title.trim() && formData.company_name.trim()
       ? `${formData.role_title.trim()} at ${formData.company_name.trim()}`
       : formData.role_title.trim() || formData.company_name.trim() || "Untitled opportunity";
-  const appliedSummary = formData.date_applied ? formatDisplayDate(formData.date_applied) : "Not applied";
+  const appliedSummary = formData.date_applied ? formatDisplayDate(formData.date_applied, "") : "Not applied";
   const followUpSummary = getFollowUpSummary(formData.follow_up_date);
 
   return (
@@ -483,7 +456,7 @@ export default function ApplicationDetailPanel({
               <div className="detail-field-group detail-field-group-wide">
                 <h3>Dates & Follow-up</h3>
                 <p className="detail-tab-helper">Saved Date is when the job was added. Applied Date is when you submitted the application.</p>
-                <div className="detail-field-grid">
+                <div className="detail-field-grid detail-dates-grid">
                   <label>
                     Saved date
                     <input

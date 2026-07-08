@@ -702,6 +702,18 @@ a {
   min-width: 0;
 }
 
+.detail-dates-grid {
+  align-items: start;
+}
+
+.detail-dates-grid > label {
+  align-self: start;
+}
+
+.detail-dates-grid .follow-up-presets {
+  margin-top: 2px;
+}
+
 .detail-field-group-status .detail-field-grid {
   align-items: start;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2446,6 +2458,10 @@ textarea:focus-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .detail-dates-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .detail-field-group-status .detail-field-grid {
     grid-template-columns: 1fr;
   }
@@ -2499,6 +2515,10 @@ textarea:focus-visible {
   }
 
   .detail-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-dates-grid {
     grid-template-columns: 1fr;
   }
 

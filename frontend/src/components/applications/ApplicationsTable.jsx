@@ -2,6 +2,7 @@ import React from "react";
 
 import EmptyApplicationsState from "./EmptyApplicationsState.jsx";
 import StatusBadge from "./StatusBadge.jsx";
+import { formatDisplayDate } from "../../utils/dateFormatting.js";
 
 const notesPreviewLimit = 100;
 
@@ -85,9 +86,9 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
                 <StatusBadge status={application.status} />
               </td>
               <td>{getResumeLabel(application, resumeVersionsById)}</td>
-              <td>{formatValue(application.date_saved)}</td>
-              <td>{formatValue(application.date_applied)}</td>
-              <td>{formatValue(application.follow_up_date)}</td>
+              <td>{formatDisplayDate(application.date_saved)}</td>
+              <td>{formatDisplayDate(application.date_applied)}</td>
+              <td>{formatDisplayDate(application.follow_up_date)}</td>
               <td>
                 {getRedFlagCount(application) > 0 ? (
                   <span className="red-flag-indicator">{getRedFlagCount(application)}</span>
