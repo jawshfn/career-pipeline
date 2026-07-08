@@ -154,7 +154,13 @@ Status: complete through Phase 10.5
 - Phase 10.3b: make the Notes shortcut open Application Detail on the Job Details tab
 - Phase 10.3c: prevent tab shortcuts from reloading application data or discarding unsaved edits
 - Phase 10.4: refresh documentation for the current MVP behavior
-- Phase 10.5: add Smart Capture review guardrails for detected format, captured fields, and user-controlled Source/Job link reminders
+- Phase 10.5: add Smart Capture review guardrails for best-match parser, captured fields, and user-controlled Source/Job link reminders
+
+## Phase 11: Application Detail Reorganization
+
+Status: complete through Phase 11.0
+
+- Phase 11.0: reorganize Application Detail so Overview is a read-only command snapshot and editable fields live in focused tabs
 
 ## Near-Term Future Work
 

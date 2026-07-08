@@ -113,20 +113,31 @@ Application Detail
 Example Company
 Junior Software Developer
 
-[Overview] [Dates & Follow-up] [Job Details] [Red Flags] [Activity]
+[Overview] [Status & Follow-up] [Job Details] [Contact & Prep] [Red Flags] [Activity]
 
 Overview
 ----------------------------------------------------------------
-Status [ Applied v ]     Source [ LinkedIn v ]     Resume Version [ Backend API Resume v ]
-Next Action [ Send recruiter follow-up ]
+Read-only snapshot:
+Company / role     Status     Applied     Follow-up     Resume     Source
 
-Notes
+Needs attention:
+[ Edit status & follow-up ] [ Edit job details ] [ Add contact/prep notes ]
+
+Status & Follow-up
 ----------------------------------------------------------------
+Status [ Applied v ]     Saved Date [ Jun 24 ]     Applied Date [ Jun 24 ]
+Follow-up Date [ Jul 1 ]     Next Action [ Send recruiter follow-up ]
+
+Job Details
+----------------------------------------------------------------
+Company [ Example Company ]     Role [ Junior Software Developer ]
+Source [ LinkedIn v ]           Job Link [ https://... ]
 [ Notes text area                                      ]
 
-Dates & Follow-up
+Contact & Prep
 ----------------------------------------------------------------
-Saved Date [ Jun 24 ]     Applied Date [ Jun 24 ]     Follow-up Date [ Jul 1 ]
+Resume Version [ Backend API Resume v ]
+Contact [ Alex Recruiter ]      Prep notes [ ... ]
 
 Red Flags
 ----------------------------------------------------------------

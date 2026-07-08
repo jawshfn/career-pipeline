@@ -46,7 +46,7 @@ const initialFormState = {
 
 const detailTabs = [
   { id: "overview", label: "Overview" },
-  { id: "dates", label: "Dates & Follow-up" },
+  { id: "dates", label: "Status & Follow-up" },
   { id: "job-details", label: "Job Details" },
   { id: "contact-prep", label: "Contact & Prep" },
   { id: "red-flags", label: "Red Flags" },
@@ -153,6 +153,14 @@ function getFollowUpSummary(value) {
   }
 
   return formatDisplayDate(value, "");
+}
+
+function getDisplayValue(value, fallback = "Not set") {
+  return String(value || "").trim() || fallback;
+}
+
+function getRedFlagCount(formData) {
+  return RED_FLAG_OPTIONS.filter((option) => formData[option.name]).length;
 }
 
 export default function ApplicationDetailPanel({
@@ -308,6 +316,40 @@ export default function ApplicationDetailPanel({
       : formData.role_title.trim() || formData.company_name.trim() || "Untitled opportunity";
   const appliedSummary = formData.date_applied ? formatDisplayDate(formData.date_applied, "") : "Not applied";
   const followUpSummary = getFollowUpSummary(formData.follow_up_date);
+  const selectedResumeVersion = resumeVersions.find(
+    (resumeVersion) => String(resumeVersion.id) === formData.resume_version_id,
+  );
+  const resumeSummary = selectedResumeVersion ? getResumeVersionLabel(selectedResumeVersion) : "No resume selected";
+  const redFlagCount = getRedFlagCount(formData);
+  const jobLinkValue = formData.job_link.trim();
+  const overviewSnapshotItems = [
+    ["Company / role", opportunityTitle],
+    ["Status", getDisplayValue(formData.status)],
+    ["Applied", appliedSummary],
+    ["Follow-up", followUpSummary],
+    ["Resume", resumeSummary],
+    ["Source", getDisplayValue(formData.source)],
+    ["Location", getDisplayValue(formData.location, "No location saved")],
+    ["Red flags", redFlagCount ? `${redFlagCount} marked` : "None marked"],
+  ];
+  const attentionItems = [
+    !formData.follow_up_date
+      ? ["No follow-up set", "Add one if this opportunity needs a reminder.", "dates"]
+      : null,
+    !formData.resume_version_id
+      ? ["No resume selected", "Choose the resume version used for this application.", "contact-prep"]
+      : null,
+    !jobLinkValue ? ["No job link saved", "Add the posting link if you want fast access later.", "job-details"] : null,
+    !formData.next_action.trim()
+      ? ["No next action written", "Capture the next step when there is one.", "dates"]
+      : null,
+    !formData.notes.trim()
+      ? ["Job details are light", "Add posting notes or pasted context if helpful.", "job-details"]
+      : null,
+    redFlagCount === 0
+      ? ["Red flags are quiet", "Review only if anything about the posting seems unusual.", "red-flags"]
+      : null,
+  ].filter(Boolean);
 
   return (
     <section className="panel application-detail-panel" aria-labelledby="application-detail-title">
@@ -345,10 +387,6 @@ export default function ApplicationDetailPanel({
               <strong>{formData.status || "Not set"}</strong>
             </div>
             <div className="detail-summary-item">
-              <span>Source</span>
-              <strong>{formData.source || "Not set"}</strong>
-            </div>
-            <div className="detail-summary-item">
               <span>Applied</span>
               <strong>{appliedSummary}</strong>
             </div>
@@ -356,10 +394,14 @@ export default function ApplicationDetailPanel({
               <span>Follow-up</span>
               <strong>{followUpSummary}</strong>
             </div>
-            {formData.job_link.trim() ? (
+            <div className="detail-summary-item">
+              <span>Resume</span>
+              <strong>{resumeSummary}</strong>
+            </div>
+            {jobLinkValue ? (
               <a
                 className="secondary-button detail-job-link-action"
-                href={formData.job_link.trim()}
+                href={jobLinkValue}
                 rel="noreferrer"
                 target="_blank"
               >
@@ -392,31 +434,74 @@ export default function ApplicationDetailPanel({
             aria-labelledby={`application-detail-tab-button-${activeTab}`}
           >
             {activeTab === "overview" ? (
-              <div className="detail-field-group detail-field-group-wide">
+              <div className="detail-overview-panel">
                 <h3>Overview</h3>
-                <div className="detail-field-grid">
-                  <label>
-                    Company name
-                    <input
-                      name="company_name"
-                      value={formData.company_name}
-                      onChange={updateField}
-                      required
-                      placeholder="Company name"
-                    />
-                  </label>
+                <p className="detail-tab-helper">
+                  A read-only command snapshot. Use the shortcuts to edit details in the focused tabs.
+                </p>
 
-                  <label>
-                    Role title
-                    <input
-                      name="role_title"
-                      value={formData.role_title}
-                      onChange={updateField}
-                      required
-                      placeholder="Role title"
-                    />
-                  </label>
+                <div className="detail-overview-grid" aria-label="Opportunity snapshot">
+                  {overviewSnapshotItems.map(([label, value]) => (
+                    <div className="detail-overview-card" key={label}>
+                      <span>{label}</span>
+                      <strong>{value}</strong>
+                    </div>
+                  ))}
+                </div>
 
+                <div className="detail-overview-section">
+                  <div className="detail-overview-section-heading">
+                    <h4>Needs attention</h4>
+                    <span>{attentionItems.length} suggestions</span>
+                  </div>
+                  <div className="detail-attention-list">
+                    {attentionItems.map(([title, description, tabId]) => (
+                      <button
+                        className="detail-attention-item"
+                        key={title}
+                        type="button"
+                        onClick={() => setActiveTab(tabId)}
+                      >
+                        <span>
+                          <strong>{title}</strong>
+                          <small>{description}</small>
+                        </span>
+                        <em>Open</em>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="detail-overview-section">
+                  <div className="detail-overview-section-heading">
+                    <h4>Quick edit</h4>
+                  </div>
+                  <div className="detail-shortcut-actions">
+                    <button type="button" onClick={() => setActiveTab("dates")}>
+                      Edit status & follow-up
+                    </button>
+                    <button type="button" onClick={() => setActiveTab("job-details")}>
+                      Edit job details
+                    </button>
+                    <button type="button" onClick={() => setActiveTab("contact-prep")}>
+                      Add contact/prep notes
+                    </button>
+                    <button type="button" onClick={() => setActiveTab("red-flags")}>
+                      Review red flags
+                    </button>
+                    <button type="button" onClick={() => setActiveTab("activity")}>
+                      View activity
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {activeTab === "dates" ? (
+              <div className="detail-field-group detail-field-group-wide">
+                <h3>Status & Follow-up</h3>
+                <p className="detail-tab-helper">Saved Date is when the job was added. Applied Date is when you submitted the application.</p>
+                <div className="detail-field-grid detail-dates-grid">
                   <label>
                     Status
                     <select name="status" value={formData.status} onChange={updateField}>
@@ -428,47 +513,6 @@ export default function ApplicationDetailPanel({
                     </select>
                   </label>
 
-                  <label>
-                    Source
-                    <select name="source" value={formData.source} onChange={updateField}>
-                      {SOURCE_OPTIONS.map((source) => (
-                        <option key={source} value={source}>
-                          {source}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Resume version
-                    <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
-                      <option value="">No resume selected</option>
-                      {resumeVersions.map((resumeVersion) => (
-                        <option key={resumeVersion.id} value={resumeVersion.id}>
-                          {getResumeVersionLabel(resumeVersion)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    Job link
-                    <input
-                      name="job_link"
-                      value={formData.job_link}
-                      onChange={updateField}
-                      placeholder="https://..."
-                    />
-                  </label>
-                </div>
-              </div>
-            ) : null}
-
-            {activeTab === "dates" ? (
-              <div className="detail-field-group detail-field-group-wide">
-                <h3>Dates & Follow-up</h3>
-                <p className="detail-tab-helper">Saved Date is when the job was added. Applied Date is when you submitted the application.</p>
-                <div className="detail-field-grid detail-dates-grid">
                   <label>
                     Saved date
                     <input
@@ -533,6 +577,49 @@ export default function ApplicationDetailPanel({
               <div className="detail-field-group detail-field-group-wide">
                 <h3>Job Details</h3>
                 <div className="detail-field-grid">
+                  <label>
+                    Company name
+                    <input
+                      name="company_name"
+                      value={formData.company_name}
+                      onChange={updateField}
+                      required
+                      placeholder="Company name"
+                    />
+                  </label>
+
+                  <label>
+                    Role title
+                    <input
+                      name="role_title"
+                      value={formData.role_title}
+                      onChange={updateField}
+                      required
+                      placeholder="Role title"
+                    />
+                  </label>
+
+                  <label>
+                    Source
+                    <select name="source" value={formData.source} onChange={updateField}>
+                      {SOURCE_OPTIONS.map((source) => (
+                        <option key={source} value={source}>
+                          {source}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="detail-field-grid-span">
+                    Job link
+                    <input
+                      name="job_link"
+                      value={formData.job_link}
+                      onChange={updateField}
+                      placeholder="https://..."
+                    />
+                  </label>
+
                   <label>
                     Location
                     <input
@@ -607,8 +694,20 @@ export default function ApplicationDetailPanel({
             {activeTab === "contact-prep" ? (
               <div className="detail-field-group detail-field-group-wide">
                 <h3>Contact & Prep</h3>
-                <p className="detail-tab-helper">Keep application-specific contact context and preparation notes here.</p>
+                <p className="detail-tab-helper">Keep resume positioning, contact context, and preparation notes here.</p>
                 <div className="detail-field-grid">
+                  <label>
+                    Resume version
+                    <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
+                      <option value="">No resume selected</option>
+                      {resumeVersions.map((resumeVersion) => (
+                        <option key={resumeVersion.id} value={resumeVersion.id}>
+                          {getResumeVersionLabel(resumeVersion)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
                   <label>
                     Contact name
                     <input

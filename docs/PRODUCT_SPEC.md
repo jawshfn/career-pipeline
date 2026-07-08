@@ -47,10 +47,11 @@ The current prototype includes:
 - Quick Add modes for Manual Entry and Smart Capture paste-review
 - Deterministic Smart Capture helpers that prepare conservative editable suggested fields from pasted job text before save
 - Internal Smart Capture parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while preserving the user's selected Source
-- Smart Capture review guardrails that summarize detected format, captured fields, and what remains user-controlled before save
+- Smart Capture review guardrails that summarize best-match parser, captured fields, and what remains user-controlled before save
 - Application create, list, update, detail editing, and archive behavior
 - Applications page with Active, Closed, and All views plus search, filters, sorting, opportunity-focused table rows, Notes shortcut, and detail access
-- Application Detail tabs for Overview, Dates & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
+- Application Detail tabs for Overview, Status & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
+- Read-only Application Detail Overview command snapshot with missing-data signals and shortcuts into focused editing tabs
 - Optional Next Action field shown in Application Detail and Command Center cards
 - Applied-date behavior that distinguishes saved date from the date the user actually applied
 - Responsive grouped Pipeline with status filtering and persisted status updates
@@ -124,13 +125,17 @@ Application Detail is a tabbed panel opened from Applications.
 Current tabs:
 
 - Overview
-- Dates & Follow-up
+- Status & Follow-up
 - Job Details
 - Contact & Prep
 - Red Flags
 - Activity
 
+Overview is a read-only command snapshot with compact opportunity context, missing-data signals, and shortcut buttons into the focused editing tabs. It does not duplicate the editable basics form.
+
 Editable areas include company name, role title, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact name, contact info, prep notes, location, compensation, salary range, employment type, notes, red flags, and red-flag notes.
+
+Status, applied date, follow-up date, and next action live in Status & Follow-up. Company, role, source, job link, location, compensation, employment type, and notes live in Job Details. Resume version lives in Contact & Prep with contact and preparation context.
 
 `date_saved` means the date the job was added to Career Pipeline. `date_applied` means the date the user actually submitted the application. Changing status to Applied or later can default an empty Applied Date, but existing Applied Date values are not automatically overwritten or cleared.
 

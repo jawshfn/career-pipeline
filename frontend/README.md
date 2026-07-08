@@ -17,9 +17,9 @@ This is the React/Vite frontend for Career Pipeline. It provides the user-facing
 - Quick Add success flow with Add another and View applications actions
 - Smart Capture mode that prepares conservative editable suggestions from pasted job text before saving
 - Smart Capture parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while preserving the user-selected Source and explicit Job link input
-- Smart Capture review guardrails that summarize detected format, captured fields, and user-controlled Source/Job link behavior
+- Smart Capture review guardrails that summarize best-match parser, captured fields, and user-controlled Source/Job link behavior
 - Applied-date handling that defaults only when useful and does not overwrite existing dates
-- Tabbed Application Detail editing for richer application context, dates/follow-ups, job details, contact/prep notes, red flags, and activity timeline entries
+- Tabbed Application Detail with a read-only Overview command snapshot plus focused editing tabs for status/follow-ups, job details, contact/prep notes, red flags, and activity timeline entries
 - Optional Next Action support in Application Detail and Command Center cards
 - Independent activity timeline add/list/delete behavior inside Application Detail
 - Opportunity-focused Applications table with follow-up urgency, red-flag counts, Notes badge shortcut, and Details action

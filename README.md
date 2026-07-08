@@ -14,7 +14,7 @@ The product is built around a common job-search problem: opportunities arrive fr
 - Manual Entry and Paste Job Text modes
 - Smart Capture paste-review workflow with conservative rule-based suggestions before saving
 - Parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while keeping Source user-selected
-- Compact review guardrails showing detected format, captured-field checklist, and user-controlled Source/Job link reminders
+- Compact review guardrails showing best-match parser, captured-field checklist, and user-controlled Source/Job link reminders
 - Explicit Job link input; pasted URLs are not captured automatically
 - Optional status, resume version, applied date, follow-up date, source, job link, and notes
 - Follow-up presets for common next-step dates
@@ -32,7 +32,8 @@ The product is built around a common job-search problem: opportunities arrive fr
 
 ### Application Detail
 
-- Tabbed detail panel for Overview, Dates & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
+- Tabbed detail panel for Overview, Status & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
+- Read-only Overview command snapshot with attention prompts and shortcuts into focused editing tabs
 - Detail editing for company, role, job link, source, status, resume version, saved date, applied date, follow-up date, next action, contact context, prep notes, location, compensation, salary range, employment type, notes, and red flags
 - Clear applied-date semantics: `date_saved` is when the job was added to Career Pipeline; `date_applied` is when the user actually applied
 - Existing applied dates are not overwritten automatically
