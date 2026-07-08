@@ -82,4 +82,3 @@ Not implemented: authentication, deployment, scraping, browser extension workflo
 - [Data Model](docs/DATA_MODEL.md)
 - [API Plan](docs/API_PLAN.md)
 - [Development Guide](docs/DEVELOPMENT.md)
-- [Wireframes](docs/WIREFRAMES.md)
