@@ -168,6 +168,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Job link values with full `http://` or `https://` protocols open as entered; obvious bare domains open with `https://`; incomplete text does not render as an external link.
 - Status, Applied Date, Follow-up Date, and Next Action edit from Status & Follow-up.
 - Resume Version edits from Contact & Prep.
+- Application Detail is split into focused presentational subcomponents while `ApplicationDetailPanel` owns loading, state, save handling, and dirty-state checks.
 - Unsaved detail changes warn before closing or switching to a different application.
 - Clicking Details on the currently open application only scrolls and does not clear dirty state.
 - Clicking Notes or Details for the currently open application can switch tabs without re-fetching data or clearing unsaved edits.
