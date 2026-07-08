@@ -139,7 +139,7 @@ function detectEmploymentType(lines) {
 function detectCityStateLocation(lines) {
   return (
     lines.find((line) =>
-      /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?(?:\s+-\s+(?:Remote|Hybrid|On-site))?$/u.test(
+      /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?(?:\s+-\s+(?:Remote|Hybrid(?:\s+(?:work|remote))?|On-?site(?:\s+work)?|In person))?$/iu.test(
         line,
       ),
     ) || ""
@@ -248,6 +248,44 @@ function isLinkedInSocialMetadataLine(line) {
   return /\b(?:ago|people clicked apply)\b/iu.test(line) && /\s+-\s+/u.test(normalizeBulletSeparators(line));
 }
 
+function getLinkedInLocationFromMetadataLine(line) {
+  const normalizedLine = normalizeBulletSeparators(line);
+  const match = normalizedLine.match(
+    /^([A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?)\s+-\s+(.+)$/u,
+  );
+  const metadata = match?.[2] || "";
+
+  if (!/\bago\b/iu.test(metadata) || !/\b(?:applicants?|people clicked apply)\b/iu.test(metadata)) {
+    return "";
+  }
+
+  return match[1];
+}
+
+function detectLinkedInLocation(headerLines) {
+  return headerLines.map(getLinkedInLocationFromMetadataLine).find(Boolean) || "";
+}
+
+function getLinkedInWorkArrangementFromLine(line) {
+  if (/^on[-\s]?site$/iu.test(line)) {
+    return "On-site";
+  }
+
+  if (/^hybrid$/iu.test(line)) {
+    return "Hybrid";
+  }
+
+  if (/^remote$/iu.test(line)) {
+    return "Remote";
+  }
+
+  return "";
+}
+
+function detectLinkedInWorkArrangement(headerLines) {
+  return headerLines.map(getLinkedInWorkArrangementFromLine).find(Boolean) || "";
+}
+
 function isLocationLine(line) {
   return Boolean(detectCityStateLocation([line]));
 }
@@ -316,6 +354,12 @@ function extractLinkedInFields(rawText) {
   const headerLines = getHeaderLines(rawText, /^about the job$/iu);
   const companyFromLogo = getLinkedInCompanyFromLogoLine(headerLines.find(isLinkedInLogoLine) || "");
   const baseFields = extractHeaderFields(rawText, { descriptionHeadingPattern: /^about the job$/iu });
+  const linkedInMetadataLocation = detectLinkedInLocation(headerLines);
+  const linkedInWorkArrangement = detectLinkedInWorkArrangement(headerLines);
+  const linkedInLocation =
+    linkedInMetadataLocation && linkedInWorkArrangement
+      ? `${linkedInMetadataLocation} - ${linkedInWorkArrangement}`
+      : linkedInMetadataLocation;
   const normalizedCompany = normalizeComparisonValue(companyFromLogo);
   const companyLineIndex = headerLines.findIndex(
     (line) => isCompanyCandidateLine(line) && normalizeComparisonValue(line) === normalizedCompany,
@@ -331,6 +375,7 @@ function extractLinkedInFields(rawText) {
     ...baseFields,
     company_name: companyFromLogo || baseFields.company_name,
     role_title: normalizeTitle(roleTitle),
+    location: linkedInLocation || baseFields.location,
     notes: buildSourceSpecificNotes(rawText, /^\s*About the job\s*$/imu),
   };
 }

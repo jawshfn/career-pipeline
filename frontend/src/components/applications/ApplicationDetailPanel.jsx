@@ -205,7 +205,7 @@ export default function ApplicationDetailPanel({
     return () => {
       isCurrent = false;
     };
-  }, [applicationId, initialTab]);
+  }, [applicationId]);
 
   useEffect(() => {
     setActiveTab(getValidDetailTab(initialTab));
