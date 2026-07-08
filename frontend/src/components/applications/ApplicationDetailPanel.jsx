@@ -53,6 +53,9 @@ const detailTabs = [
   { id: "activity", label: "Activity" },
 ];
 
+const defaultDetailTab = "overview";
+const detailTabIds = new Set(detailTabs.map((tab) => tab.id));
+
 const followUpPresets = [
   { label: "Tomorrow", daysFromToday: 1 },
   { label: "In 3 days", daysFromToday: 3 },
@@ -128,6 +131,10 @@ function isAppliedOrLater(status) {
   return APPLIED_OR_LATER_APPLICATION_STATUSES.includes(status);
 }
 
+function getValidDetailTab(tabId) {
+  return detailTabIds.has(tabId) ? tabId : defaultDetailTab;
+}
+
 function getFollowUpSummary(value) {
   const followUpDate = parseLocalDateValue(value);
 
@@ -150,6 +157,7 @@ function getFollowUpSummary(value) {
 
 export default function ApplicationDetailPanel({
   applicationId,
+  initialTab,
   onClose,
   onSaveApplication,
   onUnsavedChangesChange,
@@ -160,7 +168,7 @@ export default function ApplicationDetailPanel({
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(getValidDetailTab(initialTab));
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -179,7 +187,7 @@ export default function ApplicationDetailPanel({
           const nextFormState = toFormState(application);
           setFormData(nextFormState);
           setSavedFormData(nextFormState);
-          setActiveTab("overview");
+          setActiveTab(getValidDetailTab(initialTab));
         }
       } catch (error) {
         if (isCurrent) {
@@ -197,7 +205,11 @@ export default function ApplicationDetailPanel({
     return () => {
       isCurrent = false;
     };
-  }, [applicationId]);
+  }, [applicationId, initialTab]);
+
+  useEffect(() => {
+    setActiveTab(getValidDetailTab(initialTab));
+  }, [initialTab]);
 
   const hasUnsavedChanges = JSON.stringify(normalizeFormState(formData)) !== JSON.stringify(normalizeFormState(savedFormData));
 

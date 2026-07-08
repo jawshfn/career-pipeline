@@ -1080,7 +1080,7 @@ a {
 
 .applications-table {
   width: 100%;
-  min-width: 1060px;
+  min-width: 880px;
   border-collapse: collapse;
 }
 
@@ -1107,18 +1107,81 @@ a {
   background: #f7faf9;
 }
 
-.notes-cell {
-  max-width: 260px;
+.opportunity-cell {
+  display: grid;
+  gap: 3px;
+  min-width: 280px;
+  max-width: 440px;
 }
 
-.notes-preview {
+.opportunity-title,
+.opportunity-company,
+.opportunity-meta {
+  overflow-wrap: anywhere;
+}
+
+.opportunity-title {
   display: -webkit-box;
-  max-width: 260px;
+  overflow: hidden;
+  color: #17202a;
+  font-weight: 900;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.opportunity-company {
+  color: #34413f;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.opportunity-meta {
+  color: #60706d;
+  font-size: 0.8rem;
+}
+
+.resume-cell {
+  max-width: 220px;
+}
+
+.table-clamped-text {
+  display: -webkit-box;
+  max-width: 100%;
   overflow: hidden;
   line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow-wrap: anywhere;
+}
+
+.follow-up-table-value {
+  color: #34413f;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.follow-up-overdue {
+  color: #8b2f20;
+}
+
+.follow-up-due-today {
+  color: #8a5a00;
+}
+
+.notes-indicator-button {
+  border: 1px solid #cbd6d3;
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: #287c73;
+  background: #f7faf9;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.notes-indicator-button:hover {
+  border-color: #287c73;
+  background: #eef7f5;
 }
 
 .muted-table-value {

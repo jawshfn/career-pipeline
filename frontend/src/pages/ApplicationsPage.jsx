@@ -195,6 +195,7 @@ export default function ApplicationsPage({
   resumeVersions,
 }) {
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
+  const [selectedDetailTab, setSelectedDetailTab] = useState("overview");
   const [hasDetailUnsavedChanges, setHasDetailUnsavedChanges] = useState(false);
   const [applicationView, setApplicationView] = useState("active");
   const [filters, setFilters] = useState(initialFilters);
@@ -228,11 +229,13 @@ export default function ApplicationsPage({
 
   function closeDetails() {
     setSelectedApplicationId(null);
+    setSelectedDetailTab("overview");
     setHasDetailUnsavedChanges(false);
   }
 
-  function openDetails(applicationId) {
+  function openDetails(applicationId, initialTab = "overview") {
     if (selectedApplicationId === applicationId) {
+      setSelectedDetailTab(initialTab);
       requestAnimationFrame(scrollDetailPanelIntoView);
       return;
     }
@@ -247,6 +250,7 @@ export default function ApplicationsPage({
 
     shouldScrollToDetailRef.current = true;
     setHasDetailUnsavedChanges(false);
+    setSelectedDetailTab(initialTab);
 
     setSelectedApplicationId(applicationId);
   }
@@ -265,6 +269,7 @@ export default function ApplicationsPage({
         <div ref={detailPanelRef}>
           <ApplicationDetailPanel
             applicationId={selectedApplicationId}
+            initialTab={selectedDetailTab}
             onClose={closeDetails}
             onSaveApplication={onUpdateApplication}
             onUnsavedChangesChange={setHasDetailUnsavedChanges}
