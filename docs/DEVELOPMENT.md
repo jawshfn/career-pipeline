@@ -77,6 +77,15 @@ cd frontend
 npm run dev
 ```
 
+Optional local demo data:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m app.seed_demo_data
+```
+
+The demo seed command uses fictional data and refuses to run when local app data already exists. Use `--reset` only when you intentionally want to clear local application, activity, and resume-version tables before reseeding.
+
 Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend tests, frontend build, and manual QA for the affected workflows. Frontend-only behavior changes should at least run `npm test`, `npm run build`, and relevant browser QA.
 
 ## Backend Testing Expectations
@@ -91,6 +100,7 @@ Backend pytest coverage should protect:
 - Resume version create/update/list behavior
 - Red-flag create/update/read behavior
 - Application activity timeline create/list/update/delete behavior
+- Local demo seed safety and representative data behavior
 - 404 and cross-record isolation cases where applicable
 
 ## GitHub Actions CI Expectations

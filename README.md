@@ -69,6 +69,16 @@ npm run build
 
 Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend tests, frontend build, and manual QA for the affected workflows.
 
+## Optional Demo Data
+
+For local screenshots or demos, seed fictional data from the backend directory:
+
+```powershell
+.\.venv\Scripts\python.exe -m app.seed_demo_data
+```
+
+The seed command refuses to run if local application data already exists. Use `--reset` only when you intentionally want to clear local app demo tables before reseeding.
+
 ## Project Status
 
 Career Pipeline is a working local-first prototype. It supports quick capture, application management, follow-up workflows, activity logging, dashboard metrics, resume-version management, and red-flag tracking.

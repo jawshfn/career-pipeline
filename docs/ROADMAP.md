@@ -179,11 +179,17 @@ Status: complete through Phase 12.6
 - Phase 12.5: audit backend/frontend application contract handling and add nullable-field contract coverage
 - Phase 12.6: tighten README and documentation accuracy for current local-first prototype
 
+## Phase 13: Demo Readiness
+
+Status: complete through Phase 13.0
+
+- Phase 13.0: add safe local-only fictional demo data seeding workflow for recruiter/demo screenshots
+
 ## Near-Term Future Work
 
 These are realistic polish and presentation steps, not current product claims:
 
-- Demo data and screenshots
+- Demo screenshots and walkthrough flow
 - Public presentation pass for README, screenshots, and walkthrough flow
 - Optional AI-assisted Smart Capture extraction after the deterministic review workflow proves useful
 - Optional red-flag polish, such as clearer review summaries or filtering refinements
