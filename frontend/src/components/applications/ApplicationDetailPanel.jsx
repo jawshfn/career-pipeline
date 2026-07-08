@@ -330,6 +330,7 @@ export default function ApplicationDetailPanel({
     ["Resume", resumeSummary],
     ["Source", getDisplayValue(formData.source)],
     ["Location", getDisplayValue(formData.location, "No location saved")],
+    ["Job link", jobLinkValue ? "Saved" : "No link saved"],
     ["Red flags", redFlagCount ? `${redFlagCount} marked` : "None marked"],
   ];
   const attentionItems = [
@@ -378,34 +379,36 @@ export default function ApplicationDetailPanel({
             </div>
           ) : null}
 
-          <div className="detail-action-summary" aria-label="Application summary and actions">
-            <div className="detail-summary-item">
-              <span>Status</span>
-              <strong>{formData.status || "Not set"}</strong>
+          {activeTab !== "overview" ? (
+            <div className="detail-action-summary" aria-label="Application summary and actions">
+              <div className="detail-summary-item">
+                <span>Status</span>
+                <strong>{formData.status || "Not set"}</strong>
+              </div>
+              <div className="detail-summary-item">
+                <span>Applied</span>
+                <strong>{appliedSummary}</strong>
+              </div>
+              <div className="detail-summary-item">
+                <span>Follow-up</span>
+                <strong>{followUpSummary}</strong>
+              </div>
+              <div className="detail-summary-item">
+                <span>Resume</span>
+                <strong>{resumeSummary}</strong>
+              </div>
+              {jobLinkValue ? (
+                <a
+                  className="secondary-button detail-job-link-action"
+                  href={jobLinkValue}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Open job link
+                </a>
+              ) : null}
             </div>
-            <div className="detail-summary-item">
-              <span>Applied</span>
-              <strong>{appliedSummary}</strong>
-            </div>
-            <div className="detail-summary-item">
-              <span>Follow-up</span>
-              <strong>{followUpSummary}</strong>
-            </div>
-            <div className="detail-summary-item">
-              <span>Resume</span>
-              <strong>{resumeSummary}</strong>
-            </div>
-            {jobLinkValue ? (
-              <a
-                className="secondary-button detail-job-link-action"
-                href={jobLinkValue}
-                rel="noreferrer"
-                target="_blank"
-              >
-                Open job link
-              </a>
-            ) : null}
-          </div>
+          ) : null}
 
           <div className="detail-tabs" role="tablist" aria-label="Application detail sections">
             {detailTabs.map((tab) => (
@@ -442,6 +445,11 @@ export default function ApplicationDetailPanel({
                     <div className="detail-overview-card" key={label}>
                       <span>{label}</span>
                       <strong>{value}</strong>
+                      {label === "Job link" && jobLinkValue ? (
+                        <a href={jobLinkValue} rel="noreferrer" target="_blank">
+                          Open posting
+                        </a>
+                      ) : null}
                     </div>
                   ))}
                 </div>

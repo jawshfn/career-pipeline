@@ -834,6 +834,17 @@ a {
   font-size: 0.92rem;
 }
 
+.detail-overview-card a {
+  color: #287c73;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.detail-overview-card a:hover {
+  text-decoration: underline;
+}
+
 .detail-overview-section {
   display: grid;
   gap: 10px;
