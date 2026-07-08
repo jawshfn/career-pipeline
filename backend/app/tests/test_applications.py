@@ -281,6 +281,134 @@ def test_update_application_detail_fields(client):
     assert saved["prep_notes"] == "Review backend project talking points before the screen."
 
 
+def test_create_application_with_optional_contract_fields(client):
+    resume = client.post(
+        "/api/resume-versions",
+        json={
+            "name": "Contract Resume",
+            "target_role": "Software Engineering",
+            "description": "Fictional contract test resume.",
+        },
+    ).json()
+
+    response = create_application(
+        client,
+        job_link="not a link",
+        source="Handshake",
+        status="Applied",
+        location="Norfolk, VA",
+        compensation="$60,000 - $70,000 a year",
+        salary_min=60000,
+        salary_max=70000,
+        employment_type="Full-time",
+        date_applied="2026-06-21",
+        follow_up_date="2026-06-28",
+        next_action="Follow up with recruiter.",
+        contact_name="Alex Recruiter",
+        contact_info="alex.recruiter@example.com",
+        prep_notes="Review project notes.",
+        resume_version_id=resume["id"],
+        notes="Created with populated optional fields.",
+        vague_job_description=True,
+        unrealistic_salary=False,
+        asks_for_payment=False,
+        suspicious_contact=True,
+        company_mismatch=False,
+        too_good_to_be_true=False,
+        red_flags_notes="Contact details need review.",
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["job_link"] == "not a link"
+    assert data["source"] == "Handshake"
+    assert data["status"] == "Applied"
+    assert data["location"] == "Norfolk, VA"
+    assert data["compensation"] == "$60,000 - $70,000 a year"
+    assert data["salary_min"] == 60000
+    assert data["salary_max"] == 70000
+    assert data["employment_type"] == "Full-time"
+    assert data["date_applied"] == "2026-06-21"
+    assert data["follow_up_date"] == "2026-06-28"
+    assert data["next_action"] == "Follow up with recruiter."
+    assert data["contact_name"] == "Alex Recruiter"
+    assert data["contact_info"] == "alex.recruiter@example.com"
+    assert data["prep_notes"] == "Review project notes."
+    assert data["resume_version_id"] == resume["id"]
+    assert data["notes"] == "Created with populated optional fields."
+    assert data["vague_job_description"] is True
+    assert data["suspicious_contact"] is True
+    assert data["red_flags_notes"] == "Contact details need review."
+
+
+def test_update_application_can_clear_nullable_contract_fields(client):
+    resume = client.post(
+        "/api/resume-versions",
+        json={
+            "name": "Nullable Contract Resume",
+            "target_role": "Software Engineering",
+            "description": "Fictional nullable-field test resume.",
+        },
+    ).json()
+    created = create_application(
+        client,
+        job_link="https://example.com/jobs/123",
+        location="Remote",
+        compensation="$62,000 - $78,000 a year",
+        salary_min=62000,
+        salary_max=78000,
+        employment_type="Full-time",
+        date_applied="2026-06-20",
+        follow_up_date="2026-06-27",
+        next_action="Prepare recruiter follow-up notes.",
+        contact_name="Alex Recruiter",
+        contact_info="alex.recruiter@example.com",
+        prep_notes="Review backend project talking points before the screen.",
+        resume_version_id=resume["id"],
+        notes="Created with optional fields.",
+        red_flags_notes="Review posting details.",
+    ).json()
+
+    response = client.patch(
+        f"/api/applications/{created['id']}",
+        json={
+            "job_link": None,
+            "location": None,
+            "compensation": None,
+            "salary_min": None,
+            "salary_max": None,
+            "employment_type": None,
+            "date_applied": None,
+            "follow_up_date": None,
+            "next_action": None,
+            "contact_name": None,
+            "contact_info": None,
+            "prep_notes": None,
+            "resume_version_id": None,
+            "notes": None,
+            "red_flags_notes": None,
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["job_link"] is None
+    assert data["location"] is None
+    assert data["compensation"] is None
+    assert data["salary_min"] is None
+    assert data["salary_max"] is None
+    assert data["employment_type"] is None
+    assert data["date_applied"] is None
+    assert data["follow_up_date"] is None
+    assert data["next_action"] is None
+    assert data["contact_name"] is None
+    assert data["contact_info"] is None
+    assert data["prep_notes"] is None
+    assert data["resume_version_id"] is None
+    assert data["notes"] is None
+    assert data["red_flags_notes"] is None
+
+
 def test_update_application_red_flags(client):
     created = create_application(client).json()
 
