@@ -181,9 +181,10 @@ Status: complete through Phase 12.6
 
 ## Phase 13: Demo Readiness
 
-Status: complete through Phase 13.0
+Status: complete through Phase 13.1a
 
 - Phase 13.0: add safe local-only fictional demo data seeding workflow for recruiter/demo screenshots
+- Phase 13.1a: simplify Manual Quick Add by keeping tracking details behind an optional disclosure
 
 ## Near-Term Future Work
 

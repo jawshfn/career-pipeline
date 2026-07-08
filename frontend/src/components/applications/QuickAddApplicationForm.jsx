@@ -72,6 +72,7 @@ export default function QuickAddApplicationForm({
   const [formData, setFormData] = useState(initialFormState);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showTrackingDetails, setShowTrackingDetails] = useState(false);
 
   function updateField(event) {
     const { name, value } = event.target;
@@ -108,6 +109,7 @@ export default function QuickAddApplicationForm({
     try {
       const createdApplication = await onCreateApplication(payload);
       setFormData(initialFormState);
+      setShowTrackingDetails(false);
       onCreateSuccess?.(createdApplication);
     } catch (creationError) {
       setError(creationError.message || "Could not create application.");
@@ -129,8 +131,8 @@ export default function QuickAddApplicationForm({
   return (
     <section className="panel quick-add-panel" aria-labelledby="quick-add-title">
       <div className="section-heading">
-        <h2 id="quick-add-title">Quick Add</h2>
-        <p>Capture the opportunity now. Add more detail later.</p>
+        <h2 id="quick-add-title">Manual Entry</h2>
+        <p>Add the basics now. Tracking details and notes can be filled in later.</p>
       </div>
 
       {error ? (
@@ -140,9 +142,10 @@ export default function QuickAddApplicationForm({
       ) : null}
 
       <form className="quick-add-form" onSubmit={handleSubmit}>
-        <div className="quick-add-row quick-add-row-primary">
+
+        <div className="quick-add-row quick-add-row-essentials">
           <label>
-            Company name
+            Company name <span className="required-label">Required</span>
             <input
               name="company_name"
               value={formData.company_name}
@@ -153,7 +156,7 @@ export default function QuickAddApplicationForm({
           </label>
 
           <label>
-            Role title
+            Role title <span className="required-label">Required</span>
             <input
               name="role_title"
               value={formData.role_title}
@@ -164,7 +167,7 @@ export default function QuickAddApplicationForm({
           </label>
 
           <label>
-            Job link
+            Job link 
             <input
               name="job_link"
               value={formData.job_link}
@@ -172,9 +175,7 @@ export default function QuickAddApplicationForm({
               placeholder="https://..."
             />
           </label>
-        </div>
 
-        <div className="quick-add-row quick-add-row-selects">
           <label>
             Source
             <select name="source" value={formData.source} onChange={updateField}>
@@ -185,86 +186,105 @@ export default function QuickAddApplicationForm({
               ))}
             </select>
           </label>
-
-          <label>
-            Status
-            <select name="status" value={formData.status} onChange={updateField}>
-              {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Resume version
-            <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
-              <option value="">No resume selected</option>
-              {resumeVersions.map((resumeVersion) => (
-                <option key={resumeVersion.id} value={resumeVersion.id}>
-                  {getResumeVersionLabel(resumeVersion)}
-                </option>
-              ))}
-            </select>
-          </label>
         </div>
 
-        <div className="quick-add-row quick-add-row-dates">
-          <label className="quick-add-date-field">
-            Applied date
-            <input
-              name="date_applied"
-              type="date"
-              value={formData.date_applied}
-              onChange={updateField}
-            />
-            <span className="field-helper">Date you submitted the application.</span>
-          </label>
+        <button
+          aria-controls="manual-quick-add-tracking-details"
+          aria-expanded={showTrackingDetails}
+          className="quick-add-disclosure"
+          type="button"
+          onClick={() => setShowTrackingDetails((current) => !current)}
+        >
+          {showTrackingDetails ? "Hide tracking details" : "Tracking details — optional"}
+        </button>
 
-          <div className="follow-up-date-field">
-          <label>
-            Follow-up date
-            <input
-              name="follow_up_date"
-              type="date"
-              value={formData.follow_up_date}
-              onChange={updateField}
-            />
-          </label>
-          <div className="follow-up-presets" aria-label="Follow-up date presets">
-            {followUpPresets.map((preset) => (
-              <button
-                key={preset.label}
-                type="button"
-                onClick={() => setFollowUpDate(getPresetDate(preset.daysFromToday))}
-              >
-                {preset.label}
-              </button>
-            ))}
-            <button type="button" onClick={() => setFollowUpDate("")}>
-              Clear
-            </button>
+        {showTrackingDetails ? (
+          <div
+            className="quick-add-tracking-details"
+            id="manual-quick-add-tracking-details"
+          >
+            <div className="quick-add-row quick-add-row-selects">
+              <label>
+                Status
+                <select name="status" value={formData.status} onChange={updateField}>
+                  {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Resume version
+                <select name="resume_version_id" value={formData.resume_version_id} onChange={updateField}>
+                  <option value="">No resume selected</option>
+                  {resumeVersions.map((resumeVersion) => (
+                    <option key={resumeVersion.id} value={resumeVersion.id}>
+                      {getResumeVersionLabel(resumeVersion)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="quick-add-row quick-add-row-dates">
+              <label className="quick-add-date-field">
+                Applied date
+                <input
+                  name="date_applied"
+                  type="date"
+                  value={formData.date_applied}
+                  onChange={updateField}
+                />
+                <span className="field-helper">Date you submitted the application.</span>
+              </label>
+
+              <div className="follow-up-date-field">
+                <label>
+                  Follow-up date
+                  <input
+                    name="follow_up_date"
+                    type="date"
+                    value={formData.follow_up_date}
+                    onChange={updateField}
+                  />
+                </label>
+                <div className="follow-up-presets" aria-label="Follow-up date presets">
+                  {followUpPresets.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => setFollowUpDate(getPresetDate(preset.daysFromToday))}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                  <button type="button" onClick={() => setFollowUpDate("")}>
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <label className="notes-field">
+              Notes
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={updateField}
+                rows="3"
+                placeholder="Optional context, next step, or recruiter note"
+              />
+            </label>
           </div>
-        </div>
-        </div>
-
-        <label className="notes-field">
-          Notes
-          <textarea
-            name="notes"
-            value={formData.notes}
-            onChange={updateField}
-            rows="3"
-            placeholder="Optional context, next step, or recruiter note"
-          />
-        </label>
+        ) : null}
 
         <DuplicateOpportunityWarning matches={duplicateMatches} />
 
         <div className="form-actions">
           <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Adding..." : "Add application"}
+            {isSubmitting ? "Saving..." : "Save opportunity"}
           </button>
         </div>
       </form>

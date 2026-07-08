@@ -132,6 +132,8 @@ Run the relevant parts of this checklist before starting a new product phase or 
 ### Quick Add
 
 - Quick Add shows Manual Entry and Paste Job Text modes.
+- Manual Entry defaults to essential fields: company, role, job link, and source.
+- Manual Entry tracking details expand to reveal status, resume version, applied date, follow-up date, presets, and notes.
 - Quick Add creates a new application and shows clear success feedback.
 - Add another clears the success state and leaves the user on Quick Add.
 - View applications navigates to Applications.
