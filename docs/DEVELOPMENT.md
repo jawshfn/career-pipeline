@@ -104,7 +104,7 @@ The current CI workflow should:
 - Fail clearly on test or build errors
 
 Later CI can add linting, formatting, or broader frontend interaction tests if those checks become useful.
-Current frontend utility tests cover explicit job link normalization/openable links, duplicate/similar opportunity detection, and shared application payload normalization.
+Current frontend utility tests cover explicit job link normalization/openable links, duplicate/similar opportunity detection, shared application payload normalization, and Smart Capture parser guardrails.
 
 ## Manual QA Checklist
 

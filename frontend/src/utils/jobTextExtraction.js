@@ -429,6 +429,8 @@ function extractLinkedInFields(rawText) {
 
 function getGenericFallbackFields(rawText) {
   const headerFields = extractHeaderFields(rawText);
+  const headerLines = getHeaderLines(rawText);
+  const hasEnoughUnlabeledHeaderContext = headerLines.filter(isRoleCandidateLine).length >= 2;
   const companyName = detectLabeledValue(rawText, ["Company", "Company name"]);
   const roleTitle = detectLabeledValue(rawText, [
     "Role",
@@ -440,8 +442,8 @@ function getGenericFallbackFields(rawText) {
 
   return {
     ...headerFields,
-    company_name: headerFields.company_name || companyName,
-    role_title: headerFields.role_title || roleTitle,
+    company_name: companyName || (hasEnoughUnlabeledHeaderContext ? headerFields.company_name : ""),
+    role_title: roleTitle || (hasEnoughUnlabeledHeaderContext ? headerFields.role_title : ""),
     notes: buildGenericNotes(rawText),
   };
 }
