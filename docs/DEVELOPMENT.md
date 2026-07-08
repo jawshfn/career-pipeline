@@ -143,11 +143,12 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Applied or later statuses default an empty Applied Date without overwriting a manually entered date.
 - Paste Job Text prepares a review form without creating an application.
 - Smart Capture review fields can be edited before Save application creates the record.
+- Smart Capture review is organized into Review before saving, Essentials, Captured details when present, Optional details, and Job details.
 - Smart Capture notes include the pasted job text.
 - Smart Capture leaves Job link blank unless the user enters an explicit link.
 - Smart Capture keeps Source user-selected instead of inferring or overwriting it from pasted text or URLs.
 - Smart Capture can internally detect common LinkedIn, Indeed, ZipRecruiter, or generic pasted-text formats to choose the best deterministic extraction profile.
-- Smart Capture review guardrails appear after Prepare review and show best-match parser, captured-field statuses, and Source/Job link reminders.
+- Smart Capture review summary appears after Prepare review and shows detected format, captured-field statuses, and Source/Job link reminders.
 - Smart Capture captures obvious header-level compensation as editable text instead of numeric salary guesses.
 - Explicit Job link values can normalize bare domains like `example.com` to `https://example.com`, but pasted job text is never scanned for links.
 - Company career pages remain best-effort and should be reviewed manually before saving.

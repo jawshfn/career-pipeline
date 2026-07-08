@@ -40,55 +40,93 @@ function getParserFormatLabel(format) {
   return labels[format] || "Generic";
 }
 
-function getReviewStatus(value, missingLabel = "Missing") {
-  return String(value || "").trim() ? "Captured" : missingLabel;
+const parsedJobDetailFields = [
+  { name: "location", label: "Location" },
+  { name: "employment_type", label: "Employment type" },
+  { name: "compensation", label: "Compensation" },
+];
+
+function hasReviewValue(value) {
+  return Boolean(String(value || "").trim());
 }
 
-function getReviewStatusClass(status) {
-  if (status === "Captured") {
-    return "is-captured";
-  }
-
-  if (status === "Review") {
-    return "is-review";
-  }
-
-  return "is-missing";
+function getReviewStatus(value) {
+  return hasReviewValue(value) ? "Captured" : "Needs review";
 }
 
-function SmartCaptureGuardrails({ reviewData }) {
-  const fieldStatuses = [
-    ["Company", getReviewStatus(reviewData.company_name)],
-    ["Role/title", getReviewStatus(reviewData.role_title)],
-    ["Location", getReviewStatus(reviewData.location, "Review")],
-    ["Job details", getReviewStatus(reviewData.notes, "Review")],
+function getReviewStatusClass(value) {
+  return hasReviewValue(value) ? "is-captured" : "is-needs-review";
+}
+
+function getUncapturedParsedJobDetailFields(capturedReviewFields) {
+  return parsedJobDetailFields.filter((field) => !capturedReviewFields[field.name]);
+}
+
+function getReviewStatusItems(reviewData) {
+  return [
+    ["Company", reviewData.company_name],
+    ["Role", reviewData.role_title],
   ];
+}
+
+function SmartCaptureDetailField({ fieldName, reviewData, updateReviewField }) {
+  if (fieldName === "employment_type") {
+    return (
+      <label>
+        Employment type
+        <select name="employment_type" value={reviewData.employment_type} onChange={updateReviewField}>
+          {EMPLOYMENT_TYPE_OPTIONS.map((option) => (
+            <option key={option || "blank"} value={option}>
+              {option || "Not specified"}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  }
+
+  if (fieldName === "compensation") {
+    return (
+      <label>
+        Compensation
+        <input
+          name="compensation"
+          value={reviewData.compensation}
+          onChange={updateReviewField}
+          placeholder="ex. $29/hr or $60,000 - $70,000 a year"
+        />
+      </label>
+    );
+  }
 
   return (
-    <aside className="smart-capture-guardrails" aria-label="Smart Capture review guardrails">
-      <div className="smart-capture-guardrails-header">
-        <div>
-          <p className="eyebrow">Review guardrails</p>
-          <h4>Check the suggested fields before saving</h4>
-        </div>
-        <span className="smart-capture-format-pill">
-          Best match parser: {getParserFormatLabel(reviewData.parser_format)}
-        </span>
-      </div>
+    <label>
+      Location
+      <input
+        name="location"
+        value={reviewData.location}
+        onChange={updateReviewField}
+        placeholder="Add location"
+      />
+    </label>
+  );
+}
 
-      <div className="smart-capture-checklist" aria-label="Captured field checklist">
-        {fieldStatuses.map(([label, status]) => (
-          <div className="smart-capture-check-item" key={label}>
-            <span>{label}</span>
-            <strong className={getReviewStatusClass(status)}>{status}</strong>
-          </div>
+function SmartCaptureReviewSummary({ reviewData }) {
+  const reviewStatusItems = getReviewStatusItems(reviewData);
+
+  return (
+    <aside className="smart-capture-review-summary" aria-label="Smart Capture review summary">
+      <span className="smart-capture-format-pill">
+        Detected format: {getParserFormatLabel(reviewData.parser_format)}
+      </span>
+      <div className="smart-capture-status-chips" aria-label="Captured field status">
+        {reviewStatusItems.map(([label, value]) => (
+          <span className="smart-capture-status-chip" key={label}>
+            {label}: <strong className={getReviewStatusClass(value)}>{getReviewStatus(value)}</strong>
+          </span>
         ))}
       </div>
-
-      <p className="smart-capture-guardrails-note">
-        Smart Capture gives you a starting point. Source stays manually selected, and Job Link is saved only
-        when entered in the job link field.
-      </p>
     </aside>
   );
 }
@@ -101,8 +139,10 @@ export default function SmartCaptureForm({
 }) {
   const [captureData, setCaptureData] = useState(initialCaptureState);
   const [reviewData, setReviewData] = useState(null);
+  const [capturedReviewFields, setCapturedReviewFields] = useState({});
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showTrackingDetails, setShowTrackingDetails] = useState(false);
 
   function updateCaptureField(event) {
     const { name, value } = event.target;
@@ -117,7 +157,14 @@ export default function SmartCaptureForm({
   function handlePrepareReview(event) {
     event.preventDefault();
     setError("");
-    setReviewData(buildSmartCaptureReviewState(captureData));
+    const nextReviewData = buildSmartCaptureReviewState(captureData);
+    setReviewData(nextReviewData);
+    setCapturedReviewFields({
+      location: hasReviewValue(nextReviewData.location),
+      employment_type: hasReviewValue(nextReviewData.employment_type),
+      compensation: hasReviewValue(nextReviewData.compensation),
+    });
+    setShowTrackingDetails(false);
   }
 
   async function handleSubmitReview(event) {
@@ -144,6 +191,8 @@ export default function SmartCaptureForm({
       const createdApplication = await onCreateApplication(payload);
       setCaptureData(initialCaptureState);
       setReviewData(null);
+      setCapturedReviewFields({});
+      setShowTrackingDetails(false);
       onCreateSuccess?.(createdApplication);
     } catch (creationError) {
       setError(creationError.message || "Could not create application.");
@@ -163,6 +212,10 @@ export default function SmartCaptureForm({
         existingApplications,
       )
     : [];
+  const capturedParsedJobDetailFields = reviewData
+    ? parsedJobDetailFields.filter((field) => capturedReviewFields[field.name])
+    : [];
+  const uncapturedParsedJobDetailFields = reviewData ? getUncapturedParsedJobDetailFields(capturedReviewFields) : [];
 
   return (
     <section className="panel quick-add-panel smart-capture-panel" aria-labelledby="smart-capture-title">
@@ -224,153 +277,185 @@ export default function SmartCaptureForm({
       {reviewData ? (
         <form className="quick-add-form smart-capture-review-form" onSubmit={handleSubmitReview}>
           <div className="section-heading smart-capture-review-heading">
-            <h3>Review suggested fields</h3>
-            <p>Edit anything before saving this application.</p>
+            <h3>Review before saving</h3>
+            <p>Smart Capture prepared editable fields from your pasted text. Review anything that looks wrong.</p>
           </div>
 
-          <SmartCaptureGuardrails reviewData={reviewData} />
+          <SmartCaptureReviewSummary reviewData={reviewData} />
 
           <DuplicateOpportunityWarning matches={duplicateMatches} />
 
-          <div className="quick-add-row quick-add-row-primary">
-            <label>
-              Company name
-              <input
-                name="company_name"
-                value={reviewData.company_name}
-                onChange={updateReviewField}
-                required
-                placeholder="Example Company"
-              />
-            </label>
+          <section className="smart-capture-review-section" aria-labelledby="smart-capture-essentials-title">
+            <div className="smart-capture-review-section-heading">
+              <h4 id="smart-capture-essentials-title">Essentials</h4>
+            </div>
 
-            <label>
-              Role title
-              <input
-                name="role_title"
-                value={reviewData.role_title}
-                onChange={updateReviewField}
-                required
-                placeholder="Associate Software Engineer"
-              />
-            </label>
+            <div className="quick-add-row quick-add-row-essentials">
+              <label>
+                Company name
+                <input
+                  name="company_name"
+                  value={reviewData.company_name}
+                  onChange={updateReviewField}
+                  required
+                  placeholder="Example Company"
+                />
+              </label>
 
-            <label>
-              Job link
-              <input
-                name="job_link"
-                value={reviewData.job_link}
-                onChange={updateReviewField}
-                placeholder="https://..."
-              />
-            </label>
-          </div>
+              <label>
+                Role title
+                <input
+                  name="role_title"
+                  value={reviewData.role_title}
+                  onChange={updateReviewField}
+                  required
+                  placeholder="Enter role title"
+                />
+              </label>
 
-          <div className="quick-add-row quick-add-row-selects">
-            <label>
-              Source
-              <select name="source" value={reviewData.source} onChange={updateReviewField}>
-                {SOURCE_OPTIONS.map((source) => (
-                  <option key={source} value={source}>
-                    {source}
-                  </option>
+              <label>
+                Job link
+                <input
+                  name="job_link"
+                  value={reviewData.job_link}
+                  onChange={updateReviewField}
+                  placeholder="https://..."
+                />
+              </label>
+
+              <label>
+                Source
+                <select name="source" value={reviewData.source} onChange={updateReviewField}>
+                  {SOURCE_OPTIONS.map((source) => (
+                    <option key={source} value={source}>
+                      {source}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </section>
+
+          {capturedParsedJobDetailFields.length ? (
+            <section className="smart-capture-review-section" aria-labelledby="smart-capture-captured-details-title">
+              <div className="smart-capture-review-section-heading">
+                <h4 id="smart-capture-captured-details-title">Captured details</h4>
+              </div>
+
+              <div className="quick-add-row smart-capture-detail-row">
+                {capturedParsedJobDetailFields.map((field) => (
+                  <SmartCaptureDetailField
+                    fieldName={field.name}
+                    key={field.name}
+                    reviewData={reviewData}
+                    updateReviewField={updateReviewField}
+                  />
                 ))}
-              </select>
-            </label>
+              </div>
+            </section>
+          ) : null}
 
-            <label>
-              Status
-              <select name="status" value={reviewData.status} onChange={updateReviewField}>
-                {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <button
+            aria-controls="smart-capture-optional-details"
+            aria-expanded={showTrackingDetails}
+            className="quick-add-disclosure"
+            type="button"
+            onClick={() => setShowTrackingDetails((current) => !current)}
+          >
+            {showTrackingDetails ? "Hide optional details" : "Optional details"}
+          </button>
 
-            <label>
-              Resume version
-              <select name="resume_version_id" value={reviewData.resume_version_id} onChange={updateReviewField}>
-                <option value="">No resume selected</option>
-                {resumeVersions.map((resumeVersion) => (
-                  <option key={resumeVersion.id} value={resumeVersion.id}>
-                    {getResumeVersionLabel(resumeVersion)}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
+          {showTrackingDetails ? (
+            <section
+              className="quick-add-tracking-details smart-capture-review-section"
+              id="smart-capture-optional-details"
+              aria-labelledby="smart-capture-optional-details-title"
+            >
+              <div className="smart-capture-review-section-heading">
+                <h4 id="smart-capture-optional-details-title">Optional details</h4>
+                <p>Add missing job details or tracking info now, or fill them in later.</p>
+              </div>
 
-          <div className="quick-add-row smart-capture-detail-row">
-            <label>
-              Location
-              <input
-                name="location"
-                value={reviewData.location}
+              {uncapturedParsedJobDetailFields.length ? (
+                <div className="quick-add-row smart-capture-detail-row">
+                  {uncapturedParsedJobDetailFields.map((field) => (
+                    <SmartCaptureDetailField
+                      fieldName={field.name}
+                      key={field.name}
+                      reviewData={reviewData}
+                      updateReviewField={updateReviewField}
+                    />
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="quick-add-row quick-add-row-selects">
+                <label>
+                  Status
+                  <select name="status" value={reviewData.status} onChange={updateReviewField}>
+                    {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Resume version
+                  <select name="resume_version_id" value={reviewData.resume_version_id} onChange={updateReviewField}>
+                    <option value="">No resume selected</option>
+                    {resumeVersions.map((resumeVersion) => (
+                      <option key={resumeVersion.id} value={resumeVersion.id}>
+                        {getResumeVersionLabel(resumeVersion)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Follow-up date
+                  <input
+                    name="follow_up_date"
+                    type="date"
+                    value={reviewData.follow_up_date}
+                    onChange={updateReviewField}
+                  />
+                </label>
+              </div>
+
+              <label>
+                Next action
+                <input
+                  name="next_action"
+                  value={reviewData.next_action}
+                  onChange={updateReviewField}
+                  placeholder="Review posting and apply"
+                />
+              </label>
+            </section>
+          ) : null}
+
+          <section className="smart-capture-review-section" aria-labelledby="smart-capture-job-details-title">
+            <div className="smart-capture-review-section-heading">
+              <h4 id="smart-capture-job-details-title">Job details</h4>
+              <p>Pasted job text is saved here for later reference.</p>
+            </div>
+
+            <label className="notes-field">
+              <textarea
+                name="notes"
+                value={reviewData.notes}
                 onChange={updateReviewField}
-                placeholder="Remote"
+                rows="7"
+                placeholder="Pasted job text and optional context"
               />
             </label>
-
-            <label>
-              Employment type
-              <select name="employment_type" value={reviewData.employment_type} onChange={updateReviewField}>
-                {EMPLOYMENT_TYPE_OPTIONS.map((option) => (
-                  <option key={option || "blank"} value={option}>
-                    {option || "Not specified"}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label>
-              Follow-up date
-              <input
-                name="follow_up_date"
-                type="date"
-                value={reviewData.follow_up_date}
-                onChange={updateReviewField}
-              />
-            </label>
-          </div>
-
-          <div className="quick-add-row smart-capture-compensation-row">
-            <label>
-              Compensation
-              <input
-                name="compensation"
-                value={reviewData.compensation}
-                onChange={updateReviewField}
-                placeholder="$29/hr, $60,000 - $70,000 a year, competitive"
-              />
-            </label>
-
-            <label>
-              Next action
-              <input
-                name="next_action"
-                value={reviewData.next_action}
-                onChange={updateReviewField}
-                placeholder="Review posting and apply"
-              />
-            </label>
-          </div>
-
-          <label className="notes-field">
-            Notes
-            <textarea
-              name="notes"
-              value={reviewData.notes}
-              onChange={updateReviewField}
-              rows="7"
-              placeholder="Pasted job text and optional context"
-            />
-          </label>
+          </section>
 
           <div className="form-actions">
             <button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save application"}
+              {isSubmitting ? "Saving..." : "Save opportunity"}
             </button>
           </div>
         </form>

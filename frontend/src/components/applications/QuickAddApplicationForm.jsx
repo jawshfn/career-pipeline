@@ -195,7 +195,7 @@ export default function QuickAddApplicationForm({
           type="button"
           onClick={() => setShowTrackingDetails((current) => !current)}
         >
-          {showTrackingDetails ? "Hide tracking details" : "Tracking details — optional"}
+          {showTrackingDetails ? "Hide tracking details" : "Tracking details - optional"}
         </button>
 
         {showTrackingDetails ? (
