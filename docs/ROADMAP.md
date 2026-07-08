@@ -131,11 +131,29 @@ Status: complete through Phase 8.9 plus targeted app-shell restoration
 
 ## Phase 9: Smart Capture
 
-Status: started
+Status: complete through Phase 9.8
 
 - Phase 9.0: add Smart Capture paste-review workflow to Quick Add without AI integration
 - Phase 9.1: improve source-aware rule-based extraction for common job-board pasted text
 - Phase 9.2: simplify Smart Capture extraction and add flexible compensation capture
+- Phase 9.3: improve header-level employment type detection without scanning full descriptions
+- Phase 9.4 / 9.4b: improve LinkedIn parsing and clean copied logo/header lines in generic parsing
+- Phase 9.5: add Smart Capture guidance copy for supported paste formats and best-effort company pages
+- Phase 9.6: align Smart Capture and backend applied-date defaults
+- Phase 9.7: improve Indeed-style location precision
+- Phase 9.8: parse LinkedIn location metadata and add internal parser-format detection while preserving user-selected Source
+
+## Phase 10: Detail and Applications Table Polish
+
+Status: complete through Phase 10.4
+
+- Phase 10.0: strengthen Application Detail action header, summary context, job-link action, and follow-up presets
+- Phase 10.1: improve date display consistency across detail and table surfaces
+- Phase 10.2: improve Applications table scanability around next actions and follow-up urgency
+- Phase 10.3: simplify the Applications table into an opportunity-focused layout with Notes and Details actions
+- Phase 10.3b: make the Notes shortcut open Application Detail on the Job Details tab
+- Phase 10.3c: prevent tab shortcuts from reloading application data or discarding unsaved edits
+- Phase 10.4: refresh documentation for the current MVP behavior
 
 ## Near-Term Future Work
 

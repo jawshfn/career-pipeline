@@ -46,8 +46,9 @@ The current prototype includes:
 - Dedicated Quick Add page for lightweight opportunity capture
 - Quick Add modes for Manual Entry and Smart Capture paste-review
 - Deterministic Smart Capture helpers that prepare conservative editable suggested fields from pasted job text before save
+- Internal Smart Capture parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while preserving the user's selected Source
 - Application create, list, update, detail editing, and archive behavior
-- Applications page with Active, Closed, and All views plus search, filters, sorting, table previews, and detail access
+- Applications page with Active, Closed, and All views plus search, filters, sorting, opportunity-focused table rows, Notes shortcut, and detail access
 - Application Detail tabs for Overview, Dates & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity
 - Optional Next Action field shown in Application Detail and Command Center cards
 - Applied-date behavior that distinguishes saved date from the date the user actually applied
@@ -97,7 +98,7 @@ Manual Entry fields include:
 
 Follow-up presets help schedule common dates quickly. If the user selects Applied or a later status and Applied Date is empty, the frontend can default Applied Date to today. Existing manually entered applied dates are not overwritten.
 
-Smart Capture is an additional paste-review workflow. The user pastes a job post, recruiter message, or copied listing text, optionally adds a job link and source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, and notes containing the relevant pasted text. Job link and source stay user-controlled rather than being guessed from arbitrary pasted URLs. The user must review and edit the fields before saving. AI-assisted extraction is not implemented yet.
+Smart Capture is an additional paste-review workflow. The user pastes a job post, recruiter message, or copied listing text, optionally adds an explicit job link, selects a source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, employment type, and notes containing the relevant pasted text. The parser can internally recognize common LinkedIn, Indeed, ZipRecruiter, or generic paste formats to improve extraction quality, but it does not change the saved Source. Job link also stays user-controlled and is not guessed from arbitrary pasted URLs. Company career pages can still be pasted, but they are best-effort and should be reviewed carefully before saving. AI-assisted extraction is not implemented yet.
 
 After saving, the application appears in Applications, Pipeline, Dashboard metrics, and other relevant views. The user can open Application Detail later to add richer information.
 
@@ -111,9 +112,9 @@ Current controls include:
 - Search across company, role, source, location, and full notes text
 - Filters for status, source, resume version, and red-flag state
 - Sorting by recently updated, saved date, follow-up date, company, and status
-- Table columns for saved date, applied date, follow-up date, red flags, notes preview, and actions
+- Opportunity-focused table columns for opportunity, status, follow-up urgency, resume assignment, red flags, Notes shortcut, and actions
 
-Long notes are truncated in the table for scanability, while full notes remain readable and editable in Application Detail.
+The table avoids showing raw pasted notes as long previews. Applications with notes show a compact Notes badge that opens the Job Details tab, while full notes remain readable and editable in Application Detail.
 
 ### Edit Application Detail
 

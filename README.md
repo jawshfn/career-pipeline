@@ -13,6 +13,8 @@ The product is built around a common job-search problem: opportunities arrive fr
 - Dedicated Quick Add page for quickly saving a job opportunity
 - Manual Entry and Paste Job Text modes
 - Smart Capture paste-review workflow with conservative rule-based suggestions before saving
+- Parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while keeping Source user-selected
+- Explicit Job link input; pasted URLs are not captured automatically
 - Optional status, resume version, applied date, follow-up date, source, job link, and notes
 - Follow-up presets for common next-step dates
 - Applied-date defaulting when a user selects Applied or a later status and no applied date is set
@@ -24,7 +26,8 @@ The product is built around a common job-search problem: opportunities arrive fr
 - Search across company, role, source, location, and notes
 - Filters for status, source, resume version, and red-flag state
 - Sort options for recently updated, saved date, follow-up date, company, and status
-- Applications table with saved date, applied date, follow-up date, red-flag indicators, and compact truncated notes previews
+- Opportunity-focused Applications table with status, follow-up urgency, resume assignment, red-flag indicators, Notes shortcut, and Details action
+- Notes badge opens the Job Details tab while full notes remain editable in Application Detail
 
 ### Application Detail
 
@@ -137,9 +140,9 @@ Docs-only changes do not require tests. Cross-stack product changes should run b
 
 ## Project Status
 
-Career Pipeline is a working local-first prototype with a FastAPI backend, SQLite database, React/Vite frontend, backend pytest coverage, and GitHub Actions CI. It supports quick capture, application management, tabbed detail editing, pipeline status updates, follow-up and status-change activity logging, dashboard effectiveness metrics, resume-version management, red-flag tracking, next actions, and activity timelines.
+Career Pipeline is a working local-first prototype with a FastAPI backend, SQLite database, React/Vite frontend, backend pytest coverage, and GitHub Actions CI. It supports quick capture with Smart Capture review, application management, tabbed detail editing, pipeline status updates, follow-up and status-change activity logging, dashboard effectiveness metrics, resume-version management, red-flag tracking, next actions, and activity timelines.
 
-Deployment, authentication, AI features, scraping, browser extension workflows, and advanced analytics are not implemented. Smart Capture uses conservative deterministic paste-review helpers today; AI-assisted extraction is an optional future direction rather than a current product claim.
+Deployment, authentication, AI features, scraping, browser extension workflows, and advanced analytics are not implemented. Smart Capture uses conservative deterministic paste-review helpers with internal parser-format detection today; AI-assisted extraction is an optional future direction rather than a current product claim.
 
 ## Documentation
 

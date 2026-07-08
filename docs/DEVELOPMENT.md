@@ -124,8 +124,10 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Smart Capture review fields can be edited before Save application creates the record.
 - Smart Capture notes include the pasted job text.
 - Smart Capture leaves Job link blank unless the user enters an explicit link.
-- Smart Capture keeps Source user-selected instead of inferring it from pasted URLs.
+- Smart Capture keeps Source user-selected instead of inferring or overwriting it from pasted text or URLs.
+- Smart Capture can internally detect common LinkedIn, Indeed, ZipRecruiter, or generic pasted-text formats to choose the best deterministic extraction profile.
 - Smart Capture captures obvious header-level compensation as editable text instead of numeric salary guesses.
+- Company career pages remain best-effort and should be reviewed manually before saving.
 
 ### Applications Filters And Details
 
@@ -136,12 +138,16 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Search works for company, role, source, location, and full notes text.
 - Status, source, resume version, and red-flag filters work within the selected view.
 - Sorting works for recently updated, saved date newest/oldest, follow-up date, company, and status.
-- Long notes display as compact previews in the table while full notes remain available in Details.
+- The Applications table prioritizes opportunity, status, follow-up urgency, resume assignment, flags, Notes shortcut, and Details action.
+- Applications with notes show a compact Notes badge rather than raw pasted-note previews.
+- Clicking the Notes badge opens Application Detail on the Job Details tab.
 - Details opens from filtered and sorted results.
+- Details opens Application Detail on the Overview tab.
 - Selecting Details scrolls the detail panel into view.
 - Detail tabs show Overview, Dates & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity.
 - Unsaved detail changes warn before closing or switching to a different application.
 - Clicking Details on the currently open application only scrolls and does not clear dirty state.
+- Clicking Notes or Details for the currently open application can switch tabs without re-fetching data or clearing unsaved edits.
 - Saving detail changes keeps the panel open and clears the unsaved-change warning.
 
 ### Applied Dates And Detail Fields
@@ -152,6 +158,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Existing Applied Date is not overwritten by status changes.
 - Applied Date is not automatically cleared when changing status back to Saved.
 - Users can manually edit or clear Applied Date.
+- Backend create/update behavior also protects the applied-date default when status is Applied or later and the value is empty.
 - Next Action can be added, edited, cleared, and saved from Application Detail.
 - Next Action appears on Command Center cards when present.
 - Contact name, Contact info, and Prep notes can be added, edited, cleared, and saved from the Contact & Prep tab.

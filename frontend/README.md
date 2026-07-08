@@ -7,7 +7,7 @@ This is the React/Vite frontend for Career Pipeline. It provides the user-facing
 - Command Center: backend-derived overdue follow-ups, upcoming follow-ups, stale applications, Next Action display, and follow-up quick actions
 - Dashboard: backend-derived job-search summary metrics, source/resume breakdowns, Source Effectiveness, and Resume Version Effectiveness
 - Quick Add: lightweight manual capture and Smart Capture paste-review workflow
-- Applications: Active, Closed, and All views with search, filters, sorting, table previews, and Details access
+- Applications: Active, Closed, and All views with search, filters, sorting, opportunity-focused table rows, Notes shortcut, and Details access
 - Pipeline: responsive grouped application status workflow with status filters
 - Resume Versions: create, edit, deactivate, reactivate, and view reusable resume variants
 
@@ -16,11 +16,12 @@ This is the React/Vite frontend for Career Pipeline. It provides the user-facing
 - Sticky responsive sidebar navigation
 - Quick Add success flow with Add another and View applications actions
 - Smart Capture mode that prepares conservative editable suggestions from pasted job text before saving
+- Smart Capture parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while preserving the user-selected Source and explicit Job link input
 - Applied-date handling that defaults only when useful and does not overwrite existing dates
 - Tabbed Application Detail editing for richer application context, dates/follow-ups, job details, contact/prep notes, red flags, and activity timeline entries
 - Optional Next Action support in Application Detail and Command Center cards
 - Independent activity timeline add/list/delete behavior inside Application Detail
-- Applications table note truncation with hover/title preview for long notes
+- Opportunity-focused Applications table with follow-up urgency, red-flag counts, Notes badge shortcut, and Details action
 - Command Center follow-up actions for Snooze 3 days, Snooze 1 week, and Clear follow-up, with activity logging and no-op snooze prevention
 - Visual readability polish for status colors, dashboard accents, pipeline distinction, and empty states
 - Responsive layout polish for normal full-screen and half-screen desktop widths
