@@ -52,6 +52,13 @@ const detailTabs = [
   { id: "activity", label: "Activity" },
 ];
 
+const followUpPresets = [
+  { label: "Tomorrow", daysFromToday: 1 },
+  { label: "In 3 days", daysFromToday: 3 },
+  { label: "In 1 week", daysFromToday: 7 },
+  { label: "In 2 weeks", daysFromToday: 14 },
+];
+
 function toFormState(application) {
   return {
     company_name: application.company_name || "",
@@ -110,8 +117,62 @@ function getTodayValue() {
   return formatLocalDate(new Date());
 }
 
+function getPresetDate(daysFromToday) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromToday);
+  return formatLocalDate(date);
+}
+
 function isAppliedOrLater(status) {
   return APPLIED_OR_LATER_APPLICATION_STATUSES.includes(status);
+}
+
+function parseDateValue(value) {
+  if (!value) {
+    return null;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
+}
+
+function formatDisplayDate(value) {
+  const date = parseDateValue(value);
+
+  if (!date) {
+    return "";
+  }
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function getFollowUpSummary(value) {
+  const followUpDate = parseDateValue(value);
+
+  if (!followUpDate) {
+    return "No follow-up set";
+  }
+
+  const today = parseDateValue(getTodayValue());
+
+  if (followUpDate.getTime() === today.getTime()) {
+    return "Due today";
+  }
+
+  if (followUpDate < today) {
+    return "Overdue";
+  }
+
+  return formatDisplayDate(value);
 }
 
 export default function ApplicationDetailPanel({
@@ -192,6 +253,11 @@ export default function ApplicationDetailPanel({
     setSaveMessage("");
   }
 
+  function setFollowUpDate(value) {
+    setFormData((current) => ({ ...current, follow_up_date: value }));
+    setSaveMessage("");
+  }
+
   function handleClose() {
     if (
       hasUnsavedChanges &&
@@ -251,13 +317,20 @@ export default function ApplicationDetailPanel({
     }
   }
 
+  const opportunityTitle =
+    formData.role_title.trim() && formData.company_name.trim()
+      ? `${formData.role_title.trim()} at ${formData.company_name.trim()}`
+      : formData.role_title.trim() || formData.company_name.trim() || "Untitled opportunity";
+  const appliedSummary = formData.date_applied ? formatDisplayDate(formData.date_applied) : "Not applied";
+  const followUpSummary = getFollowUpSummary(formData.follow_up_date);
+
   return (
     <section className="panel application-detail-panel" aria-labelledby="application-detail-title">
       <div className="section-heading detail-heading">
         <div>
           <p className="eyebrow">Application detail</p>
-          <h2 id="application-detail-title">Edit Application</h2>
-          <p>Add richer context without slowing down Quick Add.</p>
+          <h2 id="application-detail-title">{opportunityTitle}</h2>
+          <p>Track status, follow-ups, notes, and prep for this opportunity.</p>
         </div>
         <button className="secondary-button" type="button" onClick={handleClose}>
           Close
@@ -280,6 +353,35 @@ export default function ApplicationDetailPanel({
               Unsaved changes
             </div>
           ) : null}
+
+          <div className="detail-action-summary" aria-label="Application summary and actions">
+            <div className="detail-summary-item">
+              <span>Status</span>
+              <strong>{formData.status || "Not set"}</strong>
+            </div>
+            <div className="detail-summary-item">
+              <span>Source</span>
+              <strong>{formData.source || "Not set"}</strong>
+            </div>
+            <div className="detail-summary-item">
+              <span>Applied</span>
+              <strong>{appliedSummary}</strong>
+            </div>
+            <div className="detail-summary-item">
+              <span>Follow-up</span>
+              <strong>{followUpSummary}</strong>
+            </div>
+            {formData.job_link.trim() ? (
+              <a
+                className="secondary-button detail-job-link-action"
+                href={formData.job_link.trim()}
+                rel="noreferrer"
+                target="_blank"
+              >
+                Open job link
+              </a>
+            ) : null}
+          </div>
 
           <div className="detail-tabs" role="tablist" aria-label="Application detail sections">
             {detailTabs.map((tab) => (
@@ -412,6 +514,20 @@ export default function ApplicationDetailPanel({
                       value={formData.follow_up_date}
                       onChange={updateField}
                     />
+                    <div className="follow-up-presets" aria-label="Follow-up date presets">
+                      {followUpPresets.map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => setFollowUpDate(getPresetDate(preset.daysFromToday))}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                      <button type="button" onClick={() => setFollowUpDate("")}>
+                        Clear
+                      </button>
+                    </div>
                   </label>
 
                   <label className="detail-field-grid-span">

@@ -571,6 +571,49 @@ a {
   grid-column: 1 / -1;
 }
 
+.detail-action-summary {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+}
+
+.detail-summary-item {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  border: 1px solid #dce6e3;
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: #f7faf9;
+}
+
+.detail-summary-item span {
+  color: #60706d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.detail-summary-item strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #17202a;
+  font-size: 0.95rem;
+}
+
+.detail-job-link-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
+  text-decoration: none;
+}
+
 .detail-tabs,
 .detail-tab-panel {
   grid-column: 1 / -1;
