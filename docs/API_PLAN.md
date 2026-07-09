@@ -170,7 +170,7 @@ Rules:
 
 - overdue_followups: follow_up_date exists and is before today
 - upcoming_followups: follow_up_date exists and is today through the next 3 days
-- stale_applications: no follow_up_date, active status, and updated_at older than 14 days
+- stale_applications: backend response field for Needs check-in items: no follow_up_date, active status, and updated_at older than 14 days
 
 Stale applications exclude:
 
@@ -248,7 +248,7 @@ The response includes:
 
 Status: implemented
 
-## Resume Versions
+## Resume Variants API
 
 ### GET /api/resume-versions
 

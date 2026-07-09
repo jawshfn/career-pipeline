@@ -2130,13 +2130,18 @@ a {
 }
 
 .pipeline-filter-button-active {
-  border-color: #287c73;
+  border-color: #174f48;
   color: #ffffff;
-  background: #287c73;
+  background: #1f6860;
+  box-shadow:
+    0 0 0 3px rgba(40, 124, 115, 0.18),
+    0 8px 18px rgba(31, 104, 96, 0.22);
+  transform: translateY(-1px);
 }
 
 .pipeline-filter-button-active:hover {
-  background: #1f6860;
+  border-color: #174f48;
+  background: #174f48;
 }
 
 .pipeline-groups {
@@ -2438,6 +2443,22 @@ textarea:focus-visible {
 .follow-up-presets button:hover {
   border-color: var(--color-accent);
   background: var(--color-accent-soft);
+}
+
+.pipeline-filter-button.pipeline-filter-button-active {
+  border-color: #174f48;
+  color: #ffffff;
+  background: #1f6860;
+  box-shadow:
+    0 0 0 3px rgba(40, 124, 115, 0.18),
+    0 8px 18px rgba(31, 104, 96, 0.22);
+  transform: translateY(-1px);
+}
+
+.pipeline-filter-button.pipeline-filter-button-active:hover {
+  border-color: #174f48;
+  color: #ffffff;
+  background: #174f48;
 }
 
 .quiet-danger-button {

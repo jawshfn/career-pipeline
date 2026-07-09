@@ -1,42 +1,25 @@
 # Career Pipeline Frontend
 
-This is the React/Vite frontend for Career Pipeline. It provides the user-facing workspace for quick application capture, application management, status review, follow-up actions, dashboard metrics, resume management, red-flag tracking, and activity timelines.
+React/Vite frontend for the Career Pipeline local job-search workspace.
 
-## Page Structure
+## Pages
 
-- Reminders: backend-derived overdue follow-ups, upcoming follow-ups, Needs check-in items, Next Action display, and follow-up quick actions
-- Dashboard: backend-derived summary metric cards plus expandable Application Status, Sources, Red Flags, Source Results, and Resume Results sections
-- Add Job: lightweight manual capture and Smart Capture paste-review workflow
-- Applications: Active, Closed, and All views with search, filters, sorting, opportunity-focused table rows, Notes shortcut, and Details access
-- Status Board: responsive grouped application status workflow with status filters and quick status updates
+- Reminders: overdue follow-ups, upcoming follow-ups, Needs check-in items, and follow-up quick actions
+- Dashboard: summary cards plus expandable Application Status, Sources, Red Flags, Source Results, and Resume Results sections
+- Add Job: Manual Entry and Smart Capture paste-review workflows
+- Applications: Active, Closed, and All views with search, filters, sorting, table actions, and Application Detail
+- Status Board: grouped status board with search, status filters, adaptive tiles, and quick status updates
 - Resumes: create, edit, deactivate, reactivate, and view reusable resume variants
 
-## Main Frontend Features
+## Local Backend
 
-- Sticky responsive sidebar navigation
-- Add Job success flow with Add another and View applications actions
-- Smart Capture mode that prepares conservative editable suggestions from pasted job text before saving
-- Smart Capture parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while preserving the user-selected Source and explicit Job link input
-- Smart Capture review guardrails that summarize best-match parser, captured fields, and user-controlled Source/Job link behavior
-- Applied-date handling that defaults only when useful and does not overwrite existing dates
-- Tabbed Application Detail with a read-only Overview command snapshot plus focused editing tabs for status/follow-ups, job details, contact/prep notes, red flags, and activity timeline entries
-- Optional Next Action support in Application Detail and Reminders cards
-- Independent activity timeline add/list/delete behavior inside Application Detail
-- Opportunity-focused Applications table with follow-up urgency, red-flag counts, Notes badge shortcut, and Details action
-- Reminders follow-up actions for Snooze 3 days, Snooze 1 week, and Clear follow-up, with activity logging and no-op snooze prevention
-- Visual readability polish for status colors, dashboard accents, status-board distinction, and empty states
-- Responsive layout polish for normal full-screen and half-screen desktop widths
-- App shell constraints that keep desktop navigation sticky, center pages in the main content area, and avoid page-level horizontal overflow
-
-## Local Backend Requirement
-
-The frontend API layer expects the FastAPI backend to be running locally at:
+Interactive frontend features expect the FastAPI backend at:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-Start the backend before using the app interactively:
+Start the backend from the repository root:
 
 ```powershell
 cd backend
@@ -45,19 +28,23 @@ cd backend
 
 ## Setup
 
-From the repository root:
-
 ```powershell
 cd frontend
 npm install
 ```
 
-## Available Scripts
+## Scripts
 
-Run the Vite dev server:
+Run the dev server:
 
 ```powershell
 npm run dev
+```
+
+Run frontend tests:
+
+```powershell
+npm test
 ```
 
 Build for production:
@@ -66,10 +53,10 @@ Build for production:
 npm run build
 ```
 
-Preview the production build locally:
+Preview the production build:
 
 ```powershell
 npm run preview
 ```
 
-The production build does not require the backend server to be running, but interactive API features do.
+The production build can complete without the backend running, but API-driven pages need the backend for interactive use.

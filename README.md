@@ -2,23 +2,19 @@
 
 [![CI](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml)
 
-Career Pipeline is a full-stack job-search command center for capturing opportunities, tracking applications, managing follow-ups, and reviewing job-search progress from one place.
+Career Pipeline is a local-first full-stack job-search workspace for capturing opportunities, tracking applications, managing follow-ups, and reviewing progress.
 
-## Why I Built It
+It is built as a practical product prototype: fast capture when a job looks interesting, richer detail when context matters, and clear daily surfaces for follow-ups, status changes, resumes, red flags, and activity history.
 
-Job searches spread across LinkedIn, Indeed, ZipRecruiter, company career pages, recruiters, referrals, and notes. A spreadsheet can track rows, but it often loses the context that matters later: follow-up timing, resume versions, next actions, pasted job details, and warning signs.
+## Product Highlights
 
-Career Pipeline is built as a practical local-first workflow tool, not just a CRUD demo. Add Job keeps capture lightweight, while richer application management, follow-ups, activity history, and metrics live in focused views.
-
-## Highlights
-
-- Add Job with Manual Entry and deterministic Smart Capture / Paste Job Text.
-- Smart Capture is review-first: Source remains user-selected and Job Link is saved only from the explicit input.
-- Application management with Active, Closed, and All views, search, filters, sorting, and detail editing.
-- Reminders for overdue follow-ups, upcoming follow-ups, and Needs check-in items.
-- Application Detail with status/follow-up, job details, contact/prep notes, red flags, and activity timeline.
-- Dashboard metrics for application status, sources, resumes, red flags, and effectiveness snapshots.
-- Tested full-stack foundation with FastAPI, SQLite, React/Vite, pytest, Vitest, and GitHub Actions.
+- **Add Job:** save opportunities manually or with deterministic Smart Capture from pasted job text.
+- **Applications:** search, filter, sort, and open detailed records across Active, Closed, and All views.
+- **Status Board:** scan opportunities by stage and update statuses quickly.
+- **Reminders:** review overdue follow-ups, upcoming follow-ups, and Needs check-in items.
+- **Dashboard:** see summary metrics, source results, resume results, and red-flag snapshots.
+- **Resumes:** manage reusable resume variants and connect them to applications.
+- **Application Detail:** edit follow-up, job details, resume/prep notes, red flags, and activity timeline entries.
 
 ## Tech Stack
 
@@ -67,8 +63,6 @@ npm test
 npm run build
 ```
 
-Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend tests, frontend build, and manual QA for the affected workflows.
-
 ## Optional Demo Data
 
 For local screenshots or demos, seed fictional data from the backend directory:
@@ -77,13 +71,13 @@ For local screenshots or demos, seed fictional data from the backend directory:
 .\.venv\Scripts\python.exe -m app.seed_demo_data
 ```
 
-The seed command refuses to run if local application data already exists. Use `--reset` only when you intentionally want to clear local app demo tables before reseeding.
+The seed command refuses to run if local application data already exists. Use `--reset` only when you intentionally want to clear local demo tables before reseeding.
 
 ## Project Status
 
-Career Pipeline is a working local-first prototype. It supports quick capture, application management, follow-up workflows, activity logging, dashboard metrics, resume management, and red-flag tracking.
+Career Pipeline is a working local-first prototype, not a deployed production SaaS app.
 
-Not implemented: authentication, deployment, scraping, browser extension workflows, AI extraction, import/export, or external integrations. Smart Capture is deterministic and review-first.
+Not implemented: authentication, deployment, scraping, browser extension workflows, AI extraction, import/export, email/calendar integrations, or multi-user sync.
 
 ## Documentation
 

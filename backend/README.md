@@ -1,12 +1,19 @@
 # Career Pipeline Backend
 
-This backend began as the Phase 1 foundation for Career Pipeline. It provides a local-first FastAPI API with SQLite persistence, SQLAlchemy models, Pydantic schemas, local demo data, and pytest coverage for the application, resume-version, archive, dashboard, activity, and action-item workflows.
+FastAPI backend for the Career Pipeline local-first prototype. It provides SQLite persistence, SQLAlchemy models, Pydantic schemas, demo data seeding, and pytest coverage for the core job-search workflows.
 
-The React frontend now exists, and GitHub Actions CI runs backend tests, frontend tests, and the frontend production build. The backend currently supports applications, resume versions, pipeline status updates, archive behavior, Reminders action items for overdue follow-ups, upcoming follow-ups due within 3 days, Needs check-in applications, application activity entries, and Dashboard summary metrics. Deployment and authentication are planned for later phases.
+## Current API Areas
+
+- Applications: create, list, retrieve, update, archive
+- Application activities: list, create, update, delete timeline entries
+- Reminders action items: overdue follow-ups, upcoming follow-ups, and Needs check-in items
+- Dashboard summary metrics
+- Resume variants
+- Health check
+
+The backend is local-development focused. Authentication, deployment, scraping, browser extensions, AI extraction, import/export, and email/calendar integrations are not implemented.
 
 ## Setup
-
-From the repository root:
 
 ```powershell
 cd backend
@@ -16,7 +23,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-## Run the API
+## Run The API
 
 ```powershell
 cd backend
@@ -44,33 +51,25 @@ The default SQLite database is created at:
 backend/career_pipeline.db
 ```
 
-This file is local development state and should not be committed.
-
-To use a different SQLite database path, set `CAREER_PIPELINE_DATABASE_URL` before starting the API.
+This file is local development state and should not be committed. To use a different SQLite database path, set `CAREER_PIPELINE_DATABASE_URL` before starting the API.
 
 ## Run Tests
 
-From the backend directory:
-
 ```powershell
 cd backend
-python -m pytest
+.\.venv\Scripts\python.exe -m pytest
 ```
 
 Tests use a separate temporary SQLite database and do not write to `backend/career_pipeline.db`.
 
-GitHub Actions CI runs this same backend test command on push and pull request.
-
 ## Seed Demo Data
 
-After installing dependencies, run this from the backend directory:
+Seed fictional, public-safe demo data from the backend directory:
 
 ```powershell
 cd backend
 .\.venv\Scripts\python.exe -m app.seed_demo_data
 ```
-
-The seed script creates fictional, public-safe demo resume versions, applications, and activity entries. It does not use personal job-search data.
 
 The command refuses to run if local app data already exists:
 
@@ -78,7 +77,7 @@ The command refuses to run if local app data already exists:
 Demo seed refused because local data already exists. Run with --reset to clear local app demo tables first.
 ```
 
-Use reset only when you intentionally want to clear the local app demo tables before reseeding:
+Use reset only when you intentionally want to clear local demo tables before reseeding:
 
 ```powershell
 .\.venv\Scripts\python.exe -m app.seed_demo_data --reset

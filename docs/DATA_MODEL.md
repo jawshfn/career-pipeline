@@ -57,7 +57,7 @@ Allowed stored statuses:
 - Withdrawn
 - Archived
 
-`Archived` is stored for archived records, but it is not an active pipeline stage. Active Applications and Pipeline views filter out records where `is_archived` is true.
+`Archived` is stored for archived records, but it is not an active Status Board stage. Active Applications and Status Board views filter out records where `is_archived` is true.
 
 `Follow-up due` is not stored as a status. Follow-up action states are computed from `follow_up_date`.
 
@@ -118,7 +118,7 @@ Stores dated Activity Timeline entries for an application.
 ### Implementation Notes
 
 - Activity entries are saved independently from the main application detail form.
-- Command Center follow-up quick actions can create activity entries for snooze and clear outcomes.
+- Reminders follow-up quick actions can create activity entries for snooze and clear outcomes.
 - Application status changes create backend-owned `Status Change` activity entries.
 
 ## Planned Future Tables
