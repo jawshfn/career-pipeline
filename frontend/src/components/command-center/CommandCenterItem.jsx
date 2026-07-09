@@ -1,13 +1,14 @@
 import React from "react";
 
 import StatusBadge from "../applications/StatusBadge.jsx";
+import { formatDisplayDate } from "../../utils/dateFormatting.js";
 
 function formatDate(value) {
   if (!value) {
     return "-";
   }
 
-  return value.slice(0, 10);
+  return formatDisplayDate(String(value).slice(0, 10), String(value).slice(0, 10));
 }
 
 export default function CommandCenterItem({
@@ -29,30 +30,32 @@ export default function CommandCenterItem({
         <StatusBadge status={application.status} />
       </div>
 
-      <dl className="command-center-item-details">
+      <div className="command-center-item-meta">
         {!showUpdatedAt ? (
-          <div>
-            <dt>Follow-up</dt>
-            <dd>{formatDate(application.follow_up_date)}</dd>
-          </div>
+          <p>
+            <strong>Follow-up:</strong> {formatDate(application.follow_up_date)}
+          </p>
         ) : null}
         {showUpdatedAt ? (
-          <div>
-            <dt>Last updated</dt>
-            <dd>{formatDate(application.updated_at)}</dd>
-          </div>
+          <p>
+            <strong>Last updated:</strong> {formatDate(application.updated_at)}
+          </p>
         ) : null}
         {application.next_action ? (
-          <div className="command-center-next-action">
-            <dt>Next action</dt>
-            <dd>{application.next_action}</dd>
-          </div>
+          <p className="command-center-next-action">
+            <strong>Next:</strong> {application.next_action}
+          </p>
         ) : null}
-      </dl>
+      </div>
 
       {showFollowUpActions ? (
         <details className="command-center-action-details">
-          <summary>Actions</summary>
+          <summary>Manage reminder</summary>
+          {!application.next_action ? (
+            <p className="command-center-action-note">
+              Add a next action from Application Detail if this reminder needs more context.
+            </p>
+          ) : null}
           <div className="command-center-actions" aria-label={`Follow-up actions for ${application.company_name}`}>
             {availableFollowUpActions.snooze3 ? (
               <button

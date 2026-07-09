@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..domain import (
     ARCHIVED_APPLICATION_STATUS,
+    FOLLOW_UP_EXCLUDED_STATUSES,
     STALE_EXCLUDED_STATUSES,
     STATUS_CHANGE_ACTIVITY_TYPE,
     should_default_date_applied,
@@ -94,6 +95,7 @@ def get_action_items(db: Session = Depends(get_db)) -> dict[str, list[Applicatio
         db.query(Application)
         .filter(
             Application.is_archived.is_(False),
+            Application.status.notin_(FOLLOW_UP_EXCLUDED_STATUSES),
             Application.follow_up_date.is_not(None),
             Application.follow_up_date < today,
         )
@@ -105,6 +107,7 @@ def get_action_items(db: Session = Depends(get_db)) -> dict[str, list[Applicatio
         db.query(Application)
         .filter(
             Application.is_archived.is_(False),
+            Application.status.notin_(FOLLOW_UP_EXCLUDED_STATUSES),
             Application.follow_up_date.is_not(None),
             Application.follow_up_date >= today,
             Application.follow_up_date <= upcoming_cutoff,

@@ -176,7 +176,7 @@ export default function CommandCenterPage({ onUpdateApplication }) {
         <div>
           <p className="eyebrow">Daily reminders</p>
           <h2>Reminders</h2>
-          <p>See overdue and upcoming follow-ups, plus any opportunities that may need a check-in.</p>
+          <p>Follow up on opportunities that need attention soon.</p>
         </div>
       </header>
 

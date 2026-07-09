@@ -75,6 +75,31 @@ def test_action_items_exclude_four_days_out_followups(client):
     assert data["stale_applications"] == []
 
 
+def test_action_items_exclude_closed_statuses_from_followups(client):
+    yesterday = date.today() - timedelta(days=1)
+    today = date.today()
+
+    create_application(
+        client,
+        company_name="Rejected Follow-up Co",
+        status="Rejected",
+        follow_up_date=yesterday.isoformat(),
+    )
+    create_application(
+        client,
+        company_name="Withdrawn Follow-up Co",
+        status="Withdrawn",
+        follow_up_date=today.isoformat(),
+    )
+    create_application(client, company_name="Offer Follow-up Co", status="Offer", follow_up_date=today.isoformat())
+
+    data = get_action_items(client)
+
+    assert data["overdue_followups"] == []
+    assert [item["company_name"] for item in data["upcoming_followups"]] == ["Offer Follow-up Co"]
+    assert data["stale_applications"] == []
+
+
 def test_action_items_include_stale_active_applications(client, db_session):
     created = create_application(client, company_name="Stale Active Co", status="Applied").json()
     set_updated_at(db_session, created["id"], utc_now() - timedelta(days=15))
