@@ -248,13 +248,6 @@ export default function ApplicationsPage({
     setFilters(initialFilters);
   }
 
-  function updateRedFlagFilter(event) {
-    setFilters((currentFilters) => ({
-      ...currentFilters,
-      redFlagState: event.target.checked ? "flagged" : "all",
-    }));
-  }
-
   function closeDetails() {
     setSelectedApplicationId(null);
     setSelectedDetailTab("overview");
@@ -410,15 +403,11 @@ export default function ApplicationsPage({
 
               <label>
                 Red flags
-                <span className="application-filter-checkbox-control">
-                  <input
-                    checked={filters.redFlagState === "flagged"}
-                    name="redFlagState"
-                    onChange={updateRedFlagFilter}
-                    type="checkbox"
-                  />
-                  {filters.redFlagState === "flagged" ? "Enabled" : "Disabled"}
-                </span>
+                <select name="redFlagState" onChange={updateFilter} value={filters.redFlagState}>
+                  <option value="all">All</option>
+                  <option value="flagged">Red flags only</option>
+                  <option value="clean">No red flags</option>
+                </select>
               </label>
             </div>
           ) : null}

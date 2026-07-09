@@ -717,33 +717,6 @@ a {
   background: #ffffff;
 }
 
-.application-filter-checkbox-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 39px;
-  padding: 9px 10px;
-  border: 1px solid #cbd6d3;
-  border-radius: 6px;
-  color: #34413f;
-  background: #ffffff;
-  box-sizing: border-box;
-}
-
-.application-filters .application-filter-checkbox-control input[type="checkbox"] {
-  width: 16px;
-  min-width: 16px;
-  height: 16px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  accent-color: #b85f54;
-  cursor: pointer;
-}
-
 .application-filters input:focus,
 .application-filters select:focus {
   border-color: #287c73;
