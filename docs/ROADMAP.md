@@ -181,11 +181,12 @@ Status: complete through Phase 12.6
 
 ## Phase 13: Demo Readiness
 
-Status: complete through Phase 13.1b
+Status: complete through Phase 13.1c
 
 - Phase 13.0: add safe local-only fictional demo data seeding workflow for recruiter/demo screenshots
 - Phase 13.1a: simplify Manual Quick Add by keeping tracking details behind an optional disclosure
 - Phase 13.1b: simplify Smart Capture Review into clearer review sections with optional tracking details
+- Phase 13.1c: simplify Applications filters with visible search/sort and collapsed advanced filters
 
 ## Near-Term Future Work
 

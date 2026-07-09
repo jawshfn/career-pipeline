@@ -166,7 +166,8 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Closed shows Rejected and Withdrawn.
 - All shows active and closed applications while still excluding archived records.
 - Search works for company, role, source, location, and full notes text.
-- Status, source, resume version, and red-flag filters work within the selected view.
+- Search and Sort remain visible by default.
+- Status, source, resume version, and Red flags only filters live behind More filters and keep their values when collapsed.
 - Sorting works for recently updated, saved date newest/oldest, follow-up date, company, and status.
 - The Applications table prioritizes opportunity, status, follow-up urgency, resume assignment, flags, Notes shortcut, and Details action.
 - Applications with notes show a compact Notes badge rather than raw pasted-note previews.

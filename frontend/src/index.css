@@ -668,11 +668,29 @@ a {
 
 .application-filters {
   display: grid;
-  grid-template-columns: minmax(min(100%, 280px), 1.4fr) repeat(auto-fit, minmax(min(100%, 170px), 1fr));
-  align-items: end;
   gap: 12px;
   margin-bottom: 16px;
   min-width: 0;
+}
+
+.application-filters-primary,
+.application-advanced-filters {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.application-filters-primary {
+  grid-template-columns: minmax(min(100%, 320px), 1.5fr) minmax(min(100%, 190px), 0.8fr) auto auto;
+  align-items: end;
+}
+
+.application-advanced-filters {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 12px;
+  border: 1px solid #d8e4e1;
+  border-radius: 8px;
+  background: #f7faf9;
 }
 
 .application-filters label {
@@ -699,6 +717,20 @@ a {
   background: #ffffff;
 }
 
+.application-filters .application-filter-red-flags input[type="checkbox"] {
+  justify-self: start;
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  margin: 2px 0 0 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  accent-color: #8b2f20;
+  cursor: pointer;
+}
+
 .application-filters input:focus,
 .application-filters select:focus {
   border-color: #287c73;
@@ -711,7 +743,9 @@ a {
   min-width: 0;
 }
 
+.application-filter-disclosure,
 .application-filter-actions button {
+  min-width: 132px;
   width: 100%;
 }
 
@@ -2879,6 +2913,16 @@ textarea:focus-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .application-filters-primary,
+  .application-advanced-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .application-filter-disclosure,
+  .application-filter-actions {
+    justify-self: start;
+  }
+
   .application-detail-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2928,6 +2972,11 @@ textarea:focus-visible {
   .smart-capture-source-row,
   .smart-capture-detail-row,
   .smart-capture-compensation-row {
+    grid-template-columns: 1fr;
+  }
+
+  .application-filters-primary,
+  .application-advanced-filters {
     grid-template-columns: 1fr;
   }
 

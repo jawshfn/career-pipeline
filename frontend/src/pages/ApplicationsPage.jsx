@@ -187,6 +187,23 @@ function getSourceOptions(applications) {
   ).sort((first, second) => first.localeCompare(second));
 }
 
+function getAdvancedFilterCount(filters) {
+  return ["status", "source", "resumeVersionId", "redFlagState"].filter(
+    (filterName) => filters[filterName] !== initialFilters[filterName],
+  ).length;
+}
+
+function hasAnyNonDefaultFilter(filters) {
+  return (
+    filters.search.trim() !== initialFilters.search ||
+    filters.status !== initialFilters.status ||
+    filters.source !== initialFilters.source ||
+    filters.resumeVersionId !== initialFilters.resumeVersionId ||
+    filters.redFlagState !== initialFilters.redFlagState ||
+    filters.sortBy !== initialFilters.sortBy
+  );
+}
+
 export default function ApplicationsPage({
   applications,
   error,
@@ -199,11 +216,15 @@ export default function ApplicationsPage({
   const [hasDetailUnsavedChanges, setHasDetailUnsavedChanges] = useState(false);
   const [applicationView, setApplicationView] = useState("active");
   const [filters, setFilters] = useState(initialFilters);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const detailPanelRef = useRef(null);
   const shouldScrollToDetailRef = useRef(false);
   const viewedApplications = getApplicationsForView(applications, applicationView);
   const filteredApplications = getFilteredApplications(viewedApplications, filters);
   const sourceOptions = getSourceOptions(viewedApplications);
+  const advancedFilterCount = getAdvancedFilterCount(filters);
+  const hasActiveFilters = hasAnyNonDefaultFilter(filters);
+  const advancedFilterButtonLabel = `${showAdvancedFilters ? "Hide filters" : "More filters"} (${advancedFilterCount})`;
 
   function scrollDetailPanelIntoView() {
     detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -225,6 +246,13 @@ export default function ApplicationsPage({
 
   function clearFilters() {
     setFilters(initialFilters);
+  }
+
+  function updateRedFlagFilter(event) {
+    setFilters((currentFilters) => ({
+      ...currentFilters,
+      redFlagState: event.target.checked ? "flagged" : "all",
+    }));
   }
 
   function closeDetails() {
@@ -302,78 +330,96 @@ export default function ApplicationsPage({
         </div>
 
         <div className="application-filters" aria-label="Search, filter, and sort applications">
-          <label className="application-filter-search">
-            Search
-            <input
-              name="search"
-              onChange={updateFilter}
-              placeholder="Company, role, source, location, or notes"
-              value={filters.search}
-            />
-          </label>
+          <div className="application-filters-primary">
+            <label className="application-filter-search">
+              Search
+              <input
+                name="search"
+                onChange={updateFilter}
+                placeholder="Company, role, source, location, or notes"
+                value={filters.search}
+              />
+            </label>
 
-          <label>
-            Status
-            <select name="status" onChange={updateFilter} value={filters.status}>
-              <option value="all">All statuses</option>
-              {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label>
+              Sort
+              <select name="sortBy" onChange={updateFilter} value={filters.sortBy}>
+                {sortOptions.map((sortOption) => (
+                  <option key={sortOption.value} value={sortOption.value}>
+                    {sortOption.label}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label>
-            Source
-            <select name="source" onChange={updateFilter} value={filters.source}>
-              <option value="all">All sources</option>
-              {sourceOptions.map((source) => (
-                <option key={source} value={source}>
-                  {source}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Resume
-            <select name="resumeVersionId" onChange={updateFilter} value={filters.resumeVersionId}>
-              <option value="all">All resume versions</option>
-              <option value="none">No resume version</option>
-              {resumeVersions.map((resumeVersion) => (
-                <option key={resumeVersion.id} value={String(resumeVersion.id)}>
-                  {resumeVersion.name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Red flags
-            <select name="redFlagState" onChange={updateFilter} value={filters.redFlagState}>
-              <option value="all">All applications</option>
-              <option value="flagged">Red-flagged only</option>
-              <option value="clean">No red flags</option>
-            </select>
-          </label>
-
-          <label>
-            Sort
-            <select name="sortBy" onChange={updateFilter} value={filters.sortBy}>
-              {sortOptions.map((sortOption) => (
-                <option key={sortOption.value} value={sortOption.value}>
-                  {sortOption.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="application-filter-actions">
-            <button className="secondary-button" type="button" onClick={clearFilters}>
-              Clear filters
+            <button
+              aria-controls="applications-advanced-filters"
+              aria-expanded={showAdvancedFilters}
+              className="secondary-button application-filter-disclosure"
+              type="button"
+              onClick={() => setShowAdvancedFilters((currentValue) => !currentValue)}
+            >
+              {advancedFilterButtonLabel}
             </button>
+
+            <div className="application-filter-actions">
+              <button className="secondary-button" disabled={!hasActiveFilters} type="button" onClick={clearFilters}>
+                Clear filters
+              </button>
+            </div>
           </div>
+
+          {showAdvancedFilters ? (
+            <div className="application-advanced-filters" id="applications-advanced-filters">
+              <label>
+                Status
+                <select name="status" onChange={updateFilter} value={filters.status}>
+                  <option value="all">All statuses</option>
+                  {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Source
+                <select name="source" onChange={updateFilter} value={filters.source}>
+                  <option value="all">All sources</option>
+                  {sourceOptions.map((source) => (
+                    <option key={source} value={source}>
+                      {source}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Resume
+                <select name="resumeVersionId" onChange={updateFilter} value={filters.resumeVersionId}>
+                  <option value="all">All resume versions</option>
+                  <option value="none">No resume version</option>
+                  {resumeVersions.map((resumeVersion) => (
+                    <option key={resumeVersion.id} value={String(resumeVersion.id)}>
+                      {resumeVersion.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="application-filter-red-flags">
+                <span>Red flags</span>
+                <input
+                  aria-label="Show red-flagged applications only"
+                  checked={filters.redFlagState === "flagged"}
+                  name="redFlagState"
+                  onChange={updateRedFlagFilter}
+                  type="checkbox"
+                />
+              </label>
+            </div>
+          ) : null}
         </div>
 
         {isLoading ? <LoadingState message="Loading applications..." /> : null}
