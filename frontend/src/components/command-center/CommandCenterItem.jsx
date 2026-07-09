@@ -30,14 +30,12 @@ export default function CommandCenterItem({
       </div>
 
       <dl className="command-center-item-details">
-        <div>
-          <dt>Source</dt>
-          <dd>{application.source || "-"}</dd>
-        </div>
-        <div>
-          <dt>Follow-up</dt>
-          <dd>{formatDate(application.follow_up_date)}</dd>
-        </div>
+        {!showUpdatedAt ? (
+          <div>
+            <dt>Follow-up</dt>
+            <dd>{formatDate(application.follow_up_date)}</dd>
+          </div>
+        ) : null}
         {showUpdatedAt ? (
           <div>
             <dt>Last updated</dt>
@@ -53,36 +51,39 @@ export default function CommandCenterItem({
       </dl>
 
       {showFollowUpActions ? (
-        <div className="command-center-actions" aria-label={`Follow-up actions for ${application.company_name}`}>
-          {availableFollowUpActions.snooze3 ? (
+        <details className="command-center-action-details">
+          <summary>Actions</summary>
+          <div className="command-center-actions" aria-label={`Follow-up actions for ${application.company_name}`}>
+            {availableFollowUpActions.snooze3 ? (
+              <button
+                className="quiet-button"
+                disabled={isUpdating}
+                type="button"
+                onClick={() => onFollowUpAction(application, "snooze-3")}
+              >
+                Snooze 3 days
+              </button>
+            ) : null}
+            {availableFollowUpActions.snooze7 ? (
+              <button
+                className="quiet-button"
+                disabled={isUpdating}
+                type="button"
+                onClick={() => onFollowUpAction(application, "snooze-7")}
+              >
+                Snooze 1 week
+              </button>
+            ) : null}
             <button
-              className="quiet-button"
+              className="quiet-danger-button"
               disabled={isUpdating}
               type="button"
-              onClick={() => onFollowUpAction(application, "snooze-3")}
+              onClick={() => onFollowUpAction(application, "clear")}
             >
-              Snooze 3 days
+              Clear follow-up
             </button>
-          ) : null}
-          {availableFollowUpActions.snooze7 ? (
-            <button
-              className="quiet-button"
-              disabled={isUpdating}
-              type="button"
-              onClick={() => onFollowUpAction(application, "snooze-7")}
-            >
-              Snooze 1 week
-            </button>
-          ) : null}
-          <button
-            className="quiet-danger-button"
-            disabled={isUpdating}
-            type="button"
-            onClick={() => onFollowUpAction(application, "clear")}
-          >
-            Clear follow-up
-          </button>
-        </div>
+          </div>
+        </details>
       ) : null}
     </article>
   );

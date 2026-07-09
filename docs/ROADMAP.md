@@ -181,7 +181,7 @@ Status: complete through Phase 12.6
 
 ## Phase 13: Demo Readiness
 
-Status: complete through Phase 13.1e
+Status: complete through Phase 13.1f
 
 - Phase 13.0: add safe local-only fictional demo data seeding workflow for recruiter/demo screenshots
 - Phase 13.1a: simplify Manual Quick Add by keeping tracking details behind an optional disclosure
@@ -189,6 +189,7 @@ Status: complete through Phase 13.1e
 - Phase 13.1c: simplify Applications filters with visible search/sort and collapsed advanced filters
 - Phase 13.1d: simplify sidebar navigation labels for Reminders, Add Job, and Resumes
 - Phase 13.1e: simplify Application Detail tabs, saved-date metadata, and stable summary-strip layout
+- Phase 13.1f: simplify Reminders cards and layout around follow-ups with secondary Needs check-in items
 
 ## Near-Term Future Work
 

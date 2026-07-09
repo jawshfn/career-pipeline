@@ -1824,10 +1824,19 @@ a {
   font-weight: 800;
 }
 
+.command-center-layout {
+  display: grid;
+  gap: 16px;
+}
+
 .command-center-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
   gap: 16px;
+}
+
+.command-center-secondary {
+  display: grid;
 }
 
 .command-center-message {
@@ -1961,6 +1970,23 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.command-center-action-details {
+  border-top: 1px solid #edf2f0;
+  padding-top: 8px;
+}
+
+.command-center-action-details summary {
+  width: fit-content;
+  cursor: pointer;
+  color: #287c73;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.command-center-action-details[open] summary {
+  margin-bottom: 8px;
 }
 
 .pipeline-board {
@@ -2965,6 +2991,10 @@ textarea:focus-visible {
   }
 
   .dashboard-sections-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .command-center-grid {
     grid-template-columns: 1fr;
   }
 

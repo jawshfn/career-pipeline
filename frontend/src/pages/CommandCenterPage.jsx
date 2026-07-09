@@ -165,6 +165,10 @@ export default function CommandCenterPage({ onUpdateApplication }) {
     actionItems.overdue_followups.length > 0 ||
     actionItems.upcoming_followups.length > 0 ||
     actionItems.stale_applications.length > 0;
+  const hasFollowUpItems =
+    actionItems.overdue_followups.length > 0 ||
+    actionItems.upcoming_followups.length > 0;
+  const hasCheckInItems = actionItems.stale_applications.length > 0;
 
   return (
     <div className="command-center-page">
@@ -172,7 +176,7 @@ export default function CommandCenterPage({ onUpdateApplication }) {
         <div>
           <p className="eyebrow">Daily reminders</p>
           <h2>Reminders</h2>
-          <p>See follow-ups and stale applications that need attention.</p>
+          <p>See overdue and upcoming follow-ups, plus any opportunities that may need a check-in.</p>
         </div>
       </header>
 
@@ -191,32 +195,45 @@ export default function CommandCenterPage({ onUpdateApplication }) {
         </div>
       ) : null}
       {!isActionItemsLoading && !actionItemsError && hasActionItems ? (
-        <div className="command-center-grid">
-          <CommandCenterSection
-            accent="overdue"
-            applications={actionItems.overdue_followups}
-            description="Follow-up dates before today."
-            getAvailableFollowUpActions={getAvailableFollowUpActions}
-            onFollowUpAction={handleFollowUpAction}
-            title="Overdue Follow-ups"
-            updatingApplicationId={updatingApplicationId}
-          />
-          <CommandCenterSection
-            accent="upcoming"
-            applications={actionItems.upcoming_followups}
-            description="Follow-ups due today through the next 3 days."
-            getAvailableFollowUpActions={getAvailableFollowUpActions}
-            onFollowUpAction={handleFollowUpAction}
-            title="Upcoming Follow-ups"
-            updatingApplicationId={updatingApplicationId}
-          />
-          <CommandCenterSection
-            accent="stale"
-            applications={actionItems.stale_applications}
-            description="Active applications without a follow-up and no recent update."
-            title="Stale Applications"
-            showUpdatedAt
-          />
+        <div className="command-center-layout">
+          {hasFollowUpItems ? (
+            <div className="command-center-grid">
+              {actionItems.overdue_followups.length > 0 ? (
+                <CommandCenterSection
+                  accent="overdue"
+                  applications={actionItems.overdue_followups}
+                  description="Follow-up dates before today."
+                  getAvailableFollowUpActions={getAvailableFollowUpActions}
+                  onFollowUpAction={handleFollowUpAction}
+                  title="Overdue Follow-ups"
+                  updatingApplicationId={updatingApplicationId}
+                />
+              ) : null}
+              {actionItems.upcoming_followups.length > 0 ? (
+                <CommandCenterSection
+                  accent="upcoming"
+                  applications={actionItems.upcoming_followups}
+                  description="Follow-ups due today through the next 3 days."
+                  getAvailableFollowUpActions={getAvailableFollowUpActions}
+                  onFollowUpAction={handleFollowUpAction}
+                  title="Upcoming Follow-ups"
+                  updatingApplicationId={updatingApplicationId}
+                />
+              ) : null}
+            </div>
+          ) : null}
+
+          {hasCheckInItems ? (
+            <div className="command-center-secondary">
+              <CommandCenterSection
+                accent="stale"
+                applications={actionItems.stale_applications}
+                description="Active applications without a follow-up and no recent update."
+                title="Needs check-in"
+                showUpdatedAt
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

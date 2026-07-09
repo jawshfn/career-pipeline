@@ -12,18 +12,19 @@ export default function CommandCenterSection({
   title,
   updatingApplicationId,
 }) {
+  const sectionId = `command-center-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const emptyMessages = {
     overdue: "No urgent follow-ups today.",
     upcoming: "No upcoming follow-ups in the next 3 days.",
-    stale: "No stale applications right now.",
+    stale: "No applications need a check-in right now.",
     default: "Nothing needs attention here.",
   };
 
   return (
-    <section className={`panel command-center-section command-center-section-${accent}`} aria-labelledby={`command-center-${title}`}>
+    <section className={`panel command-center-section command-center-section-${accent}`} aria-labelledby={sectionId}>
       <div className="command-center-section-header">
         <div>
-          <h3 id={`command-center-${title}`}>{title}</h3>
+          <h3 id={sectionId}>{title}</h3>
           <p>{description}</p>
         </div>
         <span>{applications.length}</span>
