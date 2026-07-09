@@ -9,7 +9,7 @@ export default function ContactPrepTab({
   return (
     <div className="detail-field-group detail-field-group-wide">
       <h3>Resume & Prep</h3>
-      <p className="detail-tab-helper">Keep the resume used, contact details, and prep notes together.</p>
+      <p className="detail-tab-helper">Keep the resume used and preparation notes together.</p>
       <div className="detail-field-grid">
         <label>
           Resume version
@@ -23,26 +23,6 @@ export default function ContactPrepTab({
           </select>
         </label>
 
-        <label>
-          Contact name
-          <input
-            name="contact_name"
-            value={formData.contact_name}
-            onChange={updateField}
-            placeholder="Recruiter or contact name"
-          />
-        </label>
-
-        <label className="detail-field-grid-span">
-          Contact info
-          <input
-            name="contact_info"
-            value={formData.contact_info}
-            onChange={updateField}
-            placeholder="Email, profile link, phone, or other contact method"
-          />
-        </label>
-
         <label className="detail-notes-field detail-field-grid-span">
           Prep notes
           <textarea
@@ -50,7 +30,7 @@ export default function ContactPrepTab({
             value={formData.prep_notes}
             onChange={updateField}
             rows="5"
-            placeholder="Interview prep, assessment notes, talking points, or questions to ask"
+            placeholder="Interview prep, recruiter notes, assessment details, talking points, or questions to ask"
           />
         </label>
       </div>

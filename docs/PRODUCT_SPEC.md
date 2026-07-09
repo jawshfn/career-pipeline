@@ -136,13 +136,13 @@ Current tabs:
 
 Overview is a read-only command snapshot with compact opportunity context, read-only added-to-tracker metadata, and contextual helpful next-step shortcuts into the focused editing tabs. When nothing needs attention, it shows a calm organized state instead of duplicating the main tab navigation. The compact summary strip appears below the tab buttons across Application Detail tabs so navigation stays stable.
 
-Editable areas include company name, role title, job link, source, status, resume version, applied date, follow-up date, next action, contact name, contact info, prep notes, location, compensation, salary range, employment type, notes, red flags, and red-flag notes.
+Editable areas include company name, role title, job link, source, status, resume version, applied date, follow-up date, next action, prep notes, location, compensation, salary range, employment type, notes, red flags, and red-flag notes.
 
-Status, applied date, follow-up date, and next action live in Follow-up. Company, role, source, job link, location, compensation, employment type, and notes live in Job Details. Resume version lives in Resume & Prep with contact and preparation context.
+Status lives in the persistent summary strip. Applied date, follow-up date, and next action live in Follow-up. Company, role, source, job link, location, compensation, employment type, and notes live in Job Details. Resume version and prep notes live in Resume & Prep.
 
 `date_saved` means the date the job was added to Career Pipeline. `date_applied` means the date the user actually submitted the application. Changing status to Applied or later can default an empty Applied Date, but existing Applied Date values are not automatically overwritten or cleared.
 
-The Resume & Prep tab stores application-scoped contact context and preparation notes. It is intentionally not a shared contacts table or full CRM.
+The Resume & Prep tab stores resume assignment and preparation notes. Prep notes can include recruiter context, assessment details, talking points, or questions to ask without becoming a shared contacts table or full CRM.
 
 The Activity tab supports dated activity entries with activity type and note. Activity entries are saved independently from the main detail form. Meaningful status changes are also logged by the backend as `Status Change` activity entries.
 

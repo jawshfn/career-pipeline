@@ -5,27 +5,15 @@ export default function StatusFollowUpTab({
   formData,
   getPresetDate,
   setFollowUpDate,
-  statusOptions,
   updateField,
 }) {
   return (
     <div className="detail-field-group detail-field-group-wide">
       <h3>Follow-up</h3>
       <p className="detail-tab-helper">
-        Track where this opportunity stands and what needs to happen next.
+        Track application dates, reminders, and the next thing to do.
       </p>
       <div className="detail-field-grid detail-dates-grid">
-        <label>
-          Status
-          <select name="status" value={formData.status} onChange={updateField}>
-            {statusOptions.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </select>
-        </label>
-
         <label>
           Date applied
           <input

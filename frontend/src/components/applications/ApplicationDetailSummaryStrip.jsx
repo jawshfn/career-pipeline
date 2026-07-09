@@ -6,12 +6,22 @@ export default function ApplicationDetailSummaryStrip({
   openableJobLink,
   resumeSummary,
   status,
+  statusOptions,
+  updateField,
 }) {
   return (
     <div className="detail-action-summary" aria-label="Application summary and actions">
       <div className="detail-summary-item">
-        <span>Status</span>
-        <strong>{status || "Not set"}</strong>
+        <label className="detail-summary-status-control">
+          <span>Status</span>
+          <select name="status" value={status} onChange={updateField}>
+            {statusOptions.map((statusOption) => (
+              <option key={statusOption} value={statusOption}>
+                {statusOption}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       <div className="detail-summary-item">
         <span>Applied</span>

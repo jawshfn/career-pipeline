@@ -460,6 +460,8 @@ export default function ApplicationDetailPanel({
             openableJobLink={openableJobLink}
             resumeSummary={resumeSummary}
             status={formData.status}
+            statusOptions={USER_SELECTABLE_APPLICATION_STATUSES}
+            updateField={updateField}
           />
 
           <div
@@ -483,7 +485,6 @@ export default function ApplicationDetailPanel({
                 formData={formData}
                 getPresetDate={getPresetDate}
                 setFollowUpDate={setFollowUpDate}
-                statusOptions={USER_SELECTABLE_APPLICATION_STATUSES}
                 updateField={updateField}
               />
             ) : null}

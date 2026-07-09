@@ -870,6 +870,27 @@ a {
   font-size: 0.95rem;
 }
 
+.detail-summary-status-control {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.detail-summary-status-control select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cbd6d3;
+  border-radius: 6px;
+  padding: 8px 9px;
+  color: #17202a;
+  background: #ffffff;
+}
+
+.detail-summary-status-control select:focus {
+  border-color: #287c73;
+  outline: 3px solid rgba(40, 124, 115, 0.14);
+}
+
 .detail-job-link-action {
   display: inline-flex;
   align-items: center;
