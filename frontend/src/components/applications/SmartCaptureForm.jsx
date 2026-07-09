@@ -143,6 +143,7 @@ export default function SmartCaptureForm({
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTrackingDetails, setShowTrackingDetails] = useState(false);
+  const [showJobDetails, setShowJobDetails] = useState(false);
 
   function updateCaptureField(event) {
     const { name, value } = event.target;
@@ -165,6 +166,7 @@ export default function SmartCaptureForm({
       compensation: hasReviewValue(nextReviewData.compensation),
     });
     setShowTrackingDetails(false);
+    setShowJobDetails(false);
   }
 
   async function handleSubmitReview(event) {
@@ -193,6 +195,7 @@ export default function SmartCaptureForm({
       setReviewData(null);
       setCapturedReviewFields({});
       setShowTrackingDetails(false);
+      setShowJobDetails(false);
       onCreateSuccess?.(createdApplication);
     } catch (creationError) {
       setError(creationError.message || "Could not create application.");
@@ -439,18 +442,30 @@ export default function SmartCaptureForm({
           <section className="smart-capture-review-section" aria-labelledby="smart-capture-job-details-title">
             <div className="smart-capture-review-section-heading">
               <h4 id="smart-capture-job-details-title">Job details</h4>
-              <p>Pasted job text is saved here for later reference.</p>
+              <p>Pasted job text will be saved for later reference.</p>
             </div>
 
-            <label className="notes-field">
-              <textarea
-                name="notes"
-                value={reviewData.notes}
-                onChange={updateReviewField}
-                rows="7"
-                placeholder="Pasted job text and optional context"
-              />
-            </label>
+            <button
+              aria-controls="smart-capture-job-details-text"
+              aria-expanded={showJobDetails}
+              className="quick-add-disclosure"
+              type="button"
+              onClick={() => setShowJobDetails((current) => !current)}
+            >
+              {showJobDetails ? "Hide pasted text" : "Show / edit pasted text"}
+            </button>
+
+            {showJobDetails ? (
+              <label className="notes-field" id="smart-capture-job-details-text">
+                <textarea
+                  name="notes"
+                  value={reviewData.notes}
+                  onChange={updateReviewField}
+                  rows="12"
+                  placeholder="Pasted job text and optional context"
+                />
+              </label>
+            ) : null}
           </section>
 
           <div className="form-actions">
