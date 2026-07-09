@@ -10,9 +10,9 @@ export default function StatusFollowUpTab({
 }) {
   return (
     <div className="detail-field-group detail-field-group-wide">
-      <h3>Status & Follow-up</h3>
+      <h3>Follow-up</h3>
       <p className="detail-tab-helper">
-        Saved Date is when the job was added. Applied Date is when you submitted the application.
+        Track where this opportunity stands and what needs to happen next.
       </p>
       <div className="detail-field-grid detail-dates-grid">
         <label>
@@ -24,17 +24,6 @@ export default function StatusFollowUpTab({
               </option>
             ))}
           </select>
-        </label>
-
-        <label>
-          Saved date
-          <input
-            name="date_saved"
-            type="date"
-            value={formData.date_saved}
-            onChange={updateField}
-            required
-          />
         </label>
 
         <label>

@@ -61,9 +61,9 @@ const initialFormState = {
 
 const detailTabs = [
   { id: "overview", label: "Overview" },
-  { id: "dates", label: "Status & Follow-up" },
+  { id: "dates", label: "Follow-up" },
   { id: "job-details", label: "Job Details" },
-  { id: "contact-prep", label: "Contact & Prep" },
+  { id: "contact-prep", label: "Resume & Prep" },
   { id: "red-flags", label: "Red Flags" },
   { id: "activity", label: "Activity" },
 ];
@@ -382,6 +382,7 @@ export default function ApplicationDetailPanel({
   const overviewSnapshotItems = [
     ["Company / role", opportunityTitle],
     ["Status", getDisplayValue(formData.status)],
+    ["Added to tracker", formData.date_saved ? formatDisplayDate(formData.date_saved, "") : "Not recorded"],
     ["Applied", appliedSummary],
     ["Follow-up", followUpSummary],
     ["Resume", resumeSummary],
@@ -397,12 +398,9 @@ export default function ApplicationDetailPanel({
     !formData.resume_version_id
       ? ["No resume selected", "Choose the resume version used for this application.", "contact-prep"]
       : null,
-    !openableJobLink ? ["No job link saved", "Add the posting link if you want fast access later.", "job-details"] : null,
+    !openableJobLink ? ["Posting link not saved", "Add it if you want quick access later.", "job-details"] : null,
     !formData.next_action.trim()
       ? ["No next action written", "Capture the next step when there is one.", "dates"]
-      : null,
-    !formData.notes.trim()
-      ? ["Job details are light", "Add posting notes or pasted context if helpful.", "job-details"]
       : null,
   ].filter(Boolean);
 
@@ -439,16 +437,6 @@ export default function ApplicationDetailPanel({
             </div>
           ) : null}
 
-          {activeTab !== "overview" ? (
-            <ApplicationDetailSummaryStrip
-              appliedSummary={appliedSummary}
-              followUpSummary={followUpSummary}
-              openableJobLink={openableJobLink}
-              resumeSummary={resumeSummary}
-              status={formData.status}
-            />
-          ) : null}
-
           <div className="detail-tabs" role="tablist" aria-label="Application detail sections">
             {detailTabs.map((tab) => (
               <button
@@ -465,6 +453,14 @@ export default function ApplicationDetailPanel({
               </button>
             ))}
           </div>
+
+          <ApplicationDetailSummaryStrip
+            appliedSummary={appliedSummary}
+            followUpSummary={followUpSummary}
+            openableJobLink={openableJobLink}
+            resumeSummary={resumeSummary}
+            status={formData.status}
+          />
 
           <div
             className="detail-tab-panel"

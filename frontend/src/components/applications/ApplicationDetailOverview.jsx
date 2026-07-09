@@ -10,7 +10,7 @@ export default function ApplicationDetailOverview({
     <div className="detail-overview-panel">
       <h3>Overview</h3>
       <p className="detail-tab-helper">
-        A read-only command snapshot. Use the shortcuts to edit details in the focused tabs.
+        Start here for the current status, follow-up, resume, source, and quick context for this opportunity.
       </p>
 
       <div className="detail-overview-grid" aria-label="Opportunity snapshot">
@@ -29,9 +29,9 @@ export default function ApplicationDetailOverview({
 
       <div className="detail-overview-section">
         <div className="detail-overview-section-heading">
-          <h4>Needs attention</h4>
+          <h4>Helpful next steps</h4>
           <span>
-            {attentionItems.length === 1 ? "1 suggestion" : `${attentionItems.length} suggestions`}
+            {attentionItems.length === 1 ? "1 item" : `${attentionItems.length} items`}
           </span>
         </div>
         {attentionItems.length > 0 ? (

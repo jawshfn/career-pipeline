@@ -175,15 +175,15 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Details opens from filtered and sorted results.
 - Details opens Application Detail on the Overview tab.
 - Selecting Details scrolls the detail panel into view.
-- Detail tabs show Overview, Status & Follow-up, Job Details, Contact & Prep, Red Flags, and Activity.
-- Overview is read-only and shows a scannable command snapshot with contextual Needs attention suggestions.
+- Detail tabs show Overview, Follow-up, Job Details, Resume & Prep, Red Flags, and Activity.
+- Overview is read-only and shows a scannable command snapshot with contextual helpful next-step items.
 - Overview does not show a static Quick edit button row because the main tabs already provide broad navigation.
-- Overview hides the persistent top summary strip; focused edit tabs keep it for orientation.
-- When there are no attention suggestions, Overview shows a calm organized empty state.
+- The compact summary strip appears below the tab buttons across Application Detail tabs for stable navigation.
+- When there are no helpful next-step items, Overview shows a calm organized empty state.
 - Company name, role title, Source, Job link, location, compensation, employment type, and notes edit from Job Details.
 - Job link values with full `http://` or `https://` protocols open as entered; obvious bare domains open with `https://`; incomplete text does not render as an external link.
-- Status, Applied Date, Follow-up Date, and Next Action edit from Status & Follow-up.
-- Resume Version edits from Contact & Prep.
+- Status, Applied Date, Follow-up Date, and Next Action edit from Follow-up.
+- Resume Version edits from Resume & Prep.
 - Application Detail is split into focused presentational subcomponents while `ApplicationDetailPanel` owns loading, state, save handling, and dirty-state checks.
 - Unsaved detail changes warn before closing or switching to a different application.
 - Clicking Details on the currently open application only scrolls and does not clear dirty state.
@@ -201,8 +201,8 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Backend create/update behavior also protects the applied-date default when status is Applied or later and the value is empty.
 - Next Action can be added, edited, cleared, and saved from Application Detail.
 - Next Action appears on Command Center cards when present.
-- Contact name, Contact info, and Prep notes can be added, edited, cleared, and saved from the Contact & Prep tab.
-- Contact & Prep fields do not appear in Quick Add, Dashboard, Pipeline, Command Center, or Applications table columns.
+- Contact name, Contact info, and Prep notes can be added, edited, cleared, and saved from the Resume & Prep tab.
+- Resume & Prep fields do not appear in Add Job, Dashboard, Pipeline, Reminders, or Applications table columns.
 - Follow-up date edits persist and update Applications, Command Center, and Dashboard where relevant.
 
 ### Pipeline Sync

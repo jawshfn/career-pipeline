@@ -8,8 +8,8 @@ export default function ContactPrepTab({
 }) {
   return (
     <div className="detail-field-group detail-field-group-wide">
-      <h3>Contact & Prep</h3>
-      <p className="detail-tab-helper">Keep resume positioning, contact context, and preparation notes here.</p>
+      <h3>Resume & Prep</h3>
+      <p className="detail-tab-helper">Keep the resume used, contact details, and prep notes together.</p>
       <div className="detail-field-grid">
         <label>
           Resume version
