@@ -717,17 +717,30 @@ a {
   background: #ffffff;
 }
 
-.application-filters .application-filter-red-flags input[type="checkbox"] {
-  justify-self: start;
+.application-filter-checkbox-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 39px;
+  padding: 9px 10px;
+  border: 1px solid #cbd6d3;
+  border-radius: 6px;
+  color: #34413f;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.application-filters .application-filter-checkbox-control input[type="checkbox"] {
   width: 16px;
   min-width: 16px;
   height: 16px;
-  margin: 2px 0 0 24px;
+  margin: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
-  accent-color: #8b2f20;
+  accent-color: #b85f54;
   cursor: pointer;
 }
 

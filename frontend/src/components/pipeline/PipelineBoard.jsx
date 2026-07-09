@@ -51,7 +51,7 @@ export default function PipelineBoard({
       </div>
 
       {visibleStatuses.length === 0 ? (
-        <p className="pipeline-empty-board">No active applications yet. Add one with Quick Add to start building your pipeline.</p>
+        <p className="pipeline-empty-board">No active applications yet. Add one with Add Job to start building your pipeline.</p>
       ) : (
         <div className="pipeline-groups">
           {visibleStatuses.map((status) => (

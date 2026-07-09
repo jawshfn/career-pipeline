@@ -3,21 +3,21 @@ import React from "react";
 import "./AppLayout.css";
 
 const navigationItems = [
-  { id: "command-center", label: "Command Center" },
+  { id: "command-center", label: "Reminders" },
   { id: "dashboard", label: "Dashboard" },
-  { id: "quick-add", label: "Quick Add" },
+  { id: "quick-add", label: "Add Job" },
   { id: "applications", label: "Applications" },
   { id: "pipeline", label: "Pipeline" },
-  { id: "resume-versions", label: "Resume Versions" },
+  { id: "resume-versions", label: "Resumes" },
 ];
 
 const pageTitles = {
-  "command-center": "Command Center",
+  "command-center": "Reminders",
   dashboard: "Dashboard",
-  "quick-add": "Quick Add",
+  "quick-add": "Add Job",
   applications: "Applications",
   pipeline: "Pipeline",
-  "resume-versions": "Resume Versions",
+  "resume-versions": "Resumes",
 };
 
 export default function AppLayout({ activePage, children, onNavigate }) {

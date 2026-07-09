@@ -21,7 +21,7 @@ export default function QuickAddPage({
       <header className="page-header">
         <div>
           <p className="eyebrow">Fast capture</p>
-          <h2>Quick Add</h2>
+          <h2>Add Job</h2>
           <p>Capture a job opportunity quickly. You can add richer details later.</p>
         </div>
       </header>
@@ -45,7 +45,7 @@ export default function QuickAddPage({
         </section>
       ) : null}
 
-      <div className="quick-add-mode-tabs" role="tablist" aria-label="Quick Add mode">
+      <div className="quick-add-mode-tabs" role="tablist" aria-label="Add Job mode">
         <button
           className={`quick-add-mode-tab ${activeMode === "manual" ? "is-active" : ""}`}
           type="button"

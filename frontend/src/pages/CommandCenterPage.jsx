@@ -73,7 +73,7 @@ export default function CommandCenterPage({ onUpdateApplication }) {
       });
     } catch (error) {
       setActionItems(emptyActionItems);
-      setActionItemsError(error.message || "Could not load Command Center action items.");
+      setActionItemsError(error.message || "Could not load reminder action items.");
     } finally {
       if (showLoading) {
         setIsActionItemsLoading(false);
@@ -170,8 +170,8 @@ export default function CommandCenterPage({ onUpdateApplication }) {
     <div className="command-center-page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Daily Command Center</p>
-          <h2>Command Center</h2>
+          <p className="eyebrow">Daily reminders</p>
+          <h2>Reminders</h2>
           <p>See follow-ups and stale applications that need attention.</p>
         </div>
       </header>

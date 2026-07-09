@@ -291,7 +291,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 
 - Demo data and screenshots contain no private or personal job-search data.
 - Use fictional company, recruiter, and note examples.
-- Screenshots should show the current navigation structure: Command Center, Dashboard, Quick Add, Applications, Pipeline, Resume Versions.
+- Screenshots should show the current navigation structure: Reminders, Dashboard, Add Job, Applications, Pipeline, Resumes.
 
 ## Local QA Data Cleanup
 

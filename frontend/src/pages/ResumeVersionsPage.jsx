@@ -141,7 +141,7 @@ export default function ResumeVersionsPage({
       <header className="page-header">
         <div>
           <p className="eyebrow">Resume library</p>
-          <h2>Resume Versions</h2>
+          <h2>Resumes</h2>
           <p>Manage reusable resume variants for different roles and applications.</p>
         </div>
       </header>

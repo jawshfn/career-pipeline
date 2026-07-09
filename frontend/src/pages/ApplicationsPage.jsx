@@ -408,15 +408,17 @@ export default function ApplicationsPage({
                 </select>
               </label>
 
-              <label className="application-filter-red-flags">
-                <span>Red flags</span>
-                <input
-                  aria-label="Show red-flagged applications only"
-                  checked={filters.redFlagState === "flagged"}
-                  name="redFlagState"
-                  onChange={updateRedFlagFilter}
-                  type="checkbox"
-                />
+              <label>
+                Red flags
+                <span className="application-filter-checkbox-control">
+                  <input
+                    checked={filters.redFlagState === "flagged"}
+                    name="redFlagState"
+                    onChange={updateRedFlagFilter}
+                    type="checkbox"
+                  />
+                  Only
+                </span>
               </label>
             </div>
           ) : null}
