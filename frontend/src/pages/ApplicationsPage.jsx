@@ -217,11 +217,15 @@ export default function ApplicationsPage({
   const [applicationView, setApplicationView] = useState("active");
   const [filters, setFilters] = useState(initialFilters);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [applicationDetailCache, setApplicationDetailCache] = useState(() => new Map());
   const detailPanelRef = useRef(null);
   const shouldScrollToDetailRef = useRef(false);
   const viewedApplications = getApplicationsForView(applications, applicationView);
   const filteredApplications = getFilteredApplications(viewedApplications, filters);
   const sourceOptions = getSourceOptions(viewedApplications);
+  const cachedSelectedApplication = selectedApplicationId ? applicationDetailCache.get(selectedApplicationId) : null;
+  const selectedApplication =
+    cachedSelectedApplication || applications.find((application) => application.id === selectedApplicationId);
   const advancedFilterCount = getAdvancedFilterCount(filters);
   const hasActiveFilters = hasAnyNonDefaultFilter(filters);
   const advancedFilterButtonLabel = `${showAdvancedFilters ? "Hide filters" : "More filters"} (${advancedFilterCount})`;
@@ -246,6 +250,18 @@ export default function ApplicationsPage({
 
   function clearFilters() {
     setFilters(initialFilters);
+  }
+
+  function cacheApplicationDetail(application) {
+    if (!application?.id) {
+      return;
+    }
+
+    setApplicationDetailCache((currentCache) => {
+      const nextCache = new Map(currentCache);
+      nextCache.set(application.id, application);
+      return nextCache;
+    });
   }
 
   function closeDetails() {
@@ -290,8 +306,11 @@ export default function ApplicationsPage({
         <div ref={detailPanelRef}>
           <ApplicationDetailPanel
             applicationId={selectedApplicationId}
+            initialApplication={selectedApplication}
             initialTab={selectedDetailTab}
+            key={selectedApplicationId}
             onClose={closeDetails}
+            onLoadApplication={cacheApplicationDetail}
             onSaveApplication={onUpdateApplication}
             onUnsavedChangesChange={setHasDetailUnsavedChanges}
             resumeVersions={resumeVersions}

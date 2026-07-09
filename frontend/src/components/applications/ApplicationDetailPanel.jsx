@@ -208,21 +208,24 @@ function getCloseConfirmationMessage(hasUnsavedApplicationChanges, hasUnsavedAct
 
 export default function ApplicationDetailPanel({
   applicationId,
+  initialApplication,
   initialTab,
   onClose,
+  onLoadApplication,
   onSaveApplication,
   onUnsavedChangesChange,
   resumeVersions,
 }) {
-  const [formData, setFormData] = useState(initialFormState);
-  const [savedFormData, setSavedFormData] = useState(initialFormState);
+  const seededFormState = initialApplication ? toFormState(initialApplication) : initialFormState;
+  const [formData, setFormData] = useState(seededFormState);
+  const [savedFormData, setSavedFormData] = useState(seededFormState);
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
   const [activeTab, setActiveTab] = useState(getValidDetailTab(initialTab));
   const [activityDraft, setActivityDraft] = useState(getInitialActivityForm);
   const [activityDraftBaseline, setActivityDraftBaseline] = useState(getInitialActivityForm);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialApplication);
   const [isSaving, setIsSaving] = useState(false);
 
   function resetActivityDraft() {
@@ -235,7 +238,17 @@ export default function ApplicationDetailPanel({
     let isCurrent = true;
 
     async function loadApplication() {
-      setIsLoading(true);
+      if (initialApplication) {
+        const nextFormState = toFormState(initialApplication);
+        setFormData(nextFormState);
+        setSavedFormData(nextFormState);
+        setIsLoading(false);
+      } else {
+        setIsLoading(true);
+      }
+
+      resetActivityDraft();
+      setActiveTab(getValidDetailTab(initialTab));
       setLoadError("");
       setSaveError("");
       setSaveMessage("");
@@ -246,8 +259,7 @@ export default function ApplicationDetailPanel({
           const nextFormState = toFormState(application);
           setFormData(nextFormState);
           setSavedFormData(nextFormState);
-          resetActivityDraft();
-          setActiveTab(getValidDetailTab(initialTab));
+          onLoadApplication?.(application);
         }
       } catch (error) {
         if (isCurrent) {
@@ -358,6 +370,7 @@ export default function ApplicationDetailPanel({
       const nextFormState = toFormState(updatedApplication);
       setFormData(nextFormState);
       setSavedFormData(nextFormState);
+      onLoadApplication?.(updatedApplication);
       setSaveMessage("Changes saved.");
     } catch (error) {
       setSaveError(error.message || "Could not save application details.");
@@ -403,6 +416,7 @@ export default function ApplicationDetailPanel({
       ? ["No next action written", "Capture the next step when there is one.", "dates"]
       : null,
   ].filter(Boolean);
+  const canRenderDetail = !isLoading && (!loadError || initialApplication);
 
   return (
     <section className="panel application-detail-panel" aria-labelledby="application-detail-title">
@@ -420,7 +434,7 @@ export default function ApplicationDetailPanel({
       {isLoading ? <LoadingState message="Loading application details..." /> : null}
       {!isLoading && loadError ? <ErrorMessage message={loadError} /> : null}
 
-      {!isLoading && !loadError ? (
+      {canRenderDetail ? (
         <form className="application-detail-form" onSubmit={handleSubmit}>
           {saveError ? <ErrorMessage message={saveError} /> : null}
           {saveMessage ? (
