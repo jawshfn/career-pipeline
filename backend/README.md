@@ -2,7 +2,7 @@
 
 This backend began as the Phase 1 foundation for Career Pipeline. It provides a local-first FastAPI API with SQLite persistence, SQLAlchemy models, Pydantic schemas, local demo data, and pytest coverage for the application, resume-version, archive, dashboard, activity, and action-item workflows.
 
-The React frontend now exists, and GitHub Actions CI runs backend tests, frontend tests, and the frontend production build. The backend currently supports applications, resume versions, pipeline status updates, archive behavior, Daily Command Center action items for overdue follow-ups, upcoming follow-ups due within 3 days, stale active applications, application activity entries, and Dashboard summary metrics. Deployment and authentication are planned for later phases.
+The React frontend now exists, and GitHub Actions CI runs backend tests, frontend tests, and the frontend production build. The backend currently supports applications, resume versions, pipeline status updates, archive behavior, Reminders action items for overdue follow-ups, upcoming follow-ups due within 3 days, Needs check-in applications, application activity entries, and Dashboard summary metrics. Deployment and authentication are planned for later phases.
 
 ## Setup
 

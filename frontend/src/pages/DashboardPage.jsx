@@ -68,6 +68,43 @@ function EffectivenessGrid({ ariaLabel, firstColumnLabel, items }) {
   );
 }
 
+function DashboardDisclosureSection({ children, defaultOpen = true, id, summary, title }) {
+  return (
+    <details className="panel dashboard-panel dashboard-disclosure" open={defaultOpen}>
+      <summary className="dashboard-disclosure-summary" aria-controls={id}>
+        <span>
+          <strong>{title}</strong>
+          <small>{summary}</small>
+        </span>
+      </summary>
+      <div className="dashboard-disclosure-content" id={id}>
+        {children}
+      </div>
+    </details>
+  );
+}
+
+function summarizeBreakdown(items, singularLabel, pluralLabel = `${singularLabel}s`) {
+  const total = items.reduce((sum, item) => sum + item.count, 0);
+  const label = items.length === 1 ? singularLabel : pluralLabel;
+  return `${total} applications across ${items.length} ${label}`;
+}
+
+function getResumeCoverageSummary(resumeUsage, resumeEffectiveness) {
+  const unassignedCount = resumeUsage.find((item) => item.label === "No resume version")?.count || 0;
+  const assignedCount = resumeUsage.reduce((total, item) => {
+    if (item.label === "No resume version") {
+      return total;
+    }
+
+    return total + item.count;
+  }, 0);
+  const comparedCount = resumeEffectiveness.filter((item) => item.label !== "Unassigned").length;
+  const versionLabel = comparedCount === 1 ? "resume version" : "resume versions";
+
+  return `${comparedCount} ${versionLabel} compared - ${assignedCount} assigned / ${unassignedCount} unassigned`;
+}
+
 export default function DashboardPage() {
   const [dashboardSummary, setDashboardSummary] = useState(emptyDashboardSummary);
   const [error, setError] = useState("");
@@ -102,6 +139,11 @@ export default function DashboardPage() {
 
   const totalApplications = dashboardSummary.status_breakdown.reduce((total, item) => total + item.count, 0);
   const redFlaggedCount = dashboardSummary.red_flag_snapshot.flagged_count;
+  const sourceTotal = dashboardSummary.source_breakdown.reduce((total, item) => total + item.count, 0);
+  const resumeCoverageSummary = getResumeCoverageSummary(
+    dashboardSummary.resume_usage,
+    dashboardSummary.resume_version_effectiveness,
+  );
 
   return (
     <div className="dashboard-page">
@@ -109,12 +151,20 @@ export default function DashboardPage() {
         <div>
           <p className="eyebrow">Job search snapshot</p>
           <h2>Dashboard</h2>
-          <p>See counts, status mix, sources, resume usage, and red flags at a glance.</p>
+          <p>Scan your job search progress, follow-ups, sources, and resume results.</p>
         </div>
       </header>
 
       {isLoading ? <LoadingState message="Loading dashboard..." /> : null}
       {!isLoading && error ? <ErrorMessage message={error} /> : null}
+
+      {!isLoading && !error ? (
+        <section className="dashboard-metric-grid" aria-label="Summary metrics">
+          {dashboardSummary.summary_cards.map((metric) => (
+            <MetricCard key={metric.key} label={metric.label} tone={metric.tone} value={metric.value} />
+          ))}
+        </section>
+      ) : null}
 
       {!isLoading && !error && totalApplications === 0 ? (
         <div className="empty-state">
@@ -124,84 +174,70 @@ export default function DashboardPage() {
       ) : null}
 
       {!isLoading && !error && totalApplications > 0 ? (
-        <>
-          <section className="dashboard-metric-grid" aria-label="Summary metrics">
-            {dashboardSummary.summary_cards.map((metric) => (
-              <MetricCard key={metric.key} label={metric.label} tone={metric.tone} value={metric.value} />
-            ))}
-          </section>
-
-          <div className="dashboard-sections-grid">
-            <section className="panel dashboard-panel" aria-labelledby="dashboard-status-title">
-              <div className="section-heading">
-                <h2 id="dashboard-status-title">Status Breakdown</h2>
-                <p>Applications by current stage.</p>
-              </div>
+        <div className="dashboard-detail-stack">
+          <div className="dashboard-breakdown-grid">
+            <DashboardDisclosureSection
+              id="dashboard-status-panel"
+              summary={summarizeBreakdown(dashboardSummary.status_breakdown, "status", "statuses")}
+              title="Application Status"
+            >
               <BreakdownList emptyMessage="No status data yet." items={dashboardSummary.status_breakdown} />
-            </section>
+            </DashboardDisclosureSection>
 
-            <section className="panel dashboard-panel" aria-labelledby="dashboard-source-title">
-              <div className="section-heading">
-                <h2 id="dashboard-source-title">Source Breakdown</h2>
-                <p>Where opportunities came from.</p>
-              </div>
+            <DashboardDisclosureSection
+              id="dashboard-source-panel"
+              summary={`${sourceTotal} applications from ${dashboardSummary.source_breakdown.length} sources`}
+              title="Sources"
+            >
               <BreakdownList emptyMessage="No source data yet." items={dashboardSummary.source_breakdown} />
-            </section>
+            </DashboardDisclosureSection>
 
-            <section className="panel dashboard-panel" aria-labelledby="dashboard-resume-title">
-              <div className="section-heading">
-                <h2 id="dashboard-resume-title">Resume Version Usage</h2>
-                <p>Resume variants attached to applications.</p>
-              </div>
-              <BreakdownList emptyMessage="No resume versions are assigned yet." items={dashboardSummary.resume_usage} />
-            </section>
-
-            <section className="panel dashboard-panel" aria-labelledby="dashboard-red-flags-title">
-              <div className="section-heading">
-                <h2 id="dashboard-red-flags-title">Red Flag Snapshot</h2>
-                <p>{redFlaggedCount} application{redFlaggedCount === 1 ? "" : "s"} flagged.</p>
-              </div>
+            <DashboardDisclosureSection
+              id="dashboard-red-flags-panel"
+              summary={`${redFlaggedCount} application${redFlaggedCount === 1 ? "" : "s"} flagged`}
+              title="Red Flags"
+            >
               <BreakdownList
                 emptyMessage="No red flags marked on applications."
                 items={dashboardSummary.red_flag_snapshot.items}
               />
-            </section>
+            </DashboardDisclosureSection>
           </div>
 
-          <section className="panel dashboard-panel dashboard-effectiveness-panel" aria-labelledby="dashboard-source-effectiveness-title">
-            <div className="section-heading">
-              <h2 id="dashboard-source-effectiveness-title">Source Effectiveness</h2>
-              <p>Compare which sources are producing applications, interviews, offers, and closed outcomes.</p>
-            </div>
+          <div className="dashboard-results-grid">
+            <DashboardDisclosureSection
+              id="dashboard-source-results-panel"
+              summary={`${dashboardSummary.source_effectiveness.length} sources compared`}
+              title="Source Results"
+            >
+              {dashboardSummary.source_effectiveness.length === 0 ? (
+                <p className="dashboard-empty-panel">No source data yet.</p>
+              ) : (
+                <EffectivenessGrid
+                  ariaLabel="Source effectiveness metrics"
+                  firstColumnLabel="Source"
+                  items={dashboardSummary.source_effectiveness}
+                />
+              )}
+            </DashboardDisclosureSection>
 
-            {dashboardSummary.source_effectiveness.length === 0 ? (
-              <p className="dashboard-empty-panel">No source data yet.</p>
-            ) : (
-              <EffectivenessGrid
-                ariaLabel="Source effectiveness metrics"
-                firstColumnLabel="Source"
-                items={dashboardSummary.source_effectiveness}
-              />
-            )}
-          </section>
-
-          <section className="panel dashboard-panel dashboard-effectiveness-panel" aria-labelledby="dashboard-resume-effectiveness-title">
-            <div className="section-heading">
-              <h2 id="dashboard-resume-effectiveness-title">Resume Version Effectiveness</h2>
-              <p>Compare how assigned resume versions connect to application progress.</p>
-            </div>
-
-            {dashboardSummary.resume_version_effectiveness.length === 0 ? (
-              <p className="dashboard-empty-panel">No resume-version data yet.</p>
-            ) : (
-              <EffectivenessGrid
-                ariaLabel="Resume version effectiveness metrics"
-                firstColumnLabel="Resume Version"
-                items={dashboardSummary.resume_version_effectiveness}
-              />
-            )}
-          </section>
-        </>
+            <DashboardDisclosureSection
+              id="dashboard-resume-results-panel"
+              summary={resumeCoverageSummary}
+              title="Resume Results"
+            >
+              {dashboardSummary.resume_version_effectiveness.length === 0 ? (
+                <p className="dashboard-empty-panel">No resume-version data yet.</p>
+              ) : (
+                <EffectivenessGrid
+                  ariaLabel="Resume version effectiveness metrics"
+                  firstColumnLabel="Resume Version"
+                  items={dashboardSummary.resume_version_effectiveness}
+                />
+              )}
+            </DashboardDisclosureSection>
+          </div>
+        </div>
       ) : null}
     </div>
   );

@@ -4,7 +4,7 @@
 
 Career Pipeline is a job-search command center that helps applicants capture opportunities quickly, track applications consistently, manage follow-ups, and understand which sources and resume strategies are producing progress.
 
-The product should feel like a practical daily workspace, not a data-entry chore. Quick Add stays lightweight, while richer details, risk tracking, follow-up actions, and metrics live in focused views.
+The product should feel like a practical daily workspace, not a data-entry chore. Add Job stays lightweight, while richer details, risk tracking, follow-up actions, and metrics live in focused views.
 
 ## Problem Statement
 
@@ -31,9 +31,9 @@ Career Pipeline centralizes that activity into a simple workflow that supports f
 
 ## Product Principles
 
-- Quick-add first: the main workflow should not start as a giant manual form.
+- Quick-capture first: the main workflow should not start as a giant manual form.
 - Capture now, enrich later: users should be able to save partial information and improve it later.
-- Action-focused Command Center: daily attention items should be visible and quick to act on.
+- Action-focused Reminders: daily attention items should be visible and quick to act on.
 - Summary-focused Dashboard: metrics should explain activity and progress without becoming heavy analytics.
 - Local-first early prototype: the backend should work well as a local development app with SQLite.
 - Transparent status tracking: pipeline states should be clear and easy to update.
@@ -43,8 +43,8 @@ Career Pipeline centralizes that activity into a simple workflow that supports f
 
 The current prototype includes:
 
-- Dedicated Quick Add page for lightweight opportunity capture
-- Quick Add modes for Manual Entry and Smart Capture paste-review
+- Dedicated Add Job page for lightweight opportunity capture
+- Add Job modes for Manual Entry and Smart Capture paste-review
 - Deterministic Smart Capture helpers that prepare conservative editable suggested fields from pasted job text before save
 - Internal Smart Capture parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while preserving the user's selected Source
 - Smart Capture review guardrails that summarize best-match parser, captured fields, and what remains user-controlled before save
@@ -53,18 +53,18 @@ The current prototype includes:
 - Applications page with Active, Closed, and All views plus search, filters, sorting, opportunity-focused table rows, Notes shortcut, and detail access
 - Application Detail tabs for Overview, Follow-up, Job Details, Resume & Prep, Red Flags, and Activity
 - Read-only Application Detail Overview command snapshot with contextual helpful next-step shortcuts into focused editing tabs
-- Optional Next Action field shown in Application Detail and Command Center cards
+- Optional Next Action field shown in Application Detail and Reminders cards
 - Applied-date behavior that distinguishes saved date from the date the user actually applied
 - Responsive grouped Pipeline with status filtering and persisted status updates
-- Daily Command Center with overdue follow-ups, upcoming follow-ups due within 3 days, stale active applications, and follow-up quick actions
-- Backend-derived Command Center action-item rules from `/api/applications/action-items`
+- Reminders with overdue follow-ups, upcoming follow-ups due within 3 days, secondary Needs check-in items, and follow-up quick actions
+- Backend-derived Reminders action-item rules from `/api/applications/action-items`
 - Follow-up quick actions for Snooze 3 days, Snooze 1 week, and Clear follow-up
 - Activity Timeline entries for manual activity, follow-up quick-action outcomes, and backend-logged status changes
 - No-op snooze prevention when a snooze action would not move the follow-up date later
-- Resume Versions page for creating, editing, deactivating, reactivating, and assigning reusable resume variants
+- Resumes page for creating, editing, deactivating, reactivating, and assigning reusable resume variants
 - Application-scoped contact and prep notes in Application Detail
 - Red-flag checklist and notes in Application Detail, with compact indicators in Applications and Pipeline
-- Backend-derived Dashboard summary cards, status breakdown, source breakdown, resume-version usage, red-flag snapshot, Source Effectiveness, and Resume Version Effectiveness
+- Backend-derived Dashboard summary cards plus expandable Application Status, Sources, Red Flags, Source Results, and Resume Results sections
 - Sticky responsive app shell with page content centered inside the main content area and no intended page-level horizontal overflow
 - Archive behavior that stores `Archived` status while hiding archived records from normal active workflow views
 
@@ -83,9 +83,9 @@ The current prototype includes:
 
 ## Core Workflows
 
-### Quick Add an Application
+### Add a Job
 
-The user opens Quick Add and either enters the minimum needed manually or pastes job text into Smart Capture.
+The user opens Add Job and either enters the minimum needed manually or pastes job text into Smart Capture.
 
 Manual Entry fields include:
 
@@ -103,7 +103,7 @@ Follow-up presets help schedule common dates quickly. If the user selects Applie
 
 Smart Capture is an additional paste-review workflow. The user pastes a job post, recruiter message, or copied listing text, optionally adds an explicit job link, selects a source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, employment type, and notes containing the relevant pasted text. The parser can internally recognize common LinkedIn, Indeed, ZipRecruiter, or generic paste formats to improve extraction quality, but it does not change the saved Source. Job link also stays user-controlled and is not guessed from arbitrary pasted URLs. Explicit user-entered bare domains can be normalized to `https://` for safe opening. A compact review guardrails panel summarizes the best-match parser, captured-field status, and Source/Job link reminders before saving. Company career pages can still be pasted, but they are best-effort and should be reviewed carefully before saving. AI-assisted extraction is not implemented yet.
 
-Quick Add and Smart Capture Review can show advisory duplicate warnings before saving. These warnings are deterministic and do not block save. Same normalized job links are treated as likely duplicates. Same or similar company, role, and location are also likely duplicates. Same or similar company and role with missing or different location are shown as similar opportunities. Archived applications are ignored for these warnings.
+Add Job and Smart Capture Review can show advisory duplicate warnings before saving. These warnings are deterministic and do not block save. Same normalized job links are treated as likely duplicates. Same or similar company, role, and location are also likely duplicates. Same or similar company and role with missing or different location are shown as similar opportunities. Archived applications are ignored for these warnings.
 
 After saving, the application appears in Applications, Pipeline, Dashboard metrics, and other relevant views. The user can open Application Detail later to add richer information.
 
@@ -134,11 +134,11 @@ Current tabs:
 - Red Flags
 - Activity
 
-Overview is a read-only command snapshot with compact opportunity context, read-only added-to-tracker metadata, and contextual helpful next-step shortcuts into the focused editing tabs. When nothing needs attention, it shows a calm organized state instead of duplicating the main tab navigation. The compact summary strip appears below the tab buttons across Application Detail tabs so navigation stays stable.
+Overview is a read-only command snapshot with compact opportunity context, read-only Added to tracker metadata, and contextual helpful next-step shortcuts into the focused editing tabs. When nothing needs attention, it shows a calm organized state instead of duplicating the main tab navigation. The compact summary strip appears below the tab buttons on non-Overview Application Detail tabs so navigation stays stable.
 
 Editable areas include company name, role title, job link, source, status, resume version, applied date, follow-up date, next action, prep notes, location, compensation, salary range, employment type, notes, red flags, and red-flag notes.
 
-Status lives in the persistent summary strip. Applied date, follow-up date, and next action live in Follow-up. Company, role, source, job link, location, compensation, employment type, and notes live in Job Details. Resume version and prep notes live in Resume & Prep.
+Status appears in the compact summary strip on focused edit tabs. Applied date, follow-up date, and next action live in Follow-up. Saved date is read-only Added to tracker metadata in Overview. Company, role, source, job link, location, compensation, employment type, and notes live in Job Details. Resume version and prep notes live in Resume & Prep.
 
 `date_saved` means the date the job was added to Career Pipeline. `date_applied` means the date the user actually submitted the application. Changing status to Applied or later can default an empty Applied Date, but existing Applied Date values are not automatically overwritten or cleared.
 
@@ -166,19 +166,19 @@ Archived is stored for archived records but is not an active pipeline stage. Act
 
 Follow-up due is not a pipeline status. It is a computed action state based on `follow_up_date`, such as overdue, upcoming, or not scheduled.
 
-### Review Follow-Ups Due
+### Review Reminders
 
-The Command Center answers "what needs my attention today?"
+Reminders answers "what needs my attention today?"
 
 It shows:
 
 - Overdue follow-ups
 - Upcoming follow-ups due today through the next 3 days
-- Stale active applications without a follow-up and without a recent update
+- Needs check-in items for active applications without a follow-up and without a recent update
 
-These action-item sections come from the backend `/api/applications/action-items` endpoint so follow-up and stale-application rules stay consistent across the app.
+These action-item sections come from the backend `/api/applications/action-items` endpoint so follow-up and Needs check-in rules stay consistent across the app.
 
-Cards show enough context to act quickly, including company, role, source, status, follow-up date, and Next Action when present.
+Cards show enough context to act quickly, including company, role, status, follow-up date, and Next Action when present.
 
 Follow-up quick actions:
 
@@ -188,9 +188,9 @@ Follow-up quick actions:
 
 Snooze actions only appear or run when they would move the follow-up date later than the current follow-up date. Valid quick actions update the application and log an Activity Timeline entry. Clear follow-up remains available whenever a follow-up date exists.
 
-### Manage Resume Versions
+### Manage Resumes
 
-Resume Versions supports reusable resume variants for different roles or application strategies.
+Resumes supports reusable resume variants for different roles or application strategies.
 
 Users can:
 
@@ -198,7 +198,7 @@ Users can:
 - Edit name, target role, description, and active state
 - Deactivate and reactivate versions
 - Include inactive versions in the list
-- Assign active resume versions from Quick Add and Application Detail
+- Assign active resume versions from Add Job and Application Detail
 
 Dashboard usage and effectiveness sections help show how assigned resume versions connect to application progress.
 
@@ -220,17 +220,16 @@ Applications and Pipeline show compact indicators when flags exist. Normal appli
 
 ### Review Dashboard Insights
 
-The Dashboard provides summary-focused metrics from the backend `/api/dashboard/summary` endpoint.
+The Dashboard provides summary-focused metrics from the backend `/api/dashboard/summary` endpoint. Summary metric cards stay visible, while detailed breakdowns and results live in expandable sections for cleaner scanning.
 
 Current sections include:
 
 - Summary metric cards for active applications, follow-ups, red-flagged applications, interviews, and offers
-- Status breakdown
-- Source breakdown
-- Resume-version usage
-- Red flag snapshot
-- Source Effectiveness, showing applications, active count, interviews, offers, and closed count by source
-- Resume Version Effectiveness, showing applications, active count, interviews, offers, and closed count by resume version
+- Application Status
+- Sources
+- Red Flags
+- Source Results, showing applications, active count, interviews, offers, and closed count by source
+- Resume Results, showing applications, active count, interviews, offers, closed count, and assignment coverage by resume version
 
 Archived applications are excluded from normal dashboard metrics.
 
@@ -240,7 +239,7 @@ Archived applications are excluded from normal dashboard metrics.
 - A user can track at least 25 applications without losing important context.
 - A user can distinguish active opportunities from closed outcomes.
 - A user can identify overdue follow-ups and upcoming follow-ups due within 3 days.
-- A user can snooze or clear follow-ups directly from Command Center without creating no-op activity logs.
+- A user can snooze or clear follow-ups directly from Reminders without creating no-op activity logs.
 - A user can record next actions and activity timeline entries.
 - A user can assign resume versions and review usage/effectiveness patterns.
 - A user can flag suspicious or concerning postings without automated scoring.

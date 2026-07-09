@@ -5,7 +5,7 @@ Career Pipeline should be built as a serious product prototype with a small, rel
 ## Development Principles
 
 - Build the smallest complete workflow before adding breadth.
-- Keep Quick Add lightweight and separate from richer management workflows.
+- Keep Add Job lightweight and separate from richer management workflows.
 - Prefer clear data models and predictable endpoints.
 - Make local development easy.
 - Keep public documentation professional and product-focused.
@@ -96,7 +96,7 @@ Backend pytest coverage should protect:
 - Application create, list, retrieve, update, and archive behavior
 - Status updates and archived-record restrictions
 - Automatic status-change activity logging
-- Overdue, upcoming, and stale follow-up action-item rules
+- Overdue, upcoming, and Needs check-in action-item rules
 - Resume version create/update/list behavior
 - Red-flag create/update/read behavior
 - Application activity timeline create/list/update/delete behavior
@@ -129,15 +129,15 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Page headers start near the top of the main content area with normal padding.
 - Narrower layouts do not let navigation cover page content.
 
-### Quick Add
+### Add Job
 
-- Quick Add shows Manual Entry and Paste Job Text modes.
+- Add Job shows Manual Entry and Paste Job Text modes.
 - Manual Entry defaults to essential fields: company, role, job link, and source.
 - Manual Entry tracking details expand to reveal status, resume version, applied date, follow-up date, presets, and notes.
-- Quick Add creates a new application and shows clear success feedback.
-- Add another clears the success state and leaves the user on Quick Add.
+- Add Job creates a new application and shows clear success feedback.
+- Add another clears the success state and leaves the user on Add Job.
 - View applications navigates to Applications.
-- Quick Add does not offer `Archived` as a status.
+- Add Job does not offer `Archived` as a status.
 - Follow-up presets fill Tomorrow, In 3 days, In 1 week, and In 2 weeks as `YYYY-MM-DD`.
 - Follow-up Clear removes the follow-up date.
 - Applied or later statuses default an empty Applied Date without overwriting a manually entered date.
@@ -201,10 +201,10 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Users can manually edit or clear Applied Date.
 - Backend create/update behavior also protects the applied-date default when status is Applied or later and the value is empty.
 - Next Action can be added, edited, cleared, and saved from Application Detail.
-- Next Action appears on Command Center cards when present.
+- Next Action appears on Reminders cards when present.
 - Prep notes can be added, edited, cleared, and saved from the Resume & Prep tab.
 - Resume & Prep fields do not appear in Add Job, Dashboard, Pipeline, Reminders, or Applications table columns.
-- Follow-up date edits persist and update Applications, Command Center, and Dashboard where relevant.
+- Follow-up date edits persist and update Applications, Reminders, and Dashboard where relevant.
 
 ### Pipeline Sync
 
@@ -216,14 +216,15 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Meaningful status changes create one `Status Change` Activity Timeline entry.
 - Saving without changing status does not create a duplicate status-change Activity Timeline entry.
 
-### Command Center Follow-Up Actions
+### Reminders Follow-Up Actions
 
-- Command Center action-item sections load from `/api/applications/action-items`.
+- Reminders action-item sections load from `/api/applications/action-items`.
 - Overdue follow-ups appear in the overdue section.
 - Today through three-days-out follow-ups appear in upcoming.
-- Four-days-out follow-ups do not appear in Command Center.
-- Stale active applications appear when they have no follow-up and no recent update.
-- Rejected, Withdrawn, and Archived applications do not appear as stale.
+- Four-days-out follow-ups do not appear in Reminders.
+- Needs check-in applications appear when they have no follow-up and no recent update.
+- Rejected, Withdrawn, and Archived applications do not appear as Needs check-in items.
+- Rejected, Withdrawn, and Archived applications do not appear in overdue or upcoming follow-up sections.
 - Snooze 3 days sets the follow-up date to today plus 3 days.
 - Snooze 1 week sets the follow-up date to today plus 7 days.
 - Clear follow-up sets the follow-up date to empty/null.
@@ -242,21 +243,21 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Follow-up metrics match current follow-up dates.
 - Red-flag count updates after flagging or unflagging an application.
 - Status, source, and resume-version usage sections match the loaded application data.
-- Source Effectiveness groups non-archived applications by source and shows applications, active count, interviews, offers, and closed outcomes.
+- Source Results groups non-archived applications by source and shows applications, active count, interviews, offers, and closed outcomes.
 - Blank or missing sources appear as `Unspecified`.
-- Resume Version Effectiveness groups non-archived applications by assigned resume version and includes unassigned applications.
-- Dashboard effectiveness sections remain readable with small datasets and at narrow widths.
+- Resume Results groups non-archived applications by assigned resume version and includes unassigned applications.
+- Dashboard expandable detail sections remain readable with small datasets and at narrow widths.
 - Empty or minimal data states remain clear.
 
-### Resume Versions
+### Resumes
 
-- Resume Versions loads active resume versions by default.
+- Resumes loads active resume versions by default.
 - Users can create a resume version.
 - Users can edit name, target role, description, and active state.
 - Deactivating a resume version removes it from the active-only view.
 - Including inactive resume versions shows inactive versions.
 - Reactivating a resume version returns it to the active view.
-- Quick Add and Application Detail receive current active resume-version options.
+- Add Job and Application Detail receive current active resume-version options.
 
 ### Red Flags
 
@@ -284,7 +285,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 ### Archive Behavior
 
 - Moving an application to `Archived` hides it from normal active workflow views.
-- Archived applications do not appear in Applications, Pipeline, Command Center, or Dashboard metrics by default.
+- Archived applications do not appear in Applications, Pipeline, Reminders, or Dashboard metrics by default.
 - Archived records remain available through backend `include_archived=true` behavior.
 - Do not introduce a dedicated Archived page unless a future phase explicitly calls for it.
 
@@ -322,4 +323,4 @@ A feature is done when:
 - Empty, loading, and error states are handled where relevant.
 - Demo data can show the feature clearly.
 - Documentation is updated if behavior, setup, API, or data model changed.
-- The feature does not make Quick Add slower or more complex unless the user intentionally opens an advanced view.
+- The feature does not make Add Job slower or more complex unless the user intentionally opens an advanced view.

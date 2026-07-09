@@ -164,7 +164,7 @@ Status: implemented
 
 ### GET /api/applications/action-items
 
-Purpose: power the Daily Command Center as the source of truth for overdue follow-ups, upcoming follow-ups, and stale applications.
+Purpose: power Reminders as the source of truth for overdue follow-ups, upcoming follow-ups, and Needs check-in applications.
 
 Rules:
 
