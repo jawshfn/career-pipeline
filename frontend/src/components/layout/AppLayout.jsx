@@ -7,7 +7,7 @@ const navigationItems = [
   { id: "dashboard", label: "Dashboard" },
   { id: "quick-add", label: "Add Job" },
   { id: "applications", label: "Applications" },
-  { id: "pipeline", label: "Pipeline" },
+  { id: "pipeline", label: "Status Board" },
   { id: "resume-versions", label: "Resumes" },
 ];
 
@@ -16,7 +16,7 @@ const pageTitles = {
   dashboard: "Dashboard",
   "quick-add": "Add Job",
   applications: "Applications",
-  pipeline: "Pipeline",
+  pipeline: "Status Board",
   "resume-versions": "Resumes",
 };
 

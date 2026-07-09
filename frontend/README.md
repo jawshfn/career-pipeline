@@ -1,6 +1,6 @@
 # Career Pipeline Frontend
 
-This is the React/Vite frontend for Career Pipeline. It provides the user-facing workspace for quick application capture, application management, pipeline review, follow-up actions, dashboard metrics, resume management, red-flag tracking, and activity timelines.
+This is the React/Vite frontend for Career Pipeline. It provides the user-facing workspace for quick application capture, application management, status review, follow-up actions, dashboard metrics, resume management, red-flag tracking, and activity timelines.
 
 ## Page Structure
 
@@ -8,7 +8,7 @@ This is the React/Vite frontend for Career Pipeline. It provides the user-facing
 - Dashboard: backend-derived summary metric cards plus expandable Application Status, Sources, Red Flags, Source Results, and Resume Results sections
 - Add Job: lightweight manual capture and Smart Capture paste-review workflow
 - Applications: Active, Closed, and All views with search, filters, sorting, opportunity-focused table rows, Notes shortcut, and Details access
-- Pipeline: responsive grouped application status workflow with status filters
+- Status Board: responsive grouped application status workflow with status filters and quick status updates
 - Resumes: create, edit, deactivate, reactivate, and view reusable resume variants
 
 ## Main Frontend Features
@@ -24,7 +24,7 @@ This is the React/Vite frontend for Career Pipeline. It provides the user-facing
 - Independent activity timeline add/list/delete behavior inside Application Detail
 - Opportunity-focused Applications table with follow-up urgency, red-flag counts, Notes badge shortcut, and Details action
 - Reminders follow-up actions for Snooze 3 days, Snooze 1 week, and Clear follow-up, with activity logging and no-op snooze prevention
-- Visual readability polish for status colors, dashboard accents, pipeline distinction, and empty states
+- Visual readability polish for status colors, dashboard accents, status-board distinction, and empty states
 - Responsive layout polish for normal full-screen and half-screen desktop widths
 - App shell constraints that keep desktop navigation sticky, center pages in the main content area, and avoid page-level horizontal overflow
 

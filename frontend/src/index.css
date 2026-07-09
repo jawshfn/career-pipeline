@@ -2074,6 +2074,35 @@ a {
   min-width: 0;
 }
 
+.pipeline-toolbar {
+  display: flex;
+  min-width: 0;
+}
+
+.pipeline-toolbar label {
+  display: grid;
+  gap: 6px;
+  width: min(100%, 420px);
+  color: #34413f;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.pipeline-toolbar input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #cbd6d3;
+  border-radius: 6px;
+  padding: 9px 10px;
+  color: #17202a;
+  background: #ffffff;
+}
+
+.pipeline-toolbar input:focus {
+  border-color: #287c73;
+  outline: 3px solid rgba(40, 124, 115, 0.14);
+}
+
 .pipeline-filter {
   display: flex;
   flex-wrap: wrap;
@@ -2157,9 +2186,9 @@ a {
 .pipeline-card-list {
   display: grid;
   align-content: start;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 285px), 1fr));
-  gap: 10px;
-  padding: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 410px), 1fr));
+  gap: 8px;
+  padding: 10px;
 }
 
 .pipeline-empty-column {
@@ -2187,14 +2216,19 @@ a {
 
 .pipeline-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(142px, 170px);
+  grid-template-areas:
+    "heading status"
+    "meta meta";
+  align-items: center;
   align-content: start;
-  gap: 10px;
+  gap: 7px 10px;
   min-width: 0;
   border: 1px solid #d8e1de;
   border-radius: 8px;
-  padding: 13px;
+  padding: 9px 10px;
   background: #ffffff;
-  box-shadow: 0 6px 18px rgba(23, 32, 42, 0.06);
+  box-shadow: 0 3px 12px rgba(23, 32, 42, 0.04);
 }
 
 .pipeline-card-saving {
@@ -2202,60 +2236,66 @@ a {
   background: #fbfdfc;
 }
 
+.pipeline-card-heading {
+  grid-area: heading;
+  min-width: 0;
+}
+
 .pipeline-card-heading h4 {
   margin: 0;
   color: #17202a;
-  font-size: 1rem;
+  font-size: 0.94rem;
   letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 
 .pipeline-card-heading p {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   color: #52605d;
+  font-size: 0.88rem;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
 
-.pipeline-card-details {
-  display: grid;
-  gap: 8px;
-  margin: 0;
+.pipeline-card-meta {
+  grid-area: meta;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  align-items: center;
+  color: #52605d;
+  font-size: 0.82rem;
 }
 
-.pipeline-card-details div {
-  display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 8px;
-}
-
-.pipeline-card-details dt {
-  color: #60706d;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.pipeline-card-details dd {
-  margin: 0;
-  color: #202a33;
-  font-size: 0.88rem;
+.pipeline-card-action {
   overflow-wrap: anywhere;
 }
 
-.pipeline-card-notes {
-  margin: 0;
-  border-left: 3px solid #cbd6d3;
-  padding-left: 10px;
-  color: #52605d;
-  font-size: 0.88rem;
+.pipeline-card-action strong {
+  color: #34413f;
+}
+
+.pipeline-card-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #7f3028;
+  font-weight: 800;
 }
 
 .pipeline-status-select {
   display: grid;
-  gap: 6px;
+  grid-area: status;
+  gap: 4px;
+  min-width: 0;
   color: #34413f;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 800;
+}
+
+.pipeline-status-select span {
+  color: #60706d;
+  font-size: 0.74rem;
 }
 
 .pipeline-status-select select {
@@ -2263,7 +2303,7 @@ a {
   min-width: 0;
   border: 1px solid #cbd6d3;
   border-radius: 6px;
-  padding: 9px 10px;
+  padding: 7px 8px;
   color: #17202a;
   background: #ffffff;
   cursor: pointer;
@@ -2604,7 +2644,6 @@ textarea:focus-visible {
 .pipeline-card-heading p,
 .resume-version-card-header p,
 .resume-version-description,
-.pipeline-card-notes,
 .muted-table-value {
   color: var(--color-muted-strong);
 }
@@ -2722,14 +2761,12 @@ textarea:focus-visible {
   box-shadow: 0 5px 16px rgba(23, 32, 42, 0.045);
 }
 
-.pipeline-card-details dt,
 .resume-version-meta dt {
   color: var(--color-muted);
   letter-spacing: 0;
   text-transform: uppercase;
 }
 
-.pipeline-card-details dd,
 .resume-version-meta dd {
   color: var(--color-text-soft);
 }
@@ -3075,6 +3112,10 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  .pipeline-card {
+    grid-template-columns: minmax(0, 1fr) minmax(142px, 180px);
+  }
+
 }
 
 @media (max-width: 640px) {
@@ -3136,6 +3177,20 @@ textarea:focus-visible {
 
   .activity-form-actions button {
     width: 100%;
+  }
+
+  .pipeline-card {
+    grid-template-columns: 1fr;
+    grid-template-areas: none;
+  }
+
+  .pipeline-card-heading,
+  .pipeline-card-meta {
+    grid-area: auto;
+  }
+
+  .pipeline-status-select {
+    grid-area: auto;
   }
 
   .effectiveness-header {

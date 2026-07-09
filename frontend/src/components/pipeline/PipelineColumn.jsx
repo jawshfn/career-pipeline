@@ -9,7 +9,6 @@ function getStatusAccentClass(status) {
 export default function PipelineColumn({
   applications,
   onStatusChange,
-  resumeVersionsById,
   status,
   updatingApplicationId,
 }) {
@@ -29,7 +28,6 @@ export default function PipelineColumn({
               application={application}
               key={application.id}
               onStatusChange={onStatusChange}
-              resumeVersion={resumeVersionsById.get(application.resume_version_id)}
               isUpdating={updatingApplicationId === application.id}
             />
           ))

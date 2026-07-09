@@ -2,26 +2,6 @@ import React from "react";
 
 import PipelineStatusSelect from "./PipelineStatusSelect.jsx";
 
-function formatValue(value) {
-  return value || "-";
-}
-
-function getResumeLabel(application, resumeVersion) {
-  if (resumeVersion?.name) {
-    return resumeVersion.name;
-  }
-
-  return application.resume_version_id || "-";
-}
-
-function getNotesPreview(notes) {
-  if (!notes) {
-    return "";
-  }
-
-  return notes.length > 110 ? `${notes.slice(0, 110)}...` : notes;
-}
-
 function getRedFlagCount(application) {
   return [
     application.vague_job_description,
@@ -37,9 +17,11 @@ function getStatusAccentClass(status) {
   return `pipeline-card-${String(status || "default").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 }
 
-export default function PipelineCard({ application, isUpdating, onStatusChange, resumeVersion }) {
-  const notesPreview = getNotesPreview(application.notes);
+export default function PipelineCard({ application, isUpdating, onStatusChange }) {
   const redFlagCount = getRedFlagCount(application);
+  const compactActionText = application.next_action || application.follow_up_date || "";
+  const compactActionLabel = application.next_action ? "Next" : "Follow-up";
+  const showCardMeta = redFlagCount > 0 || compactActionText;
 
   return (
     <article className={`pipeline-card ${getStatusAccentClass(application.status)} ${isUpdating ? "pipeline-card-saving" : ""}`}>
@@ -48,34 +30,21 @@ export default function PipelineCard({ application, isUpdating, onStatusChange, 
         <p>{application.role_title}</p>
       </div>
 
-      <dl className="pipeline-card-details">
-        {redFlagCount > 0 ? (
-          <div>
-            <dt>Flags</dt>
-            <dd>
+      {showCardMeta ? (
+        <div className="pipeline-card-meta">
+          {redFlagCount > 0 ? (
+            <span className="pipeline-card-flag">
               <span className="red-flag-indicator">{redFlagCount}</span>
-            </dd>
-          </div>
-        ) : null}
-        <div>
-          <dt>Source</dt>
-          <dd>{formatValue(application.source)}</dd>
+              {redFlagCount === 1 ? " flag" : " flags"}
+            </span>
+          ) : null}
+          {compactActionText ? (
+            <span className="pipeline-card-action">
+              <strong>{compactActionLabel}:</strong> {compactActionText}
+            </span>
+          ) : null}
         </div>
-        <div>
-          <dt>Resume</dt>
-          <dd>{getResumeLabel(application, resumeVersion)}</dd>
-        </div>
-        <div>
-          <dt>Applied</dt>
-          <dd>{formatValue(application.date_applied)}</dd>
-        </div>
-        <div>
-          <dt>Follow-up</dt>
-          <dd>{formatValue(application.follow_up_date)}</dd>
-        </div>
-      </dl>
-
-      {notesPreview ? <p className="pipeline-card-notes">{notesPreview}</p> : null}
+      ) : null}
 
       <PipelineStatusSelect
         disabled={isUpdating}

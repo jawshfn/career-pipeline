@@ -130,7 +130,6 @@ export default function App() {
           error={loadError}
           isLoading={isLoading}
           onUpdateApplication={handleUpdateApplication}
-          resumeVersions={resumeVersions}
         />
       ) : (
         <ApplicationsPage

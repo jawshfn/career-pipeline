@@ -203,15 +203,15 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Next Action can be added, edited, cleared, and saved from Application Detail.
 - Next Action appears on Reminders cards when present.
 - Prep notes can be added, edited, cleared, and saved from the Resume & Prep tab.
-- Resume & Prep fields do not appear in Add Job, Dashboard, Pipeline, Reminders, or Applications table columns.
+- Resume & Prep fields do not appear in Add Job, Dashboard, Status Board, Reminders, or Applications table columns.
 - Follow-up date edits persist and update Applications, Reminders, and Dashboard where relevant.
 
-### Pipeline Sync
+### Status Board Sync
 
-- Pipeline groups applications by status and supports status filtering.
-- Pipeline cards remain readable at full-width and half-screen desktop widths.
-- Pipeline does not show archived applications in active workflow views.
-- Changing a status in Pipeline updates Applications and Dashboard state.
+- Status Board groups applications by status and supports status filtering plus company/role search.
+- Status Board tiles stay focused on company, role, status updates, red flags, and compact follow-up or Next Action context.
+- Status Board does not show archived applications in active workflow views.
+- Changing a status in Status Board updates Applications and Dashboard state.
 - Moving an application to Rejected or Withdrawn removes it from the Applications Active view and shows it in Closed.
 - Meaningful status changes create one `Status Change` Activity Timeline entry.
 - Saving without changing status does not create a duplicate status-change Activity Timeline entry.
@@ -242,7 +242,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Active application count excludes archived applications.
 - Follow-up metrics match current follow-up dates.
 - Red-flag count updates after flagging or unflagging an application.
-- Status, source, and resume-version usage sections match the loaded application data.
+- Status, source, and resume results sections match the loaded application data.
 - Source Results groups non-archived applications by source and shows applications, active count, interviews, offers, and closed outcomes.
 - Blank or missing sources appear as `Unspecified`.
 - Resume Results groups non-archived applications by assigned resume version and includes unassigned applications.
@@ -264,7 +264,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Red-flag checklist values save from Application Detail.
 - Red-flag notes save from Application Detail.
 - Applications table shows a compact count only when flags exist.
-- Pipeline cards show red-flag indicators where applicable.
+- Status Board tiles show red-flag indicators where applicable.
 - Normal applications without flags remain visually clean.
 
 ### Activity Timeline
@@ -285,7 +285,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 ### Archive Behavior
 
 - Moving an application to `Archived` hides it from normal active workflow views.
-- Archived applications do not appear in Applications, Pipeline, Reminders, or Dashboard metrics by default.
+- Archived applications do not appear in Applications, Status Board, Reminders, or Dashboard metrics by default.
 - Archived records remain available through backend `include_archived=true` behavior.
 - Do not introduce a dedicated Archived page unless a future phase explicitly calls for it.
 
@@ -293,7 +293,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 
 - Demo data and screenshots contain no private or personal job-search data.
 - Use fictional company, recruiter, and note examples.
-- Screenshots should show the current navigation structure: Reminders, Dashboard, Add Job, Applications, Pipeline, Resumes.
+- Screenshots should show the current navigation structure: Reminders, Dashboard, Add Job, Applications, Status Board, Resumes.
 
 ## Local QA Data Cleanup
 

@@ -181,7 +181,7 @@ Status: complete through Phase 12.6
 
 ## Phase 13: Demo Readiness
 
-Status: complete through Phase 13.1g
+Status: complete through Phase 13.1h
 
 - Phase 13.0: add safe local-only fictional demo data seeding workflow for recruiter/demo screenshots
 - Phase 13.1a: simplify Manual Quick Add by keeping tracking details behind an optional disclosure
@@ -191,6 +191,7 @@ Status: complete through Phase 13.1g
 - Phase 13.1e: simplify Application Detail tabs, saved-date metadata, and stable summary-strip layout
 - Phase 13.1f: simplify Reminders cards and layout around follow-ups with secondary Needs check-in items, excluding closed outcomes from follow-up reminders
 - Phase 13.1g: polish Dashboard into summary metrics plus expanded/collapsible detail grids and refresh public UI wording
+- Phase 13.1h: reframe Pipeline as Status Board with search and adaptive compact tiles for quick status updates
 
 ## Near-Term Future Work
 

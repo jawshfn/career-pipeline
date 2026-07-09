@@ -102,7 +102,7 @@ function getResumeCoverageSummary(resumeUsage, resumeEffectiveness) {
   const comparedCount = resumeEffectiveness.filter((item) => item.label !== "Unassigned").length;
   const versionLabel = comparedCount === 1 ? "resume version" : "resume versions";
 
-  return `${comparedCount} ${versionLabel} compared - ${assignedCount} assigned / ${unassignedCount} unassigned`;
+  return `${comparedCount} ${versionLabel} compared • ${assignedCount} assigned / ${unassignedCount} unassigned`;
 }
 
 export default function DashboardPage() {

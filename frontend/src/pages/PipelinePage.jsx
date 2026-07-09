@@ -28,7 +28,6 @@ export default function PipelinePage({
   error,
   isLoading,
   onUpdateApplication,
-  resumeVersions,
 }) {
   const [statusUpdateError, setStatusUpdateError] = useState("");
   const [updatingApplicationId, setUpdatingApplicationId] = useState(null);
@@ -59,19 +58,18 @@ export default function PipelinePage({
     <div className="pipeline-page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Pipeline board</p>
-          <h2>Pipeline</h2>
-          <p>Review applications by stage and update where each opportunity stands.</p>
+          <p className="eyebrow">Status workflow</p>
+          <h2>Status Board</h2>
+          <p>Move opportunities through stages quickly and keep your application list current.</p>
         </div>
       </header>
 
-      {isLoading ? <LoadingState message="Loading pipeline..." /> : null}
+      {isLoading ? <LoadingState message="Loading status board..." /> : null}
       {!isLoading && error ? <ErrorMessage message={error} /> : null}
       {!isLoading && statusUpdateError ? <ErrorMessage message={statusUpdateError} /> : null}
       {!isLoading && !error ? (
         <PipelineBoard
           applications={applications}
-          resumeVersions={resumeVersions}
           onStatusChange={handleStatusChange}
           updatingApplicationId={updatingApplicationId}
         />

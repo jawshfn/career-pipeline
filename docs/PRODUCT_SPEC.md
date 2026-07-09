@@ -36,7 +36,7 @@ Career Pipeline centralizes that activity into a simple workflow that supports f
 - Action-focused Reminders: daily attention items should be visible and quick to act on.
 - Summary-focused Dashboard: metrics should explain activity and progress without becoming heavy analytics.
 - Local-first early prototype: the backend should work well as a local development app with SQLite.
-- Transparent status tracking: pipeline states should be clear and easy to update.
+- Transparent status tracking: application states should be clear and easy to update.
 - Public-repo appropriate: documentation should focus on product, architecture, and development, not private strategy or personal examples.
 
 ## Current Implemented Scope
@@ -55,7 +55,7 @@ The current prototype includes:
 - Read-only Application Detail Overview command snapshot with contextual helpful next-step shortcuts into focused editing tabs
 - Optional Next Action field shown in Application Detail and Reminders cards
 - Applied-date behavior that distinguishes saved date from the date the user actually applied
-- Responsive grouped Pipeline with status filtering and persisted status updates
+- Responsive grouped Status Board with status filtering, company/role search, and persisted status updates
 - Reminders with overdue follow-ups, upcoming follow-ups due within 3 days, secondary Needs check-in items, and follow-up quick actions
 - Backend-derived Reminders action-item rules from `/api/applications/action-items`
 - Follow-up quick actions for Snooze 3 days, Snooze 1 week, and Clear follow-up
@@ -63,7 +63,7 @@ The current prototype includes:
 - No-op snooze prevention when a snooze action would not move the follow-up date later
 - Resumes page for creating, editing, deactivating, reactivating, and assigning reusable resume variants
 - Application-scoped contact and prep notes in Application Detail
-- Red-flag checklist and notes in Application Detail, with compact indicators in Applications and Pipeline
+- Red-flag checklist and notes in Application Detail, with compact indicators in Applications and Status Board
 - Backend-derived Dashboard summary cards plus expandable Application Status, Sources, Red Flags, Source Results, and Resume Results sections
 - Sticky responsive app shell with page content centered inside the main content area and no intended page-level horizontal overflow
 - Archive behavior that stores `Archived` status while hiding archived records from normal active workflow views
@@ -105,7 +105,7 @@ Smart Capture is an additional paste-review workflow. The user pastes a job post
 
 Add Job and Smart Capture Review can show advisory duplicate warnings before saving. These warnings are deterministic and do not block save. Same normalized job links are treated as likely duplicates. Same or similar company, role, and location are also likely duplicates. Same or similar company and role with missing or different location are shown as similar opportunities. Archived applications are ignored for these warnings.
 
-After saving, the application appears in Applications, Pipeline, Dashboard metrics, and other relevant views. The user can open Application Detail later to add richer information.
+After saving, the application appears in Applications, Status Board, Dashboard metrics, and other relevant views. The user can open Application Detail later to add richer information.
 
 ### Manage Applications
 
@@ -146,9 +146,9 @@ The Resume & Prep tab stores resume assignment and preparation notes. Prep notes
 
 The Activity tab supports dated activity entries with activity type and note. Activity entries are saved independently from the main detail form. Meaningful status changes are also logged by the backend as `Status Change` activity entries.
 
-### Track an Application Through the Pipeline
+### Track an Application Through the Status Board
 
-The user updates status as an opportunity moves through the process.
+The user updates status as an opportunity moves through the process. Status Board is the fastest place to review grouped opportunities and move them between stages.
 
 Stored statuses:
 
@@ -162,9 +162,9 @@ Stored statuses:
 - Withdrawn
 - Archived
 
-Archived is stored for archived records but is not an active pipeline stage. Active pipeline views show non-archived applications and preserve Rejected and Withdrawn as closed outcomes.
+Archived is stored for archived records but is not an active status-board stage. Active Status Board views show non-archived applications and preserve Rejected and Withdrawn as closed outcomes.
 
-Follow-up due is not a pipeline status. It is a computed action state based on `follow_up_date`, such as overdue, upcoming, or not scheduled.
+Follow-up due is not a status-board status. It is a computed action state based on `follow_up_date`, such as overdue, upcoming, or not scheduled.
 
 ### Review Reminders
 
@@ -216,7 +216,7 @@ Current red-flag fields include:
 - Too good to be true
 - Red-flag notes
 
-Applications and Pipeline show compact indicators when flags exist. Normal applications without flags remain visually quiet.
+Applications and Status Board show compact indicators when flags exist. Normal applications without flags remain visually quiet.
 
 ### Review Dashboard Insights
 
