@@ -515,14 +515,13 @@ export default function ApplicationDetailPanel({
               />
             ) : null}
 
-            {activeTab === "activity" ? (
-              <ApplicationActivityTimeline
-                applicationId={applicationId}
-                draftData={activityDraft}
-                onDraftChange={setActivityDraft}
-                onResetDraft={resetActivityDraft}
-              />
-            ) : null}
+            <ApplicationActivityTimeline
+              applicationId={applicationId}
+              draftData={activityDraft}
+              isActive={activeTab === "activity"}
+              onDraftChange={setActivityDraft}
+              onResetDraft={resetActivityDraft}
+            />
           </div>
 
           <div className="detail-actions">

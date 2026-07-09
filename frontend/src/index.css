@@ -1192,7 +1192,11 @@ a {
 }
 
 .activity-timeline-section {
-  margin-top: 14px;
+  margin-top: 0;
+}
+
+.activity-timeline-section[hidden] {
+  display: none;
 }
 
 .activity-timeline-heading h3,

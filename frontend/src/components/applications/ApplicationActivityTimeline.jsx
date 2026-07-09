@@ -45,6 +45,7 @@ function formatDate(value) {
 export default function ApplicationActivityTimeline({
   applicationId,
   draftData,
+  isActive,
   onDraftChange,
   onResetDraft,
 }) {
@@ -146,7 +147,7 @@ export default function ApplicationActivityTimeline({
   }
 
   return (
-    <section className="detail-field-group detail-field-group-wide activity-timeline-section">
+    <section className="detail-field-group detail-field-group-wide activity-timeline-section" hidden={!isActive}>
       <div className="activity-timeline-heading">
         <div>
           <h3>Activity timeline</h3>
@@ -161,69 +162,73 @@ export default function ApplicationActivityTimeline({
         </div>
       ) : null}
 
-      <div className="activity-form-grid">
-        <label>
-          Activity date
-          <input
-            name="activity_date"
-            type="date"
-            value={draftData.activity_date}
-            onChange={updateField}
-          />
-        </label>
-        <label>
-          Activity type
-          <select name="activity_type" value={draftData.activity_type} onChange={updateField}>
-            {activityTypeOptions.map((activityType) => (
-              <option key={activityType} value={activityType}>
-                {activityType}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="activity-note-field">
-          Note
-          <textarea
-            name="note"
-            rows="3"
-            value={draftData.note}
-            onChange={updateField}
-            placeholder="Recruiter replied, assessment completed, interview scheduled..."
-          />
-        </label>
-        <div className="activity-form-actions">
-          <button className="primary-small-button" type="button" disabled={isSaving} onClick={handleAddActivity}>
-            {isSaving ? "Adding..." : "Add activity"}
-          </button>
-        </div>
-      </div>
-
       {isLoading ? <LoadingState message="Loading activity timeline..." /> : null}
-      {!isLoading && activities.length === 0 ? (
-        <p className="activity-empty-state">No activity yet. Add updates as this opportunity moves forward.</p>
-      ) : null}
-      {!isLoading && activities.length > 0 ? (
-        <div className="activity-list">
-          {activities.map((activity) => (
-            <article className="activity-item" key={activity.id}>
-              <div className="activity-item-header">
-                <div>
-                  <time dateTime={activity.activity_date}>{formatDate(activity.activity_date)}</time>
-                  <span className="activity-type-badge">{activity.activity_type}</span>
-                </div>
-                <button
-                  className="quiet-danger-button"
-                  type="button"
-                  disabled={deletingActivityId === activity.id}
-                  onClick={() => handleDeleteActivity(activity.id)}
-                >
-                  Delete
-                </button>
-              </div>
-              <p>{activity.note}</p>
-            </article>
-          ))}
-        </div>
+      {!isLoading ? (
+        <>
+          <div className="activity-form-grid">
+            <label>
+              Activity date
+              <input
+                name="activity_date"
+                type="date"
+                value={draftData.activity_date}
+                onChange={updateField}
+              />
+            </label>
+            <label>
+              Activity type
+              <select name="activity_type" value={draftData.activity_type} onChange={updateField}>
+                {activityTypeOptions.map((activityType) => (
+                  <option key={activityType} value={activityType}>
+                    {activityType}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="activity-note-field">
+              Note
+              <textarea
+                name="note"
+                rows="3"
+                value={draftData.note}
+                onChange={updateField}
+                placeholder="Recruiter replied, assessment completed, interview scheduled..."
+              />
+            </label>
+            <div className="activity-form-actions">
+              <button className="primary-small-button" type="button" disabled={isSaving} onClick={handleAddActivity}>
+                {isSaving ? "Adding..." : "Add activity"}
+              </button>
+            </div>
+          </div>
+
+          {activities.length === 0 ? (
+            <p className="activity-empty-state">No activity yet. Add updates as this opportunity moves forward.</p>
+          ) : null}
+          {activities.length > 0 ? (
+            <div className="activity-list">
+              {activities.map((activity) => (
+                <article className="activity-item" key={activity.id}>
+                  <div className="activity-item-header">
+                    <div>
+                      <time dateTime={activity.activity_date}>{formatDate(activity.activity_date)}</time>
+                      <span className="activity-type-badge">{activity.activity_type}</span>
+                    </div>
+                    <button
+                      className="quiet-danger-button"
+                      type="button"
+                      disabled={deletingActivityId === activity.id}
+                      onClick={() => handleDeleteActivity(activity.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <p>{activity.note}</p>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </>
       ) : null}
     </section>
   );

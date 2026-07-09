@@ -417,7 +417,7 @@ export default function ApplicationsPage({
                     onChange={updateRedFlagFilter}
                     type="checkbox"
                   />
-                  Only
+                  {filters.redFlagState === "flagged" ? "Enabled" : "Disabled"}
                 </span>
               </label>
             </div>
