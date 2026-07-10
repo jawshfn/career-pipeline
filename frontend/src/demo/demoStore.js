@@ -408,6 +408,9 @@ export function getDemoDashboardSummary() {
       application.follow_up_date <= upcomingCutoff,
   ).length;
   const redFlaggedCount = applications.filter((application) => getRedFlagCount(application) > 0).length;
+  const closedApplicationCount = applications.filter((application) =>
+    CLOSED_APPLICATION_STATUSES.has(application.status),
+  ).length;
 
   const resumeUsage = [...resumeCounts.entries()].map(([resumeKey, count]) => {
     if (resumeKey === "unassigned") {
@@ -422,12 +425,12 @@ export function getDemoDashboardSummary() {
 
   return clone({
     summary_cards: [
+      { key: "total_applications", label: "Total applications", tone: "total", value: applications.length },
       { key: "active_applications", label: "Active applications", tone: "active", value: activeApplicationCount },
+      { key: "closed_applications", label: "Closed applications", tone: "closed", value: closedApplicationCount },
       { key: "overdue_followups", label: "Overdue follow-ups", tone: "overdue", value: overdueFollowupCount },
       { key: "upcoming_followups", label: "Upcoming follow-ups", tone: "upcoming", value: upcomingFollowupCount },
       { key: "red_flagged_applications", label: "Red-flagged applications", tone: "flags", value: redFlaggedCount },
-      { key: "interviews", label: "Interviews", tone: "interviews", value: statusCounts.get("Interview") || 0 },
-      { key: "offers", label: "Offers", tone: "offers", value: statusCounts.get("Offer") || 0 },
     ],
     status_breakdown: USER_SELECTABLE_APPLICATION_STATUSES.map((status) => ({
       label: status,

@@ -156,6 +156,7 @@ def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
         for application in applications
         if application.follow_up_date and today <= application.follow_up_date <= upcoming_cutoff
     )
+    closed_application_count = sum(1 for application in applications if application.status in CLOSED_APPLICATION_STATUSES)
     red_flagged_count = sum(1 for application in applications if has_red_flag(application))
     red_flag_items = [
         {
@@ -168,10 +169,22 @@ def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
     return {
         "summary_cards": [
             {
+                "key": "total_applications",
+                "label": "Total applications",
+                "tone": "total",
+                "value": len(applications),
+            },
+            {
                 "key": "active_applications",
                 "label": "Active applications",
                 "tone": "active",
                 "value": active_application_count,
+            },
+            {
+                "key": "closed_applications",
+                "label": "Closed applications",
+                "tone": "closed",
+                "value": closed_application_count,
             },
             {
                 "key": "overdue_followups",
@@ -190,18 +203,6 @@ def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
                 "label": "Red-flagged applications",
                 "tone": "flags",
                 "value": red_flagged_count,
-            },
-            {
-                "key": "interviews",
-                "label": "Interviews",
-                "tone": "interviews",
-                "value": status_counts.get(INTERVIEW_APPLICATION_STATUS, 0),
-            },
-            {
-                "key": "offers",
-                "label": "Offers",
-                "tone": "offers",
-                "value": status_counts.get(OFFER_APPLICATION_STATUS, 0),
             },
         ],
         "status_breakdown": [

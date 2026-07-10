@@ -129,6 +129,7 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
           <tr>
             <th>Opportunity</th>
             <th>Status</th>
+            <th>Applied</th>
             <th>Follow-up</th>
             <th>Resume</th>
             <th>Flags</th>
@@ -148,6 +149,11 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
                 </td>
                 <td>
                   <StatusBadge status={application.status} />
+                </td>
+                <td>
+                  {application.date_applied ? formatDisplayDate(application.date_applied) : (
+                    <span className="muted-table-value">-</span>
+                  )}
                 </td>
                 <td>
                   <span className={`follow-up-table-value${getFollowUpClassName(application.follow_up_date)}`}>
@@ -184,7 +190,7 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
                     type="button"
                     onClick={() => onOpenDetails(application.id)}
                   >
-                    Details
+                    Edit
                   </button>
                 </td>
               </tr>

@@ -34,7 +34,9 @@ def get_count(items, label):
 def test_empty_dashboard_summary(client):
     summary = get_summary(client)
 
+    assert get_card(summary, "total_applications")["value"] == 0
     assert get_card(summary, "active_applications")["value"] == 0
+    assert get_card(summary, "closed_applications")["value"] == 0
     assert all(item["count"] == 0 for item in summary["status_breakdown"])
     assert summary["source_breakdown"] == []
     assert summary["resume_usage"] == []
@@ -49,6 +51,7 @@ def test_dashboard_excludes_archived_applications(client):
 
     summary = get_summary(client)
 
+    assert get_card(summary, "total_applications")["value"] == 0
     assert get_card(summary, "active_applications")["value"] == 0
     assert summary["source_breakdown"] == []
     assert summary["source_effectiveness"] == []
@@ -64,9 +67,9 @@ def test_dashboard_status_and_closed_counts(client):
 
     summary = get_summary(client)
 
+    assert get_card(summary, "total_applications")["value"] == 6
     assert get_card(summary, "active_applications")["value"] == 4
-    assert get_card(summary, "interviews")["value"] == 1
-    assert get_card(summary, "offers")["value"] == 1
+    assert get_card(summary, "closed_applications")["value"] == 2
     assert get_count(summary["status_breakdown"], "Saved") == 1
     assert get_count(summary["status_breakdown"], "Applied") == 1
     assert get_count(summary["status_breakdown"], "Interview") == 1

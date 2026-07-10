@@ -147,6 +147,13 @@ Status: complete through Phase 13.3
 - Phase 13.2 - Add a static GitHub Pages demo mode with fictional frontend data while preserving the local FastAPI/SQLite app.
 - Phase 13.3 - Add Smart Capture help documentation for Paste Job Text usage.
 
+## Phase 14 - Presentation Polish
+
+Status: complete through Phase 14.2
+
+- Phase 14.1 - Clarify Applications table dates and edit actions.
+- Phase 14.2 - Refresh Dashboard summary metrics and add a Status Board CTA.
+
 ## Near-Term Future Work
 
 - Demo screenshots and fuller Smart Capture visual walkthrough

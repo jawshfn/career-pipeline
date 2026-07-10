@@ -132,7 +132,7 @@ export default function App() {
           onUpdateApplication={handleUpdateApplication}
         />
       ) : activePage === "dashboard" ? (
-        <DashboardPage />
+        <DashboardPage onOpenStatusBoard={() => setActivePage("pipeline")} />
       ) : activePage === "quick-add" ? (
         <QuickAddPage
           existingApplications={activeApplications}

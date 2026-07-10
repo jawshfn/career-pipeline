@@ -2947,26 +2947,62 @@ textarea:focus-visible {
 
 .dashboard-metric-card-active::before,
 .dashboard-metric-card-active strong {
-  color: var(--color-accent);
-  background: var(--color-accent);
+  color: #1f6f65;
+  background: #2a8177;
+}
+
+.dashboard-metric-card-active p {
+  color: #47776f;
 }
 
 .dashboard-metric-card-overdue::before,
 .dashboard-metric-card-overdue strong {
-  color: #b9473a;
+  color: #b64336;
   background: #c75d4d;
+}
+
+.dashboard-metric-card-overdue p {
+  color: #96554d;
 }
 
 .dashboard-metric-card-upcoming::before,
 .dashboard-metric-card-upcoming strong {
-  color: #2867a8;
-  background: #5b9dde;
+  color: #21639e;
+  background: #4e91d2;
+}
+
+.dashboard-metric-card-upcoming p {
+  color: #4d7198;
 }
 
 .dashboard-metric-card-flags::before,
 .dashboard-metric-card-flags strong {
-  color: #9a5f12;
-  background: #d39b2a;
+  color: #b86909;
+  background: #ff9900;
+}
+
+.dashboard-metric-card-flags p {
+  color: #ac7b2d;
+}
+
+.dashboard-metric-card-total::before,
+.dashboard-metric-card-total strong {
+  color: #243443;
+  background: #465a6c;
+}
+
+.dashboard-metric-card-total p {
+  color: #52606b;
+}
+
+.dashboard-metric-card-closed::before,
+.dashboard-metric-card-closed strong {
+  color: #5b666b;
+  background: #9aa0a4;
+}
+
+.dashboard-metric-card-closed p {
+  color: #687276;
 }
 
 .dashboard-metric-card-interviews::before,
@@ -2983,6 +3019,41 @@ textarea:focus-visible {
 
 .dashboard-metric-card strong {
   background: transparent;
+}
+
+.dashboard-status-board-cta {
+  width: 100%;
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid #d7e4e0;
+  border-radius: 8px;
+  background: #f8fbfa;
+  box-shadow: 0 10px 24px rgba(20, 38, 38, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dashboard-status-board-cta div {
+  min-width: 0;
+}
+
+.dashboard-status-board-cta h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.dashboard-status-board-cta p {
+  margin: 0;
+  color: #526866;
+}
+
+@media (max-width: 720px) {
+  .dashboard-status-board-cta {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 .effectiveness-row:not(.effectiveness-header) span:nth-child(2) {

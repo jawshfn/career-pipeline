@@ -105,7 +105,7 @@ function getResumeCoverageSummary(resumeUsage, resumeEffectiveness) {
   return `${comparedCount} ${versionLabel} compared • ${assignedCount} assigned / ${unassignedCount} unassigned`;
 }
 
-export default function DashboardPage() {
+export default function DashboardPage({ onOpenStatusBoard }) {
   const [dashboardSummary, setDashboardSummary] = useState(emptyDashboardSummary);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -163,6 +163,18 @@ export default function DashboardPage() {
           {dashboardSummary.summary_cards.map((metric) => (
             <MetricCard key={metric.key} label={metric.label} tone={metric.tone} value={metric.value} />
           ))}
+        </section>
+      ) : null}
+
+      {!isLoading && !error ? (
+        <section className="dashboard-status-board-cta" aria-labelledby="dashboard-status-board-cta-title">
+          <div>
+            <h3 id="dashboard-status-board-cta-title">Keep statuses current</h3>
+            <p>Update where opportunities stand on the Status Board.</p>
+          </div>
+          <button className="secondary-button" type="button" onClick={onOpenStatusBoard}>
+            Open Status Board
+          </button>
         </section>
       ) : null}
 
