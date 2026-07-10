@@ -373,47 +373,130 @@ function getLinkedInDescriptionCompensation(rawText) {
 }
 
 function getIndeedBonusFromSegment(segment) {
-  if (/\b(?:employee\s+referral|referral)\s+bonus\b/iu.test(segment)) {
+  if (hasExcludedBonusContext(segment)) {
     return "";
   }
 
-  const moneyBonusMatch = segment.match(
-    /(?:^|\b)(?:up to\s+)?(?:\$\s*\d+(?:,\d{3})?(?:\.\d{1,2})?|(?:\d+(?:\.\d+)?\s*%))\s+(?:(?:sign[-\s]?on|signing|hiring|annual|performance)\s+){0,2}bonus\b/iu,
-  );
-
-  if (!moneyBonusMatch) {
-    return "";
-  }
-
-  const normalizedBonus = normalizeWhitespace(moneyBonusMatch[0])
-    .replace(/\bsign on\b/iu, "sign-on")
-    .replace(/\bsign-on\b/iu, "sign-on")
-    .replace(/\bsigning\b/iu, "signing")
-    .replace(/\bhiring\b/iu, "hiring")
-    .replace(/\bannual\b/iu, "annual")
-    .replace(/\bperformance\b/iu, "performance")
-    .replace(/\bbonus\b/iu, "bonus");
-  const cleanBonus = normalizedBonus.replace(/^\$ /u, "$");
-
-  return `Bonus: ${cleanBonus}`;
+  return getAmountFirstIndeedBonus(segment) || getBonusFirstIndeedBonus(segment);
 }
 
-function getIndeedDescriptionBonus(rawText) {
+function hasExcludedBonusContext(segment) {
+  return /\b(?:employee\s+referral|referral)\s+(?:bonus|award)\b|(?:stipends?|allowances?|reimbursements?|equity|retirement|matching|project|equipment)\b|bonus\s+pools?\b|\badminister(?:ed|s|ing)?\b.*\bbonus\b|\bbonus\b.*\b(?:other|current)\s+employees?\b/iu.test(
+    segment,
+  );
+}
+
+function getAmountFirstIndeedBonus(segment) {
+  const match = segment.match(
+    new RegExp(`(?:^|\\b)(${bonusAmountPattern})\\s+((?:(?:${bonusTypeWordPattern})\\s+){0,4})bonus\\b`, "iu"),
+  );
+
+  if (!match) {
+    return "";
+  }
+
+  return formatIndeedBonus(match[1], match[2]);
+}
+
+function getBonusFirstIndeedBonus(segment) {
+  const match = segment.match(
+    new RegExp(
+      `\\b((?:(?:${bonusTypeWordPattern})\\s+){0,4})bonus(?:\\s+(?:opportunity|potential))?\\s*(?::|\\bof\\b|\\bis\\b|\\bbeing\\b)?\\s*(${bonusAmountPattern})`,
+      "iu",
+    ),
+  );
+
+  if (!match) {
+    return "";
+  }
+
+  return formatIndeedBonus(match[2], match[1]);
+}
+
+const bonusAmountPattern =
+  "(?:up to\\s+)?(?:\\$\\s*\\d[\\d,]*(?:\\.\\d{1,2})?(?:\\s*(?:-|\\u2013|\\u2014|to)\\s*\\$?\\s*\\d[\\d,]*(?:\\.\\d{1,2})?)?|\\d+(?:\\.\\d+)?\\s*%(?:\\s*(?:-|\\u2013|\\u2014|to)\\s*\\d+(?:\\.\\d+)?\\s*%)?)";
+
+const bonusTypeWordPattern = "(?:sign[-\\s]?on|signing|hiring|annual|performance|target|retention|one[-\\s]?time)";
+
+function formatIndeedBonus(rawAmount, rawType) {
+  const amount = normalizeBonusAmount(rawAmount);
+  const type = normalizeBonusType(rawType);
+
+  return type ? `${amount} ${type} bonus` : `${amount} bonus`;
+}
+
+function normalizeBonusAmount(rawAmount) {
+  return normalizeWhitespace(rawAmount)
+    .replace(/\$\s*(\d[\d,]*(?:\.\d{1,2})?)/gu, (_, amount) => `$${formatNumericAmount(amount)}`)
+    .replace(/^up to\b/iu, "up to")
+    .replace(/\s*(?:\u2013|\u2014|-)\s*/gu, "-")
+    .replace(/\s+to\s+/giu, " to ")
+    .replace(/\s+%/gu, "%");
+}
+
+function normalizeBonusType(rawType) {
+  return normalizeWhitespace(rawType || "")
+    .toLowerCase()
+    .replace(/\bsign\s+on\b/gu, "sign-on")
+    .replace(/\s+bonus$/u, "")
+    .trim();
+}
+
+function formatNumericAmount(amount) {
+  const [wholePart, decimalPart] = amount.replace(/,/gu, "").split(".");
+
+  if (!wholePart || wholePart.length <= 3) {
+    return amount;
+  }
+
+  const formattedWholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/gu, ",");
+
+  return decimalPart ? `${formattedWholePart}.${decimalPart}` : formattedWholePart;
+}
+
+function getBonusComparisonKey(bonus) {
+  return bonus
+    .toLowerCase()
+    .replace(/\bsign on\b/gu, "sign-on")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+function getIndeedDescriptionBonuses(rawText) {
   const descriptionText = getTextAfterHeading(rawText, /^\s*Full job description\s*$/imu);
 
   if (!descriptionText) {
-    return "";
+    return [];
   }
+
+  const bonuses = [];
+  const seenBonusKeys = new Set();
 
   for (const segment of getSentenceLikeSegments(descriptionText)) {
     const bonus = getIndeedBonusFromSegment(segment);
+    const bonusKey = bonus ? getBonusComparisonKey(bonus) : "";
 
-    if (bonus) {
-      return bonus;
+    if (bonus && !seenBonusKeys.has(bonusKey)) {
+      bonuses.push(bonus);
+      seenBonusKeys.add(bonusKey);
     }
   }
 
-  return "";
+  return bonuses;
+}
+
+function formatIndeedCompensation(baseCompensation, bonuses) {
+  if (bonuses.length === 0) {
+    return baseCompensation;
+  }
+
+  if (!baseCompensation) {
+    return bonuses.length === 1 ? `Bonus: ${bonuses[0]}` : `Bonuses: ${bonuses.join("; ")}`;
+  }
+
+  return bonuses.length === 1
+    ? `Base: ${baseCompensation}; Bonus: ${bonuses[0]}`
+    : `Base: ${baseCompensation}; Bonuses: ${bonuses.join("; ")}`;
 }
 
 function buildGenericNotes(rawText) {
@@ -554,6 +637,7 @@ function extractIndeedFields(rawText) {
   const headerLines = getHeaderLines(rawText);
   const streetAddressLocation = detectStreetAddressLocation(headerLines);
   const indeedWorkArrangement = headerLines.map(getWorkArrangementFromLine).find(Boolean) || "";
+  const indeedBonuses = getIndeedDescriptionBonuses(rawText);
   const indeedLocation = streetAddressLocation
     ? appendWorkArrangement(streetAddressLocation, indeedWorkArrangement)
     : baseFields.location;
@@ -561,7 +645,7 @@ function extractIndeedFields(rawText) {
   return {
     ...baseFields,
     location: indeedLocation,
-    compensation: baseFields.compensation || getIndeedDescriptionBonus(rawText),
+    compensation: formatIndeedCompensation(baseFields.compensation, indeedBonuses),
     notes: buildSourceSpecificNotes(rawText, /^\s*Full job description\s*$/imu),
   };
 }

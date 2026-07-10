@@ -401,6 +401,284 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.compensation).toBe("Bonus: $2,500 sign-on bonus");
   });
 
+  it("combines Indeed structured hourly pay with a bonus near the bottom of the description", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        payLine: "$18 - $21 an hour",
+        descriptionLines: [
+          "Coordinate fictional plant operations.",
+          "Support weekly inventory planning.",
+          "$2,000 sign on bonus paid after training.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Base: $18 - $21 an hour; Bonus: $2,000 sign-on bonus");
+  });
+
+  it("detects an Indeed bonus near the beginning of the description", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Up to $5,000 hiring bonus for qualified applicants.",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: up to $5,000 hiring bonus");
+  });
+
+  it("detects Indeed sign-on bonus labels before the amount", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Sign-on bonus: $2,000",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: $2,000 sign-on bonus");
+  });
+
+  it("detects Indeed signing bonus wording before the amount", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "This role offers a signing bonus of $2,000.",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: $2,000 signing bonus");
+  });
+
+  it("detects Indeed hiring bonus labels before an up-to amount", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Hiring bonus: up to $5,000 for qualified applicants.",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: up to $5,000 hiring bonus");
+  });
+
+  it("detects Indeed annual performance bonus labels before percentages", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Annual performance bonus: 10%",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: 10% annual performance bonus");
+  });
+
+  it("detects Indeed target bonus wording before an up-to percentage", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "The position is eligible for an annual target bonus of up to 15%.",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: up to 15% annual target bonus");
+  });
+
+  it("normalizes generic Indeed bonus labels before the amount", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Bonus: $2,000",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: $2,000 bonus");
+  });
+
+  it("detects an Indeed bonus under a Benefits heading", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Responsibilities",
+          "Coordinate fictional plant operations.",
+          "Benefits",
+          "$10,000 signing bonus after onboarding.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: $10,000 signing bonus");
+  });
+
+  it("detects an Indeed bonus near the end of the description without relying on section headings", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Coordinate fictional plant operations.",
+          "Work with supervisors on quality checks.",
+          "Candidates may earn 10% annual performance bonus.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: 10% annual performance bonus");
+  });
+
+  it("normalizes unformatted Indeed dollar bonuses and sign on wording", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "$2000 sign on bonus for eligible hires.",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: $2,000 sign-on bonus");
+  });
+
+  it("deduplicates reversed and amount-first mentions of the same Indeed bonus", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Sign-on bonus: $2000.",
+          "New hires are eligible for a $2,000 sign-on bonus.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: $2,000 sign-on bonus");
+  });
+
+  it("detects applicant-facing Indeed bonus ranges", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Sign-on bonus: $2,000-$5,000.",
+          "Annual bonus opportunity: 10%-15%.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonuses: $2,000-$5,000 sign-on bonus; 10%-15% annual bonus");
+  });
+
+  it("detects applicant-facing Indeed bonus potential percentages", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Bonus potential of up to 20% for eligible applicants.",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: up to 20% bonus");
+  });
+
+  it("detects one-time Indeed bonus wording", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "A one-time bonus of $3,000 is paid after 90 days.",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: $3,000 one-time bonus");
+  });
+
+  it("deduplicates repeated equivalent Indeed bonus mentions", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "$2,500 Sign-On Bonus for Full-Time!",
+          "The same $2,500 sign-on bonus appears in a later copied section.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: $2,500 sign-on bonus");
+  });
+
+  it("retains multiple distinct Indeed bonuses with base pay", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        payLine: "$70,000 - $85,000 a year",
+        descriptionLines: [
+          "$5,000 signing bonus after start.",
+          "Eligible applicants may also earn up to 10% annual performance bonus.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe(
+      "Base: $70,000 - $85,000 a year; Bonuses: $5,000 signing bonus; up to 10% annual performance bonus",
+    );
+  });
+
+  it("formats multiple Indeed bonuses without base pay", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "$5,000 signing bonus after start.",
+          "Eligible applicants may also earn up to 15% target bonus.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonuses: $5,000 signing bonus; up to 15% target bonus");
+  });
+
   it("does not use vague Indeed compensation text as quantified compensation", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: buildIndeedRawText({
@@ -431,12 +709,42 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.compensation).toBe("");
   });
 
+  it("ignores unlabeled Indeed numeric and percentage ranges", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "The team supports 20-30 facilities and improves throughput by 10%-15%.",
+          "Coordinate fictional plant operations.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("");
+  });
+
   it("does not treat Indeed employee referral bonuses as applicant compensation", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: buildIndeedRawText({
         descriptionLines: [
           "Current employees may receive a $1,000 employee referral bonus.",
           "Help coordinate safe production workflows.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("");
+  });
+
+  it("does not treat Indeed bonus pools as applicant compensation", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "The manager administers a $50,000 bonus pool for other employees.",
+          "Coordinate fictional plant operations.",
         ],
       }),
       jobLink: "",
@@ -476,7 +784,7 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.compensation).toBe("");
   });
 
-  it("keeps Indeed header salary ahead of a description-only bonus", () => {
+  it("combines Indeed header salary with a description-only bonus", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: buildIndeedRawText({
         payLine: "$60,000 - $65,000 a year - Full-time",
@@ -489,7 +797,7 @@ describe("buildSmartCaptureReviewState", () => {
       source: "Indeed",
     });
 
-    expect(reviewData.compensation).toBe("$60,000 - $65,000 a year");
+    expect(reviewData.compensation).toBe("Base: $60,000 - $65,000 a year; Bonus: $2,500 sign-on bonus");
   });
 
   it("extracts key review fields from ZipRecruiter-style pasted text", () => {
