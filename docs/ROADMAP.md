@@ -153,7 +153,7 @@ Status: complete through Phase 14.3
 
 - Phase 14.1 - Clarify Applications table dates and edit actions.
 - Phase 14.2 - Refresh Dashboard summary metrics and add a Status Board CTA.
-- Phase 14.3 - Clarify red flag checklist labels and helper text.
+- Phase 14.3 - Clarify red flag checklist labels and add Support page for Smart Capture reports.
 
 ## Near-Term Future Work
 

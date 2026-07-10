@@ -2,13 +2,14 @@ import React from "react";
 
 import "./AppLayout.css";
 
-const navigationItems = [
+export const navigationItems = [
   { id: "command-center", label: "Reminders" },
   { id: "dashboard", label: "Dashboard" },
   { id: "quick-add", label: "Add Job" },
   { id: "applications", label: "Applications" },
   { id: "pipeline", label: "Status Board" },
   { id: "resume-versions", label: "Resumes" },
+  { id: "support", label: "Support" },
 ];
 
 const pageTitles = {
@@ -18,6 +19,7 @@ const pageTitles = {
   applications: "Applications",
   pipeline: "Status Board",
   "resume-versions": "Resumes",
+  support: "Support",
 };
 
 export default function AppLayout({ activePage, children, isDemoMode = false, onNavigate }) {

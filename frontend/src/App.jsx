@@ -14,6 +14,7 @@ import DashboardPage from "./pages/DashboardPage.jsx";
 import PipelinePage from "./pages/PipelinePage.jsx";
 import QuickAddPage from "./pages/QuickAddPage.jsx";
 import ResumeVersionsPage from "./pages/ResumeVersionsPage.jsx";
+import SupportPage from "./pages/SupportPage.jsx";
 
 export default function App() {
   const [activePage, setActivePage] = useState("command-center");
@@ -156,6 +157,8 @@ export default function App() {
           isLoading={isLoading}
           onUpdateApplication={handleUpdateApplication}
         />
+      ) : activePage === "support" ? (
+        <SupportPage />
       ) : (
         <ApplicationsPage
           applications={activeApplications}

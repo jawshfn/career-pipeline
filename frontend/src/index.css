@@ -81,7 +81,8 @@ a {
 .dashboard-page,
 .pipeline-page,
 .quick-add-page,
-.resume-versions-page {
+.resume-versions-page,
+.support-page {
   display: grid;
   align-content: start;
   gap: 20px;
@@ -636,6 +637,94 @@ a {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.support-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.support-content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
+.support-section,
+.support-product-note {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #e4ebe9;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfdfc;
+}
+
+.support-section h3,
+.support-product-note h3 {
+  margin: 0;
+  color: #17202a;
+  font-size: 0.98rem;
+}
+
+.support-section p,
+.support-product-note p {
+  margin: 0;
+  color: #52605d;
+  font-size: 0.9rem;
+}
+
+.support-checklist {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 18px;
+  color: #34413f;
+  font-size: 0.9rem;
+}
+
+.support-privacy-note {
+  border-color: #ead397;
+  background: #fffaf0;
+}
+
+.support-email-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-width: 0;
+  border: 1px solid #d7e4e0;
+  border-radius: 8px;
+  padding: 14px;
+  background: #f8fbfa;
+}
+
+.support-email-action div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.support-email-action span {
+  color: #60706d;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.support-email-action strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #17202a;
+}
+
+.support-email-action a {
+  flex: 0 0 auto;
+  text-decoration: none;
 }
 
 .application-view-tabs {
@@ -3361,11 +3450,16 @@ textarea:focus-visible {
     flex-direction: column;
   }
 
+  .support-email-action {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .quick-add-success-actions {
     justify-content: flex-start;
   }
 
-  .panel {
+.panel {
     padding: 18px;
   }
 }
