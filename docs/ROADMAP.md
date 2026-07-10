@@ -132,7 +132,7 @@ Status: complete
 
 ## Phase 13 — Demo Readiness
 
-Status: complete through Phase 13.2
+Status: complete through Phase 13.3
 
 - Phase 13.0 — Add safe local-only fictional demo data seeding.
 - Phase 13.1a — Simplify Manual Entry in Add Job.
@@ -145,10 +145,11 @@ Status: complete through Phase 13.2
 - Phase 13.1h — Reframe Status Board with search, clearer filters, and adaptive compact tiles.
 
 - Phase 13.2 - Add a static GitHub Pages demo mode with fictional frontend data while preserving the local FastAPI/SQLite app.
+- Phase 13.3 - Add Smart Capture help documentation for Paste Job Text usage.
 
 ## Near-Term Future Work
 
-- Demo screenshots and walkthrough flow
+- Demo screenshots and fuller Smart Capture visual walkthrough
 - Final recruiter-facing screenshot audit
 - Final responsive browser QA pass
 - Optional lightweight frontend smoke tests if the UI stabilizes enough to justify them

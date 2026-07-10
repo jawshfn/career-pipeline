@@ -22,6 +22,12 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 - **Resumes:** manage reusable resume variants and connect them to applications.
 - **Application Detail:** edit follow-up, job details, resume/prep notes, red flags, and activity timeline entries.
 
+## Smart Capture / Paste Job Text
+
+Career Pipeline includes a review-first Smart Capture workflow for copied job postings. Paste the job text, review suggested fields, then save the opportunity. It works best when the copied text includes the posting header and the full job description. The Source and Job Link stay user-controlled.
+
+Read the [Smart Capture Guide](docs/SMART_CAPTURE_GUIDE.md) for copy-and-review tips.
+
 ## Tech Stack
 
 - Frontend: React, Vite, JavaScript, CSS
@@ -102,6 +108,7 @@ Not implemented: authentication, production backend/SaaS deployment, scraping, b
 
 - [Product Spec](docs/PRODUCT_SPEC.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Smart Capture Guide](docs/SMART_CAPTURE_GUIDE.md)
 - [Data Model](docs/DATA_MODEL.md)
 - [API Plan](docs/API_PLAN.md)
 - [Development Guide](docs/DEVELOPMENT.md)
