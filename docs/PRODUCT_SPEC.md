@@ -43,6 +43,7 @@ Career Pipeline centralizes that activity into a simple workflow that supports f
 
 The current prototype includes:
 
+- Static GitHub Pages demo mode with fictional in-memory data that resets on refresh
 - Dedicated Add Job page for lightweight opportunity capture
 - Add Job modes for Manual Entry and Smart Capture paste-review
 - Deterministic Smart Capture helpers that prepare conservative editable suggested fields from pasted job text before save

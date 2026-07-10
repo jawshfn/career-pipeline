@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { getApplication } from "../../api/applicationsApi.js";
+import { getApplication } from "../../services/applicationsService.js";
 import {
   APPLIED_OR_LATER_APPLICATION_STATUSES,
   DEFAULT_APPLICATION_SOURCE,
@@ -116,9 +116,18 @@ function normalizeFormState(formState) {
 }
 
 function getResumeVersionLabel(resumeVersion) {
-  return resumeVersion.target_role
+  const label = resumeVersion.target_role
     ? `${resumeVersion.name} (${resumeVersion.target_role})`
     : resumeVersion.name;
+  return resumeVersion.is_active === false ? `${label} (inactive)` : label;
+}
+
+function getAssignableResumeVersions(resumeVersions, selectedResumeVersionId) {
+  return resumeVersions.filter(
+    (resumeVersion) =>
+      resumeVersion.is_active ||
+      String(resumeVersion.id) === String(selectedResumeVersionId),
+  );
 }
 
 function formatLocalDate(date) {
@@ -389,6 +398,7 @@ export default function ApplicationDetailPanel({
     (resumeVersion) => String(resumeVersion.id) === formData.resume_version_id,
   );
   const resumeSummary = selectedResumeVersion ? getResumeVersionLabel(selectedResumeVersion) : "No resume selected";
+  const assignableResumeVersions = getAssignableResumeVersions(resumeVersions, formData.resume_version_id);
   const redFlagCount = getRedFlagCount(formData);
   const jobLinkValue = formData.job_link.trim();
   const openableJobLink = getOpenableJobLink(jobLinkValue);
@@ -516,7 +526,7 @@ export default function ApplicationDetailPanel({
               <ContactPrepTab
                 formData={formData}
                 getResumeVersionLabel={getResumeVersionLabel}
-                resumeVersions={resumeVersions}
+                resumeVersions={assignableResumeVersions}
                 updateField={updateField}
               />
             ) : null}

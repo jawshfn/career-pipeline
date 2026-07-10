@@ -132,7 +132,7 @@ Status: complete
 
 ## Phase 13 — Demo Readiness
 
-Status: complete through Phase 13.1h
+Status: complete through Phase 13.2
 
 - Phase 13.0 — Add safe local-only fictional demo data seeding.
 - Phase 13.1a — Simplify Manual Entry in Add Job.
@@ -144,10 +144,12 @@ Status: complete through Phase 13.1h
 - Phase 13.1g — Polish Dashboard layout and public documentation wording.
 - Phase 13.1h — Reframe Status Board with search, clearer filters, and adaptive compact tiles.
 
+- Phase 13.2 - Add a static GitHub Pages demo mode with fictional frontend data while preserving the local FastAPI/SQLite app.
+
 ## Near-Term Future Work
 
 - Demo screenshots and walkthrough flow
-- Final recruiter-facing README and screenshot audit
+- Final recruiter-facing screenshot audit
 - Final responsive browser QA pass
 - Optional lightweight frontend smoke tests if the UI stabilizes enough to justify them
 

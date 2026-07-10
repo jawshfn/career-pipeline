@@ -1,6 +1,6 @@
 # Career Pipeline Frontend
 
-React/Vite frontend for the Career Pipeline local job-search workspace.
+React/Vite frontend for the Career Pipeline local job-search workspace. Normal local mode talks to the FastAPI backend; demo mode uses bundled fictional in-memory data for GitHub Pages.
 
 ## Pages
 
@@ -60,3 +60,23 @@ npm run preview
 ```
 
 The production build can complete without the backend running, but API-driven pages need the backend for interactive use.
+
+## Static Demo Mode
+
+Demo mode is enabled only when `VITE_APP_MODE=demo`. It uses fictional frontend data and resets on page refresh.
+
+Build for GitHub Pages:
+
+```powershell
+$env:VITE_APP_MODE="demo"
+$env:VITE_BASE_PATH="/career-pipeline/"
+npm run build
+```
+
+Preview the built demo locally:
+
+```powershell
+npm run preview
+```
+
+The GitHub Pages workflow runs frontend tests, builds with `VITE_APP_MODE=demo`, and publishes `frontend/dist`.

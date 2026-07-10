@@ -6,6 +6,12 @@ Career Pipeline is a local-first full-stack job-search workspace for capturing o
 
 It is built as a practical product prototype: fast capture when a job looks interesting, richer detail when context matters, and clear daily surfaces for follow-ups, status changes, resumes, red flags, and activity history.
 
+## Static Demo
+
+A GitHub Pages demo is available at [https://jawshfn.github.io/career-pipeline/](https://jawshfn.github.io/career-pipeline/).
+
+The hosted demo uses fictional in-memory sample data. It is useful for reviewing the interface, but it does not connect to the FastAPI backend and changes reset when the page reloads.
+
 ## Product Highlights
 
 - **Add Job:** save opportunities manually or with deterministic Smart Capture from pasted job text.
@@ -25,6 +31,8 @@ It is built as a practical product prototype: fast capture when a job looks inte
 - CI: GitHub Actions
 
 ## Run Locally
+
+The full local app uses the React frontend, FastAPI backend, and SQLite database.
 
 Backend:
 
@@ -73,11 +81,22 @@ For local screenshots or demos, seed fictional data from the backend directory:
 
 The seed command refuses to run if local application data already exists. Use `--reset` only when you intentionally want to clear local demo tables before reseeding.
 
+## Static Demo Build
+
+To build the frontend in GitHub Pages demo mode:
+
+```powershell
+cd frontend
+$env:VITE_APP_MODE="demo"
+$env:VITE_BASE_PATH="/career-pipeline/"
+npm run build
+```
+
 ## Project Status
 
-Career Pipeline is a working local-first prototype, not a deployed production SaaS app.
+Career Pipeline is a working local-first prototype, not a production SaaS app. The GitHub Pages site is a static portfolio demo with reset-on-refresh sample data.
 
-Not implemented: authentication, deployment, scraping, browser extension workflows, AI extraction, import/export, email/calendar integrations, or multi-user sync.
+Not implemented: authentication, production backend/SaaS deployment, scraping, browser extension workflows, AI extraction, import/export, email/calendar integrations, or multi-user sync.
 
 ## Documentation
 

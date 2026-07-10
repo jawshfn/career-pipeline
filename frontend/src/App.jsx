@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { createApplication, getApplications, updateApplication } from "./api/applicationsApi.js";
+import { createApplication, getApplications, updateApplication } from "./services/applicationsService.js";
 import {
   createResumeVersion,
   getResumeVersions,
   updateResumeVersion,
-} from "./api/resumeVersionsApi.js";
+} from "./services/resumesService.js";
+import { isDemoMode } from "./config/runtimeMode.js";
 import AppLayout from "./components/layout/AppLayout.jsx";
 import ApplicationsPage from "./pages/ApplicationsPage.jsx";
 import CommandCenterPage from "./pages/CommandCenterPage.jsx";
@@ -18,6 +19,7 @@ export default function App() {
   const [activePage, setActivePage] = useState("command-center");
   const [applications, setApplications] = useState([]);
   const [resumeVersions, setResumeVersions] = useState([]);
+  const [allResumeVersions, setAllResumeVersions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -28,6 +30,10 @@ export default function App() {
     try {
       const resumeVersionsData = await getResumeVersions(options);
       setResumeVersions(resumeVersionsData);
+
+      if (options.includeInactive) {
+        setAllResumeVersions(resumeVersionsData);
+      }
     } catch (error) {
       setLoadError(error.message || "Could not load resume versions.");
     } finally {
@@ -40,13 +46,15 @@ export default function App() {
     setLoadError("");
 
     try {
-      const [applicationsData, resumeVersionsData] = await Promise.all([
+      const [applicationsData, activeResumeVersionsData, allResumeVersionsData] = await Promise.all([
         getApplications(),
         getResumeVersions(),
+        getResumeVersions({ includeInactive: true }),
       ]);
 
       setApplications(applicationsData);
-      setResumeVersions(resumeVersionsData);
+      setResumeVersions(activeResumeVersionsData);
+      setAllResumeVersions(allResumeVersionsData);
     } catch (error) {
       setLoadError(error.message || "Could not load workspace data.");
     } finally {
@@ -77,6 +85,7 @@ export default function App() {
   async function handleCreateResumeVersion(payload) {
     const createdResumeVersion = await createResumeVersion(payload);
     setResumeVersions((currentResumeVersions) => [createdResumeVersion, ...currentResumeVersions]);
+    setAllResumeVersions((currentResumeVersions) => [createdResumeVersion, ...currentResumeVersions]);
     return createdResumeVersion;
   }
 
@@ -95,13 +104,29 @@ export default function App() {
         resumeVersion.id === updatedResumeVersion.id ? updatedResumeVersion : resumeVersion,
       );
     });
+    setAllResumeVersions((currentResumeVersions) => {
+      const hasResumeVersion = currentResumeVersions.some(
+        (resumeVersion) => resumeVersion.id === updatedResumeVersion.id,
+      );
+
+      if (!hasResumeVersion) {
+        return [updatedResumeVersion, ...currentResumeVersions];
+      }
+
+      return currentResumeVersions.map((resumeVersion) =>
+        resumeVersion.id === updatedResumeVersion.id ? updatedResumeVersion : resumeVersion,
+      );
+    });
     return updatedResumeVersion;
   }
 
   const activeApplications = applications.filter((application) => !application.is_archived);
+  const activeResumeVersions = allResumeVersions.length
+    ? allResumeVersions.filter((resumeVersion) => resumeVersion.is_active)
+    : resumeVersions.filter((resumeVersion) => resumeVersion.is_active);
 
   return (
-    <AppLayout activePage={activePage} onNavigate={setActivePage}>
+    <AppLayout activePage={activePage} isDemoMode={isDemoMode()} onNavigate={setActivePage}>
       {activePage === "command-center" ? (
         <CommandCenterPage
           onUpdateApplication={handleUpdateApplication}
@@ -113,7 +138,7 @@ export default function App() {
           existingApplications={activeApplications}
           onCreateApplication={handleCreateApplication}
           onViewApplications={() => setActivePage("applications")}
-          resumeVersions={resumeVersions}
+          resumeVersions={activeResumeVersions}
         />
       ) : activePage === "resume-versions" ? (
         <ResumeVersionsPage
@@ -137,7 +162,7 @@ export default function App() {
           error={loadError}
           isLoading={isLoading}
           onUpdateApplication={handleUpdateApplication}
-          resumeVersions={resumeVersions}
+          resumeVersions={allResumeVersions}
         />
       )}
     </AppLayout>

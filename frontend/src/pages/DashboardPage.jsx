@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { getDashboardSummary } from "../api/dashboardApi.js";
+import { getDashboardSummary } from "../services/dashboardService.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 

@@ -20,7 +20,7 @@ const pageTitles = {
   "resume-versions": "Resumes",
 };
 
-export default function AppLayout({ activePage, children, onNavigate }) {
+export default function AppLayout({ activePage, children, isDemoMode = false, onNavigate }) {
   return (
     <div className="app-shell">
       <aside className="app-sidebar" aria-label="Primary">
@@ -42,7 +42,14 @@ export default function AppLayout({ activePage, children, onNavigate }) {
           ))}
         </nav>
       </aside>
-      <main className="app-main">{children}</main>
+      <main className="app-main">
+        {isDemoMode ? (
+          <div className="demo-mode-banner" role="status">
+            Demo mode: sample data is fictional and resets when the page reloads.
+          </div>
+        ) : null}
+        {children}
+      </main>
     </div>
   );
 }

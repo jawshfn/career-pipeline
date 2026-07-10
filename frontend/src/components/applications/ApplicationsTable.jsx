@@ -98,9 +98,10 @@ function getResumeLabel(application, resumeVersionsById) {
     return `Resume #${application.resume_version_id}`;
   }
 
-  return resumeVersion.target_role
+  const label = resumeVersion.target_role
     ? `${resumeVersion.name} (${resumeVersion.target_role})`
     : resumeVersion.name;
+  return resumeVersion.is_active === false ? `${label} (inactive)` : label;
 }
 
 function getRedFlagCount(application) {

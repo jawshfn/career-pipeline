@@ -4,7 +4,7 @@ import {
   createApplicationActivity,
   deleteApplicationActivity,
   getApplicationActivities,
-} from "../../api/applicationActivitiesApi.js";
+} from "../../services/applicationActivitiesService.js";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
 

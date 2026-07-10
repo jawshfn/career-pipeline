@@ -86,6 +86,19 @@ cd backend
 
 The demo seed command uses fictional data and refuses to run when local app data already exists. Use `--reset` only when you intentionally want to clear local application, activity, and resume-version tables before reseeding.
 
+Static frontend demo mode:
+
+```powershell
+cd frontend
+$env:VITE_APP_MODE="demo"
+$env:VITE_BASE_PATH="/career-pipeline/"
+npm test
+npm run build
+npm run preview
+```
+
+Demo mode uses bundled fictional in-memory data, does not call the local FastAPI backend, and resets when the browser reloads.
+
 Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend tests, frontend build, and manual QA for the affected workflows. Frontend-only behavior changes should at least run `npm test`, `npm run build`, and relevant browser QA.
 
 ## Backend Testing Expectations
@@ -112,6 +125,7 @@ The current CI workflow should:
 - Install frontend dependencies
 - Run frontend Vitest utility tests
 - Run the frontend production build
+- Build and deploy the static GitHub Pages demo from `frontend/dist`
 - Fail clearly on test or build errors
 
 Later CI can add linting, formatting, or broader frontend interaction tests if those checks become useful.

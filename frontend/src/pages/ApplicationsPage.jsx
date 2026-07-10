@@ -187,6 +187,10 @@ function getSourceOptions(applications) {
   ).sort((first, second) => first.localeCompare(second));
 }
 
+function getResumeFilterLabel(resumeVersion) {
+  return resumeVersion.is_active === false ? `${resumeVersion.name} (inactive)` : resumeVersion.name;
+}
+
 function getAdvancedFilterCount(filters) {
   return ["status", "source", "resumeVersionId", "redFlagState"].filter(
     (filterName) => filters[filterName] !== initialFilters[filterName],
@@ -414,7 +418,7 @@ export default function ApplicationsPage({
                   <option value="none">No resume version</option>
                   {resumeVersions.map((resumeVersion) => (
                     <option key={resumeVersion.id} value={String(resumeVersion.id)}>
-                      {resumeVersion.name}
+                      {getResumeFilterLabel(resumeVersion)}
                     </option>
                   ))}
                 </select>

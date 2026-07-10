@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { createApplicationActivity } from "../api/applicationActivitiesApi.js";
-import { getApplicationActionItems } from "../api/applicationsApi.js";
+import { createApplicationActivity } from "../services/applicationActivitiesService.js";
+import { getApplicationActionItems } from "../services/applicationsService.js";
 import CommandCenterSection from "../components/command-center/CommandCenterSection.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";

@@ -2,6 +2,8 @@
 
 FastAPI backend for the Career Pipeline local-first prototype. It provides SQLite persistence, SQLAlchemy models, Pydantic schemas, demo data seeding, and pytest coverage for the core job-search workflows.
 
+The backend is used by the full local app. It is not hosted by GitHub Pages; the Pages version is a static frontend demo with fictional in-memory data.
+
 ## Current API Areas
 
 - Applications: create, list, retrieve, update, archive
@@ -11,7 +13,7 @@ FastAPI backend for the Career Pipeline local-first prototype. It provides SQLit
 - Resume variants
 - Health check
 
-The backend is local-development focused. Authentication, deployment, scraping, browser extensions, AI extraction, import/export, and email/calendar integrations are not implemented.
+The backend is local-development focused. Authentication, production backend deployment, scraping, browser extensions, AI extraction, import/export, and email/calendar integrations are not implemented.
 
 ## Setup
 
