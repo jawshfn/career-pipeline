@@ -193,6 +193,16 @@ function detectCityStateLocation(lines) {
   );
 }
 
+function detectStreetAddressLocation(lines) {
+  return (
+    lines.find((line) =>
+      /^\d+\s+[A-Za-z0-9 .'-]+,\s*[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}\s+\d{5}(?:-\d{4})?$/iu.test(
+        line,
+      ),
+    ) || ""
+  );
+}
+
 function detectLocationHint(rawText) {
   const labeledLocation = detectLabeledValue(rawText, ["Location", "Job location"]);
 
@@ -248,6 +258,34 @@ function detectCompensation(lines) {
   }
 
   return "";
+}
+
+function getWorkArrangementFromLine(line) {
+  if (/^in[-\s]?person$/iu.test(line)) {
+    return "In-person";
+  }
+
+  if (/^on[-\s]?site$/iu.test(line)) {
+    return "On-site";
+  }
+
+  if (/^hybrid(?:\s+(?:work|remote))?$/iu.test(line)) {
+    return "Hybrid";
+  }
+
+  if (/^remote$/iu.test(line)) {
+    return "Remote";
+  }
+
+  return "";
+}
+
+function appendWorkArrangement(location, workArrangement) {
+  if (!location || !workArrangement || new RegExp(`\\b${workArrangement}\\b`, "iu").test(location)) {
+    return location;
+  }
+
+  return `${location} - ${workArrangement}`;
 }
 
 function getTextAfterHeading(rawText, headingPattern) {
@@ -328,6 +366,50 @@ function getLinkedInDescriptionCompensation(rawText) {
         /\b(?:salary|base pay|base salary|pay range)\b/iu.test(segment))
     ) {
       return compensation;
+    }
+  }
+
+  return "";
+}
+
+function getIndeedBonusFromSegment(segment) {
+  if (/\b(?:employee\s+referral|referral)\s+bonus\b/iu.test(segment)) {
+    return "";
+  }
+
+  const moneyBonusMatch = segment.match(
+    /(?:^|\b)(?:up to\s+)?(?:\$\s*\d+(?:,\d{3})?(?:\.\d{1,2})?|(?:\d+(?:\.\d+)?\s*%))\s+(?:(?:sign[-\s]?on|signing|hiring|annual|performance)\s+){0,2}bonus\b/iu,
+  );
+
+  if (!moneyBonusMatch) {
+    return "";
+  }
+
+  const normalizedBonus = normalizeWhitespace(moneyBonusMatch[0])
+    .replace(/\bsign on\b/iu, "sign-on")
+    .replace(/\bsign-on\b/iu, "sign-on")
+    .replace(/\bsigning\b/iu, "signing")
+    .replace(/\bhiring\b/iu, "hiring")
+    .replace(/\bannual\b/iu, "annual")
+    .replace(/\bperformance\b/iu, "performance")
+    .replace(/\bbonus\b/iu, "bonus");
+  const cleanBonus = normalizedBonus.replace(/^\$ /u, "$");
+
+  return `Bonus: ${cleanBonus}`;
+}
+
+function getIndeedDescriptionBonus(rawText) {
+  const descriptionText = getTextAfterHeading(rawText, /^\s*Full job description\s*$/imu);
+
+  if (!descriptionText) {
+    return "";
+  }
+
+  for (const segment of getSentenceLikeSegments(descriptionText)) {
+    const bonus = getIndeedBonusFromSegment(segment);
+
+    if (bonus) {
+      return bonus;
     }
   }
 
@@ -418,7 +500,7 @@ function detectLinkedInWorkArrangement(headerLines) {
 }
 
 function isLocationLine(line) {
-  return Boolean(detectCityStateLocation([line]));
+  return Boolean(detectCityStateLocation([line]) || detectStreetAddressLocation([line]));
 }
 
 function isCompanyCandidateLine(line) {
@@ -468,8 +550,18 @@ function extractHeaderFields(rawText, options = {}) {
 }
 
 function extractIndeedFields(rawText) {
+  const baseFields = extractHeaderFields(rawText);
+  const headerLines = getHeaderLines(rawText);
+  const streetAddressLocation = detectStreetAddressLocation(headerLines);
+  const indeedWorkArrangement = headerLines.map(getWorkArrangementFromLine).find(Boolean) || "";
+  const indeedLocation = streetAddressLocation
+    ? appendWorkArrangement(streetAddressLocation, indeedWorkArrangement)
+    : baseFields.location;
+
   return {
-    ...extractHeaderFields(rawText),
+    ...baseFields,
+    location: indeedLocation,
+    compensation: baseFields.compensation || getIndeedDescriptionBonus(rawText),
     notes: buildSourceSpecificNotes(rawText, /^\s*Full job description\s*$/imu),
   };
 }

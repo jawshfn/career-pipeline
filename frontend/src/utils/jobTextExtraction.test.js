@@ -26,6 +26,29 @@ function buildLinkedInRawText({
     .join("\n");
 }
 
+function buildIndeedRawText({
+  descriptionLines = [],
+  jobDetailsLines = [],
+  location = "Norfolk, VA 23510",
+  payLine = "",
+} = {}) {
+  return [
+    "Production Coordinator- job post",
+    "Example Manufacturing Co",
+    "3.8",
+    "3.8 out of 5 stars",
+    location,
+    payLine,
+    "Job details",
+    "Here's how the job details align with your profile.",
+    ...jobDetailsLines,
+    "Full job description",
+    ...descriptionLines,
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+}
+
 describe("buildSmartCaptureReviewState", () => {
   it("preserves the manually selected source and normalizes the explicit job link", () => {
     const reviewData = buildSmartCaptureReviewState({
@@ -330,6 +353,143 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.compensation).toBe("$60,000 - $65,000 a year");
     expect(reviewData.employment_type).toBe("Full-time");
     expect(reviewData.notes).toMatch(/^Full job description/u);
+  });
+
+  it("preserves Indeed structured street-address locations", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        location: "2960 Chelsea Road, West Point, VA 23181",
+        descriptionLines: ["Coordinate production schedules for a fictional facility."],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.parser_format).toBe("indeed");
+    expect(reviewData.location).toBe("2960 Chelsea Road, West Point, VA 23181");
+  });
+
+  it("combines Indeed structured street-address locations with explicit work arrangement", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        location: "2960 Chelsea Road, West Point, VA 23181",
+        jobDetailsLines: ["In-person"],
+        descriptionLines: ["Coordinate production schedules for a fictional facility."],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.location).toBe("2960 Chelsea Road, West Point, VA 23181 - In-person");
+  });
+
+  it("extracts an Indeed sign-on bonus from the full job description when salary is missing", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        location: "2960 Chelsea Road, West Point, VA 23181",
+        jobDetailsLines: ["In-person"],
+        descriptionLines: [
+          "$2,500 Sign-On Bonus for Full-Time!",
+          "The same $2,500 sign-on bonus is paid after the required period.",
+          "Help coordinate safe production workflows.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("Bonus: $2,500 sign-on bonus");
+  });
+
+  it("does not use vague Indeed compensation text as quantified compensation", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Competitive compensation is available for qualified applicants.",
+          "Help coordinate safe production workflows.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("");
+  });
+
+  it("does not use unlabeled Indeed bonus opportunities as compensation", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Bonus opportunities available based on facility results.",
+          "Help coordinate safe production workflows.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("");
+  });
+
+  it("does not treat Indeed employee referral bonuses as applicant compensation", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Current employees may receive a $1,000 employee referral bonus.",
+          "Help coordinate safe production workflows.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("");
+  });
+
+  it("does not treat non-monetary Indeed bonus wording as compensation", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "Experience with rehabilitation is a bonus.",
+          "Help coordinate safe production workflows.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("");
+  });
+
+  it("ignores unrelated Indeed dollar amounts without salary or bonus context", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        descriptionLines: [
+          "You will help monitor a $25,000 equipment budget for the training room.",
+          "Help coordinate safe production workflows.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("");
+  });
+
+  it("keeps Indeed header salary ahead of a description-only bonus", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        payLine: "$60,000 - $65,000 a year - Full-time",
+        descriptionLines: [
+          "$2,500 Sign-On Bonus for Full-Time!",
+          "Help coordinate safe production workflows.",
+        ],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.compensation).toBe("$60,000 - $65,000 a year");
   });
 
   it("extracts key review fields from ZipRecruiter-style pasted text", () => {
