@@ -250,6 +250,90 @@ function detectCompensation(lines) {
   return "";
 }
 
+function getTextAfterHeading(rawText, headingPattern) {
+  const match = rawText.match(headingPattern);
+
+  if (typeof match?.index !== "number") {
+    return "";
+  }
+
+  return rawText.slice(match.index + match[0].length).trim();
+}
+
+function getSentenceLikeSegments(rawText) {
+  return rawText
+    .split(/\r?\n/u)
+    .flatMap((line) => normalizeWhitespace(normalizeBulletSeparators(line)).split(/(?<=[.!?])\s+/u))
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+}
+
+function hasBaseCompensationContext(segment) {
+  return (
+    /\b(?:salary|salary range|base salary|base pay|base pay range|pay range|annual pay|hourly rate|wage|wage range)\b/iu.test(
+      segment,
+    ) ||
+    hasExplicitBaseCompensationLabel(segment) ||
+    /\bcompensation\s+for\s+(?:this|the)\s+role\b.*\b(?:is|being|ranges?|range|from|between)\b/iu.test(
+      segment,
+    )
+  );
+}
+
+function hasExplicitBaseCompensationLabel(segment) {
+  return /\b(?:compensation|salary|salary range|base salary|base pay|base pay range|pay range)\s*:/iu.test(
+    segment,
+  );
+}
+
+function getCurrencylessLinkedInCompensationFromSegment(segment) {
+  const labeledCompensationPattern =
+    /\b(?:compensation|salary|salary range|base salary|base pay|base pay range|pay range)\s*:\s*/iu;
+  const labelMatch = segment.match(labeledCompensationPattern);
+
+  if (!labelMatch) {
+    return "";
+  }
+
+  const textAfterLabel = segment.slice((labelMatch.index || 0) + labelMatch[0].length);
+  const amountRangeMatch = textAfterLabel.match(
+    /\b(?:\d{1,3}(?:,\d{3})+|\d{5,6}|\d{2,3})\s*[kK]?\s*(?:-|\u2013|\u2014|to)\s*(?:\d{1,3}(?:,\d{3})+|\d{5,6}|\d{2,3})\s*[kK]?\b/u,
+  );
+
+  return amountRangeMatch ? normalizeWhitespace(amountRangeMatch[0]) : "";
+}
+
+function hasBenefitsOnlyCompensationContext(segment) {
+  return /\b(?:bonus(?:es)?|stipends?|allowances?|reimbursements?|referral payments?|referral bonus(?:es)?|relocation assistance|tuition assistance|equity|retirement benefits?|401\s*\(?k\)?|insurance|project budgets?)\b/iu.test(
+    segment,
+  );
+}
+
+function getLinkedInDescriptionCompensation(rawText) {
+  const descriptionText = getTextAfterHeading(rawText, /^\s*About the job\s*$/imu);
+
+  if (!descriptionText) {
+    return "";
+  }
+
+  for (const segment of getSentenceLikeSegments(descriptionText)) {
+    const compensation =
+      getCompensationFromLine(segment) || getCurrencylessLinkedInCompensationFromSegment(segment);
+
+    if (
+      compensation &&
+      hasBaseCompensationContext(segment) &&
+      (!hasBenefitsOnlyCompensationContext(segment) ||
+        hasExplicitBaseCompensationLabel(segment) ||
+        /\b(?:salary|base pay|base salary|pay range)\b/iu.test(segment))
+    ) {
+      return compensation;
+    }
+  }
+
+  return "";
+}
+
 function buildGenericNotes(rawText) {
   const trimmedText = rawText.trim();
 
@@ -423,6 +507,7 @@ function extractLinkedInFields(rawText) {
     company_name: companyFromLogo || baseFields.company_name,
     role_title: normalizeTitle(roleTitle),
     location: linkedInLocation || baseFields.location,
+    compensation: baseFields.compensation || getLinkedInDescriptionCompensation(rawText),
     notes: buildSourceSpecificNotes(rawText, /^\s*About the job\s*$/imu),
   };
 }
