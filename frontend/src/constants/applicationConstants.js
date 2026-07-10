@@ -55,12 +55,36 @@ export const EMPLOYMENT_TYPE_OPTIONS = [
 ];
 
 export const RED_FLAG_OPTIONS = [
-  { name: "vague_job_description", label: "Vague job description" },
-  { name: "unrealistic_salary", label: "Unrealistic salary" },
-  { name: "asks_for_payment", label: "Asks for payment" },
-  { name: "suspicious_contact", label: "Suspicious contact" },
-  { name: "company_mismatch", label: "Company mismatch" },
-  { name: "too_good_to_be_true", label: "Too good to be true" },
+  {
+    name: "vague_job_description",
+    label: "Vague job description",
+    description: "Responsibilities, requirements, or company details are unclear.",
+  },
+  {
+    name: "unrealistic_salary",
+    label: "Unrealistic pay or benefits",
+    description: "Pay, benefits, or flexibility seem unusually high for the role.",
+  },
+  {
+    name: "asks_for_payment",
+    label: "Payment or check/deposit request",
+    description: "The employer asks for money, equipment purchases, deposits, checks, or financial steps.",
+  },
+  {
+    name: "suspicious_contact",
+    label: "Suspicious contact method",
+    description: "Communication uses odd email domains, personal accounts, texting apps, or unusual channels.",
+  },
+  {
+    name: "company_mismatch",
+    label: "Company identity mismatch",
+    description: "Company name, website, email domain, recruiter, or posting details do not line up.",
+  },
+  {
+    name: "too_good_to_be_true",
+    label: "Too-good-to-be-true claims",
+    description: "The role promises unusually easy work, fast hiring, guaranteed income, or unusually generous terms.",
+  },
 ];
 
 export const RED_FLAG_FIELD_NAMES = RED_FLAG_OPTIONS.map((option) => option.name);

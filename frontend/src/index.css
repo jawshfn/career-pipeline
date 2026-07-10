@@ -1148,9 +1148,8 @@ a {
 }
 
 .checkbox-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  gap: 4px;
   min-width: 0;
   color: #34413f;
   font-size: 0.9rem;
@@ -1162,6 +1161,31 @@ a {
   height: 16px;
   flex: 0 0 auto;
   accent-color: #8b2f20;
+}
+
+.checkbox-field-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.checkbox-field strong {
+  color: #34413f;
+  font-size: 0.9rem;
+  line-height: 1.25;
+}
+
+.checkbox-field-description {
+  display: block;
+  padding-left: 24px;
+}
+
+.checkbox-field small {
+  color: #60706d;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .activity-timeline-section {

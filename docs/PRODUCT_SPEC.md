@@ -210,11 +210,11 @@ Red flags are user-managed caution tags, not automated scoring.
 Current red-flag fields include:
 
 - Vague job description
-- Unrealistic salary
-- Asks for payment
-- Suspicious contact
-- Company mismatch
-- Too good to be true
+- Unrealistic pay or benefits
+- Payment or check/deposit request
+- Suspicious contact method
+- Company identity mismatch
+- Too-good-to-be-true claims
 - Red-flag notes
 
 Applications and Status Board show compact indicators when flags exist. Normal applications without flags remain visually quiet.
@@ -225,7 +225,7 @@ The Dashboard provides summary-focused metrics from the backend `/api/dashboard/
 
 Current sections include:
 
-- Summary metric cards for active applications, follow-ups, red-flagged applications, interviews, and offers
+- Summary metric cards for total, active, closed, follow-ups, and red-flagged applications
 - Application Status
 - Sources
 - Red Flags
