@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   APPLIED_OR_LATER_APPLICATION_STATUSES,
@@ -17,7 +17,7 @@ import {
 import { findSimilarOpportunities } from "../../utils/opportunityDuplicates.js";
 import DuplicateOpportunityWarning from "./DuplicateOpportunityWarning.jsx";
 
-const initialFormState = {
+export const initialQuickAddFormState = {
   company_name: "",
   role_title: "",
   job_link: "",
@@ -28,6 +28,16 @@ const initialFormState = {
   follow_up_date: "",
   notes: "",
 };
+
+function normalizeDirtyValue(value) {
+  return String(value ?? "");
+}
+
+export function isQuickAddFormDirty(formData, baselineFormData = initialQuickAddFormState) {
+  return Object.keys(baselineFormData).some(
+    (fieldName) => normalizeDirtyValue(formData[fieldName]) !== normalizeDirtyValue(baselineFormData[fieldName]),
+  );
+}
 
 const followUpPresets = [
   { label: "Tomorrow", daysFromToday: 1 },
@@ -68,11 +78,22 @@ export default function QuickAddApplicationForm({
   resumeVersions,
   onCreateApplication,
   onCreateSuccess,
+  onUnsavedChangesChange,
 }) {
-  const [formData, setFormData] = useState(initialFormState);
+  const [formData, setFormData] = useState(initialQuickAddFormState);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTrackingDetails, setShowTrackingDetails] = useState(false);
+
+  useEffect(() => {
+    onUnsavedChangesChange?.(isQuickAddFormDirty(formData));
+  }, [formData, onUnsavedChangesChange]);
+
+  useEffect(() => {
+    return () => {
+      onUnsavedChangesChange?.(false);
+    };
+  }, [onUnsavedChangesChange]);
 
   function updateField(event) {
     const { name, value } = event.target;
@@ -108,7 +129,7 @@ export default function QuickAddApplicationForm({
 
     try {
       const createdApplication = await onCreateApplication(payload);
-      setFormData(initialFormState);
+      setFormData(initialQuickAddFormState);
       setShowTrackingDetails(false);
       onCreateSuccess?.(createdApplication);
     } catch (creationError) {

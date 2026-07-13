@@ -43,7 +43,7 @@ function BreakdownList({ emptyMessage, items }) {
   );
 }
 
-function EffectivenessGrid({ ariaLabel, firstColumnLabel, items }) {
+export function EffectivenessGrid({ ariaLabel, firstColumnLabel, items }) {
   return (
     <div className="effectiveness-grid" role="table" aria-label={ariaLabel}>
       <div className="effectiveness-row effectiveness-header" role="row">

@@ -212,6 +212,7 @@ export default function ApplicationsPage({
   applications,
   error,
   isLoading,
+  onUnsavedChangesChange,
   onUpdateApplication,
   resumeVersions,
 }) {
@@ -246,6 +247,16 @@ export default function ApplicationsPage({
     shouldScrollToDetailRef.current = false;
     requestAnimationFrame(scrollDetailPanelIntoView);
   }, [selectedApplicationId]);
+
+  useEffect(() => {
+    onUnsavedChangesChange?.(hasDetailUnsavedChanges);
+  }, [hasDetailUnsavedChanges, onUnsavedChangesChange]);
+
+  useEffect(() => {
+    return () => {
+      onUnsavedChangesChange?.(false);
+    };
+  }, [onUnsavedChangesChange]);
 
   function updateFilter(event) {
     const { name, value } = event.target;

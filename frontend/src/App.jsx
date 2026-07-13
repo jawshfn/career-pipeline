@@ -16,8 +16,27 @@ import QuickAddPage from "./pages/QuickAddPage.jsx";
 import ResumeVersionsPage from "./pages/ResumeVersionsPage.jsx";
 import SupportPage from "./pages/SupportPage.jsx";
 
+export const UNSAVED_PAGE_CONFIRM_MESSAGE = "You have unsaved changes on this page. Leave without saving?";
+
+export function shouldConfirmPageNavigation(currentPage, requestedPage, hasUnsavedChanges) {
+  return Boolean(hasUnsavedChanges && requestedPage !== currentPage);
+}
+
+export function resolvePageNavigation(currentPage, requestedPage, hasUnsavedChanges, confirmLeave) {
+  if (!shouldConfirmPageNavigation(currentPage, requestedPage, hasUnsavedChanges)) {
+    return { shouldClearDirtyState: false, shouldNavigate: true, targetPage: requestedPage };
+  }
+
+  if (!confirmLeave(UNSAVED_PAGE_CONFIRM_MESSAGE)) {
+    return { shouldClearDirtyState: false, shouldNavigate: false, targetPage: currentPage };
+  }
+
+  return { shouldClearDirtyState: true, shouldNavigate: true, targetPage: requestedPage };
+}
+
 export default function App() {
   const [activePage, setActivePage] = useState("command-center");
+  const [activePageHasUnsavedChanges, setActivePageHasUnsavedChanges] = useState(false);
   const [applications, setApplications] = useState([]);
   const [resumeVersions, setResumeVersions] = useState([]);
   const [allResumeVersions, setAllResumeVersions] = useState([]);
@@ -66,6 +85,50 @@ export default function App() {
   useEffect(() => {
     loadWorkspaceData();
   }, [loadWorkspaceData]);
+
+  useEffect(() => {
+    if (!activePageHasUnsavedChanges) {
+      return undefined;
+    }
+
+    function handleBeforeUnload(event) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [activePageHasUnsavedChanges]);
+
+  const handlePageUnsavedChangesChange = useCallback((hasUnsavedChanges) => {
+    setActivePageHasUnsavedChanges(Boolean(hasUnsavedChanges));
+  }, []);
+
+  const navigateToPage = useCallback(
+    (requestedPage) => {
+      const navigationResult = resolvePageNavigation(
+        activePage,
+        requestedPage,
+        activePageHasUnsavedChanges,
+        window.confirm,
+      );
+
+      if (!navigationResult.shouldNavigate) {
+        return false;
+      }
+
+      if (navigationResult.shouldClearDirtyState) {
+        setActivePageHasUnsavedChanges(false);
+      }
+
+      setActivePage(navigationResult.targetPage);
+      return true;
+    },
+    [activePage, activePageHasUnsavedChanges],
+  );
 
   async function handleCreateApplication(applicationData) {
     const createdApplication = await createApplication(applicationData);
@@ -127,18 +190,19 @@ export default function App() {
     : resumeVersions.filter((resumeVersion) => resumeVersion.is_active);
 
   return (
-    <AppLayout activePage={activePage} isDemoMode={isDemoMode()} onNavigate={setActivePage}>
+    <AppLayout activePage={activePage} isDemoMode={isDemoMode()} onNavigate={navigateToPage}>
       {activePage === "command-center" ? (
         <CommandCenterPage
           onUpdateApplication={handleUpdateApplication}
         />
       ) : activePage === "dashboard" ? (
-        <DashboardPage onOpenStatusBoard={() => setActivePage("pipeline")} />
+        <DashboardPage onOpenStatusBoard={() => navigateToPage("pipeline")} />
       ) : activePage === "quick-add" ? (
         <QuickAddPage
           existingApplications={activeApplications}
           onCreateApplication={handleCreateApplication}
-          onViewApplications={() => setActivePage("applications")}
+          onUnsavedChangesChange={handlePageUnsavedChangesChange}
+          onViewApplications={() => navigateToPage("applications")}
           resumeVersions={activeResumeVersions}
         />
       ) : activePage === "resume-versions" ? (
@@ -147,6 +211,7 @@ export default function App() {
           isLoading={isLoading}
           onCreateResumeVersion={handleCreateResumeVersion}
           onLoadResumeVersions={loadResumeVersions}
+          onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onUpdateResumeVersion={handleUpdateResumeVersion}
           resumeVersions={resumeVersions}
         />
@@ -164,6 +229,7 @@ export default function App() {
           applications={activeApplications}
           error={loadError}
           isLoading={isLoading}
+          onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onUpdateApplication={handleUpdateApplication}
           resumeVersions={allResumeVersions}
         />

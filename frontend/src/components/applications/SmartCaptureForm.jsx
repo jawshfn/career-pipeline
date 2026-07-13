@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import {
   DEFAULT_APPLICATION_SOURCE,
@@ -17,11 +17,25 @@ import { buildSmartCaptureReviewState } from "../../utils/jobTextExtraction.js";
 import { findSimilarOpportunities } from "../../utils/opportunityDuplicates.js";
 import DuplicateOpportunityWarning from "./DuplicateOpportunityWarning.jsx";
 
-const initialCaptureState = {
+export const initialSmartCaptureState = {
   rawText: "",
   jobLink: "",
   source: DEFAULT_APPLICATION_SOURCE,
 };
+
+function normalizeDirtyValue(value) {
+  return String(value ?? "");
+}
+
+export function isSmartCaptureDirty(captureData, reviewData, baselineCaptureData = initialSmartCaptureState) {
+  if (reviewData) {
+    return true;
+  }
+
+  return Object.keys(baselineCaptureData).some(
+    (fieldName) => normalizeDirtyValue(captureData[fieldName]) !== normalizeDirtyValue(baselineCaptureData[fieldName]),
+  );
+}
 
 function getResumeVersionLabel(resumeVersion) {
   return resumeVersion.target_role
@@ -136,14 +150,25 @@ export default function SmartCaptureForm({
   resumeVersions,
   onCreateApplication,
   onCreateSuccess,
+  onUnsavedChangesChange,
 }) {
-  const [captureData, setCaptureData] = useState(initialCaptureState);
+  const [captureData, setCaptureData] = useState(initialSmartCaptureState);
   const [reviewData, setReviewData] = useState(null);
   const [capturedReviewFields, setCapturedReviewFields] = useState({});
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTrackingDetails, setShowTrackingDetails] = useState(false);
   const [showJobDetails, setShowJobDetails] = useState(false);
+
+  useEffect(() => {
+    onUnsavedChangesChange?.(isSmartCaptureDirty(captureData, reviewData));
+  }, [captureData, reviewData, onUnsavedChangesChange]);
+
+  useEffect(() => {
+    return () => {
+      onUnsavedChangesChange?.(false);
+    };
+  }, [onUnsavedChangesChange]);
 
   function updateCaptureField(event) {
     const { name, value } = event.target;
@@ -191,7 +216,7 @@ export default function SmartCaptureForm({
 
     try {
       const createdApplication = await onCreateApplication(payload);
-      setCaptureData(initialCaptureState);
+      setCaptureData(initialSmartCaptureState);
       setReviewData(null);
       setCapturedReviewFields({});
       setShowTrackingDetails(false);

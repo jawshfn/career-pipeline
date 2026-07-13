@@ -300,11 +300,13 @@ export default function ApplicationDetailPanel({
 
   useEffect(() => {
     onUnsavedChangesChange?.(hasUnsavedChanges);
+  }, [hasUnsavedChanges, onUnsavedChangesChange]);
 
+  useEffect(() => {
     return () => {
       onUnsavedChangesChange?.(false);
     };
-  }, [hasUnsavedChanges, onUnsavedChangesChange]);
+  }, [onUnsavedChangesChange]);
 
   function updateField(event) {
     const { checked, name, type, value } = event.target;

@@ -1926,12 +1926,17 @@ a {
 }
 
 .dashboard-results-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 680px), 1fr));
 }
 
 .dashboard-disclosure {
   display: block;
   align-self: start;
+}
+
+.dashboard-results-grid .dashboard-disclosure {
+  container: dashboard-results-panel / inline-size;
+  overflow: hidden;
 }
 
 .dashboard-disclosure-summary {
@@ -1989,6 +1994,7 @@ a {
   display: grid;
   gap: 10px;
   margin-top: 10px;
+  min-width: 0;
 }
 
 .dashboard-breakdown-list {
@@ -2051,11 +2057,12 @@ a {
   display: grid;
   gap: 0;
   min-width: 0;
+  overflow: hidden;
 }
 
 .effectiveness-row {
   display: grid;
-  grid-template-columns: minmax(140px, 1.6fr) repeat(5, minmax(70px, 0.8fr));
+  grid-template-columns: minmax(150px, 1.7fr) repeat(5, minmax(0, 0.8fr));
   align-items: center;
   gap: 10px;
   border-bottom: 1px solid #edf1ef;
@@ -2071,12 +2078,29 @@ a {
   color: #60706d;
   font-size: 0.76rem;
   font-weight: 800;
+  line-height: 1.25;
   text-transform: uppercase;
 }
 
+.effectiveness-header span {
+  min-width: 0;
+  overflow-wrap: normal;
+  text-align: center;
+  white-space: normal;
+}
+
+.effectiveness-header span:first-child {
+  text-align: left;
+}
+
 .effectiveness-row strong {
+  min-width: 0;
   color: #17202a;
   overflow-wrap: anywhere;
+}
+
+.effectiveness-row span {
+  min-width: 0;
 }
 
 .effectiveness-row:not(.effectiveness-header) span:not(:first-child) {
@@ -3264,6 +3288,47 @@ textarea:focus-visible {
 .effectiveness-row:not(.effectiveness-header) span:nth-child(6) {
   color: #6a4a44;
   background: #f1edeb;
+}
+
+@container dashboard-results-panel (max-width: 700px) {
+  .effectiveness-grid {
+    gap: 8px;
+  }
+
+  .effectiveness-header {
+    display: none;
+  }
+
+  .effectiveness-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    border: 1px solid #e1e8e6;
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .effectiveness-row strong {
+    grid-column: 1 / -1;
+  }
+
+  .effectiveness-row:not(.effectiveness-header) span:not(:first-child) {
+    justify-content: space-between;
+    gap: 10px;
+    border-radius: 6px;
+    padding: 7px 9px;
+  }
+
+  .effectiveness-row:not(.effectiveness-header) span:not(:first-child)::before {
+    content: attr(data-label);
+    color: #60706d;
+    font-weight: 800;
+  }
+}
+
+@container dashboard-results-panel (max-width: 430px) {
+  .effectiveness-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .pipeline-column::before {

@@ -9,11 +9,80 @@ const initialCreateForm = {
   description: "",
 };
 
+export const RESUME_EDIT_SWITCH_CONFIRM_MESSAGE = "You have unsaved changes. Switch resumes without saving?";
+export const RESUME_EDIT_CANCEL_CONFIRM_MESSAGE = "You have unsaved changes. Cancel editing without saving?";
+
+function normalizeFormValue(value) {
+  return String(value ?? "");
+}
+
+export function isResumeFormDirty(formData, baselineFormData = initialCreateForm) {
+  return Object.keys(baselineFormData).some(
+    (fieldName) => normalizeFormValue(formData[fieldName]) !== normalizeFormValue(baselineFormData[fieldName]),
+  );
+}
+
 function toEditForm(resumeVersion) {
   return {
     name: resumeVersion.name || "",
     target_role: resumeVersion.target_role || "",
     description: resumeVersion.description || "",
+  };
+}
+
+function getCleanEditState() {
+  return {
+    editingId: null,
+    editForm: initialCreateForm,
+    editFormBaseline: initialCreateForm,
+  };
+}
+
+function getEditStateForResume(resumeVersion) {
+  const nextEditForm = toEditForm(resumeVersion);
+
+  return {
+    editingId: resumeVersion.id,
+    editForm: nextEditForm,
+    editFormBaseline: nextEditForm,
+  };
+}
+
+export function isResumeEditDirty(editingId, editForm, editFormBaseline) {
+  return Boolean(editingId && isResumeFormDirty(editForm, editFormBaseline));
+}
+
+export function resolveResumeEditSwitch(currentState, nextResumeVersion, confirmLeave) {
+  const nextResumeId = nextResumeVersion.id;
+  const isSwitchingResume = currentState.editingId && currentState.editingId !== nextResumeId;
+
+  if (
+    isSwitchingResume &&
+    isResumeEditDirty(currentState.editingId, currentState.editForm, currentState.editFormBaseline) &&
+    !confirmLeave(RESUME_EDIT_SWITCH_CONFIRM_MESSAGE)
+  ) {
+    return currentState;
+  }
+
+  return {
+    ...currentState,
+    ...getEditStateForResume(nextResumeVersion),
+    actionError: "",
+    actionMessage: "",
+  };
+}
+
+export function resolveResumeEditCancel(currentState, confirmLeave) {
+  if (
+    isResumeEditDirty(currentState.editingId, currentState.editForm, currentState.editFormBaseline) &&
+    !confirmLeave(RESUME_EDIT_CANCEL_CONFIRM_MESSAGE)
+  ) {
+    return currentState;
+  }
+
+  return {
+    ...currentState,
+    ...getCleanEditState(),
   };
 }
 
@@ -41,12 +110,14 @@ export default function ResumeVersionsPage({
   isLoading,
   onCreateResumeVersion,
   onLoadResumeVersions,
+  onUnsavedChangesChange,
   onUpdateResumeVersion,
   resumeVersions,
 }) {
   const [createForm, setCreateForm] = useState(initialCreateForm);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(initialCreateForm);
+  const [editFormBaseline, setEditFormBaseline] = useState(initialCreateForm);
   const [includeInactive, setIncludeInactive] = useState(false);
   const [actionError, setActionError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
@@ -56,6 +127,19 @@ export default function ResumeVersionsPage({
   useEffect(() => {
     onLoadResumeVersions({ includeInactive });
   }, [includeInactive, onLoadResumeVersions]);
+
+  const hasCreateFormChanges = isResumeFormDirty(createForm, initialCreateForm);
+  const hasEditFormChanges = editingId ? isResumeFormDirty(editForm, editFormBaseline) : false;
+
+  useEffect(() => {
+    onUnsavedChangesChange?.(hasCreateFormChanges || hasEditFormChanges);
+  }, [hasCreateFormChanges, hasEditFormChanges, onUnsavedChangesChange]);
+
+  useEffect(() => {
+    return () => {
+      onUnsavedChangesChange?.(false);
+    };
+  }, [onUnsavedChangesChange]);
 
   function updateCreateField(event) {
     const { name, value } = event.target;
@@ -87,15 +171,38 @@ export default function ResumeVersionsPage({
   }
 
   function startEditing(resumeVersion) {
-    setEditingId(resumeVersion.id);
-    setEditForm(toEditForm(resumeVersion));
-    setActionError("");
-    setActionMessage("");
+    const nextState = resolveResumeEditSwitch(
+      {
+        actionError,
+        actionMessage,
+        editingId,
+        editForm,
+        editFormBaseline,
+      },
+      resumeVersion,
+      window.confirm,
+    );
+
+    setEditingId(nextState.editingId);
+    setEditForm(nextState.editForm);
+    setEditFormBaseline(nextState.editFormBaseline);
+    setActionError(nextState.actionError);
+    setActionMessage(nextState.actionMessage);
   }
 
   function cancelEditing() {
-    setEditingId(null);
-    setEditForm(initialCreateForm);
+    const nextState = resolveResumeEditCancel(
+      {
+        editingId,
+        editForm,
+        editFormBaseline,
+      },
+      window.confirm,
+    );
+
+    setEditingId(nextState.editingId);
+    setEditForm(nextState.editForm);
+    setEditFormBaseline(nextState.editFormBaseline);
   }
 
   async function handleSaveEdit(resumeVersionId) {
@@ -107,6 +214,7 @@ export default function ResumeVersionsPage({
       const updated = await onUpdateResumeVersion(resumeVersionId, toPayload(editForm));
       setEditingId(null);
       setEditForm(initialCreateForm);
+      setEditFormBaseline(initialCreateForm);
       setActionMessage(`${updated.name} updated.`);
     } catch (updateError) {
       setActionError(updateError.message || "Could not update resume version.");

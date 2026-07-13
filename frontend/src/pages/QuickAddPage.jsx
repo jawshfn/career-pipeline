@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import QuickAddApplicationForm from "../components/applications/QuickAddApplicationForm.jsx";
 import SmartCaptureForm from "../components/applications/SmartCaptureForm.jsx";
@@ -6,14 +6,42 @@ import SmartCaptureForm from "../components/applications/SmartCaptureForm.jsx";
 export default function QuickAddPage({
   existingApplications,
   onCreateApplication,
+  onUnsavedChangesChange,
   onViewApplications,
   resumeVersions,
 }) {
   const [createdApplication, setCreatedApplication] = useState(null);
   const [activeMode, setActiveMode] = useState("manual");
+  const [activeModeHasUnsavedChanges, setActiveModeHasUnsavedChanges] = useState(false);
+
+  useEffect(() => {
+    onUnsavedChangesChange?.(activeModeHasUnsavedChanges);
+  }, [activeModeHasUnsavedChanges, onUnsavedChangesChange]);
+
+  useEffect(() => {
+    return () => {
+      onUnsavedChangesChange?.(false);
+    };
+  }, [onUnsavedChangesChange]);
 
   function handleAddAnother() {
     setCreatedApplication(null);
+  }
+
+  function handleModeChange(nextMode) {
+    if (nextMode === activeMode) {
+      return;
+    }
+
+    if (
+      activeModeHasUnsavedChanges &&
+      !window.confirm("You have unsaved changes. Switch modes without saving?")
+    ) {
+      return;
+    }
+
+    setActiveModeHasUnsavedChanges(false);
+    setActiveMode(nextMode);
   }
 
   return (
@@ -49,7 +77,7 @@ export default function QuickAddPage({
         <button
           className={`quick-add-mode-tab ${activeMode === "manual" ? "is-active" : ""}`}
           type="button"
-          onClick={() => setActiveMode("manual")}
+          onClick={() => handleModeChange("manual")}
           role="tab"
           aria-selected={activeMode === "manual"}
         >
@@ -58,7 +86,7 @@ export default function QuickAddPage({
         <button
           className={`quick-add-mode-tab ${activeMode === "smart-capture" ? "is-active" : ""}`}
           type="button"
-          onClick={() => setActiveMode("smart-capture")}
+          onClick={() => handleModeChange("smart-capture")}
           role="tab"
           aria-selected={activeMode === "smart-capture"}
         >
@@ -72,6 +100,7 @@ export default function QuickAddPage({
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}
           onCreateSuccess={setCreatedApplication}
+          onUnsavedChangesChange={setActiveModeHasUnsavedChanges}
         />
       ) : (
         <SmartCaptureForm
@@ -79,6 +108,7 @@ export default function QuickAddPage({
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}
           onCreateSuccess={setCreatedApplication}
+          onUnsavedChangesChange={setActiveModeHasUnsavedChanges}
         />
       )}
     </div>
