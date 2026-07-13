@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 export const SUPPORT_EMAIL = "nunezjf2001@gmail.com";
 export const SUPPORT_MAILTO_SUBJECT = "Career Pipeline Smart Capture Issue";
@@ -18,7 +18,37 @@ export function getSupportMailtoHref(email = SUPPORT_EMAIL) {
   )}`;
 }
 
+export function getSupportReportTemplate() {
+  return [`To: ${SUPPORT_EMAIL}`, `Subject: ${SUPPORT_MAILTO_SUBJECT}`, "", SUPPORT_MAILTO_BODY].join("\n");
+}
+
+export async function copyTextToClipboard(text, successMessage) {
+  if (!globalThis.navigator?.clipboard?.writeText) {
+    return "Could not copy automatically. Select and copy the text below.";
+  }
+
+  try {
+    await globalThis.navigator.clipboard.writeText(text);
+    return successMessage;
+  } catch {
+    return "Could not copy automatically. Select and copy the text below.";
+  }
+}
+
 export default function SupportPage() {
+  const [copyStatus, setCopyStatus] = useState("");
+  const reportTemplate = getSupportReportTemplate();
+
+  async function handleCopyEmail() {
+    setCopyStatus(await copyTextToClipboard(SUPPORT_EMAIL, "Email copied"));
+  }
+
+  async function handleCopyReportTemplate() {
+    setCopyStatus(
+      await copyTextToClipboard(reportTemplate, "Report copied — open your email and paste it into a new message."),
+    );
+  }
+
   return (
     <div className="support-page">
       <header className="page-header">
@@ -66,15 +96,55 @@ export default function SupportPage() {
             when you copy the posting directly from the original job listing and describe what looked wrong.
           </p>
         </section>
+      </section>
 
-        <div className="support-email-action">
-          <div>
-            <span>Support email</span>
-            <strong>{SUPPORT_EMAIL}</strong>
+      <section className="panel support-panel support-report-panel" aria-labelledby="support-report-heading">
+        <div className="section-heading">
+          <h2 id="support-report-heading">Send a Smart Capture report</h2>
+          <p>Copy the report template, fill in what went wrong, and send it through your usual email service.</p>
+        </div>
+
+        <div className="support-report-grid">
+          <div className="support-contact-area">
+            <div className="support-email-display">
+              <span>Support email</span>
+              <strong>{SUPPORT_EMAIL}</strong>
+            </div>
+
+            <div className="support-action-controls" aria-label="Support report actions">
+              <button
+                className="support-action-control support-primary-action"
+                type="button"
+                onClick={handleCopyReportTemplate}
+              >
+                Copy report template
+              </button>
+              <button className="support-action-control secondary-button" type="button" onClick={handleCopyEmail}>
+                Copy email address
+              </button>
+              <a className="support-action-control secondary-button" href={getSupportMailtoHref()}>
+                Open email app
+              </a>
+            </div>
+
+            <p className="support-mail-handler-note">
+              Opening an email app requires a configured browser or system mail handler.
+            </p>
+
+            <p className="support-fallback-guidance">
+              The most reliable option is to copy the report template, open your usual email service, and paste it into
+              a new message.
+            </p>
+
+            <div className="support-copy-status" aria-live="polite" role="status">
+              {copyStatus}
+            </div>
           </div>
-          <a className="secondary-button" href={getSupportMailtoHref()}>
-            Report a Smart Capture issue
-          </a>
+
+          <div className="support-template-area">
+            <h3>Report template</h3>
+            <pre className="support-template-preview">{reportTemplate}</pre>
+          </div>
         </div>
       </section>
     </div>

@@ -646,7 +646,7 @@ a {
 
 .support-content-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 14px;
   min-width: 0;
 }
@@ -690,25 +690,32 @@ a {
   background: #fffaf0;
 }
 
-.support-email-action {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  min-width: 0;
-  border: 1px solid #d7e4e0;
-  border-radius: 8px;
-  padding: 14px;
-  background: #f8fbfa;
+.support-report-panel {
+  gap: 16px;
 }
 
-.support-email-action div {
+.support-report-grid {
   display: grid;
-  gap: 3px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
   min-width: 0;
 }
 
-.support-email-action span {
+.support-contact-area,
+.support-template-area {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.support-email-display {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.support-email-display span {
   color: #60706d;
   font-size: 0.72rem;
   font-weight: 900;
@@ -716,15 +723,80 @@ a {
   text-transform: uppercase;
 }
 
-.support-email-action strong {
+.support-email-display strong {
   min-width: 0;
-  overflow-wrap: anywhere;
   color: #17202a;
+  font-size: 1rem;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
-.support-email-action a {
-  flex: 0 0 auto;
+.support-action-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.support-action-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border-radius: 6px;
+  padding: 9px 13px;
+  line-height: 1.2;
+  text-align: center;
   text-decoration: none;
+  white-space: nowrap;
+}
+
+.support-primary-action {
+  border: 0;
+  color: #ffffff;
+  background: #287c73;
+  font-weight: 900;
+}
+
+.support-primary-action:hover {
+  background: #1f6860;
+}
+
+.support-mail-handler-note,
+.support-fallback-guidance {
+  margin: 0;
+  color: #52605d;
+  font-size: 0.9rem;
+}
+
+.support-copy-status {
+  min-height: 0;
+  color: #1f625b;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.support-template-area h3 {
+  margin: 0;
+  color: #34413f;
+  font-size: 0.98rem;
+}
+
+.support-template-preview {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid #cbd6d3;
+  border-radius: 8px;
+  padding: 12px;
+  color: #17202a;
+  background: #fbfdfc;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .application-view-tabs {
@@ -3450,9 +3522,12 @@ textarea:focus-visible {
     flex-direction: column;
   }
 
-  .support-email-action {
-    align-items: flex-start;
-    flex-direction: column;
+  .support-action-controls {
+    justify-content: flex-start;
+  }
+
+  .support-action-control {
+    width: 100%;
   }
 
   .quick-add-success-actions {
