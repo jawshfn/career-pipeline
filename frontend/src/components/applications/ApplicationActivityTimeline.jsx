@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   createApplicationActivity,
@@ -42,12 +42,21 @@ function formatDate(value) {
   return value || "-";
 }
 
+export function shouldShowActivityLoadingState({
+  applicationChanged,
+  currentIsLoading = false,
+  hasExistingActivities,
+}) {
+  return Boolean(applicationChanged || !hasExistingActivities || currentIsLoading);
+}
+
 export default function ApplicationActivityTimeline({
   applicationId,
   draftData,
   isActive,
   onDraftChange,
   onResetDraft,
+  refreshVersion = 0,
 }) {
   const [activities, setActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,12 +64,28 @@ export default function ApplicationActivityTimeline({
   const [deletingActivityId, setDeletingActivityId] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const previousApplicationIdRef = useRef(applicationId);
 
   useEffect(() => {
     let isCurrent = true;
+    const applicationChanged = String(previousApplicationIdRef.current) !== String(applicationId);
+
+    if (applicationChanged) {
+      previousApplicationIdRef.current = applicationId;
+      setActivities([]);
+      setIsLoading(true);
+    }
 
     async function loadActivities() {
-      setIsLoading(true);
+      if (
+        shouldShowActivityLoadingState({
+          applicationChanged,
+          currentIsLoading: isLoading,
+          hasExistingActivities: activities.length > 0,
+        })
+      ) {
+        setIsLoading(true);
+      }
       setError("");
       setMessage("");
 
@@ -85,7 +110,7 @@ export default function ApplicationActivityTimeline({
     return () => {
       isCurrent = false;
     };
-  }, [applicationId]);
+  }, [applicationId, refreshVersion]);
 
   function updateField(event) {
     const { name, value } = event.target;

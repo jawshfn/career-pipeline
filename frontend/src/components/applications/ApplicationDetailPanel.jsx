@@ -215,6 +215,10 @@ function getCloseConfirmationMessage(hasUnsavedApplicationChanges, hasUnsavedAct
   return "You have unsaved changes. Close without saving?";
 }
 
+export function shouldRefreshActivitiesAfterApplicationSave(previousStatus, nextStatus) {
+  return Boolean(previousStatus && nextStatus && previousStatus !== nextStatus);
+}
+
 export default function ApplicationDetailPanel({
   applicationId,
   initialApplication,
@@ -234,6 +238,7 @@ export default function ApplicationDetailPanel({
   const [activeTab, setActiveTab] = useState(getValidDetailTab(initialTab));
   const [activityDraft, setActivityDraft] = useState(getInitialActivityForm);
   const [activityDraftBaseline, setActivityDraftBaseline] = useState(getInitialActivityForm);
+  const [activityRefreshVersion, setActivityRefreshVersion] = useState(0);
   const [isLoading, setIsLoading] = useState(!initialApplication);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -346,6 +351,7 @@ export default function ApplicationDetailPanel({
     setIsSaving(true);
     setSaveError("");
     setSaveMessage("");
+    const previousSavedStatus = savedFormData.status;
 
     const payload = {
       company_name: normalizeRequiredText(formData.company_name),
@@ -382,6 +388,9 @@ export default function ApplicationDetailPanel({
       setFormData(nextFormState);
       setSavedFormData(nextFormState);
       onLoadApplication?.(updatedApplication);
+      if (shouldRefreshActivitiesAfterApplicationSave(previousSavedStatus, nextFormState.status)) {
+        setActivityRefreshVersion((currentVersion) => currentVersion + 1);
+      }
       setSaveMessage("Changes saved.");
     } catch (error) {
       setSaveError(error.message || "Could not save application details.");
@@ -547,6 +556,7 @@ export default function ApplicationDetailPanel({
               isActive={activeTab === "activity"}
               onDraftChange={setActivityDraft}
               onResetDraft={resetActivityDraft}
+              refreshVersion={activityRefreshVersion}
             />
           </div>
 

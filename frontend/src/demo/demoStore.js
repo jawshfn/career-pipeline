@@ -12,6 +12,10 @@ const STALE_EXCLUDED_STATUSES = new Set(["Offer", "Rejected", "Withdrawn", "Arch
 
 let demoState = createDemoState();
 
+export function resetDemoState() {
+  demoState = createDemoState();
+}
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -152,6 +156,7 @@ export function createDemoApplication(payload) {
 
 export function updateDemoApplication(applicationId, payload) {
   let updatedApplication = null;
+  let previousStatus = null;
   const timestamp = nowIso();
 
   demoState = {
@@ -161,6 +166,7 @@ export function updateDemoApplication(applicationId, payload) {
         return application;
       }
 
+      previousStatus = application.status;
       updatedApplication = {
         ...application,
         ...payload,
@@ -173,6 +179,28 @@ export function updateDemoApplication(applicationId, payload) {
 
   if (!updatedApplication) {
     throw new Error("Application not found.");
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(payload, "status") &&
+    previousStatus &&
+    updatedApplication.status !== previousStatus
+  ) {
+    const statusChangeActivity = {
+      id: demoState.nextActivityId,
+      application_id: Number(applicationId),
+      activity_date: getTodayValue(),
+      activity_type: "Status Change",
+      note: `Status changed from ${previousStatus} to ${updatedApplication.status}.`,
+      created_at: timestamp,
+      updated_at: timestamp,
+    };
+
+    demoState = {
+      ...demoState,
+      activities: [statusChangeActivity, ...demoState.activities],
+      nextActivityId: demoState.nextActivityId + 1,
+    };
   }
 
   return clone(updatedApplication);
