@@ -144,16 +144,30 @@ Status: complete through Phase 13.3
 - Phase 13.1g — Polish Dashboard layout and public documentation wording.
 - Phase 13.1h — Reframe Status Board with search, clearer filters, and adaptive compact tiles.
 
-- Phase 13.2 - Add a static GitHub Pages demo mode with fictional frontend data while preserving the local FastAPI/SQLite app.
-- Phase 13.3 - Add Smart Capture help documentation for Paste Job Text usage.
+- Phase 13.2 — Add a static GitHub Pages demo mode with fictional frontend data while preserving the local FastAPI/SQLite app.
+- Phase 13.3 — Add Smart Capture help documentation for Paste Job Text usage.
 
-## Phase 14 - Presentation Polish
+## Phase 14 — Presentation Polish
 
 Status: complete through Phase 14.3
 
-- Phase 14.1 - Clarify Applications table dates and edit actions.
-- Phase 14.2 - Refresh Dashboard summary metrics and add a Status Board CTA.
-- Phase 14.3 - Clarify red flag checklist labels and add Support page for Smart Capture reports.
+- Phase 14.1 — Clarify Applications table dates and edit actions.
+- Phase 14.2 — Refresh Dashboard summary metrics and add a Status Board CTA.
+- Phase 14.3 — Clarify red flag checklist labels and add Support page for Smart Capture reports.
+
+## Phase 15 — Capture Engine And Greenhouse Capture
+
+Status: complete through Phase 15.4b
+
+- Phase 15.0 — Add the shared Capture Engine contract and adapter foundation.
+- Phase 15.1 — Add and refine deterministic Google Jobs capture integration.
+- Phase 15.2 — Add direct hosted Greenhouse job import and correct compensation mapping.
+- Phase 15.3a — Add provider-neutral job-link fallback and bounded safe-public-HTML foundations.
+- Phase 15.3b — Add best-effort custom Greenhouse board discovery.
+- Phase 15.3c — Simplify custom discovery to strong structural evidence.
+- Phase 15.3d — Align frontend and backend Greenhouse hostname routing.
+- Phase 15.4a — Add and validate the click-initiated Greenhouse browser-detection prototype.
+- Phase 15.4b — Add the local browser-to-Career Pipeline capture bridge.
 
 ## Near-Term Future Work
 
@@ -169,6 +183,8 @@ Status: complete through Phase 14.3
 - Contact or recruiter organization if the core workflow needs it
 - Email or calendar reminders
 - Resume file upload and preview
-- Browser extension or job-board capture helper
 - Authentication and multi-device sync
 - AI-assisted summaries or suggestions
+- Other documented ATS integrations
+- Production distribution of the browser companion only if the product reaches that stage
+- Configurable browser-helper target after a hosted backend exists

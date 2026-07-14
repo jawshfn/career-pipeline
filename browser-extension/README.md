@@ -36,10 +36,18 @@ The GitHub Pages demo does not support browser-assisted imports. Run the local f
 From the repository root:
 
 ```powershell
-node --test browser-extension/detector.test.mjs browser-extension/manifest.test.mjs browser-extension/popup.test.mjs browser-extension/capturePayload.test.mjs
+node --test browser-extension/*.test.mjs
 ```
 
 No install step or extension-specific dependency is required. After changing extension files, return to `chrome://extensions` and select **Reload** on the unpacked extension card.
+
+## Current Limitations
+
+- The local full-stack app must be running; the target is fixed to `http://localhost:5173/`.
+- Each handoff intentionally opens a new local Career Pipeline tab so existing unsaved work is not replaced.
+- The extension does not request the broader `tabs` or host permissions needed to search for and reuse arbitrary tabs.
+- Only verified Greenhouse jobs are supported.
+- The helper is experimental and is not distributed through the Chrome Web Store.
 
 ## Remove afterward
 

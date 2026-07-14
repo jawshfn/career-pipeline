@@ -4,7 +4,7 @@
 
 Career Pipeline's capture flow should support multiple ways to create an editable application draft without creating a different review shape for every source. The Capture Engine provides one frontend contract that capture methods can return, then converts that contract into the current Add Job review state.
 
-The current UI still shows the same Add Job modes and editable review fields. Capture metadata is not displayed to users yet and is not persisted to the database.
+The three user-facing Add Job modes are Manual Entry, Paste Job Link, and Paste Job Text. Capture metadata is not displayed to users yet and is not persisted to the database.
 
 ## Current Methods
 
@@ -12,7 +12,6 @@ Implemented now:
 
 - `deterministic-text` - wraps the existing deterministic Paste Job Text parser in `frontend/src/utils/jobTextExtraction.js`.
 - `greenhouse-api` - imports structured published job data from hosted or verified custom Greenhouse job links through the Career Pipeline backend.
-- `greenhouse-browser-bridge` - accepts a locally initiated, browser-verified Greenhouse board token and job ID, then reuses the same official Greenhouse API importer and editable review.
 - `link-only` - creates an editable review from a valid user-entered job link without inferring job fields.
 
 The deterministic parser remains the extraction implementation. The Capture Engine only normalizes the result into a stable contract and converts it back to the current flat review state.
@@ -38,7 +37,7 @@ Transport:
 - Local mode: Career Pipeline frontend -> Career Pipeline backend -> Greenhouse Job Board API.
 - Demo mode: one fictional in-memory Greenhouse fixture.
 
-The experimental locally loaded Greenhouse detector can hand a successful browser detection to the local app at `http://localhost:5173/`. It uses a short versioned fragment payload with only the provider, verified board token, verified job ID, and original employer job URL. The frontend clears the fragment immediately, validates it again, preserves the original employer URL as Job Link, defaults Source to Company Website, and opens the normal editable review. The extension itself makes no network request, and no application is saved automatically. Static demo mode does not perform browser-assisted imports.
+The experimental locally loaded Greenhouse detector is a transport bridge rather than a separate capture method. It can hand a successful browser detection to a new local app tab at `http://localhost:5173/`, where the normal `greenhouse-api` capture method runs. The bridge uses a short versioned fragment payload with only the provider, verified board token, verified job ID, and original employer job URL. The frontend clears the fragment immediately, validates it again, preserves the original employer URL as Job Link, defaults Source to Company Website, and opens the normal editable review. The extension itself makes no network request, does not search existing tabs, and does not require broad tab or host permissions. No application is saved automatically. Static demo mode does not perform browser-assisted imports.
 
 Hosted Greenhouse links are imported directly:
 

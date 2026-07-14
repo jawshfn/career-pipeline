@@ -160,6 +160,52 @@ Behavior:
 
 Status: implemented
 
+## Job Imports
+
+### POST /api/job-imports/greenhouse
+
+Purpose: import one published Greenhouse job through the official Greenhouse Job Board API.
+
+Example request:
+
+```json
+{
+  "board_token": "fictional-board",
+  "job_id": 123456
+}
+```
+
+Validation:
+
+- `board_token` is 1-80 letters, numbers, underscores, or hyphens.
+- `job_id` is a positive strict integer.
+
+The response includes `provider`, `job_id`, `title`, `company_name`, `location`, `description_text`, `absolute_url`, and `pay_ranges`. Paste Job Link and the optional browser-assisted flow reuse this endpoint; there is no separate browser-extension API.
+
+Status: implemented
+
+### POST /api/job-imports/greenhouse/custom
+
+Purpose: attempt a best-effort Greenhouse import for a custom employer career URL containing one explicit positive `gh_jid`.
+
+Example request:
+
+```json
+{
+  "job_url": "https://careers.fictional.test/opening?gh_jid=123456"
+}
+```
+
+Behavior:
+
+- Validates a public HTTPS URL and rejects known provider domains from the custom route.
+- Fetches one bounded public HTML response through the safe fetch service.
+- Accepts exactly one board token from strong structural Greenhouse evidence before calling the official importer.
+- Never returns fetched employer HTML, executes employer JavaScript, crawls pages, or fetches arbitrary subresources.
+- Returns controlled failures for fetch, verification, ambiguity, and provider-import errors.
+
+Status: implemented
+
 ## Action Items
 
 ### GET /api/applications/action-items

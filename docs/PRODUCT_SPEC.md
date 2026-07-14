@@ -45,7 +45,12 @@ The current prototype includes:
 
 - Static GitHub Pages demo mode with fictional in-memory data that resets on refresh
 - Dedicated Add Job page for lightweight opportunity capture
-- Add Job modes for Manual Entry and Smart Capture paste-review
+- Add Job modes for Manual Entry, Paste Job Link, and Paste Job Text
+- Provider-neutral link-only review for valid public job links that do not support import
+- Direct hosted Greenhouse import through the official Greenhouse Job Board API
+- Best-effort custom Greenhouse board discovery using SSRF-protected bounded public HTML verification
+- Experimental local click-initiated Greenhouse detection and browser-to-local-app versioned fragment bridge
+- Editable imported reviews with no automatic save
 - Deterministic Smart Capture helpers that prepare conservative editable suggested fields from pasted job text before save
 - Internal Smart Capture parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while preserving the user's selected Source
 - Smart Capture review guardrails that summarize best-match parser, captured fields, and what remains user-controlled before save
@@ -71,8 +76,10 @@ The current prototype includes:
 
 ## Non-Goals for Current Prototype
 
-- Browser extensions
-- Automated scraping from job boards
+- Chrome Web Store distribution or production browser-companion deployment
+- Generic browsing monitoring or generic job-board scraping
+- Automatic application submission
+- Support for every ATS provider
 - Email inbox integration
 - Calendar integration
 - Authentication or multi-user accounts
@@ -86,7 +93,7 @@ The current prototype includes:
 
 ### Add a Job
 
-The user opens Add Job and either enters the minimum needed manually or pastes job text into Smart Capture.
+The user opens Add Job and chooses Manual Entry, Paste Job Link, or Paste Job Text.
 
 Manual Entry fields include:
 
@@ -101,6 +108,8 @@ Manual Entry fields include:
 - Notes, optional
 
 Follow-up presets help schedule common dates quickly. If the user selects Applied or a later status and Applied Date is empty, the frontend can default Applied Date to today. Existing manually entered applied dates are not overwritten.
+
+Paste Job Link provides a provider-neutral review path for valid public links. Supported hosted Greenhouse links import structured job data directly through the official Greenhouse Job Board API. Custom employer career links with one explicit `gh_jid` can use best-effort server-side board discovery from strong structural evidence; failed or unsupported links retain link-only and Paste Job Text fallbacks. The optional local browser helper can hand a verified Greenhouse board and job ID from a clicked employer page to this mode. It preserves the original employer URL as Job Link, keeps Source user-controlled, and always opens an editable review before save.
 
 Smart Capture is an additional paste-review workflow. The user pastes a job post, recruiter message, or copied listing text, optionally adds an explicit job link, selects a source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, employment type, and notes containing the relevant pasted text. The parser can internally recognize common LinkedIn, Indeed, ZipRecruiter, or generic paste formats to improve extraction quality, but it does not change the saved Source. Job link also stays user-controlled and is not guessed from arbitrary pasted URLs. Explicit user-entered bare domains can be normalized to `https://` for safe opening. A compact review guardrails panel summarizes the best-match parser, captured-field status, and Source/Job link reminders before saving. Company career pages can still be pasted, but they are best-effort and should be reviewed carefully before saving. AI-assisted extraction is not implemented yet.
 
@@ -237,6 +246,7 @@ Archived applications are excluded from normal dashboard metrics.
 ## Success Criteria for Current Prototype
 
 - A user can add a job opportunity in under a minute.
+- A supported Greenhouse opportunity can reach an editable review without retyping its structured job details.
 - A user can track at least 25 applications without losing important context.
 - A user can distinguish active opportunities from closed outcomes.
 - A user can identify overdue follow-ups and upcoming follow-ups due within 3 days.

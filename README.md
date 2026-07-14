@@ -14,7 +14,7 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 
 ## Product Highlights
 
-- **Add Job:** save opportunities manually or with deterministic Smart Capture from pasted job text.
+- **Add Job:** choose Manual Entry, Paste Job Link, or deterministic Paste Job Text review.
 - **Applications:** search, filter, sort, and open detailed records across Active, Closed, and All views.
 - **Status Board:** scan opportunities by stage and update statuses quickly.
 - **Reminders:** review overdue follow-ups, upcoming follow-ups, and Needs check-in items.
@@ -27,6 +27,16 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 Career Pipeline includes a review-first Smart Capture workflow for copied job postings. Paste the job text, review suggested fields, then save the opportunity. It works best when the copied text includes the posting header and the full job description. The Source and Job Link stay user-controlled.
 
 Read the [Smart Capture Guide](docs/SMART_CAPTURE_GUIDE.md) for copy-and-review tips.
+
+## Greenhouse Capture
+
+Paste Job Link can import structured public job data from supported hosted Greenhouse links. Custom employer career links with one explicit `gh_jid` use best-effort server-side configuration discovery. When a site exposes its Greenhouse configuration only after page JavaScript runs, the optional local browser helper can hand a verified board token and job ID to the local app. Every path opens an editable review, and nothing is saved automatically.
+
+## Optional Browser Helper
+
+The Greenhouse helper is an experimental Chrome extension loaded unpacked for the local full-stack app at `http://localhost:5173/`. It requests only `activeTab` and `scripting`, sends and stores no employer-page data, and intentionally opens a new Career Pipeline tab so existing work is not replaced. It is not a Chrome Web Store feature, and the GitHub Pages demo does not support live browser-assisted imports.
+
+See the [Browser Extension Guide](browser-extension/README.md) for local setup and privacy boundaries.
 
 ## Tech Stack
 
@@ -77,6 +87,12 @@ npm test
 npm run build
 ```
 
+Browser extension:
+
+```powershell
+node --test browser-extension/*.test.mjs
+```
+
 ## Optional Demo Data
 
 For local screenshots or demos, seed fictional data from the backend directory:
@@ -102,13 +118,17 @@ npm run build
 
 Career Pipeline is a working local-first prototype, not a production SaaS app. The GitHub Pages site is a static portfolio demo with reset-on-refresh sample data.
 
-Not implemented: authentication, production backend/SaaS deployment, scraping, browser extension workflows, AI extraction, import/export, email/calendar integrations, or multi-user sync.
+Implemented: official Greenhouse Job Board API import, best-effort custom Greenhouse discovery, and an experimental locally loaded Greenhouse browser helper with local browser-to-app transfer.
+
+Not implemented: Chrome Web Store distribution, production backend/SaaS deployment, generic job-board scraping, authentication, multi-user synchronization, AI extraction, import/export, or email/calendar integrations.
 
 ## Documentation
 
 - [Product Spec](docs/PRODUCT_SPEC.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Smart Capture Guide](docs/SMART_CAPTURE_GUIDE.md)
+- [Capture Engine](docs/CAPTURE_ENGINE.md)
+- [Browser Extension Guide](browser-extension/README.md)
 - [Data Model](docs/DATA_MODEL.md)
 - [API Plan](docs/API_PLAN.md)
 - [Development Guide](docs/DEVELOPMENT.md)

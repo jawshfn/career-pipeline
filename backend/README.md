@@ -11,9 +11,12 @@ The backend is used by the full local app. It is not hosted by GitHub Pages; the
 - Reminders action items: overdue follow-ups, upcoming follow-ups, and Needs check-in items
 - Dashboard summary metrics
 - Resume variants
+- Job imports: direct Greenhouse Job Board API import and best-effort custom employer Greenhouse discovery
 - Health check
 
-The backend is local-development focused. Authentication, production backend deployment, scraping, browser extensions, AI extraction, import/export, and email/calendar integrations are not implemented.
+Greenhouse imports use the official Job Board API. The custom employer path verifies one board token from bounded safe-public-HTML structural evidence before importing; it does not provide generic scraping. The experimental browser helper is a separate client-side component that reuses the direct Greenhouse endpoint, so there is no extension-specific backend endpoint.
+
+The backend is local-development focused. Authentication, production backend deployment, generic scraping, AI extraction, import/export, and email/calendar integrations are not implemented.
 
 ## Setup
 

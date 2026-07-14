@@ -6,7 +6,7 @@ React/Vite frontend for the Career Pipeline local job-search workspace. Normal l
 
 - Reminders: overdue follow-ups, upcoming follow-ups, Needs check-in items, and follow-up quick actions
 - Dashboard: summary cards plus expandable Application Status, Sources, Red Flags, Source Results, and Resume Results sections
-- Add Job: Manual Entry and Smart Capture paste-review workflows
+- Add Job: Manual Entry, Paste Job Link, and Paste Job Text workflows
 - Applications: Active, Closed, and All views with search, filters, sorting, table actions, and Application Detail
 - Status Board: grouped status board with search, status filters, adaptive tiles, and quick status updates
 - Resumes: create, edit, deactivate, reactivate, and view reusable resume variants
@@ -61,9 +61,15 @@ npm run preview
 
 The production build can complete without the backend running, but API-driven pages need the backend for interactive use.
 
+## Local Browser Capture
+
+The optional local Greenhouse helper can open Add Job -> Paste Job Link with a validated versioned URL fragment. The frontend clears the fragment immediately, validates it independently, and reuses the existing backend Greenhouse import path. The original employer URL remains Job Link, Source defaults to Company Website and remains editable, and the user still reviews and saves manually.
+
+See the [Browser Extension Guide](../browser-extension/README.md) for local unpacked-extension setup. The static demo does not run browser-assisted live Greenhouse imports.
+
 ## Static Demo Mode
 
-Demo mode is enabled only when `VITE_APP_MODE=demo`. It uses fictional frontend data and resets on page refresh.
+Demo mode is enabled only when `VITE_APP_MODE=demo`. It uses fictional in-memory frontend data, resets on page refresh, and does not make browser-assisted live Greenhouse imports.
 
 Build for GitHub Pages:
 

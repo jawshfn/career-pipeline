@@ -2,6 +2,8 @@
 
 The implemented backend uses SQLite with SQLAlchemy. The model supports quick capture, application tracking, resume-version assignment, follow-up action items, next actions, application-scoped contact/prep details, red-flag fields, activity timeline entries, and archive behavior.
 
+Browser-assisted capture fragments are temporary transport data only. No board token, capture metadata, or browser-import history is stored in a separate table; only the application fields the user reviews and saves persist through the existing application model.
+
 ## Implemented Tables
 
 ## applications

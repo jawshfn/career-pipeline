@@ -63,6 +63,12 @@ cd frontend
 npm test
 ```
 
+Browser extension tests:
+
+```powershell
+node --test browser-extension/*.test.mjs
+```
+
 Local backend server:
 
 ```powershell
@@ -99,7 +105,7 @@ npm run preview
 
 Demo mode uses bundled fictional in-memory data, does not call the local FastAPI backend, and resets when the browser reloads.
 
-Docs-only changes do not require tests. Cross-stack product changes should run backend pytest, frontend tests, frontend build, and manual QA for the affected workflows. Frontend-only behavior changes should at least run `npm test`, `npm run build`, and relevant browser QA.
+Docs-only changes do not require product tests. Extension-only changes should run extension tests and manual unpacked-extension QA. Cross-stack browser-capture changes should run extension tests, backend pytest, frontend tests, frontend build, and manual end-to-end QA. Frontend-only behavior changes should at least run `npm test`, `npm run build`, and relevant browser QA.
 
 ## Backend Testing Expectations
 
@@ -122,6 +128,7 @@ The current CI workflow should:
 
 - Install backend dependencies
 - Run backend pytest
+- Run browser-extension Node tests and preserve manifest permission checks
 - Install frontend dependencies
 - Run frontend Vitest utility tests
 - Run the frontend production build
@@ -145,7 +152,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 
 ### Add Job
 
-- Add Job shows Manual Entry and Paste Job Text modes.
+- Add Job shows Manual Entry, Paste Job Link, and Paste Job Text modes.
 - Manual Entry defaults to essential fields: company, role, job link, and source.
 - Manual Entry tracking details expand to reveal status, resume version, applied date, follow-up date, presets, and notes.
 - Add Job creates a new application and shows clear success feedback.
@@ -159,6 +166,11 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Smart Capture review fields can be edited before Save application creates the record.
 - Smart Capture review is organized into Review before saving, Essentials, Captured details when present, Optional details, and Job details.
 - Smart Capture notes include the pasted job text.
+- Strict hosted Greenhouse links open an editable imported review through the official API.
+- Eligible custom Greenhouse links use best-effort server discovery; failed or unsupported links expose link-only and Paste Job Text fallbacks.
+- Browser-assisted captures open Add Job -> Paste Job Link in a new local tab, preserve the original employer URL as Job Link, and default Source to Company Website while keeping it editable.
+- No Add Job capture persists an application until the user presses the existing save action.
+- Static demo mode does not perform browser-assisted live Greenhouse imports.
 - Smart Capture leaves Job link blank unless the user enters an explicit link.
 - Smart Capture keeps Source user-selected instead of inferring or overwriting it from pasted text or URLs.
 - Smart Capture can internally detect common LinkedIn, Indeed, ZipRecruiter, or generic pasted-text formats to choose the best deterministic extraction profile.
@@ -172,6 +184,14 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Same or similar company, role, and location appears as a likely duplicate.
 - Same or similar company and role with missing or different location appears as a similar opportunity.
 - Archived applications do not trigger duplicate warnings.
+
+### Browser Extension
+
+- Load the Greenhouse helper unpacked and reload it after extension changes.
+- Ordinary HTTP or HTTPS pages report no supported Greenhouse job when no match exists; protected Chrome pages report that inspection is unavailable.
+- A verified Greenhouse detection exposes Open in Career Pipeline and opens a new local tab.
+- The local app receives an editable Paste Job Link review; it does not save automatically.
+- Confirm the manifest remains limited to `activeTab` and `scripting`, with no transmitted or stored employer-page data.
 
 ### Applications Filters And Details
 
