@@ -543,6 +543,18 @@ a {
   opacity: 0.65;
 }
 
+.form-actions .secondary-button {
+  border: 1px solid #cbd6d3;
+  color: #287c73;
+  background: #ffffff;
+}
+
+.form-actions .secondary-button:hover {
+  border-color: #287c73;
+  color: #1f6860;
+  background: #eef7f5;
+}
+
 .secondary-button,
 .quiet-button,
 .quiet-danger-button,

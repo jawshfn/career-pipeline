@@ -6,11 +6,12 @@ Career Pipeline's capture flow should support multiple ways to create an editabl
 
 The current UI still shows the same Add Job modes and editable review fields. Capture metadata is not displayed to users yet and is not persisted to the database.
 
-## Current Method
+## Current Methods
 
 Implemented now:
 
 - `deterministic-text` - wraps the existing deterministic Paste Job Text parser in `frontend/src/utils/jobTextExtraction.js`.
+- `greenhouse-api` - imports structured published job data from hosted Greenhouse job-board links through the Career Pipeline backend.
 
 The deterministic parser remains the extraction implementation. The Capture Engine only normalizes the result into a stable contract and converts it back to the current flat review state.
 
@@ -24,11 +25,28 @@ Recognized deterministic parser formats are:
 
 Parser format remains separate from capture method. For example, Google Jobs text uses `capture_method: "deterministic-text"` with `detected_format: "googlejobs"`.
 
+Greenhouse URL import uses:
+
+- `capture_method: "greenhouse-api"`
+- `detected_format: "greenhouse"`
+- structured fields with `provenance: "greenhouse-api"` and `confidence: "high"`
+
+Transport:
+
+- Local mode: Career Pipeline frontend -> Career Pipeline backend -> Greenhouse Job Board API.
+- Demo mode: one fictional in-memory Greenhouse fixture.
+
+Only hosted Greenhouse links are supported:
+
+- `https://boards.greenhouse.io/{board_token}/jobs/{job_id}`
+- `https://job-boards.greenhouse.io/{board_token}/jobs/{job_id}`
+
+Custom employer domains are not supported yet because they do not reliably expose the Greenhouse board token required by the public API.
+
 ## Planned Methods
 
 These are future options, not implemented features:
 
-- `greenhouse-api`
 - `lever-api`
 - `ashby-api`
 - `jobposting-jsonld`
@@ -85,6 +103,9 @@ Only `company_name` and `role_title` are required review fields. Missing optiona
 
 - Job Link is never inferred from pasted text.
 - Source remains user-selected.
+- Greenhouse URL import still requires user review before saving.
+- Career Pipeline does not submit applications to Greenhouse.
+- Greenhouse URL import uses the documented Greenhouse Job Board API through an allowlisted backend endpoint; it does not scrape pages or use browser automation.
 - Field values must not be invented.
 - Evidence must be truthful; unknown evidence remains `null`.
 - Unsupported optional fields do not block saving.

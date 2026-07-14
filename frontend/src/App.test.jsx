@@ -10,6 +10,10 @@ import {
   isQuickAddFormDirty,
 } from "./components/applications/QuickAddApplicationForm.jsx";
 import {
+  initialJobLinkCaptureState,
+  isJobLinkCaptureDirty,
+} from "./components/applications/JobLinkCaptureForm.jsx";
+import {
   initialSmartCaptureState,
   isSmartCaptureDirty,
 } from "./components/applications/SmartCaptureForm.jsx";
@@ -89,6 +93,26 @@ describe("editable page dirty-state helpers", () => {
 
   it("treats prepared Smart Capture review data as dirty", () => {
     expect(isSmartCaptureDirty(initialSmartCaptureState, { company_name: "Example Company" })).toBe(true);
+  });
+
+  it("treats unchanged Paste Job Link data as clean", () => {
+    expect(isJobLinkCaptureDirty(initialJobLinkCaptureState, null)).toBe(false);
+  });
+
+  it("treats entered Paste Job Link data as dirty", () => {
+    expect(
+      isJobLinkCaptureDirty(
+        {
+          ...initialJobLinkCaptureState,
+          jobLink: "https://boards.greenhouse.io/example/jobs/123456",
+        },
+        null,
+      ),
+    ).toBe(true);
+  });
+
+  it("treats imported Paste Job Link review data as dirty", () => {
+    expect(isJobLinkCaptureDirty(initialJobLinkCaptureState, { company_name: "Example Company" })).toBe(true);
   });
 
   it("treats unchanged resume create/edit data as clean", () => {

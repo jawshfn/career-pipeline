@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import ClassVar
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 
 from .domain import (
     ALLOWED_APPLICATION_STATUSES,
@@ -160,6 +160,29 @@ class DashboardSummaryRead(BaseModel):
     red_flag_snapshot: DashboardRedFlagSnapshotRead
     source_effectiveness: list[DashboardSourceEffectivenessRead]
     resume_version_effectiveness: list[DashboardResumeVersionEffectivenessRead]
+
+
+class GreenhouseImportRequest(BaseModel):
+    board_token: str = Field(pattern=r"^[A-Za-z0-9_-]{1,80}$")
+    job_id: StrictInt = Field(gt=0)
+
+
+class GreenhousePayRangeRead(BaseModel):
+    title: str | None = None
+    currency_type: str | None = None
+    min_cents: int | None = None
+    max_cents: int | None = None
+
+
+class GreenhouseJobImportRead(BaseModel):
+    provider: str
+    job_id: int
+    title: str
+    company_name: str
+    location: str
+    description_text: str
+    absolute_url: str | None = None
+    pay_ranges: list[GreenhousePayRangeRead]
 
 
 class ApplicationActivityBase(BaseModel):

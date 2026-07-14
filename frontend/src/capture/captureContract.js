@@ -2,10 +2,12 @@ export const CAPTURE_CONTRACT_VERSION = 1;
 
 export const CAPTURE_METHODS = {
   DETERMINISTIC_TEXT: "deterministic-text",
+  GREENHOUSE_API: "greenhouse-api",
 };
 
 export const CAPTURE_PROVENANCE = {
   DETERMINISTIC_TEXT: "deterministic-text",
+  GREENHOUSE_API: "greenhouse-api",
   MISSING: "missing",
   SYSTEM_DEFAULT: "system-default",
   USER_INPUT: "user-input",

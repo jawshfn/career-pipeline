@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 
+import JobLinkCaptureForm from "../components/applications/JobLinkCaptureForm.jsx";
 import QuickAddApplicationForm from "../components/applications/QuickAddApplicationForm.jsx";
 import SmartCaptureForm from "../components/applications/SmartCaptureForm.jsx";
 
@@ -13,6 +14,7 @@ export default function QuickAddPage({
   const [createdApplication, setCreatedApplication] = useState(null);
   const [activeMode, setActiveMode] = useState("manual");
   const [activeModeHasUnsavedChanges, setActiveModeHasUnsavedChanges] = useState(false);
+  const [smartCaptureInitialJobLink, setSmartCaptureInitialJobLink] = useState("");
 
   useEffect(() => {
     onUnsavedChangesChange?.(activeModeHasUnsavedChanges);
@@ -26,6 +28,11 @@ export default function QuickAddPage({
 
   function handleAddAnother() {
     setCreatedApplication(null);
+  }
+
+  function handleCreateSuccess(application) {
+    setSmartCaptureInitialJobLink("");
+    setCreatedApplication(application);
   }
 
   function handleModeChange(nextMode) {
@@ -42,6 +49,12 @@ export default function QuickAddPage({
 
     setActiveModeHasUnsavedChanges(false);
     setActiveMode(nextMode);
+  }
+
+  function handleSwitchToTextCapture(jobLink) {
+    setSmartCaptureInitialJobLink(jobLink || "");
+    setActiveModeHasUnsavedChanges(false);
+    setActiveMode("smart-capture");
   }
 
   return (
@@ -84,6 +97,15 @@ export default function QuickAddPage({
           Manual Entry
         </button>
         <button
+          className={`quick-add-mode-tab ${activeMode === "job-link" ? "is-active" : ""}`}
+          type="button"
+          onClick={() => handleModeChange("job-link")}
+          role="tab"
+          aria-selected={activeMode === "job-link"}
+        >
+          Paste Job Link
+        </button>
+        <button
           className={`quick-add-mode-tab ${activeMode === "smart-capture" ? "is-active" : ""}`}
           type="button"
           onClick={() => handleModeChange("smart-capture")}
@@ -99,15 +121,25 @@ export default function QuickAddPage({
           existingApplications={existingApplications}
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}
-          onCreateSuccess={setCreatedApplication}
+          onCreateSuccess={handleCreateSuccess}
+          onUnsavedChangesChange={setActiveModeHasUnsavedChanges}
+        />
+      ) : activeMode === "job-link" ? (
+        <JobLinkCaptureForm
+          existingApplications={existingApplications}
+          resumeVersions={resumeVersions}
+          onCreateApplication={onCreateApplication}
+          onCreateSuccess={handleCreateSuccess}
+          onSwitchToTextCapture={handleSwitchToTextCapture}
           onUnsavedChangesChange={setActiveModeHasUnsavedChanges}
         />
       ) : (
         <SmartCaptureForm
           existingApplications={existingApplications}
+          initialJobLink={smartCaptureInitialJobLink}
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}
-          onCreateSuccess={setCreatedApplication}
+          onCreateSuccess={handleCreateSuccess}
           onUnsavedChangesChange={setActiveModeHasUnsavedChanges}
         />
       )}

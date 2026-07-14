@@ -18,4 +18,18 @@ describe("SmartCaptureReviewSummary", () => {
 
     expect(markup).toContain("Detected format: Google Jobs");
   });
+
+  it("displays the Greenhouse parser format label", () => {
+    const markup = renderToStaticMarkup(
+      <SmartCaptureReviewSummary
+        reviewData={{
+          parser_format: "greenhouse",
+          company_name: "Northstar Analytics",
+          role_title: "Operations Data Analyst",
+        }}
+      />,
+    );
+
+    expect(markup).toContain("Detected format: Greenhouse");
+  });
 });
