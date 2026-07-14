@@ -64,8 +64,6 @@ export function getLinkFallbackMessage(routeResult, captureState) {
   }
 
   switch (routeResult?.link_kind) {
-    case JOB_LINK_KINDS.GREENHOUSE_CUSTOM_CANDIDATE:
-      return "This company career link may use Greenhouse, but automatic import for custom career pages is not available yet.";
     case JOB_LINK_KINDS.LINKEDIN:
       return "Automatic LinkedIn link import is not available. Continue with the link or paste the job text for field extraction.";
     case JOB_LINK_KINDS.INDEED:

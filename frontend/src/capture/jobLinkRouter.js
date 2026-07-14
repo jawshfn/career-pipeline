@@ -17,10 +17,17 @@ export const JOB_LINK_KINDS = {
 };
 
 const POSITIVE_INTEGER_PATTERN = /^[1-9][0-9]{0,17}$/;
-const GREENHOUSE_HOSTNAMES = new Set(["boards.greenhouse.io", "job-boards.greenhouse.io"]);
-
 function hostnameMatches(hostname, domain) {
   return hostname === domain || hostname.endsWith(`.${domain}`);
+}
+
+function hostnameContainsDomainLabels(hostname, domain) {
+  const hostnameLabels = hostname.split(".");
+  const domainLabels = domain.split(".");
+
+  return hostnameLabels.some((_, startIndex) =>
+    domainLabels.every((label, labelIndex) => hostnameLabels[startIndex + labelIndex] === label),
+  );
 }
 
 function getValidJobUrl(rawJobLink) {
@@ -82,7 +89,7 @@ export function routeJobLink(rawJobLink) {
   const greenhouseJobIds = url.searchParams.getAll("gh_jid");
   if (
     url.protocol === "https:" &&
-    !GREENHOUSE_HOSTNAMES.has(url.hostname.toLowerCase()) &&
+    !hostnameContainsDomainLabels(url.hostname.toLowerCase(), "greenhouse.io") &&
     getCommonLinkKind(url.hostname.toLowerCase()) === JOB_LINK_KINDS.OTHER &&
     greenhouseJobIds.length === 1 &&
     POSITIVE_INTEGER_PATTERN.test(greenhouseJobIds[0])

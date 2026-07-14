@@ -26,23 +26,6 @@ _NON_CUSTOM_PROVIDER_DOMAINS = {
     "ziprecruiter.com",
 }
 _POSITIVE_JOB_ID_PATTERN = re.compile(rf"^[1-9][0-9]{{0,{MAX_GREENHOUSE_JOB_ID_DIGITS - 1}}}$")
-_SCRIPT_COMMENT_PATTERN = re.compile(r"/\*.*?\*/|^\s*//[^\r\n]*", re.DOTALL | re.MULTILINE)
-_SCRIPT_CONFIG_URL_PATTERN = re.compile(
-    r"(?:greenhouse(?:Board|Job|Api)?Url|jobBoardUrl|boardUrl|apiUrl)\s*[:=]\s*"
-    r"(?P<quote>['\"])(?P<url>https://(?:boards|job-boards|boards-api)\.greenhouse\.io/[^'\"\s<]+)(?P=quote)",
-    re.IGNORECASE,
-)
-_EMBED_CALL_PATTERN = re.compile(
-    r"(?:Grnhse\.Iframe\.load|Greenhouse\.(?:init|embed|load)|greenhouseJobBoard)\s*\("
-    r"(?P<arguments>.{0,1200}?)\)",
-    re.IGNORECASE | re.DOTALL,
-)
-_EMBED_TOKEN_PROPERTY_PATTERN = re.compile(
-    r"(?:boardToken|board_token|greenhouseBoard)\s*:\s*['\"](?P<token>[A-Za-z0-9_-]{1,80})['\"]",
-    re.IGNORECASE,
-)
-_EMBED_FIRST_TOKEN_PATTERN = re.compile(r"^\s*['\"](?P<token>[A-Za-z0-9_-]{1,80})['\"]")
-_EMBED_JOB_ID_PATTERN = re.compile(r"(?:jobId|job_id|gh_jid)\s*:\s*['\"]?(?P<job_id>[0-9]+)", re.IGNORECASE)
 
 HtmlFetcher: TypeAlias = Callable[[str], Awaitable[FetchedHtmlPage]]
 GreenhouseJobFetcher: TypeAlias = Callable[[str, int], Awaitable[GreenhouseProviderJob]]
@@ -98,16 +81,6 @@ def _single_query_value(query: str, key: str) -> str | None:
     return values[0] if len(values) == 1 else None
 
 
-def _has_greenhouse_hostname(raw_url: str | None) -> bool:
-    if not raw_url:
-        return False
-    try:
-        hostname = (urlsplit(raw_url).hostname or "").lower()
-    except ValueError:
-        return False
-    return hostname in _GREENHOUSE_BOARD_HOSTS or hostname == _GREENHOUSE_API_HOST
-
-
 def _candidate_from_greenhouse_url(
     raw_url: str,
     *,
@@ -157,8 +130,6 @@ class GreenhouseEvidenceParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.explicit_job_id = explicit_job_id
         self.candidates: set[str] = set()
-        self._in_script = False
-        self._script_parts: list[str] = []
 
     def _add_token(self, token: str | None) -> None:
         normalized_token = _normalize_board_token(token)
@@ -178,24 +149,11 @@ class GreenhouseEvidenceParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attributes = {name.lower(): value for name, value in attrs}
-        context_text = " ".join(
-            filter(
-                None,
-                [attributes.get("id"), attributes.get("class"), attributes.get("data-provider")],
-            )
-        ).lower()
-        is_greenhouse_context = (
-            "greenhouse" in context_text
-            or "grnhse" in context_text
-            or (tag in {"iframe", "script"} and _has_greenhouse_hostname(attributes.get("src")))
-        )
 
         if tag == "iframe":
             self._add_url(attributes.get("src"), allow_board_level=True)
         elif tag == "script":
             self._add_url(attributes.get("src"), allow_board_level=True)
-            self._in_script = True
-            self._script_parts = []
         elif tag == "a":
             self._add_url(attributes.get("href"), allow_board_level=False)
         elif tag == "form":
@@ -210,40 +168,6 @@ class GreenhouseEvidenceParser(HTMLParser):
 
         for attribute_name in ("data-greenhouse-board", "data-greenhouse-board-token"):
             self._add_token(attributes.get(attribute_name))
-
-        if is_greenhouse_context:
-            self._add_token(attributes.get("data-board-token"))
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag == "script" and self._in_script:
-            self._inspect_script("".join(self._script_parts))
-            self._in_script = False
-            self._script_parts = []
-
-    def handle_data(self, data: str) -> None:
-        if self._in_script:
-            self._script_parts.append(data)
-
-    def _inspect_script(self, script_text: str) -> None:
-        uncommented_script = _SCRIPT_COMMENT_PATTERN.sub("", script_text)
-
-        for match in _SCRIPT_CONFIG_URL_PATTERN.finditer(uncommented_script):
-            self._add_url(match.group("url"), allow_board_level=True)
-
-        for call_match in _EMBED_CALL_PATTERN.finditer(uncommented_script):
-            arguments = call_match.group("arguments")
-            job_id_match = _EMBED_JOB_ID_PATTERN.search(arguments)
-            if job_id_match and job_id_match.group("job_id") != str(self.explicit_job_id):
-                continue
-
-            token_match = _EMBED_TOKEN_PROPERTY_PATTERN.search(arguments)
-            if token_match:
-                self._add_token(token_match.group("token"))
-                continue
-
-            first_token_match = _EMBED_FIRST_TOKEN_PATTERN.match(arguments)
-            if first_token_match:
-                self._add_token(first_token_match.group("token"))
 
 
 def discover_greenhouse_board_token(html_text: str, explicit_job_id: int) -> str:
