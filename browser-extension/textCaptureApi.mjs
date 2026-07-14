@@ -4,8 +4,10 @@ export const TEXT_CAPTURE_HASH_KEY = "career-pipeline-text-capture";
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{32,128}$/;
 
 export async function createBrowserTextCapture(detectionResult, fetchImpl = fetch) {
-  if (detectionResult?.status !== "detected" || detectionResult.provider !== "indeed") {
-    throw new Error("A detected Indeed job is required.");
+  const supportedSources = { indeed: "Indeed", linkedin: "LinkedIn" };
+  const expectedSource = supportedSources[detectionResult?.provider];
+  if (detectionResult?.status !== "detected" || !expectedSource || detectionResult.source !== expectedSource) {
+    throw new Error("A supported detected job is required.");
   }
   const response = await fetchImpl(LOCAL_TEXT_CAPTURE_URL, {
     method: "POST",
@@ -13,8 +15,8 @@ export async function createBrowserTextCapture(detectionResult, fetchImpl = fetc
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       version: 1,
-      provider: "indeed",
-      source: "Indeed",
+      provider: detectionResult.provider,
+      source: detectionResult.source,
       original_job_link: detectionResult.original_job_link,
       raw_text: detectionResult.raw_text,
     }),

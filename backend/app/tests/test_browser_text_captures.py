@@ -20,6 +20,18 @@ def capture_payload(**overrides):
     return payload
 
 
+def linkedin_capture_payload(**overrides):
+    payload = {
+        "version": 1,
+        "provider": "linkedin",
+        "source": "LinkedIn",
+        "original_job_link": "https://www.linkedin.com/jobs/view/123456789",
+        "raw_text": "Company logo for, Fictional Systems.\nFictional Systems\nFictional Analyst\nAbout the job\n" + "Helpful work. " * 10,
+    }
+    payload.update(overrides)
+    return payload
+
+
 def test_browser_text_capture_store_is_one_time_and_expires():
     store = BrowserTextCaptureStore()
     now = datetime(2026, 1, 1, tzinfo=UTC)
@@ -85,15 +97,34 @@ def test_browser_capture_endpoints_are_validated_one_time_and_do_not_persist(cli
     assert client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": token}).status_code == 404
 
 
+def test_linkedin_browser_capture_is_validated_one_time_and_does_not_persist(client, db_session, monkeypatch):
+    store = BrowserTextCaptureStore()
+    monkeypatch.setattr("app.routers.browser_captures.browser_text_capture_store", store)
+    created = client.post("/api/browser-text-captures", json=linkedin_capture_payload())
+    assert created.status_code == 200
+    token = created.json()["capture_token"]
+    consumed = client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": token})
+    assert consumed.status_code == 200
+    assert consumed.json()["provider"] == "linkedin"
+    assert consumed.json()["source"] == "LinkedIn"
+    assert db_session.query(Application).count() == 0
+    assert client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": token}).status_code == 404
+
+
 def test_browser_capture_endpoint_rejects_untrusted_input(client):
     invalid_payloads = [
         capture_payload(provider="linkedin"),
+        capture_payload(provider="linkedin", source="Indeed"),
         capture_payload(source="Other"),
         capture_payload(version=2),
         capture_payload(original_job_link="https://indeed.com.evil.test/viewjob?jk=fake"),
         capture_payload(original_job_link="https://user:pass@www.indeed.com/viewjob?jk=fake"),
         capture_payload(raw_text=" "),
         capture_payload(raw_text="x" * 100_001),
+        linkedin_capture_payload(original_job_link="https://linkedin.com.evil.test/jobs/view/123"),
+        linkedin_capture_payload(original_job_link="https://user:pass@www.linkedin.com/jobs/view/123"),
+        linkedin_capture_payload(original_job_link="https://www.linkedin.com:8443/jobs/view/123"),
+        linkedin_capture_payload(original_job_link="ftp://www.linkedin.com/jobs/view/123"),
     ]
     for payload in invalid_payloads:
         assert client.post("/api/browser-text-captures", json=payload).status_code == 422

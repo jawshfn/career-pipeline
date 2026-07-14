@@ -67,6 +67,56 @@ function buildGoogleJobsRawText({
 }
 
 describe("buildSmartCaptureReviewState", () => {
+  it("prepares a detector-shaped LinkedIn capture with explicit source and job link", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Company logo for, Northstar Labs.",
+        "Northstar Labs",
+        "Fictional Operations Analyst",
+        "Richmond, VA",
+        "$76,000 - $92,000 a year",
+        "Hybrid",
+        "Full-time",
+        "About the job",
+        "Build reliable systems. https://unrelated.fictional.test/benefits",
+      ].join("\n"),
+      jobLink: "https://www.linkedin.com/jobs/view/123456",
+      source: "LinkedIn",
+    });
+    expect(reviewData.parser_format).toBe("linkedin");
+    expect(reviewData.company_name).toBe("Northstar Labs");
+    expect(reviewData.role_title).toBe("Fictional Operations Analyst");
+    expect(reviewData.location).toBe("Richmond, VA - Hybrid");
+    expect(reviewData.employment_type).toBe("Full-time");
+    expect(reviewData.compensation).toBe("$76,000 - $92,000 a year");
+    expect(reviewData.notes.startsWith("About the job")).toBe(true);
+    expect(reviewData.job_link).toBe("https://www.linkedin.com/jobs/view/123456");
+    expect(reviewData.source).toBe("LinkedIn");
+  });
+
+  it("does not treat LinkedIn work arrangement or employment type as a missing role title", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Company logo for, Fictional Company.",
+        "Fictional Company",
+        "Remote",
+        "Full-time",
+        "About the job",
+        "Build reliable fictional systems.",
+      ].join("\n"),
+      jobLink: "https://www.linkedin.com/jobs/view/123456",
+      source: "LinkedIn",
+    });
+    expect(reviewData.parser_format).toBe("linkedin");
+    expect(reviewData.company_name).toBe("Fictional Company");
+    expect(reviewData.role_title).toBe("");
+    expect(reviewData.location).toBe("Remote");
+    expect(reviewData.employment_type).toBe("Full-time");
+    expect(reviewData.notes.startsWith("About the job")).toBe(true);
+    expect(reviewData.job_link).toBe("https://www.linkedin.com/jobs/view/123456");
+    expect(reviewData.source).toBe("LinkedIn");
+  });
+
   it("ignores a standalone job-post marker in malformed Indeed-style pasted text", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: [

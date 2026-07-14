@@ -34,7 +34,7 @@ Paste Job Link automatically recognizes supported hosted Greenhouse and Lever po
 
 ## Optional Browser Helper
 
-The experimental local Chrome helper supports verified Greenhouse identifier capture and click-initiated Indeed text capture. It reads only the active page when clicked. For Indeed, it temporarily outlines the detected description and, only after you choose Open in Career Pipeline, sends the text to the locally running FastAPI backend for a one-time two-minute transfer. It makes no request to the employer page or any remote Career Pipeline service, and nothing reaches SQLite until you review and save. GitHub Pages does not support browser-assisted capture.
+The experimental local Chrome helper supports verified Greenhouse identifier capture and click-initiated Indeed and LinkedIn text capture. It reads only the active page when clicked, outlines the detected description, and sends bounded text to the local FastAPI backend only after you choose Open in Career Pipeline. The one-time transfer opens an editable Paste Job Text review; nothing reaches SQLite until you review and save. The helper makes no request to LinkedIn and needs no LinkedIn host permission. GitHub Pages does not support browser-assisted capture.
 
 See the [Browser Extension Guide](browser-extension/README.md) for local setup and privacy boundaries.
 

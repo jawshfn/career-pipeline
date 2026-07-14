@@ -225,38 +225,52 @@ MAX_BROWSER_CAPTURE_URL_LENGTH = 2_048
 BROWSER_CAPTURE_TOKEN_PATTERN = r"^[A-Za-z0-9_-]{32,128}$"
 
 
-def validate_indeed_browser_capture_url(value: str) -> str:
+def validate_browser_capture_url(value: str, provider: str) -> str:
     if value != value.strip() or not value or len(value) > MAX_BROWSER_CAPTURE_URL_LENGTH:
-        raise ValueError("original_job_link must be a supported Indeed URL")
+        raise ValueError("original_job_link must be a supported browser capture URL")
 
     parsed = urlparse(value)
     try:
         port = parsed.port
     except ValueError as error:
-        raise ValueError("original_job_link must be a supported Indeed URL") from error
+        raise ValueError("original_job_link must be a supported browser capture URL") from error
     hostname = (parsed.hostname or "").lower()
+    is_supported_host = (
+        (provider == "indeed" and (hostname == "indeed.com" or hostname.endswith(".indeed.com")))
+        or (provider == "linkedin" and (hostname == "linkedin.com" or hostname.endswith(".linkedin.com")))
+    )
+    is_supported_path = provider != "linkedin" or parsed.path.startswith("/jobs/")
     if (
         parsed.scheme not in {"http", "https"}
         or parsed.username
         or parsed.password
         or port not in {None, 80, 443}
-        or not (hostname == "indeed.com" or hostname.endswith(".indeed.com"))
+        or not is_supported_host
+        or not is_supported_path
     ):
-        raise ValueError("original_job_link must be a supported Indeed URL")
+        raise ValueError("original_job_link must be a supported browser capture URL")
     return value
 
 
 class BrowserTextCaptureCreateRequest(BaseModel):
     version: Literal[1]
-    provider: Literal["indeed"]
-    source: Literal["Indeed"]
+    provider: Literal["indeed", "linkedin"]
+    source: Literal["Indeed", "LinkedIn"]
     original_job_link: StrictStr
     raw_text: StrictStr = Field(min_length=1, max_length=MAX_BROWSER_CAPTURE_TEXT_LENGTH)
 
     @field_validator("original_job_link")
     @classmethod
-    def validate_original_job_link(cls, value: str) -> str:
-        return validate_indeed_browser_capture_url(value)
+    def validate_original_job_link(cls, value: str, info) -> str:
+        return validate_browser_capture_url(value, info.data.get("provider", ""))
+
+    @field_validator("source")
+    @classmethod
+    def validate_provider_source_pair(cls, value: str, info) -> str:
+        pairs = {"indeed": "Indeed", "linkedin": "LinkedIn"}
+        if pairs.get(info.data.get("provider")) != value:
+            raise ValueError("provider and source must be a supported matching pair")
+        return value
 
     @field_validator("raw_text")
     @classmethod
@@ -278,8 +292,8 @@ class BrowserTextCaptureConsumeRequest(BaseModel):
 
 class BrowserTextCaptureConsumeResponse(BaseModel):
     version: Literal[1]
-    provider: Literal["indeed"]
-    source: Literal["Indeed"]
+    provider: Literal["indeed", "linkedin"]
+    source: Literal["Indeed", "LinkedIn"]
     original_job_link: str
     raw_text: str
 

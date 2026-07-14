@@ -1,6 +1,6 @@
 # Career Pipeline Capture Helper
 
-This experimental, locally loaded Chrome extension supports verified Greenhouse identifier capture and click-initiated Indeed text capture into an editable local Career Pipeline review.
+This experimental, locally loaded Chrome extension supports verified Greenhouse identifier capture and click-initiated Indeed and LinkedIn text capture into an editable local Career Pipeline review.
 
 It is not a Chrome Web Store feature. It makes no request to the employer page or a remote Career Pipeline service, sends no telemetry, stores no persistent data, and does not modify page content beyond a temporary Indeed description outline. Its permissions are `activeTab`, `scripting`, and a narrow local-backend host permission for `http://127.0.0.1:8000/*`.
 
@@ -29,7 +29,7 @@ The popup reports whether one verified Greenhouse board and one supported job ID
 
 The app opens **Add Job** -> **Paste Job Link**, starts an import into the existing editable review, preserves the original employer URL as Job Link, and defaults Source to Company Website. Source remains editable, and no application is saved automatically.
 
-For Indeed, the helper sends bounded detected text only after **Open in Career Pipeline** is selected. The local backend keeps that text in memory for at most two minutes and consumes it once into **Add Job** -> **Paste Job Text**. It is not written to SQLite unless the user reviews and saves.
+For Indeed and LinkedIn, the helper reads only the current visible job after the user clicks the extension. It sends bounded cleaned text only after **Open in Career Pipeline** is selected. The local backend keeps that text in memory for at most two minutes and consumes it once into **Add Job** -> **Paste Job Text**. The extension makes no request to either job board and has no job-board host permissions. Captures are not written to SQLite unless the user reviews and explicitly saves.
 
 The GitHub Pages demo does not support browser-assisted imports. Run the local full-stack version instead.
 
@@ -48,7 +48,7 @@ No install step or extension-specific dependency is required. After changing ext
 - The local full-stack app must be running; the target is fixed to `http://localhost:5173/`.
 - Each handoff intentionally opens a new local Career Pipeline tab so existing unsaved work is not replaced.
 - The extension does not request the broader `tabs` or host permissions needed to search for and reuse arbitrary tabs.
-- Indeed capture supports one confidently detected current job only; LinkedIn, ZipRecruiter, Handshake, generic pages, and selected text are not supported.
+- Indeed and LinkedIn capture each support one confidently detected current job only. LinkedIn layout coverage remains pending live manual QA. ZipRecruiter, Handshake, generic pages, and selected text are not supported.
 - Greenhouse capture remains limited to verified Greenhouse jobs.
 - The helper is experimental and is not distributed through the Chrome Web Store.
 
@@ -58,4 +58,4 @@ Return to `chrome://extensions` and select **Remove** on the detector card.
 
 ## Privacy boundary
 
-Greenhouse evidence remains in the popup only and is not transferred to Career Pipeline. Indeed transfer contains only the original job URL and cleaned visible job text; it never contains HTML, form values, cookies, headers, screenshots, browsing history, or storage data. The extension has no background script, persistent content script, storage, clipboard access, broad host permissions, or employer-page network activity.
+Greenhouse evidence remains in the popup only and is not transferred to Career Pipeline. Indeed and LinkedIn transfer contains only the original job URL and cleaned visible job text; it never contains HTML, form values, cookies, headers, screenshots, browsing history, or storage data. The extension has no background script, persistent content script, storage, clipboard access, broad host permissions, or employer-page network activity.

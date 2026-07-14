@@ -14,7 +14,7 @@ The backend is used by the full local app. It is not hosted by GitHub Pages; the
 - Job imports: direct Greenhouse Job Board API import, direct canonical Lever Postings API import, and best-effort custom employer Greenhouse discovery
 - Health check
 
-Greenhouse imports use the official Job Board API. Canonical `jobs.lever.co` and `jobs.eu.lever.co` posting links use Lever's documented individual Postings API; the backend never crawls a Lever board or infers a company name from its site token. The custom employer Greenhouse path verifies one board token from bounded safe-public-HTML structural evidence before importing; it does not provide generic scraping. The experimental browser helper can also send one user-initiated Indeed text capture to a bounded, in-memory, one-time local transfer endpoint; it never fetches Indeed or writes an application.
+Greenhouse imports use the official Job Board API. Canonical `jobs.lever.co` and `jobs.eu.lever.co` posting links use Lever's documented individual Postings API; the backend never crawls a Lever board or infers a company name from its site token. The custom employer Greenhouse path verifies one board token from bounded safe-public-HTML structural evidence before importing; it does not provide generic scraping. The experimental browser helper can also send one user-initiated Indeed or LinkedIn text capture to a bounded, in-memory, one-time local transfer endpoint; it never fetches either job board or writes an application.
 
 The backend is local-development focused. Authentication, production backend deployment, generic scraping, AI extraction, import/export, and email/calendar integrations are not implemented.
 

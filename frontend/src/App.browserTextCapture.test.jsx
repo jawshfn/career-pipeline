@@ -90,4 +90,39 @@ describe("browser text capture startup", () => {
     expect(mocks.createApplication).not.toHaveBeenCalled();
     expect(mocks.getApplications).toHaveBeenCalledTimes(2);
   });
+
+  it("consumes a LinkedIn browser capture once in StrictMode and prepares its editable review without saving", async () => {
+    mocks.consumeBrowserTextCapture.mockResolvedValue({
+      version: 1,
+      provider: "linkedin",
+      source: "LinkedIn",
+      original_job_link: "https://www.linkedin.com/jobs/view/123456",
+      raw_text: [
+        "Company logo for, Northstar Labs.",
+        "Northstar Labs",
+        "Fictional Operations Analyst",
+        "Richmond, VA",
+        "Hybrid",
+        "Full-time",
+        "About the job",
+        "Build reliable systems for fictional teams.",
+      ].join("\n"),
+    });
+
+    await act(async () => {
+      root.render(<StrictMode><App /></StrictMode>);
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mocks.consumeBrowserTextCapture).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain("Review before saving");
+    expect(container.textContent).toContain("Northstar Labs");
+    expect(container.querySelector('select[name="source"]').value).toBe("LinkedIn");
+    expect(container.querySelector('input[name="job_link"]').value).toBe("https://www.linkedin.com/jobs/view/123456");
+    expect(container.textContent).not.toContain("expired or was already used");
+    expect(mocks.createApplication).not.toHaveBeenCalled();
+  });
 });

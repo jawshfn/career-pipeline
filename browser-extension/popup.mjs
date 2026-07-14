@@ -1,6 +1,7 @@
 import { detectGreenhousePage } from "./detector.mjs";
 import { buildCareerPipelineCaptureUrl } from "./capturePayload.mjs";
 import { detectIndeedJobPage } from "./indeedDetector.mjs";
+import { detectLinkedInJobPage } from "./linkedinDetector.mjs";
 import { buildBrowserTextCaptureUrl, createBrowserTextCapture } from "./textCaptureApi.mjs";
 
 const resultPanel = typeof document === "undefined" ? null : document.querySelector("#result");
@@ -67,7 +68,21 @@ export function isIndeedHostname(rawUrl) {
   }
 }
 
+export function isLinkedInHostname(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    const hostname = url.hostname.toLowerCase();
+    return (url.protocol === "http:" || url.protocol === "https:") && !url.username && !url.password &&
+      (url.port === "" || url.port === "80" || url.port === "443") &&
+      (hostname === "linkedin.com" || hostname.endsWith(".linkedin.com")) && /^\/jobs(?:\/|$)/u.test(url.pathname);
+  } catch { return false; }
+}
+
 export async function openIndeedCareerPipeline(detectionResult, chromeApi = globalThis.chrome, fetchImpl = fetch) {
+  return openBrowserTextCareerPipeline(detectionResult, chromeApi, fetchImpl);
+}
+
+export async function openBrowserTextCareerPipeline(detectionResult, chromeApi = globalThis.chrome, fetchImpl = fetch) {
   const token = await createBrowserTextCapture(detectionResult, fetchImpl);
   await chromeApi.tabs.create({ url: buildBrowserTextCaptureUrl(token) });
 }
@@ -78,15 +93,16 @@ function renderResult(result) {
   }
   resultPanel.replaceChildren();
 
-  if (result?.status === "detected" && result.provider === "indeed") {
-    appendText("status-title", "Indeed job detected");
+  if (result?.status === "detected" && (result.provider === "indeed" || result.provider === "linkedin")) {
+    const providerLabel = result.provider === "linkedin" ? "LinkedIn" : "Indeed";
+    appendText("status-title", `${providerLabel} job detected`);
     appendText("result-detail", result.role_title);
     if (result.company_name) appendText("result-detail", result.company_name);
     appendText("result-detail", `${result.description_character_count.toLocaleString()} characters captured`);
     appendText("local-capture-guidance", "Career Pipeline must be running locally at http://localhost:5173.");
     appendButton("Open in Career Pipeline", async () => {
       try {
-        await openIndeedCareerPipeline(result);
+        await openBrowserTextCareerPipeline(result);
         window.close();
       } catch {
         appendText("result-detail", "Career Pipeline could not receive this job. Confirm the local backend is running.");
@@ -118,6 +134,7 @@ function renderResult(result) {
 
   const messages = {
     "not-indeed": "This page is not a supported Indeed job page.",
+    "not-linkedin": "This page is not a supported LinkedIn job page.",
     "no-current-job": "Career Pipeline could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
     "ambiguous-job": "Career Pipeline could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
     "capture-too-large": "This Indeed job is too large to capture. Copy the job posting and use Paste Job Text.",
@@ -127,8 +144,16 @@ function renderResult(result) {
     "unsupported-page": "Chrome cannot inspect this protected browser page.",
     "extension-error": result?.error_code === "indeed-injection-failed"
       ? "Career Pipeline could not inspect this Indeed page. Reload the extension and try again."
+      : result?.error_code === "linkedin-injection-failed"
+      ? "Career Pipeline could not inspect this LinkedIn page. Reload the extension and try again."
       : "The detector encountered an unexpected error. Check the extension error details.",
   };
+  const providerLabel = result?.provider === "linkedin" ? "LinkedIn" : result?.provider === "indeed" ? "Indeed" : "";
+  if (["no-current-job", "ambiguous-job", "capture-too-large", "not-linkedin", "not-indeed"].includes(result?.status) && providerLabel) {
+    const action = result.status === "capture-too-large" ? "is too large to capture" : "could not confidently identify the current job";
+    appendText("status-title", `${providerLabel} ${action}. Copy the job posting and use Paste Job Text.`);
+    return;
+  }
   appendText("status-title", messages[result?.status] || messages["extension-error"]);
 }
 
@@ -162,21 +187,29 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
       return { status: "unsupported-page" };
     }
 
+    const provider = isLinkedInHostname(activeTab.url) ? "linkedin" : isIndeedHostname(activeTab.url) ? "indeed" : "greenhouse";
     const injectionResults = await chromeApi.scripting.executeScript({
       target: { tabId: activeTab.id },
-      func: isIndeedHostname(activeTab.url) ? detectIndeedJobPage : detectGreenhousePage,
+      func: provider === "linkedin" ? detectLinkedInJobPage : provider === "indeed" ? detectIndeedJobPage : detectGreenhousePage,
     });
     const detectionResult = unwrapInjectionResult(injectionResults);
-    return detectionResult.status === "detected"
-      ? { ...detectionResult, original_job_link: activeTab.url }
-      : detectionResult;
+    if (detectionResult.status === "detected") {
+      return { ...detectionResult, original_job_link: activeTab.url };
+    }
+    return provider === "linkedin" || provider === "indeed" ? { ...detectionResult, provider } : detectionResult;
   } catch (error) {
     console.error("Career Pipeline Greenhouse Detector inspection error", error);
     const classification = classifyInspectionError(error);
-    return isIndeedHostname(activeTab?.url) && classification.status === "extension-error"
-      ? { ...classification, error_code: "indeed-injection-failed" }
+    return providerForUrl(activeTab?.url) && classification.status === "extension-error"
+      ? { ...classification, error_code: `${providerForUrl(activeTab.url)}-injection-failed` }
       : classification;
   }
+}
+
+function providerForUrl(url) {
+  if (isLinkedInHostname(url)) return "linkedin";
+  if (isIndeedHostname(url)) return "indeed";
+  return "";
 }
 
 if (resultPanel) {

@@ -6,6 +6,8 @@ import {
   classifyInspectionError,
   inspectActivePage,
   isIndeedHostname,
+  isLinkedInHostname,
+  openBrowserTextCareerPipeline,
   openIndeedCareerPipeline,
   openCareerPipeline,
   unwrapInjectionResult,
@@ -96,12 +98,30 @@ test("routes an active Indeed page to the focused detector", async () => {
   assert.equal(isIndeedHostname("https://indeed.com.evil.test/viewjob"), false);
 });
 
+test("routes an active LinkedIn page to the focused detector", async () => {
+  const result = await inspectActivePage({
+    tabs: { query: async () => [{ id: 13, url: "https://www.linkedin.com/jobs/view/123456" }] },
+    scripting: { executeScript: async (details) => { assert.equal(typeof details.func, "function"); return [{ result: { status: "no-current-job", version: 1 } }]; } },
+  });
+  assert.equal(result.status, "no-current-job");
+  assert.equal(isLinkedInHostname("https://www.linkedin.com/jobs/view/123456"), true);
+  assert.equal(isLinkedInHostname("https://linkedin.com.evil.test/jobs/view/123456"), false);
+});
+
 test("marks an actual Indeed injection failure without exposing page data", async () => {
   const result = await inspectActivePage({
     tabs: { query: async () => [{ id: 14, url: "https://www.indeed.com/viewjob?jk=fake" }] },
     scripting: { executeScript: async () => { throw new Error("Injected function failed"); } },
   });
   assert.deepEqual(result, { status: "extension-error", error_code: "indeed-injection-failed" });
+});
+
+test("marks an actual LinkedIn injection failure without exposing page data", async () => {
+  const result = await inspectActivePage({
+    tabs: { query: async () => [{ id: 15, url: "https://www.linkedin.com/jobs/view/123456" }] },
+    scripting: { executeScript: async () => { throw new Error("Injected function failed"); } },
+  });
+  assert.deepEqual(result, { status: "extension-error", error_code: "linkedin-injection-failed" });
 });
 
 test("posts an Indeed capture only to the local backend before opening a token URL", async () => {
@@ -126,5 +146,20 @@ test("posts an Indeed capture only to the local backend before opening a token U
   assert.equal(fetchCalls.length, 1);
   assert.equal(fetchCalls[0].url, "http://127.0.0.1:8000/api/browser-text-captures");
   assert.equal(fetchCalls[0].options.credentials, "omit");
+  assert.match(calls[0].url, /^http:\/\/localhost:5173\/#career-pipeline-text-capture=/);
+});
+
+test("posts a LinkedIn capture only after the open action using its matching provider and source", async () => {
+  const calls = [];
+  const fetchCalls = [];
+  await openBrowserTextCareerPipeline(
+    { status: "detected", provider: "linkedin", source: "LinkedIn", original_job_link: "https://www.linkedin.com/jobs/view/123456", raw_text: "Company logo for, Fictional Labs.\nFictional Labs\nRole\nAbout the job\n" + "Helpful text ".repeat(10) },
+    { tabs: { create: async (details) => calls.push(details) } },
+    async (url, options) => { fetchCalls.push({ url, options }); return { ok: true, json: async () => ({ version: 1, capture_token: "b".repeat(43) }) }; },
+  );
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0].url, "http://127.0.0.1:8000/api/browser-text-captures");
+  assert.deepEqual(JSON.parse(fetchCalls[0].options.body).provider, "linkedin");
+  assert.deepEqual(JSON.parse(fetchCalls[0].options.body).source, "LinkedIn");
   assert.match(calls[0].url, /^http:\/\/localhost:5173\/#career-pipeline-text-capture=/);
 });

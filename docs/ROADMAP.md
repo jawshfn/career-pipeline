@@ -180,6 +180,7 @@ Status: complete through Phase 16.0
 Status: complete through Phase 17.0
 
 - Phase 17.0 - Add user-initiated Indeed job extraction and one-time local transfer into Paste Job Text.
+- Phase 17.1 - Add bounded browser-assisted LinkedIn text capture into the same local editable review flow; pending live manual QA.
 
 ## Near-Term Future Work
 

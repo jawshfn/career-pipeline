@@ -63,7 +63,7 @@ The production build can complete without the backend running, but API-driven pa
 
 ## Local Browser Capture
 
-The optional local helper can open Add Job from a verified Greenhouse identifier or a click-initiated Indeed text capture. Greenhouse uses the existing validated fragment handoff; Indeed uses an opaque one-time token, then opens the ordinary Paste Job Text review with the original Job Link and Source = Indeed. The user still reviews and saves manually.
+The optional local helper can open Add Job from a verified Greenhouse identifier or a click-initiated Indeed or LinkedIn text capture. Greenhouse uses the existing validated fragment handoff; text capture uses an opaque one-time token, then opens the ordinary Paste Job Text review with the original Job Link and matching Source. The user still reviews and saves manually.
 
 See the [Browser Extension Guide](../browser-extension/README.md) for local unpacked-extension setup. The static demo does not run browser-assisted live Greenhouse imports.
 

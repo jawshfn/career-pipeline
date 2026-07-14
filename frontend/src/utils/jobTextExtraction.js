@@ -824,6 +824,13 @@ function getLinkedInWorkArrangementFromLine(line) {
   return "";
 }
 
+function isLinkedInRoleCandidateLine(line) {
+  return (
+    isRoleCandidateLine(line) &&
+    !/^(?:remote|hybrid|on[-\s]?site|in[-\s]?person|full-time|part-time|contract(?:or)?|internship|temporary)$/iu.test(line)
+  );
+}
+
 function detectLinkedInWorkArrangement(headerLines) {
   return headerLines.map(getLinkedInWorkArrangementFromLine).find(Boolean) || "";
 }
@@ -912,10 +919,14 @@ function extractLinkedInFields(rawText) {
   const baseFields = extractHeaderFields(rawText, { descriptionHeadingPattern: /^about the job$/iu });
   const linkedInMetadataLocation = detectLinkedInLocation(headerLines);
   const linkedInWorkArrangement = detectLinkedInWorkArrangement(headerLines);
+  const linkedInFallbackLocation =
+    baseFields.location && linkedInWorkArrangement && !/^remote$/iu.test(baseFields.location)
+      ? appendWorkArrangement(baseFields.location, linkedInWorkArrangement)
+      : baseFields.location;
   const linkedInLocation =
     linkedInMetadataLocation && linkedInWorkArrangement
       ? `${linkedInMetadataLocation} - ${linkedInWorkArrangement}`
-      : linkedInMetadataLocation;
+      : linkedInMetadataLocation || linkedInFallbackLocation;
   const normalizedCompany = normalizeComparisonValue(companyFromLogo);
   const companyLineIndex = headerLines.findIndex(
     (line) => isCompanyCandidateLine(line) && normalizeComparisonValue(line) === normalizedCompany,
@@ -924,8 +935,8 @@ function extractLinkedInFields(rawText) {
   const roleTitle =
     headerLines
       .slice(searchStartIndex)
-      .find((line) => isRoleCandidateLine(line) && normalizeComparisonValue(line) !== normalizedCompany) ||
-    baseFields.role_title;
+      .find((line) => isLinkedInRoleCandidateLine(line) && normalizeComparisonValue(line) !== normalizedCompany) ||
+    "";
 
   return {
     ...baseFields,
