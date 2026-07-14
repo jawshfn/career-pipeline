@@ -7,10 +7,14 @@ import { DEFAULT_APPLICATION_SOURCE } from "../constants/applicationConstants.js
 
 export default function QuickAddPage({
   browserCaptureError = "",
+  browserTextCaptureError = "",
   existingApplications,
   incomingBrowserCapture = null,
+  incomingBrowserTextCapture = null,
   onBrowserCaptureConsumed,
   onBrowserCaptureErrorConsumed,
+  onBrowserTextCaptureConsumed,
+  onBrowserTextCaptureErrorConsumed,
   onCreateApplication,
   onUnsavedChangesChange,
   onViewApplications,
@@ -22,6 +26,7 @@ export default function QuickAddPage({
   const [browserCaptureTransfer, setBrowserCaptureTransfer] = useState(null);
   const [smartCaptureTransfer, setSmartCaptureTransfer] = useState(null);
   const hasHandledIncomingBrowserCapture = useRef(false);
+  const hasHandledIncomingBrowserTextCapture = useRef(false);
 
   useEffect(() => {
     onUnsavedChangesChange?.(activeModeHasUnsavedChanges);
@@ -53,6 +58,30 @@ export default function QuickAddPage({
     setActiveMode("job-link");
   }, [activeModeHasUnsavedChanges, browserCaptureError, incomingBrowserCapture]);
 
+  useEffect(() => {
+    if (hasHandledIncomingBrowserTextCapture.current || (!incomingBrowserTextCapture && !browserTextCaptureError)) return;
+    hasHandledIncomingBrowserTextCapture.current = true;
+    if (activeModeHasUnsavedChanges) return;
+    if (incomingBrowserTextCapture) {
+      setCreatedApplication(null);
+      setBrowserCaptureTransfer(null);
+      setSmartCaptureTransfer({
+        rawText: incomingBrowserTextCapture.raw_text,
+        jobLink: incomingBrowserTextCapture.original_job_link,
+        source: incomingBrowserTextCapture.source,
+        autoPrepareReview: true,
+      });
+      onBrowserTextCaptureConsumed?.();
+      setActiveModeHasUnsavedChanges(false);
+      setActiveMode("smart-capture");
+    }
+    if (browserTextCaptureError) {
+      setSmartCaptureTransfer({ error: browserTextCaptureError });
+      setActiveMode("smart-capture");
+      onBrowserTextCaptureErrorConsumed?.();
+    }
+  }, [activeModeHasUnsavedChanges, browserTextCaptureError, incomingBrowserTextCapture, onBrowserTextCaptureConsumed, onBrowserTextCaptureErrorConsumed]);
+
   function handleAddAnother() {
     setCreatedApplication(null);
   }
@@ -82,7 +111,7 @@ export default function QuickAddPage({
   }
 
   function handleSwitchToTextCapture({ jobLink = "", source = DEFAULT_APPLICATION_SOURCE } = {}) {
-    setSmartCaptureTransfer({ jobLink, source });
+    setSmartCaptureTransfer({ jobLink, source, rawText: "", autoPrepareReview: false });
     setActiveModeHasUnsavedChanges(false);
     setActiveMode("smart-capture");
   }
@@ -171,7 +200,10 @@ export default function QuickAddPage({
         <SmartCaptureForm
           existingApplications={existingApplications}
           initialJobLink={smartCaptureTransfer?.jobLink || ""}
+          initialRawText={smartCaptureTransfer?.rawText || ""}
           initialSource={smartCaptureTransfer?.source || DEFAULT_APPLICATION_SOURCE}
+          autoPrepareReview={Boolean(smartCaptureTransfer?.autoPrepareReview)}
+          initialError={smartCaptureTransfer?.error || ""}
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}
           onCreateSuccess={handleCreateSuccess}

@@ -67,6 +67,33 @@ function buildGoogleJobsRawText({
 }
 
 describe("buildSmartCaptureReviewState", () => {
+  it("ignores a standalone job-post marker in malformed Indeed-style pasted text", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Fictional Systems Technician - West Point Branch",
+        "- job post",
+        "Northstar Community Credit Union",
+        "West Point, VA 23181",
+        "Job details",
+        "$20 - $25 an hour - Full-time",
+        "Full job description",
+        "Fictional Systems Technician",
+        "",
+        "This role provides technical and administrative support.",
+      ].join("\n"),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(reviewData.parser_format).toBe("indeed");
+    expect(reviewData.role_title).toBe("Fictional Systems Technician - West Point Branch");
+    expect(reviewData.company_name).toBe("Northstar Community Credit Union");
+    expect(reviewData.location).toBe("West Point, VA 23181");
+    expect(reviewData.employment_type).toBe("Full-time");
+    expect(reviewData.compensation).toBe("$20 - $25 an hour");
+    expect(Object.values(reviewData)).not.toContain("- job post");
+  });
+
   it("preserves the manually selected source and normalizes the explicit job link", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: "Example Analytics\nJunior Data Analyst\nAbout the job\nBuild reports.",

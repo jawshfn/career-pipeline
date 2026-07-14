@@ -160,6 +160,10 @@ Behavior:
 
 Status: implemented
 
+## Browser Text Captures
+
+`POST /api/browser-text-captures` accepts one validated, user-initiated Indeed text capture from the local browser helper and returns an opaque one-time token. `POST /api/browser-text-captures/consume` returns the text once, then removes it. Captures are bounded, in-memory only, expire after two minutes, never fetch Indeed, and never create an application.
+
 ## Job Imports
 
 ### POST /api/job-imports/greenhouse

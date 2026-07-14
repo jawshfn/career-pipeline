@@ -175,6 +175,12 @@ Status: complete through Phase 16.0
 
 - Phase 16.0 - Add automatic global and EU Lever job-link import through the public Postings API.
 
+## Phase 17 - Browser-Assisted Text Capture
+
+Status: complete through Phase 17.0
+
+- Phase 17.0 - Add user-initiated Indeed job extraction and one-time local transfer into Paste Job Text.
+
 ## Near-Term Future Work
 
 - Demo screenshots and fuller Smart Capture visual walkthrough

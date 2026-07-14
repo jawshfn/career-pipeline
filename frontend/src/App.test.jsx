@@ -108,6 +108,19 @@ describe("browser capture startup", () => {
     expect(state.browserCaptureError).toContain("could not verify the browser capture");
     expect(replaceState).toHaveBeenCalledWith(null, "", "/");
   });
+
+  it("opens Add Job for a valid one-time browser text capture token", () => {
+    const replaceState = vi.fn();
+    const token = "a".repeat(43);
+    const state = getBrowserCaptureStartupState({
+      location: { hash: `#career-pipeline-text-capture=${token}`, pathname: "/", search: "" },
+      history: { state: null, replaceState },
+    });
+
+    expect(state.shouldOpenQuickAdd).toBe(true);
+    expect(state.incomingBrowserTextCaptureToken).toBe(token);
+    expect(replaceState).toHaveBeenCalledWith(null, "", "/");
+  });
 });
 
 describe("editable page dirty-state helpers", () => {

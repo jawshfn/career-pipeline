@@ -51,6 +51,7 @@ The current prototype includes:
 - Direct canonical Lever import through the public Lever Postings API
 - Best-effort custom Greenhouse board discovery using SSRF-protected bounded public HTML verification
 - Experimental local click-initiated Greenhouse detection and browser-to-local-app versioned fragment bridge
+- Experimental local click-initiated Indeed text capture with one-time in-memory local transfer into Paste Job Text
 - Editable imported reviews with no automatic save
 - Deterministic Smart Capture helpers that prepare conservative editable suggested fields from pasted job text before save
 - Internal Smart Capture parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while preserving the user's selected Source

@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from urllib.parse import urlparse
 from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
@@ -217,6 +218,70 @@ class LeverJobImportRead(BaseModel):
     apply_url: str | None = None
     salary_range: LeverSalaryRangeRead | None = None
     salary_description: str
+
+
+MAX_BROWSER_CAPTURE_TEXT_LENGTH = 100_000
+MAX_BROWSER_CAPTURE_URL_LENGTH = 2_048
+BROWSER_CAPTURE_TOKEN_PATTERN = r"^[A-Za-z0-9_-]{32,128}$"
+
+
+def validate_indeed_browser_capture_url(value: str) -> str:
+    if value != value.strip() or not value or len(value) > MAX_BROWSER_CAPTURE_URL_LENGTH:
+        raise ValueError("original_job_link must be a supported Indeed URL")
+
+    parsed = urlparse(value)
+    try:
+        port = parsed.port
+    except ValueError as error:
+        raise ValueError("original_job_link must be a supported Indeed URL") from error
+    hostname = (parsed.hostname or "").lower()
+    if (
+        parsed.scheme not in {"http", "https"}
+        or parsed.username
+        or parsed.password
+        or port not in {None, 80, 443}
+        or not (hostname == "indeed.com" or hostname.endswith(".indeed.com"))
+    ):
+        raise ValueError("original_job_link must be a supported Indeed URL")
+    return value
+
+
+class BrowserTextCaptureCreateRequest(BaseModel):
+    version: Literal[1]
+    provider: Literal["indeed"]
+    source: Literal["Indeed"]
+    original_job_link: StrictStr
+    raw_text: StrictStr = Field(min_length=1, max_length=MAX_BROWSER_CAPTURE_TEXT_LENGTH)
+
+    @field_validator("original_job_link")
+    @classmethod
+    def validate_original_job_link(cls, value: str) -> str:
+        return validate_indeed_browser_capture_url(value)
+
+    @field_validator("raw_text")
+    @classmethod
+    def validate_raw_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("raw_text must not be blank")
+        return value
+
+
+class BrowserTextCaptureCreateResponse(BaseModel):
+    version: Literal[1]
+    capture_token: str = Field(pattern=BROWSER_CAPTURE_TOKEN_PATTERN)
+
+
+class BrowserTextCaptureConsumeRequest(BaseModel):
+    version: Literal[1]
+    capture_token: StrictStr = Field(pattern=BROWSER_CAPTURE_TOKEN_PATTERN)
+
+
+class BrowserTextCaptureConsumeResponse(BaseModel):
+    version: Literal[1]
+    provider: Literal["indeed"]
+    source: Literal["Indeed"]
+    original_job_link: str
+    raw_text: str
 
 
 class ApplicationActivityBase(BaseModel):

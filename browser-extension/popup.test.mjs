@@ -5,6 +5,8 @@ import {
   canOpenCareerPipeline,
   classifyInspectionError,
   inspectActivePage,
+  isIndeedHostname,
+  openIndeedCareerPipeline,
   openCareerPipeline,
   unwrapInjectionResult,
 } from "./popup.mjs";
@@ -77,4 +79,52 @@ test("returns extension-error for unexpected executeScript failures", async () =
   assert.deepEqual(classifyInspectionError(new Error("Unexpected extension execution failure")), {
     status: "extension-error",
   });
+});
+
+test("routes an active Indeed page to the focused detector", async () => {
+  const result = await inspectActivePage({
+    tabs: { query: async () => [{ id: 12, url: "https://www.indeed.com/viewjob?jk=fake" }] },
+    scripting: {
+      executeScript: async (details) => {
+        assert.equal(typeof details.func, "function");
+        return [{ result: { status: "no-current-job", version: 1 } }];
+      },
+    },
+  });
+  assert.equal(result.status, "no-current-job");
+  assert.equal(isIndeedHostname("https://indeed.com/viewjob?jk=fake"), true);
+  assert.equal(isIndeedHostname("https://indeed.com.evil.test/viewjob"), false);
+});
+
+test("marks an actual Indeed injection failure without exposing page data", async () => {
+  const result = await inspectActivePage({
+    tabs: { query: async () => [{ id: 14, url: "https://www.indeed.com/viewjob?jk=fake" }] },
+    scripting: { executeScript: async () => { throw new Error("Injected function failed"); } },
+  });
+  assert.deepEqual(result, { status: "extension-error", error_code: "indeed-injection-failed" });
+});
+
+test("posts an Indeed capture only to the local backend before opening a token URL", async () => {
+  const calls = [];
+  const create = async (details) => calls.push(details);
+  const fetchCalls = [];
+  const fetchImpl = async (url, options) => {
+    fetchCalls.push({ url, options });
+    return { ok: true, json: async () => ({ version: 1, capture_token: "a".repeat(43) }) };
+  };
+  await openIndeedCareerPipeline(
+    {
+      status: "detected",
+      provider: "indeed",
+      source: "Indeed",
+      original_job_link: "https://www.indeed.com/viewjob?jk=fake",
+      raw_text: "Fictional Role - job post\nFull job description\n" + "Helpful text ".repeat(10),
+    },
+    { tabs: { create } },
+    fetchImpl,
+  );
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0].url, "http://127.0.0.1:8000/api/browser-text-captures");
+  assert.equal(fetchCalls[0].options.credentials, "omit");
+  assert.match(calls[0].url, /^http:\/\/localhost:5173\/#career-pipeline-text-capture=/);
 });

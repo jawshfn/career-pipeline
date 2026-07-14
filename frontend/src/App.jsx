@@ -8,6 +8,8 @@ import {
 } from "./services/resumesService.js";
 import { isDemoMode } from "./config/runtimeMode.js";
 import { consumeBrowserCaptureFromWindow } from "./capture/browserCapturePayload.js";
+import { consumeBrowserTextCaptureFromWindow } from "./capture/browserTextCapturePayload.js";
+import { consumeBrowserTextCaptureOnce } from "./services/browserTextCapturesService.js";
 import AppLayout from "./components/layout/AppLayout.jsx";
 import ApplicationsPage from "./pages/ApplicationsPage.jsx";
 import CommandCenterPage from "./pages/CommandCenterPage.jsx";
@@ -37,14 +39,20 @@ export function resolvePageNavigation(currentPage, requestedPage, hasUnsavedChan
 
 export function getBrowserCaptureStartupState(windowObject = typeof window === "undefined" ? null : window) {
   const captureResult = windowObject ? consumeBrowserCaptureFromWindow(windowObject) : { status: "none" };
+  const textCaptureResult = windowObject ? consumeBrowserTextCaptureFromWindow(windowObject) : { status: "none" };
   const hasCaptureIssue = captureResult.status === "invalid" || captureResult.status === "unsupported-version";
+  const hasTextCaptureIssue = textCaptureResult.status === "invalid";
 
   return {
     browserCaptureError: hasCaptureIssue
       ? "Career Pipeline could not verify the browser capture. Paste the job link to continue."
       : "",
     incomingBrowserCapture: captureResult.status === "valid" ? captureResult.payload : null,
-    shouldOpenQuickAdd: captureResult.status === "valid" || hasCaptureIssue,
+    incomingBrowserTextCaptureToken: textCaptureResult.status === "valid" ? textCaptureResult.token : null,
+    browserTextCaptureError: hasTextCaptureIssue
+      ? "This browser job capture expired or was already used. Return to the job page and capture it again."
+      : "",
+    shouldOpenQuickAdd: captureResult.status === "valid" || hasCaptureIssue || textCaptureResult.status === "valid" || hasTextCaptureIssue,
   };
 }
 
@@ -63,6 +71,34 @@ export default function App() {
   const [incomingBrowserCaptureError, setIncomingBrowserCaptureError] = useState(
     browserCaptureStartup.browserCaptureError,
   );
+  const [incomingBrowserTextCapture, setIncomingBrowserTextCapture] = useState(null);
+  const [incomingBrowserTextCaptureError, setIncomingBrowserTextCaptureError] = useState(
+    browserCaptureStartup.browserTextCaptureError,
+  );
+
+  useEffect(() => {
+    const token = browserCaptureStartup.incomingBrowserTextCaptureToken;
+    if (!token) return;
+    let cancelled = false;
+    if (isDemoMode()) {
+      setIncomingBrowserTextCaptureError("Browser-assisted text capture is available only in the local full-stack app.");
+      return undefined;
+    }
+    consumeBrowserTextCaptureOnce(token)
+      .then((capture) => {
+        if (cancelled) return;
+        setIncomingBrowserTextCaptureError("");
+        setIncomingBrowserTextCapture(capture);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIncomingBrowserTextCaptureError("This browser job capture expired or was already used. Return to the job page and capture it again.");
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [browserCaptureStartup.incomingBrowserTextCaptureToken]);
 
   const loadResumeVersions = useCallback(async (options = {}) => {
     setIsLoading(true);
@@ -223,8 +259,12 @@ export default function App() {
           browserCaptureError={incomingBrowserCaptureError}
           existingApplications={activeApplications}
           incomingBrowserCapture={incomingBrowserCapture}
+          incomingBrowserTextCapture={incomingBrowserTextCapture}
+          browserTextCaptureError={incomingBrowserTextCaptureError}
           onBrowserCaptureConsumed={() => setIncomingBrowserCapture(null)}
           onBrowserCaptureErrorConsumed={() => setIncomingBrowserCaptureError("")}
+          onBrowserTextCaptureConsumed={() => setIncomingBrowserTextCapture(null)}
+          onBrowserTextCaptureErrorConsumed={() => setIncomingBrowserTextCaptureError("")}
           onCreateApplication={handleCreateApplication}
           onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onViewApplications={() => navigateToPage("applications")}

@@ -15,9 +15,10 @@ export const initialSmartCaptureState = {
 
 export { SmartCaptureReviewSummary };
 
-export function getInitialSmartCaptureState({ jobLink = "", source = DEFAULT_APPLICATION_SOURCE } = {}) {
+export function getInitialSmartCaptureState({ rawText = "", jobLink = "", source = DEFAULT_APPLICATION_SOURCE } = {}) {
   return {
     ...initialSmartCaptureState,
+    rawText,
     jobLink,
     source: source || DEFAULT_APPLICATION_SOURCE,
   };
@@ -40,18 +41,22 @@ export function isSmartCaptureDirty(captureData, reviewData, baselineCaptureData
 export default function SmartCaptureForm({
   existingApplications = [],
   initialJobLink = "",
+  initialError = "",
+  initialRawText = "",
   initialSource = DEFAULT_APPLICATION_SOURCE,
+  autoPrepareReview = false,
   resumeVersions,
   onCreateApplication,
   onCreateSuccess,
   onUnsavedChangesChange,
 }) {
   const [captureData, setCaptureData] = useState(() =>
-    getInitialSmartCaptureState({ jobLink: initialJobLink, source: initialSource }),
+    getInitialSmartCaptureState({ rawText: initialRawText, jobLink: initialJobLink, source: initialSource }),
   );
   const [reviewData, setReviewData] = useState(null);
   const [capturedReviewFields, setCapturedReviewFields] = useState({});
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
+  const hasAutoPrepared = React.useRef(false);
 
   useEffect(() => {
     onUnsavedChangesChange?.(isSmartCaptureDirty(captureData, reviewData));
@@ -74,13 +79,25 @@ export default function SmartCaptureForm({
     setCapturedReviewFields({});
   }
 
-  function handlePrepareReview(event) {
-    event.preventDefault();
+  function prepareReview(data = captureData) {
     setError("");
-    const captureResult = buildCaptureResult(captureData);
+    const captureResult = buildCaptureResult(data);
     const nextReviewData = captureResultToReviewState(captureResult);
     setReviewData(nextReviewData);
     setCapturedReviewFields(getCapturedReviewFields(nextReviewData));
+  }
+
+  useEffect(() => {
+    if (!autoPrepareReview || hasAutoPrepared.current || !initialRawText) return;
+    hasAutoPrepared.current = true;
+    const nextCaptureData = getInitialSmartCaptureState({ rawText: initialRawText, jobLink: initialJobLink, source: initialSource });
+    setCaptureData(nextCaptureData);
+    prepareReview(nextCaptureData);
+  }, [autoPrepareReview, initialJobLink, initialRawText, initialSource]);
+
+  function handlePrepareReview(event) {
+    event.preventDefault();
+    prepareReview();
   }
 
   return (

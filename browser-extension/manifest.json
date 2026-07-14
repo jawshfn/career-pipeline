@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Career Pipeline Greenhouse Detector",
-  "version": "0.1.0",
-  "description": "Experimental one-click detection of Greenhouse configuration on the current page.",
+  "name": "Career Pipeline Capture Helper",
+  "version": "0.2.0",
+  "description": "Capture supported job pages into the local Career Pipeline review workflow.",
   "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["http://127.0.0.1:8000/*"],
   "action": {
-    "default_title": "Check this page for Greenhouse",
+    "default_title": "Capture this job in Career Pipeline",
     "default_popup": "popup.html"
   }
 }

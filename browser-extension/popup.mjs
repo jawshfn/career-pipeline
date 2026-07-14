@@ -1,5 +1,7 @@
 import { detectGreenhousePage } from "./detector.mjs";
 import { buildCareerPipelineCaptureUrl } from "./capturePayload.mjs";
+import { detectIndeedJobPage } from "./indeedDetector.mjs";
+import { buildBrowserTextCaptureUrl, createBrowserTextCapture } from "./textCaptureApi.mjs";
 
 const resultPanel = typeof document === "undefined" ? null : document.querySelector("#result");
 
@@ -54,11 +56,44 @@ export async function openCareerPipeline(detectionResult, chromeApi = globalThis
   await chromeApi.tabs.create({ url });
 }
 
+export function isIndeedHostname(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    const hostname = url.hostname.toLowerCase();
+    return (url.protocol === "http:" || url.protocol === "https:") && !url.username && !url.password &&
+      (hostname === "indeed.com" || hostname.endsWith(".indeed.com"));
+  } catch {
+    return false;
+  }
+}
+
+export async function openIndeedCareerPipeline(detectionResult, chromeApi = globalThis.chrome, fetchImpl = fetch) {
+  const token = await createBrowserTextCapture(detectionResult, fetchImpl);
+  await chromeApi.tabs.create({ url: buildBrowserTextCaptureUrl(token) });
+}
+
 function renderResult(result) {
   if (!resultPanel) {
     return;
   }
   resultPanel.replaceChildren();
+
+  if (result?.status === "detected" && result.provider === "indeed") {
+    appendText("status-title", "Indeed job detected");
+    appendText("result-detail", result.role_title);
+    if (result.company_name) appendText("result-detail", result.company_name);
+    appendText("result-detail", `${result.description_character_count.toLocaleString()} characters captured`);
+    appendText("local-capture-guidance", "Career Pipeline must be running locally at http://localhost:5173.");
+    appendButton("Open in Career Pipeline", async () => {
+      try {
+        await openIndeedCareerPipeline(result);
+        window.close();
+      } catch {
+        appendText("result-detail", "Career Pipeline could not receive this job. Confirm the local backend is running.");
+      }
+    });
+    return;
+  }
 
   if (result?.status === "detected") {
     appendText("status-title", "Greenhouse detected");
@@ -82,11 +117,17 @@ function renderResult(result) {
   }
 
   const messages = {
+    "not-indeed": "This page is not a supported Indeed job page.",
+    "no-current-job": "Career Pipeline could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
+    "ambiguous-job": "Career Pipeline could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
+    "capture-too-large": "This Indeed job is too large to capture. Copy the job posting and use Paste Job Text.",
     "no-supported-job-id": "This page does not expose one supported Greenhouse job ID.",
     "no-verified-board": "No verified Greenhouse board was detected on this page.",
     "ambiguous-board": "Multiple Greenhouse boards were detected, so no result was selected.",
     "unsupported-page": "Chrome cannot inspect this protected browser page.",
-    "extension-error": "The detector encountered an unexpected error. Check the extension error details.",
+    "extension-error": result?.error_code === "indeed-injection-failed"
+      ? "Career Pipeline could not inspect this Indeed page. Reload the extension and try again."
+      : "The detector encountered an unexpected error. Check the extension error details.",
   };
   appendText("status-title", messages[result?.status] || messages["extension-error"]);
 }
@@ -114,15 +155,16 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
     return { status: "extension-error" };
   }
 
+  let activeTab;
   try {
-    const [activeTab] = await chromeApi.tabs.query({ active: true, currentWindow: true });
+    [activeTab] = await chromeApi.tabs.query({ active: true, currentWindow: true });
     if (!activeTab?.id) {
       return { status: "unsupported-page" };
     }
 
     const injectionResults = await chromeApi.scripting.executeScript({
       target: { tabId: activeTab.id },
-      func: detectGreenhousePage,
+      func: isIndeedHostname(activeTab.url) ? detectIndeedJobPage : detectGreenhousePage,
     });
     const detectionResult = unwrapInjectionResult(injectionResults);
     return detectionResult.status === "detected"
@@ -130,7 +172,10 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
       : detectionResult;
   } catch (error) {
     console.error("Career Pipeline Greenhouse Detector inspection error", error);
-    return classifyInspectionError(error);
+    const classification = classifyInspectionError(error);
+    return isIndeedHostname(activeTab?.url) && classification.status === "extension-error"
+      ? { ...classification, error_code: "indeed-injection-failed" }
+      : classification;
   }
 }
 

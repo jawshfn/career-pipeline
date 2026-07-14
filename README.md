@@ -34,7 +34,7 @@ Paste Job Link automatically recognizes supported hosted Greenhouse and Lever po
 
 ## Optional Browser Helper
 
-The Greenhouse helper is an experimental Chrome extension loaded unpacked for the local full-stack app at `http://localhost:5173/`. It requests only `activeTab` and `scripting`, makes no network request, persistently stores no employer-page data, and intentionally opens a new Career Pipeline tab so existing work is not replaced. It is not a Chrome Web Store feature, and the GitHub Pages demo does not support live browser-assisted imports.
+The experimental local Chrome helper supports verified Greenhouse identifier capture and click-initiated Indeed text capture. It reads only the active page when clicked. For Indeed, it temporarily outlines the detected description and, only after you choose Open in Career Pipeline, sends the text to the locally running FastAPI backend for a one-time two-minute transfer. It makes no request to the employer page or any remote Career Pipeline service, and nothing reaches SQLite until you review and save. GitHub Pages does not support browser-assisted capture.
 
 See the [Browser Extension Guide](browser-extension/README.md) for local setup and privacy boundaries.
 

@@ -113,6 +113,10 @@ function isSearchAttributionLine(line) {
   return /^identified by .+ from the original job post$/iu.test(line);
 }
 
+function isStandaloneJobPostMarker(line) {
+  return /^(?:-|\u2013|\u2014)?\s*job\s+post$/iu.test(line);
+}
+
 function detectParserFormat(rawText) {
   const normalizedText = normalizeBulletSeparators(rawText);
   const normalizedLines = getCleanLines(rawText).map(normalizeBulletSeparators);
@@ -174,6 +178,7 @@ function isNoisyLine(line) {
 
   return (
     noisyHeaderLines.has(normalizedLine) ||
+    isStandaloneJobPostMarker(line) ||
     isRatingLine(line) ||
     isPostedAgoLine(line) ||
     isRelativeAgeLine(line) ||
