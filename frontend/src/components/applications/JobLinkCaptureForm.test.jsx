@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import JobLinkCaptureForm, {
+  getTextCaptureFallbackValues,
   initialJobLinkCaptureState,
   isJobLinkCaptureDirty,
 } from "./JobLinkCaptureForm.jsx";
@@ -35,5 +36,17 @@ describe("JobLinkCaptureForm", () => {
       ),
     ).toBe(true);
     expect(isJobLinkCaptureDirty(initialJobLinkCaptureState, { company_name: "Example" })).toBe(true);
+  });
+
+  it("preserves the entered link and selected source for text-capture fallback", () => {
+    expect(
+      getTextCaptureFallbackValues({
+        jobLink: "https://boards.greenhouse.io/example/jobs/123456?gh_src=test",
+        source: "Referral",
+      }),
+    ).toEqual({
+      jobLink: "https://boards.greenhouse.io/example/jobs/123456?gh_src=test",
+      source: "Referral",
+    });
   });
 });

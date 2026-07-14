@@ -127,12 +127,32 @@ def normalize_pay_ranges(raw_pay_ranges: Any) -> list[dict[str, Any]]:
     for pay_range in raw_pay_ranges:
         if not isinstance(pay_range, dict):
             continue
+
+        title = pay_range.get("title")
+        currency_type = pay_range.get("currency_type")
+        min_cents = pay_range.get("min_cents")
+        max_cents = pay_range.get("max_cents")
+
+        if (
+            title is not None
+            and not isinstance(title, str)
+            or not isinstance(currency_type, str)
+            or not currency_type.strip()
+            or isinstance(min_cents, bool)
+            or not isinstance(min_cents, int)
+            or isinstance(max_cents, bool)
+            or not isinstance(max_cents, int)
+            or min_cents < 0
+            or max_cents < min_cents
+        ):
+            continue
+
         normalized_ranges.append(
             {
-                "title": pay_range.get("title") or "",
-                "currency_type": pay_range.get("currency_type") or "",
-                "min_cents": pay_range.get("min_cents"),
-                "max_cents": pay_range.get("max_cents"),
+                "title": title or "",
+                "currency_type": currency_type.strip(),
+                "min_cents": min_cents,
+                "max_cents": max_cents,
             }
         )
 
@@ -151,7 +171,9 @@ def normalize_greenhouse_job(payload: dict[str, Any], job_id: int) -> Greenhouse
         location=location.get("name") or "",
         description_text=greenhouse_description_to_text(payload.get("content") or payload.get("description")),
         absolute_url=payload.get("absolute_url") or None,
-        pay_ranges=normalize_pay_ranges(payload.get("pay_ranges")),
+        # Greenhouse names this upstream field pay_input_ranges. Keep the provider DTO
+        # response stable as pay_ranges so the frontend never depends on upstream naming.
+        pay_ranges=normalize_pay_ranges(payload.get("pay_input_ranges")),
     )
 
 

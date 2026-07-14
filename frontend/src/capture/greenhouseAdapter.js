@@ -6,17 +6,18 @@ import {
   createCaptureResult,
 } from "./captureContract.js";
 import { SAVED_APPLICATION_STATUS } from "../constants/applicationConstants.js";
+import { getExplicitBaseCompensationFromText } from "../utils/jobTextExtraction.js";
 
 function hasValue(value) {
   return String(value || "").trim().length > 0;
 }
 
-function createGreenhouseField(value) {
+function createGreenhouseField(value, confidence = CAPTURE_CONFIDENCE.HIGH) {
   return hasValue(value)
     ? createCaptureField({
         value,
         provenance: CAPTURE_PROVENANCE.GREENHOUSE_API,
-        confidence: CAPTURE_CONFIDENCE.HIGH,
+        confidence,
       })
     : createCaptureField({
         value: "",
@@ -97,15 +98,38 @@ export function getGreenhouseCompensation(payRanges = []) {
   };
 }
 
+export function getGreenhouseDescriptionCompensation(descriptionText) {
+  const compensation = getExplicitBaseCompensationFromText(String(descriptionText || ""));
+
+  if (!compensation) {
+    return "";
+  }
+
+  const hasDollarAmount = /\$/u.test(compensation);
+  const hasExplicitCurrencyOrCadence = /\bUSD\b|\b(?:an hour|per hour|a year|per year|annually|\/hr|\/yr)\b/iu.test(
+    compensation,
+  );
+
+  return hasDollarAmount && !hasExplicitCurrencyOrCadence ? `${compensation} USD` : compensation;
+}
+
 export function buildGreenhouseCaptureResult({ importedJob, jobLink, source }) {
-  const { compensation, warnings } = getGreenhouseCompensation(importedJob?.pay_ranges || []);
+  const { compensation: structuredCompensation, warnings } = getGreenhouseCompensation(importedJob?.pay_ranges || []);
   const descriptionText = String(importedJob?.description_text || "").trim();
+  const descriptionCompensation =
+    structuredCompensation || warnings.includes("multiple-pay-ranges")
+      ? ""
+      : getGreenhouseDescriptionCompensation(descriptionText);
+  const compensation = structuredCompensation || descriptionCompensation;
   const notes = descriptionText ? `Imported job description:\n\n${descriptionText}` : "";
   const fields = {
     company_name: createGreenhouseField(importedJob?.company_name),
     role_title: createGreenhouseField(importedJob?.title),
     location: createGreenhouseField(importedJob?.location),
-    compensation: createGreenhouseField(compensation),
+    compensation: createGreenhouseField(
+      compensation,
+      descriptionCompensation ? CAPTURE_CONFIDENCE.MEDIUM : CAPTURE_CONFIDENCE.HIGH,
+    ),
     employment_type: createGreenhouseField(""),
     notes: createGreenhouseField(notes),
     job_link: createConfirmedUserField(jobLink, CAPTURE_PROVENANCE.USER_INPUT),

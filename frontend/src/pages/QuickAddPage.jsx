@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import JobLinkCaptureForm from "../components/applications/JobLinkCaptureForm.jsx";
 import QuickAddApplicationForm from "../components/applications/QuickAddApplicationForm.jsx";
 import SmartCaptureForm from "../components/applications/SmartCaptureForm.jsx";
+import { DEFAULT_APPLICATION_SOURCE } from "../constants/applicationConstants.js";
 
 export default function QuickAddPage({
   existingApplications,
@@ -14,7 +15,7 @@ export default function QuickAddPage({
   const [createdApplication, setCreatedApplication] = useState(null);
   const [activeMode, setActiveMode] = useState("manual");
   const [activeModeHasUnsavedChanges, setActiveModeHasUnsavedChanges] = useState(false);
-  const [smartCaptureInitialJobLink, setSmartCaptureInitialJobLink] = useState("");
+  const [smartCaptureTransfer, setSmartCaptureTransfer] = useState(null);
 
   useEffect(() => {
     onUnsavedChangesChange?.(activeModeHasUnsavedChanges);
@@ -31,7 +32,7 @@ export default function QuickAddPage({
   }
 
   function handleCreateSuccess(application) {
-    setSmartCaptureInitialJobLink("");
+    setSmartCaptureTransfer(null);
     setCreatedApplication(application);
   }
 
@@ -48,11 +49,14 @@ export default function QuickAddPage({
     }
 
     setActiveModeHasUnsavedChanges(false);
+    if (activeMode === "smart-capture") {
+      setSmartCaptureTransfer(null);
+    }
     setActiveMode(nextMode);
   }
 
-  function handleSwitchToTextCapture(jobLink) {
-    setSmartCaptureInitialJobLink(jobLink || "");
+  function handleSwitchToTextCapture({ jobLink = "", source = DEFAULT_APPLICATION_SOURCE } = {}) {
+    setSmartCaptureTransfer({ jobLink, source });
     setActiveModeHasUnsavedChanges(false);
     setActiveMode("smart-capture");
   }
@@ -136,7 +140,8 @@ export default function QuickAddPage({
       ) : (
         <SmartCaptureForm
           existingApplications={existingApplications}
-          initialJobLink={smartCaptureInitialJobLink}
+          initialJobLink={smartCaptureTransfer?.jobLink || ""}
+          initialSource={smartCaptureTransfer?.source || DEFAULT_APPLICATION_SOURCE}
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}
           onCreateSuccess={handleCreateSuccess}

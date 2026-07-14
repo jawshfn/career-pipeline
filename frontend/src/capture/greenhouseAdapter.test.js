@@ -7,7 +7,11 @@ import {
   CAPTURE_PROVENANCE,
   captureResultToReviewState,
 } from "./captureContract.js";
-import { buildGreenhouseCaptureResult, getGreenhouseCompensation } from "./greenhouseAdapter.js";
+import {
+  buildGreenhouseCaptureResult,
+  getGreenhouseCompensation,
+  getGreenhouseDescriptionCompensation,
+} from "./greenhouseAdapter.js";
 
 const importedJob = {
   provider: "greenhouse",
@@ -94,6 +98,67 @@ describe("buildGreenhouseCaptureResult", () => {
         { title: "Remote", currency_type: "USD", min_cents: 4000000, max_cents: 5000000 },
       ]),
     ).toEqual({ compensation: "", warnings: ["multiple-pay-ranges"] });
+  });
+
+  it("uses strict description compensation only when structured ranges are absent", () => {
+    const result = buildGreenhouseCaptureResult({
+      importedJob: {
+        ...importedJob,
+        pay_ranges: [],
+        description_text:
+          "Compensation: The pay range for this position is generally between $135,000 and $165,000, depending on experience.",
+      },
+      jobLink: "https://boards.greenhouse.io/northstaranalytics/jobs/123456",
+      source: "Company Website",
+    });
+
+    expect(result.fields.compensation).toMatchObject({
+      value: "$135,000-$165,000 USD",
+      provenance: CAPTURE_PROVENANCE.GREENHOUSE_API,
+      confidence: CAPTURE_CONFIDENCE.MEDIUM,
+    });
+  });
+
+  it("keeps structured compensation ahead of a description fallback", () => {
+    const result = buildGreenhouseCaptureResult({
+      importedJob: {
+        ...importedJob,
+        description_text: "Salary range: $100,000 to $120,000.",
+      },
+      jobLink: "https://boards.greenhouse.io/northstaranalytics/jobs/123456",
+      source: "Company Website",
+    });
+
+    expect(result.fields.compensation).toMatchObject({
+      value: "Salary Range: $72,000-$88,000 USD",
+      confidence: CAPTURE_CONFIDENCE.HIGH,
+    });
+  });
+
+  it("does not use a description fallback when multiple structured ranges are ambiguous", () => {
+    const result = buildGreenhouseCaptureResult({
+      importedJob: {
+        ...importedJob,
+        pay_ranges: [
+          { title: "NYC", currency_type: "USD", min_cents: 5000000, max_cents: 6000000 },
+          { title: "Remote", currency_type: "USD", min_cents: 4000000, max_cents: 5000000 },
+        ],
+        description_text: "Salary range: $100,000 to $120,000.",
+      },
+      jobLink: "https://boards.greenhouse.io/northstaranalytics/jobs/123456",
+      source: "Company Website",
+    });
+
+    expect(result.fields.compensation.value).toBe("");
+    expect(result.warnings).toContain("multiple-pay-ranges");
+  });
+
+  it.each([
+    "Eligible employees may receive a $1,000 referral bonus.",
+    "The role includes a $500 home-office stipend.",
+    "Manage a $250,000 project budget.",
+  ])("rejects benefit-only and unrelated description amounts", (descriptionText) => {
+    expect(getGreenhouseDescriptionCompensation(descriptionText)).toBe("");
   });
 
   it("formats equal pay range values as one amount", () => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { DEFAULT_APPLICATION_SOURCE, SOURCE_OPTIONS } from "../../constants/applicationConstants.js";
 import { buildCaptureResult, captureResultToReviewState } from "../../capture/captureEngine.js";
@@ -14,6 +14,14 @@ export const initialSmartCaptureState = {
 };
 
 export { SmartCaptureReviewSummary };
+
+export function getInitialSmartCaptureState({ jobLink = "", source = DEFAULT_APPLICATION_SOURCE } = {}) {
+  return {
+    ...initialSmartCaptureState,
+    jobLink,
+    source: source || DEFAULT_APPLICATION_SOURCE,
+  };
+}
 
 function normalizeDirtyValue(value) {
   return String(value ?? "");
@@ -32,33 +40,22 @@ export function isSmartCaptureDirty(captureData, reviewData, baselineCaptureData
 export default function SmartCaptureForm({
   existingApplications = [],
   initialJobLink = "",
+  initialSource = DEFAULT_APPLICATION_SOURCE,
   resumeVersions,
   onCreateApplication,
   onCreateSuccess,
   onUnsavedChangesChange,
 }) {
-  const baselineCaptureData = useMemo(
-    () => ({
-      ...initialSmartCaptureState,
-      jobLink: initialJobLink,
-    }),
-    [initialJobLink],
+  const [captureData, setCaptureData] = useState(() =>
+    getInitialSmartCaptureState({ jobLink: initialJobLink, source: initialSource }),
   );
-  const [captureData, setCaptureData] = useState(baselineCaptureData);
   const [reviewData, setReviewData] = useState(null);
   const [capturedReviewFields, setCapturedReviewFields] = useState({});
   const [error, setError] = useState("");
 
   useEffect(() => {
-    setCaptureData(baselineCaptureData);
-    setReviewData(null);
-    setCapturedReviewFields({});
-    setError("");
-  }, [baselineCaptureData]);
-
-  useEffect(() => {
-    onUnsavedChangesChange?.(isSmartCaptureDirty(captureData, reviewData, baselineCaptureData));
-  }, [baselineCaptureData, captureData, reviewData, onUnsavedChangesChange]);
+    onUnsavedChangesChange?.(isSmartCaptureDirty(captureData, reviewData));
+  }, [captureData, reviewData, onUnsavedChangesChange]);
 
   useEffect(() => {
     return () => {
@@ -72,7 +69,7 @@ export default function SmartCaptureForm({
   }
 
   function resetCaptureState() {
-    setCaptureData(baselineCaptureData);
+    setCaptureData(initialSmartCaptureState);
     setReviewData(null);
     setCapturedReviewFields({});
   }

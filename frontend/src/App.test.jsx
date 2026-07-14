@@ -14,6 +14,7 @@ import {
   isJobLinkCaptureDirty,
 } from "./components/applications/JobLinkCaptureForm.jsx";
 import {
+  getInitialSmartCaptureState,
   initialSmartCaptureState,
   isSmartCaptureDirty,
 } from "./components/applications/SmartCaptureForm.jsx";
@@ -93,6 +94,18 @@ describe("editable page dirty-state helpers", () => {
 
   it("treats prepared Smart Capture review data as dirty", () => {
     expect(isSmartCaptureDirty(initialSmartCaptureState, { company_name: "Example Company" })).toBe(true);
+  });
+
+  it("keeps transferred Paste Job Text values dirty", () => {
+    expect(
+      isSmartCaptureDirty(
+        getInitialSmartCaptureState({
+          jobLink: "https://boards.greenhouse.io/example/jobs/123456",
+          source: "Referral",
+        }),
+        null,
+      ),
+    ).toBe(true);
   });
 
   it("treats unchanged Paste Job Link data as clean", () => {

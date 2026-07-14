@@ -24,7 +24,7 @@ def make_greenhouse_payload(**overrides):
         "location": {"name": "Richmond, VA"},
         "content": "<h2>About the job</h2><p>The role supports dashboards.</p>",
         "absolute_url": "https://boards.greenhouse.io/northstaranalytics/jobs/123456",
-        "pay_ranges": [
+        "pay_input_ranges": [
             {
                 "title": "Salary Range",
                 "currency_type": "USD",
@@ -126,14 +126,65 @@ def test_greenhouse_description_double_encoded_html_becomes_clean_plain_text():
     assert text == "About the job\nBuild dashboards."
 
 
-def test_greenhouse_missing_pay_ranges_return_empty_array():
+def test_greenhouse_missing_or_malformed_pay_input_ranges_return_empty_array():
+    payloads = []
+    missing_field_payload = make_greenhouse_payload()
+    missing_field_payload.pop("pay_input_ranges")
+    payloads.append(missing_field_payload)
+    payloads.extend(
+        [
+            make_greenhouse_payload(pay_input_ranges=None),
+            make_greenhouse_payload(pay_input_ranges="not-a-list"),
+        ],
+    )
+
+    for payload in payloads:
+        async def run_test():
+            async with httpx.AsyncClient(
+                transport=httpx.MockTransport(
+                    lambda request: httpx.Response(
+                        200,
+                        json=payload,
+                    ),
+                ),
+            ) as client:
+                return await fetch_greenhouse_job("example", 123456, client=client)
+
+        assert run_async(run_test()).pay_ranges == []
+
+
+def test_greenhouse_ignores_invalid_pay_input_range_entries():
     async def run_test():
         async with httpx.AsyncClient(
-            transport=httpx.MockTransport(lambda request: httpx.Response(200, json=make_greenhouse_payload(pay_ranges=None))),
+            transport=httpx.MockTransport(
+                lambda request: httpx.Response(
+                    200,
+                    json=make_greenhouse_payload(
+                        pay_input_ranges=[
+                            {
+                                "title": "Salary Range",
+                                "currency_type": "USD",
+                                "min_cents": 5000000,
+                                "max_cents": 7500000,
+                            },
+                            None,
+                            {"currency_type": "USD", "min_cents": "5000000", "max_cents": 7500000},
+                            {"currency_type": "USD", "min_cents": 7500000, "max_cents": 5000000},
+                        ],
+                    ),
+                ),
+            ),
         ) as client:
             return await fetch_greenhouse_job("example", 123456, client=client)
 
-    assert run_async(run_test()).pay_ranges == []
+    assert run_async(run_test()).pay_ranges == [
+        {
+            "title": "Salary Range",
+            "currency_type": "USD",
+            "min_cents": 5000000,
+            "max_cents": 7500000,
+        }
+    ]
 
 
 def test_greenhouse_not_found_maps_to_controlled_error():

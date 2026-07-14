@@ -455,6 +455,25 @@ function getUsdCompensationRangeFromSegment(segment) {
   return match ? normalizeWhitespace(match[0]) : "";
 }
 
+function getBetweenCompensationRangeFromSegment(segment) {
+  const amountPattern = "(?:\\$\\s*\\d[\\d,]*(?:\\.\\d+)?|USD\\s*\\d[\\d,]*(?:\\.\\d+)?)";
+  const match = segment.match(
+    new RegExp(
+      `\\bbetween\\s+(${amountPattern})\\s+(?:and|to)\\s+(${amountPattern})(?:\\s*(${googleCompensationCadencePattern}))?`,
+      "iu",
+    ),
+  );
+
+  if (!match) {
+    return "";
+  }
+
+  const [, minimum, maximum, cadence] = match;
+  const cadenceSuffix = cadence ? ` ${normalizeWhitespace(cadence)}` : "";
+  const normalizeAmount = (amount) => normalizeWhitespace(amount).replace(/[,:;]+$/u, "");
+  return `${normalizeAmount(minimum)}-${normalizeAmount(maximum)}${cadenceSuffix}`;
+}
+
 function hasGoogleBaseCompensationContext(segment) {
   return (
     hasBaseCompensationContext(segment) ||
@@ -464,17 +483,18 @@ function hasGoogleBaseCompensationContext(segment) {
   );
 }
 
-function getExplicitGoogleCompensationFromPostingContent(lines) {
-  for (const segment of getSentenceLikeSegments(lines.join("\n"))) {
+export function getExplicitBaseCompensationFromText(rawText) {
+  for (const segment of getSentenceLikeSegments(rawText)) {
     if (!hasGoogleBaseCompensationContext(segment)) {
       continue;
     }
 
     const compensation =
-      getCompensationFromLine(segment) || getUsdCompensationRangeFromSegment(segment);
+      getBetweenCompensationRangeFromSegment(segment) ||
+      getCompensationFromLine(segment) ||
+      getUsdCompensationRangeFromSegment(segment);
     const hasAllowedContextDespiteBenefits =
-      hasExplicitBaseCompensationLabel(segment) ||
-      /\b(?:salary|base pay|base salary|pay range)\b/iu.test(segment);
+      /\b(?:salary|base pay|base salary|pay range|annual pay|hourly rate|wage|wage range)\b/iu.test(segment);
 
     if (
       compensation &&
@@ -485,6 +505,10 @@ function getExplicitGoogleCompensationFromPostingContent(lines) {
   }
 
   return "";
+}
+
+function getExplicitGoogleCompensationFromPostingContent(lines) {
+  return getExplicitBaseCompensationFromText(lines.join("\n"));
 }
 
 function getCurrencylessLinkedInCompensationFromSegment(segment) {

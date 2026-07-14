@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { SOURCE_OPTIONS } from "../../constants/applicationConstants.js";
+import { DEFAULT_APPLICATION_SOURCE, SOURCE_OPTIONS } from "../../constants/applicationConstants.js";
 import { captureResultToReviewState } from "../../capture/captureEngine.js";
 import { getDemoGreenhouseLink, importGreenhouseCaptureResult } from "../../services/jobImportsService.js";
 import CaptureReviewForm, { getCapturedReviewFields } from "./CaptureReviewForm.jsx";
@@ -22,6 +22,13 @@ export function isJobLinkCaptureDirty(captureData, reviewData, baselineCaptureDa
   return Object.keys(baselineCaptureData).some(
     (fieldName) => normalizeDirtyValue(captureData[fieldName]) !== normalizeDirtyValue(baselineCaptureData[fieldName]),
   );
+}
+
+export function getTextCaptureFallbackValues(captureData) {
+  return {
+    jobLink: String(captureData?.jobLink || ""),
+    source: captureData?.source || DEFAULT_APPLICATION_SOURCE,
+  };
 }
 
 export default function JobLinkCaptureForm({
@@ -134,7 +141,7 @@ export default function JobLinkCaptureForm({
             <button
               className="secondary-button"
               type="button"
-              onClick={() => onSwitchToTextCapture?.(captureData.jobLink)}
+              onClick={() => onSwitchToTextCapture?.(getTextCaptureFallbackValues(captureData))}
             >
               Paste job text instead
             </button>
