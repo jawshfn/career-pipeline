@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import JobLinkCaptureForm from "../components/applications/JobLinkCaptureForm.jsx";
 import QuickAddApplicationForm from "../components/applications/QuickAddApplicationForm.jsx";
@@ -6,7 +6,11 @@ import SmartCaptureForm from "../components/applications/SmartCaptureForm.jsx";
 import { DEFAULT_APPLICATION_SOURCE } from "../constants/applicationConstants.js";
 
 export default function QuickAddPage({
+  browserCaptureError = "",
   existingApplications,
+  incomingBrowserCapture = null,
+  onBrowserCaptureConsumed,
+  onBrowserCaptureErrorConsumed,
   onCreateApplication,
   onUnsavedChangesChange,
   onViewApplications,
@@ -15,7 +19,9 @@ export default function QuickAddPage({
   const [createdApplication, setCreatedApplication] = useState(null);
   const [activeMode, setActiveMode] = useState("manual");
   const [activeModeHasUnsavedChanges, setActiveModeHasUnsavedChanges] = useState(false);
+  const [browserCaptureTransfer, setBrowserCaptureTransfer] = useState(null);
   const [smartCaptureTransfer, setSmartCaptureTransfer] = useState(null);
+  const hasHandledIncomingBrowserCapture = useRef(false);
 
   useEffect(() => {
     onUnsavedChangesChange?.(activeModeHasUnsavedChanges);
@@ -26,6 +32,26 @@ export default function QuickAddPage({
       onUnsavedChangesChange?.(false);
     };
   }, [onUnsavedChangesChange]);
+
+  useEffect(() => {
+    if (
+      hasHandledIncomingBrowserCapture.current ||
+      (!incomingBrowserCapture && !browserCaptureError)
+    ) {
+      return;
+    }
+
+    hasHandledIncomingBrowserCapture.current = true;
+    if (activeModeHasUnsavedChanges) {
+      return;
+    }
+
+    setCreatedApplication(null);
+    setSmartCaptureTransfer(null);
+    setBrowserCaptureTransfer(incomingBrowserCapture);
+    setActiveModeHasUnsavedChanges(false);
+    setActiveMode("job-link");
+  }, [activeModeHasUnsavedChanges, browserCaptureError, incomingBrowserCapture]);
 
   function handleAddAnother() {
     setCreatedApplication(null);
@@ -130,7 +156,11 @@ export default function QuickAddPage({
         />
       ) : activeMode === "job-link" ? (
         <JobLinkCaptureForm
+          browserCaptureError={browserCaptureError}
           existingApplications={existingApplications}
+          initialBrowserCapture={browserCaptureTransfer}
+          onBrowserCaptureConsumed={onBrowserCaptureConsumed}
+          onBrowserCaptureErrorConsumed={onBrowserCaptureErrorConsumed}
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}
           onCreateSuccess={handleCreateSuccess}

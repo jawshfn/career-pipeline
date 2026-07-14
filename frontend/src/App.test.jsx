@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  getBrowserCaptureStartupState,
   UNSAVED_PAGE_CONFIRM_MESSAGE,
   resolvePageNavigation,
   shouldConfirmPageNavigation,
@@ -59,6 +60,53 @@ describe("unsaved page navigation guard", () => {
       shouldNavigate: true,
       targetPage: "dashboard",
     });
+  });
+});
+
+describe("browser capture startup", () => {
+  function encodePayload(payload) {
+    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    let binary = "";
+    bytes.forEach((byte) => {
+      binary += String.fromCharCode(byte);
+    });
+    return btoa(binary).replace(/\+/gu, "-").replace(/\//gu, "_").replace(/=+$/u, "");
+  }
+
+  it("opens Add Job for a valid consumed browser capture", () => {
+    const replaceState = vi.fn();
+    const hash = `#career-pipeline-capture=${encodePayload({
+      version: 1,
+      provider: "greenhouse",
+      board_token: "fictional-board",
+      job_id: "123456",
+      original_job_link: "https://careers.fictional.test/openings/role?gh_jid=123456",
+    })}`;
+    const state = getBrowserCaptureStartupState({
+      location: { hash, pathname: "/", search: "" },
+      history: { state: null, replaceState },
+    });
+
+    expect(state.shouldOpenQuickAdd).toBe(true);
+    expect(state.browserCaptureError).toBe("");
+    expect(state.incomingBrowserCapture).toMatchObject({
+      board_token: "fictional-board",
+      job_id: 123456,
+    });
+    expect(replaceState).toHaveBeenCalledWith(null, "", "/");
+  });
+
+  it("opens Add Job with a controlled error for an invalid capture", () => {
+    const replaceState = vi.fn();
+    const state = getBrowserCaptureStartupState({
+      location: { hash: "#career-pipeline-capture=invalid%payload", pathname: "/", search: "" },
+      history: { state: null, replaceState },
+    });
+
+    expect(state.shouldOpenQuickAdd).toBe(true);
+    expect(state.incomingBrowserCapture).toBeNull();
+    expect(state.browserCaptureError).toContain("could not verify the browser capture");
+    expect(replaceState).toHaveBeenCalledWith(null, "", "/");
   });
 });
 

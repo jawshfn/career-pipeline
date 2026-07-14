@@ -1,4 +1,5 @@
 import { detectGreenhousePage } from "./detector.mjs";
+import { buildCareerPipelineCaptureUrl } from "./capturePayload.mjs";
 
 const resultPanel = typeof document === "undefined" ? null : document.querySelector("#result");
 
@@ -26,6 +27,33 @@ function appendText(className, text) {
   resultPanel.append(paragraph);
 }
 
+function appendButton(text, onClick) {
+  if (!resultPanel) {
+    return;
+  }
+
+  const button = document.createElement("button");
+  button.className = "primary-button";
+  button.type = "button";
+  button.textContent = text;
+  button.addEventListener("click", onClick);
+  resultPanel.append(button);
+}
+
+export function canOpenCareerPipeline(result) {
+  try {
+    buildCareerPipelineCaptureUrl(result);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function openCareerPipeline(detectionResult, chromeApi = globalThis.chrome) {
+  const url = buildCareerPipelineCaptureUrl(detectionResult);
+  await chromeApi.tabs.create({ url });
+}
+
 function renderResult(result) {
   if (!resultPanel) {
     return;
@@ -38,6 +66,18 @@ function renderResult(result) {
     appendText("result-detail", `Job ID: ${result.job_id}`);
     const evidence = result.evidence_types.map((type) => evidenceLabels[type] || "Greenhouse configuration");
     appendText("result-detail", `Evidence: ${evidence.join(", ")}`);
+    if (canOpenCareerPipeline(result)) {
+      appendText("local-capture-guidance", "Career Pipeline must be running locally at http://localhost:5173.");
+      appendButton("Open in Career Pipeline", async () => {
+        try {
+          await openCareerPipeline(result);
+          window.close();
+        } catch (error) {
+          console.error("Career Pipeline Greenhouse Detector handoff error", error);
+          appendText("result-detail", "Career Pipeline could not be opened. Confirm the local app is running.");
+        }
+      });
+    }
     return;
   }
 
@@ -84,7 +124,10 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
       target: { tabId: activeTab.id },
       func: detectGreenhousePage,
     });
-    return unwrapInjectionResult(injectionResults);
+    const detectionResult = unwrapInjectionResult(injectionResults);
+    return detectionResult.status === "detected"
+      ? { ...detectionResult, original_job_link: activeTab.url }
+      : detectionResult;
   } catch (error) {
     console.error("Career Pipeline Greenhouse Detector inspection error", error);
     return classifyInspectionError(error);

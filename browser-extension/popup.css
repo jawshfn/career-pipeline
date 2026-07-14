@@ -52,6 +52,35 @@ h1 {
   overflow-wrap: anywhere;
 }
 
+.local-capture-guidance {
+  margin: 14px 0 0;
+  color: #66756f;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.primary-button {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border: 1px solid #17685d;
+  border-radius: 5px;
+  background: #277d70;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.primary-button:hover {
+  background: #17685d;
+}
+
+.primary-button:focus-visible {
+  outline: 3px solid #9ed5cd;
+  outline-offset: 2px;
+}
+
 .privacy-note {
   margin: 12px 0 0;
   color: #66756f;

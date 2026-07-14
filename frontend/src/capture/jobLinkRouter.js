@@ -3,6 +3,7 @@ import { normalizeExplicitJobLink } from "../utils/jobLinks.js";
 
 export const JOB_LINK_ROUTES = {
   GREENHOUSE_API: "greenhouse-api",
+  GREENHOUSE_BROWSER_DETECTED: "greenhouse-browser-detected",
   GREENHOUSE_CUSTOM_DISCOVERY: "greenhouse-custom-discovery",
   LINK_ONLY: "link-only",
 };

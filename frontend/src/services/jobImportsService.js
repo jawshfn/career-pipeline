@@ -38,3 +38,21 @@ export async function importCustomGreenhouseCaptureResult({ jobLink, source }) {
     source,
   });
 }
+
+export async function importDetectedGreenhouseCaptureResult({ boardToken, jobId, jobLink, source }) {
+  if (isDemoMode()) {
+    throw new Error("Browser-assisted imports require the local full-stack version.");
+  }
+
+  const normalizedJobLink = normalizeExplicitJobLink(jobLink);
+  const importedJob = await jobImportsApi.importGreenhouseJob({
+    boardToken,
+    jobId,
+  });
+
+  return buildGreenhouseCaptureResult({
+    importedJob,
+    jobLink: normalizedJobLink,
+    source,
+  });
+}

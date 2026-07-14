@@ -77,6 +77,12 @@ describe("JobLinkCaptureForm", () => {
     expect(getLinkFallbackMessage(null, JOB_LINK_CAPTURE_STATES.IMPORT_ERROR)).toContain(
       "could not be imported",
     );
+    expect(
+      getLinkFallbackMessage(
+        { route: "greenhouse-browser-detected" },
+        JOB_LINK_CAPTURE_STATES.IMPORT_ERROR,
+      ),
+    ).toBe("The detected Greenhouse job could not be imported. Continue with the link or paste the job text.");
   });
 
   it("labels link-only reviews as Job Link", () => {

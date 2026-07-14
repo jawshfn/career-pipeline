@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { DEFAULT_APPLICATION_SOURCE, SOURCE_OPTIONS } from "../../constants/applicationConstants.js";
 import { captureResultToReviewState } from "../../capture/captureEngine.js";
@@ -7,6 +7,7 @@ import { JOB_LINK_KINDS, JOB_LINK_ROUTES, routeJobLink } from "../../capture/job
 import {
   getDemoGreenhouseLink,
   importCustomGreenhouseCaptureResult,
+  importDetectedGreenhouseCaptureResult,
   importGreenhouseCaptureResult,
 } from "../../services/jobImportsService.js";
 import CaptureReviewForm, { getCapturedReviewFields } from "./CaptureReviewForm.jsx";
@@ -55,6 +56,10 @@ export function getTextCaptureFallbackValues(captureData) {
 }
 
 export function getLinkFallbackMessage(routeResult, captureState) {
+  if (routeResult?.route === JOB_LINK_ROUTES.GREENHOUSE_BROWSER_DETECTED) {
+    return "The detected Greenhouse job could not be imported. Continue with the link or paste the job text.";
+  }
+
   if (routeResult?.route === JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY) {
     return "Career Pipeline could not verify the Greenhouse configuration for this career page. Continue with the link or paste the job text.";
   }
@@ -76,7 +81,11 @@ export function getLinkFallbackMessage(routeResult, captureState) {
 }
 
 export default function JobLinkCaptureForm({
+  browserCaptureError = "",
   existingApplications = [],
+  initialBrowserCapture = null,
+  onBrowserCaptureConsumed,
+  onBrowserCaptureErrorConsumed,
   onCreateApplication,
   onCreateSuccess,
   onSwitchToTextCapture,
@@ -89,6 +98,7 @@ export default function JobLinkCaptureForm({
   const [captureState, setCaptureState] = useState(JOB_LINK_CAPTURE_STATES.IDLE);
   const [routeResult, setRouteResult] = useState(null);
   const [message, setMessage] = useState("");
+  const hasConsumedBrowserCapture = useRef(false);
   const demoGreenhouseLink = getDemoGreenhouseLink();
 
   useEffect(() => {
@@ -125,6 +135,51 @@ export default function JobLinkCaptureForm({
     setCaptureState(JOB_LINK_CAPTURE_STATES.REVIEW);
     setMessage("");
   }
+
+  useEffect(() => {
+    if (!browserCaptureError || initialBrowserCapture || hasConsumedBrowserCapture.current) {
+      return;
+    }
+
+    hasConsumedBrowserCapture.current = true;
+    setMessage(browserCaptureError);
+    onBrowserCaptureErrorConsumed?.();
+  }, [browserCaptureError, initialBrowserCapture, onBrowserCaptureErrorConsumed]);
+
+  useEffect(() => {
+    if (!initialBrowserCapture || hasConsumedBrowserCapture.current) {
+      return;
+    }
+
+    hasConsumedBrowserCapture.current = true;
+    const nextCaptureData = {
+      jobLink: initialBrowserCapture.original_job_link,
+      source: "Company Website",
+    };
+    const nextRouteResult = {
+      normalized_job_link: initialBrowserCapture.original_job_link,
+      route: JOB_LINK_ROUTES.GREENHOUSE_BROWSER_DETECTED,
+      link_kind: JOB_LINK_KINDS.GREENHOUSE_CUSTOM_CANDIDATE,
+    };
+
+    setCaptureData(nextCaptureData);
+    setRouteResult(nextRouteResult);
+    setMessage("");
+    setCaptureState(JOB_LINK_CAPTURE_STATES.IMPORTING);
+    onBrowserCaptureConsumed?.();
+
+    importDetectedGreenhouseCaptureResult({
+      boardToken: initialBrowserCapture.board_token,
+      jobId: initialBrowserCapture.job_id,
+      jobLink: initialBrowserCapture.original_job_link,
+      source: nextCaptureData.source,
+    })
+      .then(showReview)
+      .catch((importError) => {
+        setCaptureState(JOB_LINK_CAPTURE_STATES.IMPORT_ERROR);
+        setMessage(importError.message || "");
+      });
+  }, [initialBrowserCapture, onBrowserCaptureConsumed]);
 
   async function handleContinue(event) {
     event.preventDefault();
