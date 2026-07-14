@@ -21,15 +21,6 @@ function hostnameMatches(hostname, domain) {
   return hostname === domain || hostname.endsWith(`.${domain}`);
 }
 
-function hostnameContainsDomainLabels(hostname, domain) {
-  const hostnameLabels = hostname.split(".");
-  const domainLabels = domain.split(".");
-
-  return hostnameLabels.some((_, startIndex) =>
-    domainLabels.every((label, labelIndex) => hostnameLabels[startIndex + labelIndex] === label),
-  );
-}
-
 function getValidJobUrl(rawJobLink) {
   const normalizedJobLink = normalizeExplicitJobLink(rawJobLink);
 
@@ -89,7 +80,7 @@ export function routeJobLink(rawJobLink) {
   const greenhouseJobIds = url.searchParams.getAll("gh_jid");
   if (
     url.protocol === "https:" &&
-    !hostnameContainsDomainLabels(url.hostname.toLowerCase(), "greenhouse.io") &&
+    !hostnameMatches(url.hostname.toLowerCase(), "greenhouse.io") &&
     getCommonLinkKind(url.hostname.toLowerCase()) === JOB_LINK_KINDS.OTHER &&
     greenhouseJobIds.length === 1 &&
     POSITIVE_INTEGER_PATTERN.test(greenhouseJobIds[0])

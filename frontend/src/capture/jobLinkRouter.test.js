@@ -24,10 +24,11 @@ describe("routeJobLink", () => {
     });
   });
 
-  it("keeps Greenhouse lookalike domains provider-neutral even with a valid gh_jid", () => {
-    expect(routeJobLink("https://greenhouse.io.evil.test/jobs/123?gh_jid=123456")).toMatchObject({
-      route: JOB_LINK_ROUTES.LINK_ONLY,
-      link_kind: JOB_LINK_KINDS.OTHER,
+  it("routes a Greenhouse lookalike with a valid gh_jid as an ordinary custom domain", () => {
+    expect(routeJobLink("https://greenhouse.io.evil.test/jobs/123?gh_jid=123456")).toEqual({
+      normalized_job_link: "https://greenhouse.io.evil.test/jobs/123?gh_jid=123456",
+      route: JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY,
+      link_kind: JOB_LINK_KINDS.GREENHOUSE_CUSTOM_CANDIDATE,
     });
   });
 
@@ -45,7 +46,9 @@ describe("routeJobLink", () => {
     "http://careers.fictional.test/openings?gh_jid=123456",
     "https://careers.fictional.test/openings?gh_jid=123456&gh_jid=654321",
     "https://boards.greenhouse.io/not-a-hosted-path?gh_jid=123456",
+    "https://greenhouse.io/not-a-hosted-path?gh_jid=123456",
     "https://jobs.greenhouse.io/not-a-hosted-path?gh_jid=123456",
+    "https://anything.greenhouse.io/not-a-hosted-path?gh_jid=123456",
     "https://www.linkedin.com/jobs/view/123?gh_jid=123456",
     "https://jobs.indeed.com/viewjob?gh_jid=123456",
     "https://www.ziprecruiter.com/jobs/fictional?gh_jid=123456",
