@@ -36,7 +36,7 @@ Examples:
 ```text
 docs: refresh project documentation
 api: add application activity routes
-ui: polish command center follow-up actions
+ui: polish Reminders follow-up actions
 test: cover activity timeline endpoints
 ```
 
@@ -167,6 +167,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Smart Capture review is organized into Review before saving, Essentials, Captured details when present, Optional details, and Job details.
 - Smart Capture notes include the pasted job text.
 - Strict hosted Greenhouse links open an editable imported review through the official API.
+- Canonical hosted Lever links on `jobs.lever.co` or `jobs.eu.lever.co` open an editable imported review through the public Postings API; users do not select a provider, and Company remains a review field.
 - Eligible custom Greenhouse links use best-effort server discovery; failed or unsupported links expose link-only and Paste Job Text fallbacks.
 - Browser-assisted captures open Add Job -> Paste Job Link in a new local tab, preserve the original employer URL as Job Link, and default Source to Company Website while keeping it editable.
 - No Add Job capture persists an application until the user presses the existing save action.
@@ -191,7 +192,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Ordinary HTTP or HTTPS pages report no supported Greenhouse job when no match exists; protected Chrome pages report that inspection is unavailable.
 - A verified Greenhouse detection exposes Open in Career Pipeline and opens a new local tab.
 - The local app receives an editable Paste Job Link review; it does not save automatically.
-- Confirm the manifest remains limited to `activeTab` and `scripting`, with no transmitted or stored employer-page data.
+- Confirm the manifest remains limited to `activeTab` and `scripting`, with no network transmission or persistent storage of employer-page data.
 
 ### Applications Filters And Details
 

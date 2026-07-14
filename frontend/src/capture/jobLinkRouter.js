@@ -1,16 +1,19 @@
 import { parseGreenhouseJobUrl } from "./greenhouseUrl.js";
+import { parseLeverJobUrl } from "./leverUrl.js";
 import { normalizeExplicitJobLink } from "../utils/jobLinks.js";
 
 export const JOB_LINK_ROUTES = {
   GREENHOUSE_API: "greenhouse-api",
   GREENHOUSE_BROWSER_DETECTED: "greenhouse-browser-detected",
   GREENHOUSE_CUSTOM_DISCOVERY: "greenhouse-custom-discovery",
+  LEVER_API: "lever-api",
   LINK_ONLY: "link-only",
 };
 
 export const JOB_LINK_KINDS = {
   GREENHOUSE_HOSTED: "greenhouse-hosted",
   GREENHOUSE_CUSTOM_CANDIDATE: "greenhouse-custom-candidate",
+  LEVER_HOSTED: "lever-hosted",
   INDEED: "indeed",
   LINKEDIN: "linkedin",
   OTHER: "other",
@@ -76,6 +79,18 @@ export function routeJobLink(rawJobLink) {
     };
   } catch {
     // Only the strict hosted Greenhouse parser is eligible for an API import.
+  }
+
+  try {
+    const leverLink = parseLeverJobUrl(normalizedJobLink);
+    return {
+      normalized_job_link: leverLink.original_normalized_job_link,
+      route: JOB_LINK_ROUTES.LEVER_API,
+      link_kind: JOB_LINK_KINDS.LEVER_HOSTED,
+      lever: leverLink,
+    };
+  } catch {
+    // Only canonical hosted Lever posting URLs are eligible for an API import.
   }
 
   const greenhouseJobIds = url.searchParams.getAll("gh_jid");

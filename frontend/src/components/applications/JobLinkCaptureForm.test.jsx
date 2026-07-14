@@ -9,7 +9,7 @@ import JobLinkCaptureForm, {
   isJobLinkCaptureDirty,
   JOB_LINK_CAPTURE_STATES,
 } from "./JobLinkCaptureForm.jsx";
-import { JOB_LINK_KINDS } from "../../capture/jobLinkRouter.js";
+import { JOB_LINK_KINDS, JOB_LINK_ROUTES } from "../../capture/jobLinkRouter.js";
 import { getParserFormatLabel } from "./CaptureReviewForm.jsx";
 
 describe("JobLinkCaptureForm", () => {
@@ -83,9 +83,16 @@ describe("JobLinkCaptureForm", () => {
         JOB_LINK_CAPTURE_STATES.IMPORT_ERROR,
       ),
     ).toBe("The detected Greenhouse job could not be imported. Continue with the link or paste the job text.");
+    expect(
+      getLinkFallbackMessage(
+        { route: JOB_LINK_ROUTES.LEVER_API, link_kind: JOB_LINK_KINDS.LEVER_HOSTED },
+        JOB_LINK_CAPTURE_STATES.IMPORT_ERROR,
+      ),
+    ).toBe("This Lever job could not be imported. Continue with the link or paste the job text.");
   });
 
   it("labels link-only reviews as Job Link", () => {
     expect(getParserFormatLabel("joblink")).toBe("Job Link");
+    expect(getParserFormatLabel("lever")).toBe("Lever");
   });
 });

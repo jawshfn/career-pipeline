@@ -27,6 +27,7 @@ export function getParserFormatLabel(format) {
     generic: "Generic",
     googlejobs: "Google Jobs",
     greenhouse: "Greenhouse",
+    lever: "Lever",
     joblink: "Job Link",
     indeed: "Indeed",
     linkedin: "LinkedIn",

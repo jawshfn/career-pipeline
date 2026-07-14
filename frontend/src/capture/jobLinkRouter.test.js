@@ -24,6 +24,19 @@ describe("routeJobLink", () => {
     });
   });
 
+  it("routes canonical global and EU Lever postings before custom Greenhouse discovery", () => {
+    expect(routeJobLink("https://jobs.lever.co/fictional-site/posting-123?gh_jid=123456")).toMatchObject({
+      route: JOB_LINK_ROUTES.LEVER_API,
+      link_kind: JOB_LINK_KINDS.LEVER_HOSTED,
+      lever: { instance: "global", site: "fictional-site", posting_id: "posting-123" },
+    });
+    expect(routeJobLink("https://jobs.eu.lever.co/example/posting-456/apply")).toMatchObject({
+      route: JOB_LINK_ROUTES.LEVER_API,
+      link_kind: JOB_LINK_KINDS.LEVER_HOSTED,
+      lever: { instance: "eu", site: "example", posting_id: "posting-456" },
+    });
+  });
+
   it("routes a Greenhouse lookalike with a valid gh_jid as an ordinary custom domain", () => {
     expect(routeJobLink("https://greenhouse.io.evil.test/jobs/123?gh_jid=123456")).toEqual({
       normalized_job_link: "https://greenhouse.io.evil.test/jobs/123?gh_jid=123456",

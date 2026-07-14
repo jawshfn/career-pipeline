@@ -67,6 +67,10 @@ The optional local Greenhouse helper can open Add Job -> Paste Job Link with a v
 
 See the [Browser Extension Guide](../browser-extension/README.md) for local unpacked-extension setup. The static demo does not run browser-assisted live Greenhouse imports.
 
+## Paste Job Link Imports
+
+Paste Job Link automatically recognizes supported hosted Greenhouse and canonical Lever links. Lever supports `jobs.lever.co/{site}/{posting-id}` and `jobs.eu.lever.co/{site}/{posting-id}`, including `/apply` links; the review preserves the entered Job Link and selected Source. The user always reviews and saves manually. The static demo includes fictional Greenhouse and Lever fixtures only.
+
 ## Static Demo Mode
 
 Demo mode is enabled only when `VITE_APP_MODE=demo`. It uses fictional in-memory frontend data, resets on page refresh, and does not make browser-assisted live Greenhouse imports.

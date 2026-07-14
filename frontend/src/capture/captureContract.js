@@ -3,12 +3,14 @@ export const CAPTURE_CONTRACT_VERSION = 1;
 export const CAPTURE_METHODS = {
   DETERMINISTIC_TEXT: "deterministic-text",
   GREENHOUSE_API: "greenhouse-api",
+  LEVER_API: "lever-api",
   LINK_ONLY: "link-only",
 };
 
 export const CAPTURE_PROVENANCE = {
   DETERMINISTIC_TEXT: "deterministic-text",
   GREENHOUSE_API: "greenhouse-api",
+  LEVER_API: "lever-api",
   MISSING: "missing",
   SYSTEM_DEFAULT: "system-default",
   USER_INPUT: "user-input",

@@ -6,9 +6,11 @@ import { buildLinkOnlyCaptureResult } from "../../capture/linkOnlyAdapter.js";
 import { JOB_LINK_KINDS, JOB_LINK_ROUTES, routeJobLink } from "../../capture/jobLinkRouter.js";
 import {
   getDemoGreenhouseLink,
+  getDemoLeverLink,
   importCustomGreenhouseCaptureResult,
   importDetectedGreenhouseCaptureResult,
   importGreenhouseCaptureResult,
+  importLeverCaptureResult,
 } from "../../services/jobImportsService.js";
 import CaptureReviewForm, { getCapturedReviewFields } from "./CaptureReviewForm.jsx";
 
@@ -56,6 +58,10 @@ export function getTextCaptureFallbackValues(captureData) {
 }
 
 export function getLinkFallbackMessage(routeResult, captureState) {
+  if (routeResult?.route === JOB_LINK_ROUTES.LEVER_API) {
+    return "This Lever job could not be imported. Continue with the link or paste the job text.";
+  }
+
   if (routeResult?.route === JOB_LINK_ROUTES.GREENHOUSE_BROWSER_DETECTED) {
     return "The detected Greenhouse job could not be imported. Continue with the link or paste the job text.";
   }
@@ -100,6 +106,7 @@ export default function JobLinkCaptureForm({
   const [message, setMessage] = useState("");
   const hasConsumedBrowserCapture = useRef(false);
   const demoGreenhouseLink = getDemoGreenhouseLink();
+  const demoLeverLink = getDemoLeverLink();
 
   useEffect(() => {
     onUnsavedChangesChange?.(isJobLinkCaptureDirty(captureData, reviewData, captureState));
@@ -204,19 +211,27 @@ export default function JobLinkCaptureForm({
 
     setCaptureState(JOB_LINK_CAPTURE_STATES.IMPORTING);
     try {
-      const importCaptureResult =
-        nextRouteResult.route === JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY
-          ? importCustomGreenhouseCaptureResult
-          : importGreenhouseCaptureResult;
-      const captureResult = await importCaptureResult({
-        jobLink: nextRouteResult.normalized_job_link,
-        source: captureData.source,
-      });
+      const captureResult =
+        nextRouteResult.route === JOB_LINK_ROUTES.LEVER_API
+          ? await importLeverCaptureResult({
+              instance: nextRouteResult.lever.instance,
+              site: nextRouteResult.lever.site,
+              postingId: nextRouteResult.lever.posting_id,
+              jobLink: nextRouteResult.normalized_job_link,
+              source: captureData.source,
+            })
+          : await (nextRouteResult.route === JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY
+              ? importCustomGreenhouseCaptureResult
+              : importGreenhouseCaptureResult)({
+              jobLink: nextRouteResult.normalized_job_link,
+              source: captureData.source,
+            });
       showReview(captureResult);
     } catch (importError) {
       setCaptureState(JOB_LINK_CAPTURE_STATES.IMPORT_ERROR);
       setMessage(
-        nextRouteResult.route === JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY
+        nextRouteResult.route === JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY ||
+        nextRouteResult.route === JOB_LINK_ROUTES.LEVER_API
           ? ""
           : importError.message || "Could not import this Greenhouse job. Try again or continue with the link.",
       );
@@ -238,6 +253,13 @@ export default function JobLinkCaptureForm({
 
   function handleUseDemoLink() {
     setCaptureData((current) => ({ ...current, jobLink: demoGreenhouseLink }));
+    setCaptureState(JOB_LINK_CAPTURE_STATES.IDLE);
+    setRouteResult(null);
+    setMessage("");
+  }
+
+  function handleUseDemoLeverLink() {
+    setCaptureData((current) => ({ ...current, jobLink: demoLeverLink }));
     setCaptureState(JOB_LINK_CAPTURE_STATES.IDLE);
     setRouteResult(null);
     setMessage("");
@@ -284,7 +306,9 @@ export default function JobLinkCaptureForm({
             introText={
               reviewData.parser_format === "joblink"
                 ? "This job link is ready for review. Add the company and role before saving."
-                : "Greenhouse provided structured job details. Review anything that looks wrong."
+                : reviewData.parser_format === "lever"
+                  ? "Lever provided structured job details. Review anything that looks wrong."
+                  : "Greenhouse provided structured job details. Review anything that looks wrong."
             }
             onCreateApplication={onCreateApplication}
             onCreateSuccess={onCreateSuccess}
@@ -343,10 +367,15 @@ export default function JobLinkCaptureForm({
                   Use demo Greenhouse link
                 </button>
               ) : null}
+              {demoLeverLink ? (
+                <button className="secondary-button" type="button" onClick={handleUseDemoLeverLink}>
+                  Use demo Lever link
+                </button>
+              ) : null}
             </div>
 
-            {demoGreenhouseLink ? (
-              <p className="form-helper">The demo Greenhouse link uses fictional data and does not import real jobs.</p>
+            {demoGreenhouseLink || demoLeverLink ? (
+              <p className="form-helper">Demo import links use fictional data and do not import real jobs.</p>
             ) : null}
           </form>
 

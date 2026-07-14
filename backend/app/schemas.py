@@ -1,7 +1,7 @@
 from datetime import date, datetime
-from typing import ClassVar
+from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
 
 from .domain import (
     ALLOWED_APPLICATION_STATUSES,
@@ -187,6 +187,36 @@ class GreenhouseJobImportRead(BaseModel):
     description_text: str
     absolute_url: str | None = None
     pay_ranges: list[GreenhousePayRangeRead]
+
+
+class LeverImportRequest(BaseModel):
+    instance: Literal["global", "eu"]
+    site: StrictStr = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$")
+    posting_id: StrictStr = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
+
+
+class LeverSalaryRangeRead(BaseModel):
+    currency: str | None = None
+    interval: str | None = None
+    min: int | float | None = None
+    max: int | float | None = None
+
+
+class LeverJobImportRead(BaseModel):
+    provider: str
+    posting_id: str
+    title: str
+    location: str
+    all_locations: list[str]
+    commitment: str
+    team: str
+    department: str
+    workplace_type: str
+    description_text: str
+    hosted_url: str | None = None
+    apply_url: str | None = None
+    salary_range: LeverSalaryRangeRead | None = None
+    salary_description: str
 
 
 class ApplicationActivityBase(BaseModel):

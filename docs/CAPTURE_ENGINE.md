@@ -12,6 +12,7 @@ Implemented now:
 
 - `deterministic-text` - wraps the existing deterministic Paste Job Text parser in `frontend/src/utils/jobTextExtraction.js`.
 - `greenhouse-api` - imports structured published job data from hosted or verified custom Greenhouse job links through the Career Pipeline backend.
+- `lever-api` - imports a canonical hosted Lever posting through Lever's documented public Postings API.
 - `link-only` - creates an editable review from a valid user-entered job link without inferring job fields.
 
 The deterministic parser remains the extraction implementation. The Capture Engine only normalizes the result into a stable contract and converts it back to the current flat review state.
@@ -32,10 +33,12 @@ Greenhouse URL import uses:
 - `detected_format: "greenhouse"`
 - structured fields with `provenance: "greenhouse-api"` and `confidence: "high"`
 
+Lever URL import uses `capture_method: "lever-api"`, `detected_format: "lever"`, and `provenance: "lever-api"` for structured fields. Lever company name remains blank and requires review because the provider response does not expose a dependable display name.
+
 Transport:
 
-- Local mode: Career Pipeline frontend -> Career Pipeline backend -> Greenhouse Job Board API.
-- Demo mode: one fictional in-memory Greenhouse fixture.
+- Local mode: Career Pipeline frontend -> Career Pipeline backend -> Greenhouse Job Board API or Lever Postings API.
+- Demo mode: fictional in-memory Greenhouse and Lever fixtures.
 
 The experimental locally loaded Greenhouse detector is a transport bridge rather than a separate capture method. It can hand a successful browser detection to a new local app tab at `http://localhost:5173/`, where the normal `greenhouse-api` capture method runs. The bridge uses a short versioned fragment payload with only the provider, verified board token, verified job ID, and original employer job URL. The frontend clears the fragment immediately, validates it again, preserves the original employer URL as Job Link, defaults Source to Company Website, and opens the normal editable review. The extension itself makes no network request, does not search existing tabs, and does not require broad tab or host permissions. No application is saved automatically. Static demo mode does not perform browser-assisted imports.
 
@@ -49,6 +52,7 @@ Custom employer career links can be imported only when they contain one explicit
 Job Link routing is local and deterministic:
 
 - Hosted Greenhouse links use the Greenhouse API import.
+- Canonical global and EU hosted Lever posting links use the Lever Postings API import.
 - Other valid public job links can continue as a link-only review or transfer to Paste Job Text.
 - A custom employer link with one positive `gh_jid` uses best-effort Greenhouse discovery from strong configuration evidence present in the original public HTML. Failed or ambiguous discovery returns to the same link-only and Paste Job Text fallbacks.
 
@@ -58,7 +62,6 @@ There is no arbitrary public-fetch endpoint or generic employer-page parser. Cus
 
 These are future options, not implemented features:
 
-- `lever-api`
 - `ashby-api`
 - `jobposting-jsonld`
 - `ai-assisted-text`
@@ -114,6 +117,7 @@ Only `company_name` and `role_title` are required review fields. Missing optiona
 - Job Link is never inferred from pasted text.
 - Source remains user-selected.
 - Greenhouse URL import still requires user review before saving.
+- Lever URL import still requires user review before saving and does not submit applications.
 - Career Pipeline does not submit applications to Greenhouse.
 - Greenhouse URL import uses the documented Greenhouse Job Board API. Custom discovery retrieves one bounded public HTML page through the SSRF-protected fetch service only to verify board configuration; it does not execute JavaScript, fetch subresources, crawl pages, or use browser automation.
 - Field values must not be invented.

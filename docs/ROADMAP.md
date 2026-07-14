@@ -169,6 +169,12 @@ Status: complete through Phase 15.4b
 - Phase 15.4a — Add and validate the click-initiated Greenhouse browser-detection prototype.
 - Phase 15.4b — Add the local browser-to-Career Pipeline capture bridge.
 
+## Phase 16 - Additional Structured Job Providers
+
+Status: complete through Phase 16.0
+
+- Phase 16.0 - Add automatic global and EU Lever job-link import through the public Postings API.
+
 ## Near-Term Future Work
 
 - Demo screenshots and fuller Smart Capture visual walkthrough

@@ -1,4 +1,5 @@
 const DEMO_GREENHOUSE_LINK = "https://boards.greenhouse.io/northstaranalytics/jobs/123456";
+const DEMO_LEVER_LINK = "https://jobs.lever.co/northstar-platform/11111111-2222-3333-4444-555555555555";
 
 const DEMO_GREENHOUSE_JOB = {
   provider: "greenhouse",
@@ -22,8 +23,32 @@ const DEMO_GREENHOUSE_JOB = {
   ],
 };
 
+const DEMO_LEVER_JOB = {
+  provider: "lever",
+  posting_id: "11111111-2222-3333-4444-555555555555",
+  title: "Platform Systems Analyst",
+  location: "Richmond, VA",
+  all_locations: ["Richmond, VA"],
+  commitment: "Full-time",
+  team: "Platform Engineering",
+  department: "Operations Technology",
+  workplace_type: "Hybrid",
+  description_text: [
+    "Northstar Platform is a fictional employer used for the Career Pipeline demo.",
+    "This role supports internal systems, reporting workflows, and cross-functional operations.",
+  ].join("\n\n"),
+  hosted_url: DEMO_LEVER_LINK,
+  apply_url: `${DEMO_LEVER_LINK}/apply`,
+  salary_range: { currency: "USD", interval: "year", min: 78000, max: 96000 },
+  salary_description: "$78,000 - $96,000 USD annually",
+};
+
 export function getDemoGreenhouseLink() {
   return DEMO_GREENHOUSE_LINK;
+}
+
+export function getDemoLeverLink() {
+  return DEMO_LEVER_LINK;
 }
 
 export function importGreenhouseJob({ normalizedJobLink }) {
@@ -41,5 +66,19 @@ export function importCustomGreenhouseJob() {
     new Error(
       "Custom Greenhouse discovery is available in the local full-stack version. Continue with the link or paste the job text.",
     ),
+  );
+}
+
+export function importLeverJob({ instance, site, postingId }) {
+  if (
+    instance === "global" &&
+    site === "northstar-platform" &&
+    postingId === "11111111-2222-3333-4444-555555555555"
+  ) {
+    return Promise.resolve(DEMO_LEVER_JOB);
+  }
+
+  return Promise.reject(
+    new Error("Live Lever imports are available in the local full-stack version. Use the demo link or paste the job text."),
   );
 }

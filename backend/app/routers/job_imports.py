@@ -2,9 +2,16 @@ from dataclasses import asdict
 
 from fastapi import APIRouter, HTTPException
 
-from ..schemas import CustomGreenhouseImportRequest, GreenhouseImportRequest, GreenhouseJobImportRead
+from ..schemas import (
+    CustomGreenhouseImportRequest,
+    GreenhouseImportRequest,
+    GreenhouseJobImportRead,
+    LeverImportRequest,
+    LeverJobImportRead,
+)
 from ..services.greenhouse import GreenhouseImportError, fetch_greenhouse_job
 from ..services.greenhouse_discovery import GreenhouseDiscoveryError, discover_and_fetch_custom_greenhouse_job
+from ..services.lever import LeverImportError, fetch_lever_job
 
 router = APIRouter(prefix="/api/job-imports", tags=["job imports"])
 
@@ -26,6 +33,16 @@ async def import_custom_greenhouse_job(payload: CustomGreenhouseImportRequest) -
     except GreenhouseDiscoveryError as error:
         raise HTTPException(status_code=error.status_code, detail=error.message) from None
     except GreenhouseImportError as error:
+        raise HTTPException(status_code=error.status_code, detail=error.message) from None
+
+    return asdict(imported_job)
+
+
+@router.post("/lever", response_model=LeverJobImportRead)
+async def import_lever_job(payload: LeverImportRequest) -> dict:
+    try:
+        imported_job = await fetch_lever_job(payload.instance, payload.site, payload.posting_id)
+    except LeverImportError as error:
         raise HTTPException(status_code=error.status_code, detail=error.message) from None
 
     return asdict(imported_job)

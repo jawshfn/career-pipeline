@@ -20,3 +20,15 @@ export function importCustomGreenhouseJob({ jobUrl }) {
     "Career Pipeline could not verify the Greenhouse configuration for this career page.",
   );
 }
+
+export function importLeverJob({ instance, site, postingId }) {
+  return apiPost(
+    "/api/job-imports/lever",
+    {
+      instance,
+      site,
+      posting_id: postingId,
+    },
+    "Could not import this Lever job. Try again or paste the job text.",
+  );
+}

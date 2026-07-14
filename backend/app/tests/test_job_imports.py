@@ -12,6 +12,14 @@ from app.services.greenhouse import (
     greenhouse_description_to_text,
 )
 from app.services.greenhouse_discovery import GreenhouseDiscoveryError
+from app.services.lever import (
+    LEVER_IMPORT_ERROR,
+    LEVER_NOT_FOUND_ERROR,
+    LeverImportError,
+    LeverProviderJob,
+    LeverSalaryRange,
+    fetch_lever_job,
+)
 
 
 def run_async(coro):
@@ -33,6 +41,27 @@ def make_greenhouse_payload(**overrides):
                 "max_cents": 7500000,
             }
         ],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def make_lever_payload(**overrides):
+    payload = {
+        "text": "Platform Systems Analyst",
+        "categories": {
+            "location": "Richmond, VA",
+            "allLocations": ["Richmond, VA", "Remote"],
+            "commitment": "Full-time",
+            "team": "Platform Engineering",
+            "department": "Operations Technology",
+        },
+        "workplaceType": "Hybrid",
+        "descriptionPlain": "Fictional role description.\n\nSupport internal systems.",
+        "hostedUrl": "https://jobs.lever.co/fictional-site/posting-123",
+        "applyUrl": "https://jobs.lever.co/fictional-site/posting-123/apply",
+        "salaryRange": {"currency": "USD", "interval": "year", "min": 80000, "max": 100000},
+        "salaryDescriptionPlain": "$80,000 - $100,000 annually",
     }
     payload.update(overrides)
     return payload
@@ -399,3 +428,178 @@ def test_custom_greenhouse_endpoint_bounds_job_url_length(client):
     )
 
     assert response.status_code == 422
+
+
+def test_lever_requests_only_the_validated_global_or_eu_posting_url():
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json=make_lever_payload())
+
+    async def run_test(instance: str):
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False) as client:
+            return await fetch_lever_job(instance, "fictional-site", "posting-123", client=client)
+
+    global_job = run_async(run_test("global"))
+    eu_job = run_async(run_test("eu"))
+
+    assert [request.method for request in requests] == ["GET", "GET"]
+    assert requests[0].url.host == "api.lever.co"
+    assert requests[1].url.host == "api.eu.lever.co"
+    assert str(requests[0].url).endswith("/v0/postings/fictional-site/posting-123")
+    assert requests[0].headers["accept"] == "application/json"
+    assert not hasattr(global_job, "company_name")
+    assert global_job.title == "Platform Systems Analyst"
+    assert eu_job.all_locations == ["Richmond, VA", "Remote"]
+    assert eu_job.salary_range == LeverSalaryRange(currency="USD", interval="year", min=80000, max=100000)
+
+
+def test_lever_rejects_invalid_identifiers_before_request():
+    called = False
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal called
+        called = True
+        return httpx.Response(200, json=make_lever_payload())
+
+    async def run_test():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            await fetch_lever_job("invalid", "../unsafe", "posting-123", client=client)
+
+    try:
+        run_async(run_test())
+    except LeverImportError as error:
+        assert error.status_code == 400
+        assert error.message == LEVER_IMPORT_ERROR
+    else:
+        raise AssertionError("Expected invalid Lever identifiers to fail")
+
+    assert called is False
+
+
+def test_lever_maps_upstream_failures_to_controlled_errors():
+    async def timeout_handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.TimeoutException("timeout")
+
+    failure_transports = [
+        httpx.MockTransport(timeout_handler),
+        httpx.MockTransport(lambda request: httpx.Response(302, headers={"location": "https://fictional.test"})),
+        httpx.MockTransport(lambda request: httpx.Response(401, json={"error": "fictional"})),
+        httpx.MockTransport(lambda request: httpx.Response(500, json={"error": "fictional"})),
+        httpx.MockTransport(lambda request: httpx.Response(200, content=b"not-json", headers={"content-type": "application/json"})),
+        httpx.MockTransport(lambda request: httpx.Response(200, json=["not", "an", "object"])),
+        httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                headers={"content-type": "application/json", "content-length": "1000001"},
+            ),
+        ),
+        httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                content=b"x" * 1_000_001,
+                headers={"content-type": "application/json"},
+            ),
+        ),
+    ]
+
+    for transport in failure_transports:
+        async def run_test():
+            async with httpx.AsyncClient(transport=transport, follow_redirects=False) as client:
+                await fetch_lever_job("global", "fictional-site", "posting-123", client=client)
+
+        try:
+            run_async(run_test())
+        except LeverImportError as error:
+            assert error.status_code == 502
+            assert error.message == LEVER_IMPORT_ERROR
+        else:
+            raise AssertionError("Expected controlled Lever failure")
+
+
+def test_lever_normalizes_missing_optional_provider_fields_without_company_inference():
+    async def run_test():
+        async with httpx.AsyncClient(
+            transport=httpx.MockTransport(
+                lambda request: httpx.Response(
+                    200,
+                    json=make_lever_payload(
+                        categories=None,
+                        workplaceType=None,
+                        descriptionPlain=None,
+                        hostedUrl=None,
+                        applyUrl=None,
+                        salaryRange={"currency": "USD", "interval": "year", "min": "unknown", "max": 100000},
+                        salaryDescriptionPlain=None,
+                    ),
+                ),
+            ),
+        ) as client:
+            return await fetch_lever_job("global", "fictional-site", "posting-123", client=client)
+
+    imported_job = run_async(run_test())
+
+    assert imported_job.title == "Platform Systems Analyst"
+    assert imported_job.location == ""
+    assert imported_job.all_locations == []
+    assert imported_job.description_text == ""
+    assert imported_job.salary_range is None
+    assert imported_job.salary_description == ""
+    assert not hasattr(imported_job, "company_name")
+
+
+def test_lever_not_found_and_endpoint_response_do_not_persist(client, db_session, monkeypatch):
+    async def missing_posting():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(lambda request: httpx.Response(404))) as upstream:
+            await fetch_lever_job("global", "fictional-site", "missing", client=upstream)
+
+    try:
+        run_async(missing_posting())
+    except LeverImportError as error:
+        assert error.status_code == 404
+        assert error.message == LEVER_NOT_FOUND_ERROR
+    else:
+        raise AssertionError("Expected missing Lever posting to fail")
+
+    async def fake_fetch_lever_job(instance: str, site: str, posting_id: str):
+        assert (instance, site, posting_id) == ("eu", "fictional-site", "posting-123")
+        return LeverProviderJob(
+            provider="lever",
+            posting_id=posting_id,
+            title="Platform Systems Analyst",
+            location="Dublin, Ireland",
+            all_locations=["Dublin, Ireland"],
+            commitment="Contract",
+            team="Platform",
+            department="Technology",
+            workplace_type="Hybrid",
+            description_text="Fictional description.",
+            hosted_url=None,
+            apply_url=None,
+            salary_range=None,
+            salary_description="",
+        )
+
+    monkeypatch.setattr("app.routers.job_imports.fetch_lever_job", fake_fetch_lever_job)
+    response = client.post(
+        "/api/job-imports/lever",
+        json={"instance": "eu", "site": "fictional-site", "posting_id": "posting-123"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["provider"] == "lever"
+    assert response.json()["title"] == "Platform Systems Analyst"
+    assert "company_name" not in response.json()
+    assert db_session.query(Application).count() == 0
+
+
+def test_lever_endpoint_rejects_wrong_identifier_types(client):
+    invalid_payloads = [
+        {"instance": "global", "site": True, "posting_id": "posting-123"},
+        {"instance": "global", "site": "fictional-site", "posting_id": None},
+        {"instance": "other", "site": "fictional-site", "posting_id": "posting-123"},
+    ]
+
+    for payload in invalid_payloads:
+        assert client.post("/api/job-imports/lever", json=payload).status_code == 422

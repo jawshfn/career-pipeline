@@ -206,6 +206,29 @@ Behavior:
 
 Status: implemented
 
+### POST /api/job-imports/lever
+
+Purpose: import one published canonical Lever job through the documented individual Postings API.
+
+Example request:
+
+```json
+{
+  "instance": "global",
+  "site": "fictional-site",
+  "posting_id": "fictional-posting-id"
+}
+```
+
+Behavior:
+
+- Accepts only the `global` or `eu` API instance and bounded safe site and posting identifiers.
+- Makes one bounded, no-redirect JSON request to the matching Lever API hostname.
+- Returns structured posting fields only; it does not infer a company name from the Lever site token.
+- Returns controlled 404 and provider-failure responses without exposing upstream content.
+
+Status: implemented
+
 ## Action Items
 
 ### GET /api/applications/action-items

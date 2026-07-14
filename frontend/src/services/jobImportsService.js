@@ -2,6 +2,7 @@ import * as realJobImportsApi from "../api/jobImportsApi.js";
 import * as demoJobImportsApi from "../demo/demoJobImportsApi.js";
 import { isDemoMode } from "../config/runtimeMode.js";
 import { buildGreenhouseCaptureResult } from "../capture/greenhouseAdapter.js";
+import { buildLeverCaptureResult } from "../capture/leverAdapter.js";
 import { parseGreenhouseJobUrl } from "../capture/greenhouseUrl.js";
 import { normalizeExplicitJobLink } from "../utils/jobLinks.js";
 
@@ -9,6 +10,10 @@ const jobImportsApi = isDemoMode() ? demoJobImportsApi : realJobImportsApi;
 
 export function getDemoGreenhouseLink() {
   return isDemoMode() ? demoJobImportsApi.getDemoGreenhouseLink() : "";
+}
+
+export function getDemoLeverLink() {
+  return isDemoMode() ? demoJobImportsApi.getDemoLeverLink() : "";
 }
 
 export async function importGreenhouseCaptureResult({ jobLink, source }) {
@@ -53,6 +58,16 @@ export async function importDetectedGreenhouseCaptureResult({ boardToken, jobId,
   return buildGreenhouseCaptureResult({
     importedJob,
     jobLink: normalizedJobLink,
+    source,
+  });
+}
+
+export async function importLeverCaptureResult({ instance, site, postingId, jobLink, source }) {
+  const importedJob = await jobImportsApi.importLeverJob({ instance, site, postingId });
+
+  return buildLeverCaptureResult({
+    importedJob,
+    jobLink: normalizeExplicitJobLink(jobLink),
     source,
   });
 }
