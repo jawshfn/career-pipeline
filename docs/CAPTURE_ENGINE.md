@@ -12,6 +12,7 @@ Implemented now:
 
 - `deterministic-text` - wraps the existing deterministic Paste Job Text parser in `frontend/src/utils/jobTextExtraction.js`.
 - `greenhouse-api` - imports structured published job data from hosted Greenhouse job-board links through the Career Pipeline backend.
+- `link-only` - creates an editable review from a valid user-entered job link without inferring job fields.
 
 The deterministic parser remains the extraction implementation. The Capture Engine only normalizes the result into a stable contract and converts it back to the current flat review state.
 
@@ -36,12 +37,20 @@ Transport:
 - Local mode: Career Pipeline frontend -> Career Pipeline backend -> Greenhouse Job Board API.
 - Demo mode: one fictional in-memory Greenhouse fixture.
 
-Only hosted Greenhouse links are supported:
+Only hosted Greenhouse links are supported for automatic import:
 
 - `https://boards.greenhouse.io/{board_token}/jobs/{job_id}`
 - `https://job-boards.greenhouse.io/{board_token}/jobs/{job_id}`
 
-Custom employer domains are not supported yet because they do not reliably expose the Greenhouse board token required by the public API.
+Custom employer domains are not automatically imported yet because they do not reliably expose the Greenhouse board token required by the public API.
+
+Job Link routing is local and deterministic:
+
+- Hosted Greenhouse links use the Greenhouse API import.
+- Other valid public job links can continue as a link-only review or transfer to Paste Job Text.
+- A custom employer link with a positive `gh_jid` parameter is identified as a possible custom Greenhouse link, but it is not fetched or imported.
+
+There is no arbitrary employer webpage fetching. Link-only capture preserves the explicit Job Link and user-selected Source, leaves company and role blank for review, and never invents job fields.
 
 ## Planned Methods
 

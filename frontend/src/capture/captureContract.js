@@ -3,6 +3,7 @@ export const CAPTURE_CONTRACT_VERSION = 1;
 export const CAPTURE_METHODS = {
   DETERMINISTIC_TEXT: "deterministic-text",
   GREENHOUSE_API: "greenhouse-api",
+  LINK_ONLY: "link-only",
 };
 
 export const CAPTURE_PROVENANCE = {

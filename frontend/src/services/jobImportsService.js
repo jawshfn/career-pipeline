@@ -3,6 +3,7 @@ import * as demoJobImportsApi from "../demo/demoJobImportsApi.js";
 import { isDemoMode } from "../config/runtimeMode.js";
 import { buildGreenhouseCaptureResult } from "../capture/greenhouseAdapter.js";
 import { parseGreenhouseJobUrl } from "../capture/greenhouseUrl.js";
+import { normalizeExplicitJobLink } from "../utils/jobLinks.js";
 
 const jobImportsApi = isDemoMode() ? demoJobImportsApi : realJobImportsApi;
 
@@ -20,7 +21,7 @@ export async function importGreenhouseCaptureResult({ jobLink, source }) {
 
   return buildGreenhouseCaptureResult({
     importedJob,
-    jobLink: parsedUrl.normalized_job_link,
+    jobLink: normalizeExplicitJobLink(jobLink),
     source,
   });
 }
