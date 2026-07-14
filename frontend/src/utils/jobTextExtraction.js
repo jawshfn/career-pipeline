@@ -24,16 +24,28 @@ const noisyHeaderLines = new Set([
   "",
   "&nbsp;",
   "apply",
+  "apply now",
   "benefits",
   "company",
+  "degree mentioned",
+  "easy apply",
+  "full job description",
   "job",
+  "job description",
+  "job highlights",
   "message",
+  "no degree mentioned",
   "people you can reach out to",
   "pulled from the full job description",
+  "qualifications",
+  "quick apply",
+  "responsibilities",
   "1-click apply",
   "responses managed off linkedin",
   "save",
+  "save job",
   "show match details",
+  "view job",
   "powered by real frontline workers",
   "view more about working here",
 ]);
@@ -67,7 +79,7 @@ function getSourceKey(source) {
 }
 
 function isSupportedParserFormat(format) {
-  return ["indeed", "linkedin", "ziprecruiter"].includes(format);
+  return ["googlejobs", "indeed", "linkedin", "ziprecruiter"].includes(format);
 }
 
 function getCleanLines(rawText) {
@@ -83,6 +95,22 @@ function isRatingLine(line) {
 
 function isPostedAgoLine(line) {
   return /^posted\s+.+\s+ago$/iu.test(line);
+}
+
+function isRelativeAgeLine(line) {
+  return /^(?:today|yesterday|\d+\+?\s+(?:minute|minutes|hour|hours|day|days|week|weeks|month|months|year|years)\s+ago)$/iu.test(
+    line,
+  );
+}
+
+function isApplicationActionLine(line) {
+  return /^(?:apply|apply now|easy apply|quick apply|save job|view job|apply(?: directly)? on\s+.+)$/iu.test(
+    line,
+  );
+}
+
+function isSearchAttributionLine(line) {
+  return /^identified by .+ from the original job post$/iu.test(line);
 }
 
 function detectParserFormat(rawText) {
@@ -113,13 +141,28 @@ function detectParserFormat(rawText) {
     return "indeed";
   }
 
+  const googleJobsSummaryIndex = normalizedLines.findIndex(isGoogleJobsSummaryLine);
+  const googleJobsMetadata =
+    googleJobsSummaryIndex >= 0 ? normalizedLines.slice(googleJobsSummaryIndex + 1) : [];
+  const hasGoogleJobsSupportingClue = googleJobsMetadata.some(
+    (line) =>
+      /^job highlights$/iu.test(line) ||
+      isSearchAttributionLine(line) ||
+      isApplicationActionLine(line) ||
+      isRelativeAgeLine(line),
+  );
+
+  if (googleJobsSummaryIndex >= 0 && hasGoogleJobsSupportingClue) {
+    return "googlejobs";
+  }
+
   const zipRecruiterClues = [
     lowerLines.includes("job description"),
     normalizedLines.some(isPostedAgoLine),
     normalizedLines.slice(0, 10).some((line) => Boolean(getCompensationFromLine(line))),
   ].filter(Boolean).length;
 
-  if (zipRecruiterClues >= 2) {
+  if (zipRecruiterClues >= 2 && normalizedLines.some(isPostedAgoLine)) {
     return "ziprecruiter";
   }
 
@@ -133,6 +176,9 @@ function isNoisyLine(line) {
     noisyHeaderLines.has(normalizedLine) ||
     isRatingLine(line) ||
     isPostedAgoLine(line) ||
+    isRelativeAgeLine(line) ||
+    isApplicationActionLine(line) ||
+    isSearchAttributionLine(line) ||
     /^promoted by hirer(?:\s+-\s+responses managed off linkedin)?$/iu.test(line) ||
     /^your profile and resume\b/iu.test(line) ||
     /^beta\s+-\s+is this information helpful\??$/iu.test(line)
@@ -193,6 +239,38 @@ function detectCityStateLocation(lines) {
   );
 }
 
+function isSafeSummaryLocationSegment(value) {
+  return (
+    Boolean(detectCityStateLocation([value])) ||
+    /^(?:Remote|Hybrid|On-?site|In[-\s]?person)$/iu.test(value)
+  );
+}
+
+function getGoogleJobsSummaryParts(line) {
+  const segments = normalizeBulletSeparators(line)
+    .split(/\s+-\s+/u)
+    .map((segment) => normalizeWhitespace(segment))
+    .filter(Boolean);
+
+  if (segments.length !== 3) {
+    return null;
+  }
+
+  const [companyName, location, providerSegment] = segments;
+  const providerMatch = providerSegment.match(/^via\s+(.+)$/iu);
+  const provider = providerMatch?.[1]?.trim() || "";
+
+  if (!companyName || !provider || !isSafeSummaryLocationSegment(location)) {
+    return null;
+  }
+
+  return { company_name: companyName, location, provider };
+}
+
+function isGoogleJobsSummaryLine(line) {
+  return Boolean(getGoogleJobsSummaryParts(line));
+}
+
 function detectStreetAddressLocation(lines) {
   return (
     lines.find((line) =>
@@ -234,7 +312,7 @@ function detectLocationHint(rawText) {
 
 function getCompensationFromLine(line) {
   const compensationMatch = line.match(
-    /\$\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:USD\s*)?(?:k(?:\/yr)?|\/yr|yr\b|\/hr|hr\b|an hour|per hour|a year|per year|annually)?(?:\s*(?:-|\u2013|\u2014|\u00e2\u20ac\u201c|\u00e2\u20ac\u201d|to)\s*\$?\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:k(?:\/yr)?|\/yr|yr\b|\/hr|hr\b|an hour|per hour|a year|per year|annually)?)?/iu,
+    /\$\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:USD\s*)?(?:k(?:\/yr)?|\/yr|yr\b|\/hr|hr\b|an hour|per hour|a year|per year|annually)?(?:\s*(?:-|\u2013|\u2014|\u00e2\u20ac\u201c|\u00e2\u20ac\u201d|to)\s*\$?\s*\d+(?:,\d{3})?(?:\.\d{1,2})?\s*(?:k(?:\/yr)?|\/yr|yr\b|\/hr|hr\b|an hour|per hour|a year|per year|annually)?)?(?:\s*(?:an hour|per hour|a year|per year|annually))?/iu,
   );
 
   if (compensationMatch) {
@@ -258,6 +336,48 @@ function detectCompensation(lines) {
   }
 
   return "";
+}
+
+const googleCompensationCadencePattern =
+  "(?:a year|per year|annually|/yr|an hour|per hour|/hr)";
+
+function getGoogleMetadataCompensationFromLine(line) {
+  const normalizedLine = normalizeWhitespace(line);
+  const match = normalizedLine.match(
+    new RegExp(
+      `^((?:USD\\s*)?\\$?\\s*(\\d[\\d,]*(?:\\.\\d+)?)\\s*([kK]?)\\s*(?:-|\\u2013|\\u2014|to)\\s*(?:USD\\s*)?\\$?\\s*(\\d[\\d,]*(?:\\.\\d+)?)\\s*([kK]?)\\s*(?:USD\\s*)?(${googleCompensationCadencePattern}))$`,
+      "iu",
+    ),
+  );
+
+  if (!match) {
+    return "";
+  }
+
+  const [, compensation, firstValue, firstSuffix, secondValue, secondSuffix, cadence] = match;
+  const firstHasK = firstSuffix.toLowerCase() === "k";
+  const secondHasK = secondSuffix.toLowerCase() === "k";
+
+  if (firstHasK !== secondHasK) {
+    return "";
+  }
+
+  const hasCurrency = /\$|\bUSD\b/iu.test(compensation);
+  const isAnnualCadence = /^(?:a year|per year|annually|\/yr)$/iu.test(cadence);
+  const firstNumericValue = Number(firstValue.replace(/,/gu, ""));
+  const secondNumericValue = Number(secondValue.replace(/,/gu, ""));
+  const hasSalarySizedAnnualValues =
+    isAnnualCadence && firstNumericValue >= 10000 && secondNumericValue >= 10000;
+
+  if (!hasCurrency && !firstHasK && !hasSalarySizedAnnualValues) {
+    return "";
+  }
+
+  return normalizeWhitespace(compensation);
+}
+
+function getGoogleMetadataCompensation(lines) {
+  return lines.map(getGoogleMetadataCompensationFromLine).find(Boolean) || "";
 }
 
 function getWorkArrangementFromLine(line) {
@@ -322,6 +442,49 @@ function hasExplicitBaseCompensationLabel(segment) {
   return /\b(?:compensation|salary|salary range|base salary|base pay|base pay range|pay range)\s*:/iu.test(
     segment,
   );
+}
+
+function getUsdCompensationRangeFromSegment(segment) {
+  const match = segment.match(
+    new RegExp(
+      `\\bUSD\\s*\\d[\\d,]*(?:\\.\\d+)?\\s*(?:-|\\u2013|\\u2014|to)\\s*(?:USD\\s*)?\\d[\\d,]*(?:\\.\\d+)?(?:\\s*${googleCompensationCadencePattern})?`,
+      "iu",
+    ),
+  );
+
+  return match ? normalizeWhitespace(match[0]) : "";
+}
+
+function hasGoogleBaseCompensationContext(segment) {
+  return (
+    hasBaseCompensationContext(segment) ||
+    /\bcompensation\s+for\s+(?:this|the)\s+(?:role|position)\b.*\b(?:is|being|ranges?|range|from|between)\b/iu.test(
+      segment,
+    )
+  );
+}
+
+function getExplicitGoogleCompensationFromPostingContent(lines) {
+  for (const segment of getSentenceLikeSegments(lines.join("\n"))) {
+    if (!hasGoogleBaseCompensationContext(segment)) {
+      continue;
+    }
+
+    const compensation =
+      getCompensationFromLine(segment) || getUsdCompensationRangeFromSegment(segment);
+    const hasAllowedContextDespiteBenefits =
+      hasExplicitBaseCompensationLabel(segment) ||
+      /\b(?:salary|base pay|base salary|pay range)\b/iu.test(segment);
+
+    if (
+      compensation &&
+      (!hasBenefitsOnlyCompensationContext(segment) || hasAllowedContextDespiteBenefits)
+    ) {
+      return compensation;
+    }
+  }
+
+  return "";
 }
 
 function getCurrencylessLinkedInCompensationFromSegment(segment) {
@@ -586,10 +749,17 @@ function isLocationLine(line) {
   return Boolean(detectCityStateLocation([line]) || detectStreetAddressLocation([line]));
 }
 
+function isDescriptionSentenceLine(line) {
+  const words = normalizeWhitespace(line).split(/\s+/u);
+  return /[.!?]$/u.test(line) && words.length >= 6;
+}
+
 function isCompanyCandidateLine(line) {
   return (
     Boolean(line) &&
     !isNoisyLine(line) &&
+    !isDescriptionSentenceLine(line) &&
+    !isGoogleJobsSummaryLine(line) &&
     !isLocationLine(line) &&
     !getCompensationFromLine(line) &&
     !getEmploymentTypeFromLine(line)
@@ -600,7 +770,9 @@ function isRoleCandidateLine(line) {
   return (
     Boolean(line) &&
     !isNoisyLine(line) &&
+    !isDescriptionSentenceLine(line) &&
     !isLinkedInLogoLine(line) &&
+    !isGoogleJobsSummaryLine(line) &&
     !isLocationLine(line) &&
     !getCompensationFromLine(line) &&
     !getEmploymentTypeFromLine(line) &&
@@ -688,6 +860,53 @@ function extractLinkedInFields(rawText) {
   };
 }
 
+function isGoogleJobsContentHeading(line) {
+  return /^(?:job highlights|job description|qualifications|responsibilities|benefits)$/iu.test(line);
+}
+
+function extractGoogleJobsFields(rawText) {
+  const lines = getCleanLines(rawText).map(normalizeBulletSeparators);
+  const summaryIndex = lines.findIndex(isGoogleJobsSummaryLine);
+  const summary = summaryIndex >= 0 ? getGoogleJobsSummaryParts(lines[summaryIndex]) : null;
+
+  if (!summary) {
+    return {
+      company_name: "",
+      role_title: "",
+      location: "",
+      compensation: "",
+      employment_type: "",
+      notes: buildGenericNotes(rawText),
+    };
+  }
+
+  const normalizedCompany = normalizeComparisonValue(summary.company_name);
+  const titleCandidates = lines
+    .slice(0, summaryIndex)
+    .filter(
+      (line) =>
+        isRoleCandidateLine(line) && normalizeComparisonValue(line) !== normalizedCompany,
+    );
+  const roleTitle = titleCandidates.at(-1) || "";
+  const postSummaryLines = lines.slice(summaryIndex + 1);
+  const contentStartIndex = postSummaryLines.findIndex(isGoogleJobsContentHeading);
+  const metadataLines =
+    contentStartIndex >= 0 ? postSummaryLines.slice(0, contentStartIndex) : postSummaryLines;
+  const postingContentLines =
+    contentStartIndex >= 0 ? postSummaryLines.slice(contentStartIndex) : [];
+
+  return {
+    company_name: summary.company_name,
+    role_title: normalizeTitle(roleTitle),
+    location: summary.location,
+    compensation:
+      getGoogleMetadataCompensation(metadataLines) ||
+      getExplicitGoogleCompensationFromPostingContent(postingContentLines),
+    employment_type: detectEmploymentType(metadataLines),
+    notes: buildGenericNotes(rawText),
+  };
+}
+
 function getGenericFallbackFields(rawText) {
   const headerFields = extractHeaderFields(rawText);
   const headerLines = getHeaderLines(rawText);
@@ -703,8 +922,11 @@ function getGenericFallbackFields(rawText) {
 
   return {
     ...headerFields,
-    company_name: companyName || (hasEnoughUnlabeledHeaderContext ? headerFields.company_name : ""),
+    company_name:
+      companyName || (hasEnoughUnlabeledHeaderContext ? headerFields.company_name : ""),
     role_title: roleTitle || (hasEnoughUnlabeledHeaderContext ? headerFields.role_title : ""),
+    location: headerFields.location,
+    compensation: headerFields.compensation || detectCompensation(headerLines),
     notes: buildGenericNotes(rawText),
   };
 }
@@ -721,7 +943,13 @@ export function buildSmartCaptureReviewState(captureData) {
       ? sourceKey
       : "generic";
 
-  let extractedFields = getGenericFallbackFields(rawText);
+  let extractedFields;
+
+  if (extractionFormat === "googlejobs") {
+    extractedFields = extractGoogleJobsFields(rawText);
+  } else {
+    extractedFields = getGenericFallbackFields(rawText);
+  }
 
   if (extractionFormat === "indeed") {
     extractedFields = { ...extractedFields, ...extractIndeedFields(rawText) };

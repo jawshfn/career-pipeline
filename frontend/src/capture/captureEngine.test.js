@@ -182,6 +182,61 @@ describe("Capture Engine contract", () => {
     expect(result.needs_review).not.toContain("location");
   });
 
+  it("marks only the missing Google Jobs role as needing review", () => {
+    const result = buildCaptureResult({
+      rawText: [
+        "Northstar Maritime Industries · Newport News, VA · via ExampleJobs",
+        "6 days ago",
+        "180K–200K a year",
+        "Full-time",
+        "No Degree Mentioned",
+        "Apply on ExampleJobs",
+        "Job highlights",
+        "Job description",
+        "Northstar Maritime Industries in Newport News, VA, seeks a Data Analyst 2 to consolidate data sets.",
+      ].join("\n"),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(result.detected_format).toBe("googlejobs");
+    expect(result.fields.company_name.value).toBe("Northstar Maritime Industries");
+    expect(result.fields.role_title.value).toBe("");
+    expect(result.fields.location.value).toBe("Newport News, VA");
+    expect(result.fields.compensation.value).toBe("180K–200K a year");
+    expect(result.needs_review).toEqual(["role_title"]);
+    expect(result.needs_review).not.toContain("compensation");
+    expect(result.needs_review).not.toContain("location");
+  });
+
+  it("does not require review when a complete Google Jobs title header is present", () => {
+    const result = buildCaptureResult({
+      rawText: [
+        "Northstar Fleet Command",
+        "RESOURCE DATA ANALYST",
+        "Northstar Fleet Command · Portsmouth, VA · via ExampleBoard",
+        "9 hours ago",
+        "180K–200K a year",
+        "Part-time",
+        "Apply on ExampleBoard",
+        "Job highlights",
+        "Responsibilities",
+        "You will provide data analysis support.",
+      ].join("\n"),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(result.detected_format).toBe("googlejobs");
+    expect(result.capture_method).toBe("deterministic-text");
+    expect(result.fields.company_name.value).toBe("Northstar Fleet Command");
+    expect(result.fields.role_title.value).toBe("RESOURCE DATA ANALYST");
+    expect(result.fields.location.value).toBe("Portsmouth, VA");
+    expect(result.fields.compensation.value).toBe("180K–200K a year");
+    expect(result.fields.employment_type.value).toBe("Part-time");
+    expect(result.needs_review).toEqual([]);
+  });
+
   it("does not mutate the parser output while constructing a contract", () => {
     const reviewState = buildSmartCaptureReviewState(indeedCaptureData);
     const reviewStateBefore = structuredClone(reviewState);

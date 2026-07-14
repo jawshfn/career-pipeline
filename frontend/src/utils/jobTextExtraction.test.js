@@ -49,6 +49,23 @@ function buildIndeedRawText({
     .join("\n");
 }
 
+function buildGoogleJobsRawText({
+  contentLines = [],
+  metadataLines = [],
+  roleTitle = "Data Analyst",
+} = {}) {
+  return [
+    "Northstar Analytics LLC",
+    roleTitle,
+    "Northstar Analytics LLC · Hampton, VA · via ExampleJobs",
+    ...metadataLines,
+    "Job highlights",
+    ...contentLines,
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+}
+
 describe("buildSmartCaptureReviewState", () => {
   it("preserves the manually selected source and normalizes the explicit job link", () => {
     const reviewData = buildSmartCaptureReviewState({
@@ -837,6 +854,243 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.source).toBe("Other");
     expect(reviewData.location).toBe("Remote");
     expect(reviewData.notes).toMatch(/^Pasted job text:/u);
+  });
+
+  it("parses a complete Google Jobs copy using only the pre-summary title header", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Northstar Fleet Command",
+        "Data Analyst Business 🏆",
+        "Northstar Fleet Command · Portsmouth, VA · via LinkedIn",
+        "9 hours ago",
+        "180K–200K a year",
+        "Part-time",
+        "Health insurance",
+        "Apply on ExampleBoard",
+        "Apply directly on AnotherBoard",
+        "Job highlights",
+        "Identified by Example Search from the original job post",
+        "Benefits",
+        "Salary: $180,000 - 200,000 per year",
+        "Responsibilities",
+        "You will provide data analysis support.",
+        "Job description",
+        "Summary",
+        "You will serve as a RESOURCE DATA ANALYST in the Production Resources Department.",
+        "Learn more at https://example.invalid/job/123.",
+      ].join("\n"),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.parser_format).toBe("googlejobs");
+    expect(reviewData.company_name).toBe("Northstar Fleet Command");
+    expect(reviewData.role_title).toBe("Data Analyst Business 🏆");
+    expect(reviewData.location).toBe("Portsmouth, VA");
+    expect(reviewData.compensation).toBe("180K–200K a year");
+    expect(reviewData.employment_type).toBe("Part-time");
+    expect(reviewData.source).toBe("Other");
+    expect(reviewData.job_link).toBe("");
+    expect(reviewData.notes).toMatch(/^Pasted job text:/u);
+  });
+
+  it("parses a reversed Google Jobs title header", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "RESOURCE DATA ANALYST",
+        "Northstar Fleet Command",
+        "Northstar Fleet Command · Portsmouth, VA · via ExampleBoard",
+        "9 hours ago",
+      ].join("\n"),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.parser_format).toBe("googlejobs");
+    expect(reviewData.company_name).toBe("Northstar Fleet Command");
+    expect(reviewData.role_title).toBe("RESOURCE DATA ANALYST");
+    expect(reviewData.location).toBe("Portsmouth, VA");
+  });
+
+  it("leaves the Google Jobs role blank when the pre-summary title header is missing", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Northstar Fleet Command · Portsmouth, VA · via ExampleBoard",
+        "9 hours ago",
+        "180K–200K a year",
+        "Part-time",
+        "Health insurance",
+        "Apply on ExampleBoard",
+        "Job highlights",
+        "No Degree Mentioned",
+        "Qualifications",
+        "Responsibilities",
+        "You will serve as a RESOURCE DATA ANALYST in the Production Resources Department.",
+        "Benefits",
+      ].join("\n"),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.parser_format).toBe("googlejobs");
+    expect(reviewData.company_name).toBe("Northstar Fleet Command");
+    expect(reviewData.role_title).toBe("");
+    expect(reviewData.location).toBe("Portsmouth, VA");
+    expect(reviewData.compensation).toBe("180K–200K a year");
+    expect(reviewData.employment_type).toBe("Part-time");
+    expect(reviewData.company_name).not.toBe("ExampleBoard");
+    expect(reviewData.role_title).not.toBe("Health insurance");
+    expect(reviewData.role_title).not.toBe("Apply on ExampleBoard");
+    expect(reviewData.role_title).not.toBe("Job highlights");
+    expect(reviewData.role_title).not.toBe("Qualifications");
+    expect(reviewData.role_title).not.toBe("Responsibilities");
+    expect(reviewData.role_title).not.toBe("Benefits");
+  });
+
+  it("supports Google Jobs summary lines with Remote as the location", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Example Systems • Remote • via ExampleBoard",
+        "Today",
+        "Full-time",
+        "Job description",
+        "Support operations reporting.",
+      ].join("\n"),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.parser_format).toBe("googlejobs");
+    expect(reviewData.company_name).toBe("Example Systems");
+    expect(reviewData.location).toBe("Remote");
+    expect(reviewData.role_title).toBe("");
+  });
+
+  it.each([
+    ["180K–200K a year", "180K–200K a year"],
+    ["180K - 200K per year", "180K - 200K per year"],
+    ["$180K–$200K a year", "$180K–$200K a year"],
+    ["$180,000–$200,000 annually", "$180,000–$200,000 annually"],
+    ["180000 to 200000 per year", "180000 to 200000 per year"],
+    ["$35–$42 an hour", "$35–$42 an hour"],
+    ["35–42 USD per hour", "35–42 USD per hour"],
+  ])("extracts %s from compact Google Jobs metadata", (compensationLine, expected) => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildGoogleJobsRawText({
+        metadataLines: [compensationLine, "Full-time", "Apply on ExampleJobs"],
+      }),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.parser_format).toBe("googlejobs");
+    expect(reviewData.compensation).toBe(expected);
+    expect(reviewData.employment_type).toBe("Full-time");
+  });
+
+  it.each([
+    "180K–200K",
+    "10+ years",
+    "10-25% travel required",
+    "GS-07",
+    "GS-09",
+    "9 hours ago",
+    "180 days",
+    "500 other jobs",
+    "30 applications",
+    "12-31-59",
+  ])("does not treat %s as Google Jobs compensation", (metadataLine) => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildGoogleJobsRawText({
+        metadataLines: [metadataLine, "Full-time", "Apply on ExampleJobs"],
+      }),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.compensation).toBe("");
+  });
+
+  it("uses an explicit posting-content salary when compact metadata has no compensation", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildGoogleJobsRawText({
+        metadataLines: ["Full-time", "Apply on ExampleJobs"],
+        contentLines: [
+          "Benefits",
+          "Salary: $180,000 - 200,000 per year",
+          "Salary: $180,000 - 200,000 per year",
+          "Job description",
+          "The annual salary range for this role is USD 180,000 to USD 200,000.",
+        ],
+      }),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.compensation).toBe("$180,000 - 200,000 per year");
+  });
+
+  it.each([
+    [
+      "The annual salary range for this role is USD 180,000 to USD 200,000.",
+      "USD 180,000 to USD 200,000",
+    ],
+    [
+      "Compensation for this position ranges from $90,000 to $110,000.",
+      "$90,000 to $110,000",
+    ],
+  ])("extracts explicit Google Jobs posting compensation from %s", (salaryLine, expected) => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildGoogleJobsRawText({
+        metadataLines: ["Full-time", "Apply on ExampleJobs"],
+        contentLines: ["Job description", salaryLine],
+      }),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.compensation).toBe(expected);
+  });
+
+  it("ignores bonus-only and benefit-only amounts in Google Jobs posting content", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: buildGoogleJobsRawText({
+        metadataLines: ["Full-time", "Apply on ExampleJobs"],
+        contentLines: [
+          "Benefits",
+          "Eligible employees may receive a $1,000 referral bonus.",
+          "The role includes a $500 home-office stipend.",
+          "Responsibilities",
+          "Manage a $250,000 project budget.",
+        ],
+      }),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.compensation).toBe("");
+  });
+
+  it("rejects standalone relative age, action, badge, and heading lines as generic required fields", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Today",
+        "Yesterday",
+        "2 hours ago",
+        "45 minutes ago",
+        "Apply on ExampleJobs",
+        "Easy Apply",
+        "No Degree Mentioned",
+        "Job highlights",
+        "Full job description",
+        "Example Company seeks a Data Analyst 2 to support operations reporting.",
+      ].join("\n"),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.company_name).toBe("");
+    expect(reviewData.role_title).toBe("");
   });
 
   it("does not invent company or role fields from sparse text", () => {
