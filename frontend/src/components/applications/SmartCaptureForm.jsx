@@ -46,6 +46,7 @@ function getResumeVersionLabel(resumeVersion) {
 function getParserFormatLabel(format) {
   const labels = {
     generic: "Generic",
+    googlejobs: "Google Jobs",
     indeed: "Indeed",
     linkedin: "LinkedIn",
     ziprecruiter: "ZipRecruiter",
@@ -126,7 +127,7 @@ function SmartCaptureDetailField({ fieldName, reviewData, updateReviewField }) {
   );
 }
 
-function SmartCaptureReviewSummary({ reviewData }) {
+export function SmartCaptureReviewSummary({ reviewData }) {
   const reviewStatusItems = getReviewStatusItems(reviewData);
 
   return (

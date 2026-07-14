@@ -843,6 +843,28 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.notes).toMatch(/^Job description/u);
   });
 
+  it("detects ZipRecruiter-style text without a posting-age line", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "AI Content Reviewer",
+        "Example Localization",
+        "Hampton, VA",
+        "$29/hr",
+        "Full-time",
+        "Job description",
+        "Review content quality.",
+      ].join("\n"),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.parser_format).toBe("ziprecruiter");
+    expect(reviewData.company_name).toBe("Example Localization");
+    expect(reviewData.role_title).toBe("AI Content Reviewer");
+    expect(reviewData.compensation).toBe("$29/hr");
+    expect(reviewData.employment_type).toBe("Full-time");
+  });
+
   it("falls back to generic parsing for generic pasted text", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: "Company: Fictional Labs\nRole title: Research Assistant\nLocation: Remote\nHelp with research operations.",
@@ -854,6 +876,24 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.source).toBe("Other");
     expect(reviewData.location).toBe("Remote");
     expect(reviewData.notes).toMatch(/^Pasted job text:/u);
+  });
+
+  it("keeps long sentence-like generic company and role names eligible", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Senior Director of Global Customer Experience Operations.",
+        "Northstar Center for Advanced Research and Applied Systems.",
+        "Remote",
+      ].join("\n"),
+      jobLink: "",
+      source: "Other",
+    });
+
+    expect(reviewData.parser_format).toBe("generic");
+    expect(reviewData.role_title).toBe("Senior Director of Global Customer Experience Operations.");
+    expect(reviewData.company_name).toBe(
+      "Northstar Center for Advanced Research and Applied Systems.",
+    );
   });
 
   it("parses a complete Google Jobs copy using only the pre-summary title header", () => {

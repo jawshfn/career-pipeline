@@ -14,6 +14,16 @@ Implemented now:
 
 The deterministic parser remains the extraction implementation. The Capture Engine only normalizes the result into a stable contract and converts it back to the current flat review state.
 
+Recognized deterministic parser formats are:
+
+- `generic`
+- `googlejobs`
+- `indeed`
+- `linkedin`
+- `ziprecruiter`
+
+Parser format remains separate from capture method. For example, Google Jobs text uses `capture_method: "deterministic-text"` with `detected_format: "googlejobs"`.
+
 ## Planned Methods
 
 These are future options, not implemented features:

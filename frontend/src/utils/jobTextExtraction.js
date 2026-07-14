@@ -162,7 +162,7 @@ function detectParserFormat(rawText) {
     normalizedLines.slice(0, 10).some((line) => Boolean(getCompensationFromLine(line))),
   ].filter(Boolean).length;
 
-  if (zipRecruiterClues >= 2 && normalizedLines.some(isPostedAgoLine)) {
+  if (zipRecruiterClues >= 2) {
     return "ziprecruiter";
   }
 
@@ -749,16 +749,10 @@ function isLocationLine(line) {
   return Boolean(detectCityStateLocation([line]) || detectStreetAddressLocation([line]));
 }
 
-function isDescriptionSentenceLine(line) {
-  const words = normalizeWhitespace(line).split(/\s+/u);
-  return /[.!?]$/u.test(line) && words.length >= 6;
-}
-
 function isCompanyCandidateLine(line) {
   return (
     Boolean(line) &&
     !isNoisyLine(line) &&
-    !isDescriptionSentenceLine(line) &&
     !isGoogleJobsSummaryLine(line) &&
     !isLocationLine(line) &&
     !getCompensationFromLine(line) &&
@@ -770,7 +764,6 @@ function isRoleCandidateLine(line) {
   return (
     Boolean(line) &&
     !isNoisyLine(line) &&
-    !isDescriptionSentenceLine(line) &&
     !isLinkedInLogoLine(line) &&
     !isGoogleJobsSummaryLine(line) &&
     !isLocationLine(line) &&
