@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Career Pipeline Greenhouse Detector",
+  "version": "0.1.0",
+  "description": "Experimental one-click detection of Greenhouse configuration on the current page.",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_title": "Check this page for Greenhouse",
+    "default_popup": "popup.html"
+  }
+}
