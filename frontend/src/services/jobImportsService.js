@@ -25,3 +25,16 @@ export async function importGreenhouseCaptureResult({ jobLink, source }) {
     source,
   });
 }
+
+export async function importCustomGreenhouseCaptureResult({ jobLink, source }) {
+  const normalizedJobLink = normalizeExplicitJobLink(jobLink);
+  const importedJob = await jobImportsApi.importCustomGreenhouseJob({
+    jobUrl: normalizedJobLink,
+  });
+
+  return buildGreenhouseCaptureResult({
+    importedJob,
+    jobLink: normalizedJobLink,
+    source,
+  });
+}

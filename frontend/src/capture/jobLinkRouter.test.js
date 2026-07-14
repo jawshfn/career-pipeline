@@ -16,15 +16,15 @@ describe("routeJobLink", () => {
     });
   });
 
-  it("recognizes positive gh_jid values on custom career domains without routing them to the API", () => {
-    expect(routeJobLink("https://careers.fictional.test/openings?gh_jid=4714073005")).toEqual({
-      normalized_job_link: "https://careers.fictional.test/openings?gh_jid=4714073005",
-      route: JOB_LINK_ROUTES.LINK_ONLY,
+  it("routes one positive gh_jid on a custom HTTPS career domain to discovery", () => {
+    expect(routeJobLink("https://careers.fictional.test/openings?gh_jid=123456")).toEqual({
+      normalized_job_link: "https://careers.fictional.test/openings?gh_jid=123456",
+      route: JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY,
       link_kind: JOB_LINK_KINDS.GREENHOUSE_CUSTOM_CANDIDATE,
     });
   });
 
-  it.each(["", "0", "-5", "5.5", "abc"]) (
+  it.each(["", "0", "-5", "5.5", "+5", "abc", "1234567890123456789"]) (
     "does not classify gh_jid=%s as a custom Greenhouse candidate",
     (ghJid) => {
       expect(routeJobLink(`https://careers.fictional.test/openings?gh_jid=${ghJid}`)).toMatchObject({
@@ -33,6 +33,19 @@ describe("routeJobLink", () => {
       });
     },
   );
+
+  it.each([
+    "http://careers.fictional.test/openings?gh_jid=123456",
+    "https://careers.fictional.test/openings?gh_jid=123456&gh_jid=654321",
+    "https://boards.greenhouse.io/not-a-hosted-path?gh_jid=123456",
+    "https://www.linkedin.com/jobs/view/123?gh_jid=123456",
+    "https://jobs.indeed.com/viewjob?gh_jid=123456",
+    "https://www.ziprecruiter.com/jobs/fictional?gh_jid=123456",
+  ])("keeps invalid custom-discovery candidates in the link-only flow: %s", (jobLink) => {
+    expect(routeJobLink(jobLink)).toMatchObject({
+      route: JOB_LINK_ROUTES.LINK_ONLY,
+    });
+  });
 
   it.each([
     ["https://www.linkedin.com/jobs/view/123", JOB_LINK_KINDS.LINKEDIN],

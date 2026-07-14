@@ -4,7 +4,11 @@ import { DEFAULT_APPLICATION_SOURCE, SOURCE_OPTIONS } from "../../constants/appl
 import { captureResultToReviewState } from "../../capture/captureEngine.js";
 import { buildLinkOnlyCaptureResult } from "../../capture/linkOnlyAdapter.js";
 import { JOB_LINK_KINDS, JOB_LINK_ROUTES, routeJobLink } from "../../capture/jobLinkRouter.js";
-import { getDemoGreenhouseLink, importGreenhouseCaptureResult } from "../../services/jobImportsService.js";
+import {
+  getDemoGreenhouseLink,
+  importCustomGreenhouseCaptureResult,
+  importGreenhouseCaptureResult,
+} from "../../services/jobImportsService.js";
 import CaptureReviewForm, { getCapturedReviewFields } from "./CaptureReviewForm.jsx";
 
 export const initialJobLinkCaptureState = {
@@ -51,6 +55,10 @@ export function getTextCaptureFallbackValues(captureData) {
 }
 
 export function getLinkFallbackMessage(routeResult, captureState) {
+  if (routeResult?.route === JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY) {
+    return "Career Pipeline could not verify the Greenhouse configuration for this career page. Continue with the link or paste the job text.";
+  }
+
   if (captureState === JOB_LINK_CAPTURE_STATES.IMPORT_ERROR) {
     return "This hosted Greenhouse job could not be imported. You can continue with the link or paste the job text.";
   }
@@ -143,14 +151,22 @@ export default function JobLinkCaptureForm({
 
     setCaptureState(JOB_LINK_CAPTURE_STATES.IMPORTING);
     try {
-      const captureResult = await importGreenhouseCaptureResult({
+      const importCaptureResult =
+        nextRouteResult.route === JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY
+          ? importCustomGreenhouseCaptureResult
+          : importGreenhouseCaptureResult;
+      const captureResult = await importCaptureResult({
         jobLink: nextRouteResult.normalized_job_link,
         source: captureData.source,
       });
       showReview(captureResult);
     } catch (importError) {
       setCaptureState(JOB_LINK_CAPTURE_STATES.IMPORT_ERROR);
-      setMessage(importError.message || "Could not import this Greenhouse job. Try again or continue with the link.");
+      setMessage(
+        nextRouteResult.route === JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY
+          ? ""
+          : importError.message || "Could not import this Greenhouse job. Try again or continue with the link.",
+      );
     }
   }
 

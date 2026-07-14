@@ -64,10 +64,13 @@ describe("JobLinkCaptureForm", () => {
   it("uses specific informational fallback copy without treating unsupported providers as invalid", () => {
     expect(
       getLinkFallbackMessage(
-        { link_kind: JOB_LINK_KINDS.GREENHOUSE_CUSTOM_CANDIDATE },
-        JOB_LINK_CAPTURE_STATES.UNSUPPORTED,
+        {
+          route: "greenhouse-custom-discovery",
+          link_kind: JOB_LINK_KINDS.GREENHOUSE_CUSTOM_CANDIDATE,
+        },
+        JOB_LINK_CAPTURE_STATES.IMPORT_ERROR,
       ),
-    ).toContain("may use Greenhouse");
+    ).toContain("could not verify the Greenhouse configuration");
     expect(
       getLinkFallbackMessage({ link_kind: JOB_LINK_KINDS.LINKEDIN }, JOB_LINK_CAPTURE_STATES.UNSUPPORTED),
     ).toContain("Automatic LinkedIn link import is not available");

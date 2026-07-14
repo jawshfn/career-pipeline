@@ -3,6 +3,7 @@ import { normalizeExplicitJobLink } from "../utils/jobLinks.js";
 
 export const JOB_LINK_ROUTES = {
   GREENHOUSE_API: "greenhouse-api",
+  GREENHOUSE_CUSTOM_DISCOVERY: "greenhouse-custom-discovery",
   LINK_ONLY: "link-only",
 };
 
@@ -15,7 +16,8 @@ export const JOB_LINK_KINDS = {
   ZIPRECRUITER: "ziprecruiter",
 };
 
-const POSITIVE_INTEGER_PATTERN = /^[1-9][0-9]*$/;
+const POSITIVE_INTEGER_PATTERN = /^[1-9][0-9]{0,17}$/;
+const GREENHOUSE_HOSTNAMES = new Set(["boards.greenhouse.io", "job-boards.greenhouse.io"]);
 
 function hostnameMatches(hostname, domain) {
   return hostname === domain || hostname.endsWith(`.${domain}`);
@@ -77,11 +79,17 @@ export function routeJobLink(rawJobLink) {
     // Only the strict hosted Greenhouse parser is eligible for an API import.
   }
 
-  const greenhouseJobId = url.searchParams.get("gh_jid");
-  if (greenhouseJobId && POSITIVE_INTEGER_PATTERN.test(greenhouseJobId)) {
+  const greenhouseJobIds = url.searchParams.getAll("gh_jid");
+  if (
+    url.protocol === "https:" &&
+    !GREENHOUSE_HOSTNAMES.has(url.hostname.toLowerCase()) &&
+    getCommonLinkKind(url.hostname.toLowerCase()) === JOB_LINK_KINDS.OTHER &&
+    greenhouseJobIds.length === 1 &&
+    POSITIVE_INTEGER_PATTERN.test(greenhouseJobIds[0])
+  ) {
     return {
       normalized_job_link: normalizedJobLink,
-      route: JOB_LINK_ROUTES.LINK_ONLY,
+      route: JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY,
       link_kind: JOB_LINK_KINDS.GREENHOUSE_CUSTOM_CANDIDATE,
     };
   }

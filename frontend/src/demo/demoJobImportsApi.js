@@ -35,3 +35,11 @@ export function importGreenhouseJob({ normalizedJobLink }) {
     new Error("Live Greenhouse imports are available in the local full-stack version. Use the demo link or paste the job text."),
   );
 }
+
+export function importCustomGreenhouseJob() {
+  return Promise.reject(
+    new Error(
+      "Custom Greenhouse discovery is available in the local full-stack version. Continue with the link or paste the job text.",
+    ),
+  );
+}

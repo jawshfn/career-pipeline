@@ -10,3 +10,13 @@ export function importGreenhouseJob({ boardToken, jobId }) {
     "Could not import this Greenhouse job. Try again or paste the job text.",
   );
 }
+
+export function importCustomGreenhouseJob({ jobUrl }) {
+  return apiPost(
+    "/api/job-imports/greenhouse/custom",
+    {
+      job_url: jobUrl,
+    },
+    "Career Pipeline could not verify the Greenhouse configuration for this career page.",
+  );
+}

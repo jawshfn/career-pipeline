@@ -11,6 +11,7 @@ from app.services.greenhouse import (
     fetch_greenhouse_job,
     greenhouse_description_to_text,
 )
+from app.services.greenhouse_discovery import GreenhouseDiscoveryError
 
 
 def run_async(coro):
@@ -283,6 +284,118 @@ def test_greenhouse_import_endpoint_rejects_non_integer_job_ids(client):
     response = client.post(
         "/api/job-imports/greenhouse",
         json={"board_token": "northstaranalytics", "job_id": True},
+    )
+
+    assert response.status_code == 422
+
+
+def test_custom_greenhouse_import_endpoint_reuses_provider_response_without_persisting(
+    client,
+    db_session,
+    monkeypatch,
+):
+    async def fake_discovery(job_url: str):
+        assert job_url == "https://careers.fictional.test/openings?gh_jid=123456"
+        return GreenhouseProviderJob(
+            provider="greenhouse",
+            job_id=123456,
+            title="Operations Engineer",
+            company_name="Fictional Systems",
+            location="Richmond, VA",
+            description_text="Fictional provider description.",
+            absolute_url="https://boards.greenhouse.io/fictionalsystems/jobs/123456",
+            pay_ranges=[
+                {
+                    "title": "Salary Range",
+                    "currency_type": "USD",
+                    "min_cents": 8000000,
+                    "max_cents": 10000000,
+                }
+            ],
+        )
+
+    monkeypatch.setattr("app.routers.job_imports.discover_and_fetch_custom_greenhouse_job", fake_discovery)
+
+    response = client.post(
+        "/api/job-imports/greenhouse/custom",
+        json={"job_url": "https://careers.fictional.test/openings?gh_jid=123456"},
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "provider": "greenhouse",
+        "job_id": 123456,
+        "title": "Operations Engineer",
+        "company_name": "Fictional Systems",
+        "location": "Richmond, VA",
+        "description_text": "Fictional provider description.",
+        "absolute_url": "https://boards.greenhouse.io/fictionalsystems/jobs/123456",
+        "pay_ranges": [
+            {
+                "title": "Salary Range",
+                "currency_type": "USD",
+                "min_cents": 8000000,
+                "max_cents": 10000000,
+            }
+        ],
+    }
+    assert "board_token" not in response.json()
+    assert "html" not in response.json()
+    assert db_session.query(Application).count() == 0
+
+
+def test_custom_greenhouse_endpoint_maps_discovery_errors_without_leaking_internals(client, monkeypatch):
+    outcomes = [
+        ("invalid-custom-url", 400),
+        ("no-verified-board", 422),
+        ("ambiguous-board", 422),
+        ("safe-fetch-failed", 502),
+    ]
+
+    for code, status_code in outcomes:
+        async def fake_discovery(job_url: str, current_code=code, current_status=status_code):
+            raise GreenhouseDiscoveryError(
+                "Could not verify this fictional career page.",
+                code=current_code,
+                status_code=current_status,
+            )
+
+        monkeypatch.setattr("app.routers.job_imports.discover_and_fetch_custom_greenhouse_job", fake_discovery)
+        response = client.post(
+            "/api/job-imports/greenhouse/custom",
+            json={"job_url": "https://careers.fictional.test/openings?gh_jid=123456"},
+        )
+
+        assert response.status_code == status_code
+        assert response.json() == {"detail": "Could not verify this fictional career page."}
+        assert "board_token" not in response.text
+        assert "html" not in response.text
+
+
+def test_custom_greenhouse_endpoint_preserves_existing_provider_error_statuses(client, monkeypatch):
+    outcomes = [
+        (GREENHOUSE_NOT_FOUND_ERROR, 404),
+        (GREENHOUSE_IMPORT_ERROR, 502),
+    ]
+
+    for message, status_code in outcomes:
+        async def fake_discovery(job_url: str, current_message=message, current_status=status_code):
+            raise GreenhouseImportError(current_message, status_code=current_status)
+
+        monkeypatch.setattr("app.routers.job_imports.discover_and_fetch_custom_greenhouse_job", fake_discovery)
+        response = client.post(
+            "/api/job-imports/greenhouse/custom",
+            json={"job_url": "https://careers.fictional.test/openings?gh_jid=123456"},
+        )
+
+        assert response.status_code == status_code
+        assert response.json() == {"detail": message}
+
+
+def test_custom_greenhouse_endpoint_bounds_job_url_length(client):
+    response = client.post(
+        "/api/job-imports/greenhouse/custom",
+        json={"job_url": "https://careers.fictional.test/" + "x" * 2048},
     )
 
     assert response.status_code == 422

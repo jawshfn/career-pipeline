@@ -11,7 +11,7 @@ The current UI still shows the same Add Job modes and editable review fields. Ca
 Implemented now:
 
 - `deterministic-text` - wraps the existing deterministic Paste Job Text parser in `frontend/src/utils/jobTextExtraction.js`.
-- `greenhouse-api` - imports structured published job data from hosted Greenhouse job-board links through the Career Pipeline backend.
+- `greenhouse-api` - imports structured published job data from hosted or verified custom Greenhouse job links through the Career Pipeline backend.
 - `link-only` - creates an editable review from a valid user-entered job link without inferring job fields.
 
 The deterministic parser remains the extraction implementation. The Capture Engine only normalizes the result into a stable contract and converts it back to the current flat review state.
@@ -37,20 +37,20 @@ Transport:
 - Local mode: Career Pipeline frontend -> Career Pipeline backend -> Greenhouse Job Board API.
 - Demo mode: one fictional in-memory Greenhouse fixture.
 
-Only hosted Greenhouse links are supported for automatic import:
+Hosted Greenhouse links are imported directly:
 
 - `https://boards.greenhouse.io/{board_token}/jobs/{job_id}`
 - `https://job-boards.greenhouse.io/{board_token}/jobs/{job_id}`
 
-Custom employer domains are not automatically imported yet because they do not reliably expose the Greenhouse board token required by the public API.
+Custom employer career links can be imported only when they contain one explicit positive `gh_jid` and their safely fetched HTML exposes exactly one board token through strong Greenhouse embed or configuration evidence. The discovered token and explicit job ID are then sent to the official Greenhouse Job Board API. Tokens are never guessed from employer names, domains, or URL slugs.
 
 Job Link routing is local and deterministic:
 
 - Hosted Greenhouse links use the Greenhouse API import.
 - Other valid public job links can continue as a link-only review or transfer to Paste Job Text.
-- A custom employer link with a positive `gh_jid` parameter is identified as a possible custom Greenhouse link, but it is not fetched or imported.
+- A custom employer link with one positive `gh_jid` uses best-effort Greenhouse discovery from strong configuration evidence present in the original public HTML. Failed or ambiguous discovery returns to the same link-only and Paste Job Text fallbacks.
 
-There is no arbitrary employer webpage fetching. Link-only capture preserves the explicit Job Link and user-selected Source, leaves company and role blank for review, and never invents job fields.
+There is no arbitrary public-fetch endpoint or generic employer-page parser. Custom discovery uses the isolated safe HTML service only for Greenhouse configuration evidence and never returns fetched HTML. Some custom career sites expose that configuration only after browser JavaScript runs; Career Pipeline does not execute page JavaScript or fetch arbitrary subresources, so those sites fall back to link-only capture or Paste Job Text. A `gh_jid` alone never identifies a board token. Demo mode performs no custom employer-page fetch. Link-only capture preserves the explicit Job Link and user-selected Source, leaves company and role blank for review, and never invents job fields.
 
 ## Planned Methods
 
@@ -114,7 +114,7 @@ Only `company_name` and `role_title` are required review fields. Missing optiona
 - Source remains user-selected.
 - Greenhouse URL import still requires user review before saving.
 - Career Pipeline does not submit applications to Greenhouse.
-- Greenhouse URL import uses the documented Greenhouse Job Board API through an allowlisted backend endpoint; it does not scrape pages or use browser automation.
+- Greenhouse URL import uses the documented Greenhouse Job Board API. Custom discovery retrieves one bounded public HTML page through the SSRF-protected fetch service only to verify board configuration; it does not execute JavaScript, fetch subresources, crawl pages, or use browser automation.
 - Field values must not be invented.
 - Evidence must be truthful; unknown evidence remains `null`.
 - Unsupported optional fields do not block saving.

@@ -167,6 +167,10 @@ class GreenhouseImportRequest(BaseModel):
     job_id: StrictInt = Field(gt=0)
 
 
+class CustomGreenhouseImportRequest(BaseModel):
+    job_url: str = Field(min_length=1, max_length=2048)
+
+
 class GreenhousePayRangeRead(BaseModel):
     title: str | None = None
     currency_type: str | None = None
