@@ -13,7 +13,7 @@ import {
   normalizeOptionalText,
   normalizeRequiredText,
 } from "../../utils/applicationPayloads.js";
-import { buildSmartCaptureReviewState } from "../../utils/jobTextExtraction.js";
+import { buildCaptureResult, captureResultToReviewState } from "../../capture/captureEngine.js";
 import { findSimilarOpportunities } from "../../utils/opportunityDuplicates.js";
 import DuplicateOpportunityWarning from "./DuplicateOpportunityWarning.jsx";
 
@@ -183,7 +183,8 @@ export default function SmartCaptureForm({
   function handlePrepareReview(event) {
     event.preventDefault();
     setError("");
-    const nextReviewData = buildSmartCaptureReviewState(captureData);
+    const captureResult = buildCaptureResult(captureData);
+    const nextReviewData = captureResultToReviewState(captureResult);
     setReviewData(nextReviewData);
     setCapturedReviewFields({
       location: hasReviewValue(nextReviewData.location),
