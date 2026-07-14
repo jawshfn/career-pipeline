@@ -94,6 +94,85 @@ describe("buildSmartCaptureReviewState", () => {
     expect(Object.values(reviewData)).not.toContain("- job post");
   });
 
+  it("keeps Indeed location header-bound instead of treating description remote text as a location", () => {
+    const withHeaderLocation = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        location: "West Point, VA 23181",
+        jobDetailsLines: ["Full-time"],
+        descriptionLines: ["Support remote access for regional users."],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+    const withoutHeaderLocation = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        location: "",
+        jobDetailsLines: ["Full-time"],
+        descriptionLines: ["Provide remote support for regional users."],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+    const remoteHeader = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        location: "Remote",
+        jobDetailsLines: ["Full-time"],
+        descriptionLines: ["Support local systems."],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(withHeaderLocation.location).toBe("West Point, VA 23181");
+    expect(withoutHeaderLocation.location).toBe("");
+    expect(remoteHeader.location).toBe("Remote");
+  });
+
+  it("normalizes supported Indeed remote state and city headers without scanning descriptions", () => {
+    const cases = [
+      ["Massachusetts - Remote", "Remote in Massachusetts"],
+      ["Illinois - Remote", "Remote in Illinois"],
+      ["Remote - Massachusetts", "Remote in Massachusetts"],
+      ["Remote in Massachusetts", "Remote in Massachusetts"],
+      ["Cleveland, OH 44101 - Remote", "Remote in Cleveland, OH 44101"],
+      ["West Point, VA 23181", "West Point, VA 23181"],
+    ];
+
+    for (const [location, expectedLocation] of cases) {
+      const reviewData = buildSmartCaptureReviewState({
+        rawText: [
+          "Fictional Project Manager 1 - job post",
+          "Northstar Analytical Services",
+          location,
+          "Job details",
+          "Full-time",
+          "Full job description",
+          "This role supports distributed customer projects.",
+        ].join("\n"),
+        jobLink: "",
+        source: "Indeed",
+      });
+
+      expect(reviewData.parser_format).toBe("indeed");
+      expect(reviewData.company_name).toBe("Northstar Analytical Services");
+      expect(reviewData.role_title).toBe("Fictional Project Manager 1");
+      expect(reviewData.location).toBe(expectedLocation);
+      expect(reviewData.employment_type).toBe("Full-time");
+    }
+
+    const noHeaderLocation = buildSmartCaptureReviewState({
+      rawText: buildIndeedRawText({
+        location: "",
+        jobDetailsLines: ["Full-time"],
+        descriptionLines: ["The technician supports remote users throughout Massachusetts."],
+      }),
+      jobLink: "",
+      source: "Indeed",
+    });
+
+    expect(noHeaderLocation.location).toBe("");
+  });
+
   it("preserves the manually selected source and normalizes the explicit job link", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: "Example Analytics\nJunior Data Analyst\nAbout the job\nBuild reports.",

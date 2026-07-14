@@ -67,6 +67,55 @@ test("normalizes responsive side-panel headers onto one line before adding the j
   }
 });
 
+test("keeps a single-line Indeed header location even when the description mentions remote access", () => {
+  const result = detectIndeedJobPage(snapshot({
+    descriptions: [{
+      title: "Fictional Technician",
+      company: "Northstar Systems",
+      location: "West Point, VA 23181",
+      metadata: "Full-time",
+      description: "This fictional role provides remote access support for local users. ".repeat(3),
+    }],
+  }));
+  assert.match(result.raw_text, /Northstar Systems\nWest Point, VA 23181\nJob details/);
+});
+
+test("formats supported Indeed remote header regions without changing the job content", () => {
+  const cases = [
+    ["Massachusettsâ€¢Remote", "Remote in Massachusetts"],
+    ["Illinois Â· Remote", "Remote in Illinois"],
+    ["Massachusetts - Remote", "Remote in Massachusetts"],
+    ["Remote - Illinois", "Remote in Illinois"],
+    ["Remote in Massachusetts", "Remote in Massachusetts"],
+    ["Cleveland, OH 44101â€¢Remote", "Remote in Cleveland, OH 44101"],
+    ["Remote", "Remote"],
+    ["West Point, VA 23181", "West Point, VA 23181"],
+    ["Information desk - Remote", "Information desk - Remote"],
+    ["", ""],
+  ];
+
+  for (const [location, expectedLocation] of cases) {
+    const originalDescription = "First paragraph is unchanged.\n\nSecond paragraph is unchanged. ".repeat(2);
+    const result = detectIndeedJobPage(snapshot({
+      descriptions: [{
+        title: "Fictional Field Coordinator",
+        company: "Northstar Services",
+        location,
+        metadata: "Full-time",
+        description: originalDescription,
+      }],
+    }));
+
+    const lines = result.raw_text.split("\n");
+    assert.equal(lines[0], "Fictional Field Coordinator - job post");
+    assert.equal(lines[1], "Northstar Services");
+    assert.equal(lines[2], expectedLocation || "Job details");
+    assert.doesNotMatch(result.raw_text, /(?:â€¢|Â·)/u);
+    assert.match(result.raw_text, /First paragraph is unchanged\.\n\nSecond paragraph is unchanged\./);
+    assert.doesNotThrow(() => structuredClone(result));
+  }
+});
+
 test("runs after source reconstruction without a module closure and returns plain data", () => {
   const isolatedDetector = Function(`"use strict"; return (${detectIndeedJobPage.toString()});`)();
   const result = isolatedDetector(snapshot());

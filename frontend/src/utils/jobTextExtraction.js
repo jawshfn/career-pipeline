@@ -50,6 +50,16 @@ const noisyHeaderLines = new Set([
   "view more about working here",
 ]);
 
+const US_STATE_NAMES = new Set([
+  "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware",
+  "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa", "kansas", "kentucky",
+  "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota", "mississippi", "missouri",
+  "montana", "nebraska", "nevada", "new hampshire", "new jersey", "new mexico", "new york",
+  "north carolina", "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island",
+  "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont", "virginia", "washington",
+  "west virginia", "wisconsin", "wyoming", "district of columbia",
+]);
+
 function normalizeWhitespace(value) {
   return value.replace(/\s+/gu, " ").trim();
 }
@@ -341,6 +351,50 @@ function detectCompensation(lines) {
   }
 
   return "";
+}
+
+function detectHeaderLocationHint(headerLines) {
+  const remoteRegionLocation = headerLines.map(getIndeedRemoteRegionLocation).find(Boolean);
+  if (remoteRegionLocation) {
+    return remoteRegionLocation;
+  }
+
+  const cityStateLocation = detectCityStateLocation(headerLines);
+  if (cityStateLocation) {
+    return cityStateLocation;
+  }
+
+  return headerLines.map(getWorkArrangementFromLine).find(Boolean) || "";
+}
+
+function normalizeIndeedLocationLine(line) {
+  return normalizeWhitespace(String(line || ""))
+    .replace(/\s*(?:\u00b7|\u2022|\u00c2\u00b7|\u00e2\u20ac\u00a2)\s*/gu, " - ")
+    .replace(/\s*(?:\u2013|\u2014)\s*/gu, " - ")
+    .replace(/\s+-\s+/gu, " - ");
+}
+
+function isSupportedIndeedRemoteRegion(value) {
+  const region = normalizeWhitespace(String(value || ""));
+  return (
+    US_STATE_NAMES.has(region.toLowerCase()) ||
+    /^[A-Z]{2}$/u.test(region) ||
+    /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/u.test(region)
+  );
+}
+
+function getIndeedRemoteRegionLocation(line) {
+  const location = normalizeIndeedLocationLine(line);
+  if (/^remote$/iu.test(location)) {
+    return "Remote";
+  }
+
+  const remoteInMatch = location.match(/^remote\s+in\s+(.+)$/iu);
+  const remoteFirstMatch = location.match(/^remote\s+-\s+(.+)$/iu);
+  const remoteLastMatch = location.match(/^(.+)\s+-\s+remote$/iu);
+  const region = remoteInMatch?.[1] || remoteFirstMatch?.[1] || remoteLastMatch?.[1] || "";
+
+  return isSupportedIndeedRemoteRegion(region) ? `Remote in ${normalizeWhitespace(region)}` : "";
 }
 
 const googleCompensationCadencePattern =
@@ -831,10 +885,11 @@ function extractIndeedFields(rawText) {
   const headerLines = getHeaderLines(rawText);
   const streetAddressLocation = detectStreetAddressLocation(headerLines);
   const indeedWorkArrangement = headerLines.map(getWorkArrangementFromLine).find(Boolean) || "";
+  const headerLocation = detectHeaderLocationHint(headerLines);
   const indeedBonuses = getIndeedDescriptionBonuses(rawText);
   const indeedLocation = streetAddressLocation
     ? appendWorkArrangement(streetAddressLocation, indeedWorkArrangement)
-    : baseFields.location;
+    : headerLocation;
 
   return {
     ...baseFields,

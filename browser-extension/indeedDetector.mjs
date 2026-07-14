@@ -11,9 +11,22 @@ export function detectIndeedJobPage(snapshotOverride = null) {
   ];
   const TITLE_SELECTORS = ['[data-testid="jobsearch-JobInfoHeader-title"]', "h1"];
   const COMPANY_SELECTORS = ['[data-testid="inlineHeader-companyName"]', '[data-company-name="true"]'];
-  const LOCATION_SELECTORS = ['[data-testid="jobsearch-JobInfoHeader-companyLocation"]', '[data-testid="job-location"]'];
+  const LOCATION_SELECTORS = [
+    '[data-testid="jobsearch-JobInfoHeader-companyLocation"]',
+    '[data-testid="inlineHeader-companyLocation"]',
+    '[data-testid="job-location"]',
+  ];
   const METADATA_SELECTORS = ["#salaryInfoAndJobType", '[data-testid="jobsearch-JobMetadataHeader"]'];
   const OUTLINE_ATTRIBUTE = "data-career-pipeline-indeed-outline";
+  const US_STATE_NAMES = new Set([
+    "alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware",
+    "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa", "kansas", "kentucky",
+    "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota", "mississippi", "missouri",
+    "montana", "nebraska", "nevada", "new hampshire", "new jersey", "new mexico", "new york",
+    "north carolina", "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island",
+    "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont", "virginia", "washington",
+    "west virginia", "wisconsin", "wyoming", "district of columbia",
+  ]);
 
   function normalizeText(value) {
     return String(value || "")
@@ -30,6 +43,34 @@ export function detectIndeedJobPage(snapshotOverride = null) {
       .replace(/\u00a0/gu, " ")
       .replace(/\s+/gu, " ")
       .trim();
+  }
+
+  function normalizeLocationSeparators(value) {
+    return normalizeSingleLineField(value)
+      .replace(/\s*(?:\u00b7|\u2022|\u00c2\u00b7|\u00e2\u20ac\u00a2)\s*/gu, " - ")
+      .replace(/\s*(?:\u2013|\u2014)\s*/gu, " - ")
+      .replace(/\s+-\s+/gu, " - ");
+  }
+
+  function isSupportedRemoteRegion(value) {
+    const region = normalizeSingleLineField(value);
+    return (
+      US_STATE_NAMES.has(region.toLowerCase()) ||
+      /^[A-Z]{2}$/u.test(region) ||
+      /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/u.test(region)
+    );
+  }
+
+  function formatIndeedLocation(value) {
+    const location = normalizeLocationSeparators(value);
+    if (!location || /^remote$/iu.test(location)) return location ? "Remote" : "";
+
+    const remoteInMatch = location.match(/^remote\s+in\s+(.+)$/iu);
+    const remoteFirstMatch = location.match(/^remote\s+-\s+(.+)$/iu);
+    const remoteLastMatch = location.match(/^(.+)\s+-\s+remote$/iu);
+    const region = remoteInMatch?.[1] || remoteFirstMatch?.[1] || remoteLastMatch?.[1] || "";
+
+    return isSupportedRemoteRegion(region) ? `Remote in ${normalizeSingleLineField(region)}` : location;
   }
 
   function normalizeParagraphs(value) {
@@ -137,7 +178,7 @@ export function detectIndeedJobPage(snapshotOverride = null) {
       .trim();
     if (!roleTitle) return controlledResult("no-current-job");
     const lines = [titleWithJobPostSuffix(roleTitle)];
-    [normalizeSingleLineField(candidate.company), normalizeSingleLineField(candidate.location)].filter(Boolean).forEach((value) => lines.push(value));
+    [normalizeSingleLineField(candidate.company), formatIndeedLocation(candidate.location)].filter(Boolean).forEach((value) => lines.push(value));
     lines.push("Job details", ...getMetadataLines(candidate.metadata), "Full job description", description);
     const rawText = lines.filter(Boolean).join("\n");
     if (rawText.length > MAX_CAPTURE_LENGTH) return controlledResult("capture-too-large");
