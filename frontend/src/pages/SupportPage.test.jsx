@@ -29,6 +29,7 @@ describe("SupportPage", () => {
     );
 
     expect(markup).toContain("Help &amp; Feedback");
+    expect(markup).toContain("PursuitHQ");
     expect(markup).toContain("Fastest way to add a supported job");
     expect(markup).toContain("app-nav-item-active");
   });
@@ -74,11 +75,11 @@ describe("SupportPage", () => {
   it("prefills the capture-neutral report template", () => {
     const decodedHref = decodeURIComponent(getSupportMailtoHref());
 
-    expect(SUPPORT_MAILTO_SUBJECT).toBe("Career Pipeline Capture Issue");
+    expect(SUPPORT_MAILTO_SUBJECT).toBe("PursuitHQ Capture Issue");
     expect(SUPPORT_MAILTO_BODY).toContain("Capture method");
     expect(SUPPORT_MAILTO_BODY).toContain("Job board or source");
     expect(SUPPORT_MAILTO_BODY).toContain("Job link or page type");
-    expect(SUPPORT_MAILTO_BODY).toContain("What Career Pipeline captured");
+    expect(SUPPORT_MAILTO_BODY).toContain("What PursuitHQ captured");
     expect(SUPPORT_MAILTO_BODY).toContain("What I expected");
     expect(SUPPORT_MAILTO_BODY).toContain("Optional sanitized screenshot or copied posting text");
     expect(decodedHref).toContain("Capture method");
@@ -90,7 +91,7 @@ describe("SupportPage", () => {
     expect(reportTemplate).toContain(`To: ${SUPPORT_EMAIL}`);
     expect(reportTemplate).toContain(`Subject: ${SUPPORT_MAILTO_SUBJECT}`);
     expect(reportTemplate).toContain("Job board or source");
-    expect(reportTemplate).toContain("What Career Pipeline captured");
+    expect(reportTemplate).toContain("What PursuitHQ captured");
   });
 
   it("copies the support email with accessible success feedback", async () => {

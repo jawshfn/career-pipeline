@@ -1,6 +1,6 @@
-# Career Pipeline Backend
+# PursuitHQ Backend
 
-FastAPI backend for the Career Pipeline local-first prototype. It provides SQLite persistence, SQLAlchemy models, Pydantic schemas, demo data seeding, and pytest coverage for the core job-search workflows.
+FastAPI backend for the PursuitHQ local-first prototype. It provides SQLite persistence, SQLAlchemy models, Pydantic schemas, demo data seeding, and pytest coverage for the core job-search workflows.
 
 The backend is used by the full local app. It is not hosted by GitHub Pages; the Pages version is a static frontend demo with fictional in-memory data.
 

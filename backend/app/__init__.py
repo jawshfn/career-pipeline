@@ -1,1 +1,1 @@
-"""Career Pipeline backend package."""
+"""PursuitHQ backend package."""

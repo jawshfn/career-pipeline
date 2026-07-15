@@ -1,8 +1,10 @@
-# Career Pipeline
+# PursuitHQ
 
 [![CI](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml)
 
-Career Pipeline is a local-first full-stack job-search workspace for capturing opportunities, tracking applications, managing follow-ups, and reviewing progress.
+Capture jobs fast. Stay on top of every next step.
+
+PursuitHQ is a local-first job-search workspace for quickly capturing opportunities, organizing applications, managing follow-ups, and understanding what is working.
 
 It is built as a practical product prototype: fast capture when a job looks interesting, richer detail when context matters, and clear daily surfaces for follow-ups, status changes, resumes, red flags, and activity history.
 
@@ -14,7 +16,7 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 
 ## Product Highlights
 
-- **Browser Capture:** recommended local workflow for supported Greenhouse, Indeed, and LinkedIn pages; opens an editable review without manually copying the posting.
+- **Browser Capture:** recommended local workflow for verified Greenhouse identifiers, bounded Indeed and LinkedIn text capture, and experimental signed-in ZipRecruiter selected-job capture; opens an editable review without manually copying the posting.
 - **Add Job:** choose Manual Entry, Paste Job Link, or deterministic Paste Job Text review.
 - **Applications:** search, filter, sort, and open detailed records across Active, Closed, and All views.
 - **Status Board:** scan opportunities by stage and update statuses quickly.
@@ -25,11 +27,13 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 
 ## Browser Capture - Recommended Local Workflow
 
-The experimental, locally loaded Career Pipeline Capture Helper is the fastest local workflow when you are already viewing a supported job. It supports verified Greenhouse identifiers, bounded Indeed text capture, LinkedIn search-results current-job panels, and LinkedIn standalone job pages. After you confirm a detection, it opens an editable review; nothing is saved automatically.
+The experimental, locally loaded PursuitHQ Capture companion is the fastest local workflow when you are already viewing a supported job. It supports verified Greenhouse identifiers, bounded Indeed text capture, supported LinkedIn job layouts, and experimental signed-in ZipRecruiter selected-job capture. After you confirm a detection, it opens an editable review; nothing is saved automatically.
 
 Browser Capture requires the local frontend and FastAPI backend. It is not Chrome Web Store distributed, and the GitHub Pages demo does not support the helper. The helper reads only the active page after you click it, then transfers only the approved bounded job data to the local app.
 
 See the [Browser Extension Guide](browser-extension/README.md) for local setup and privacy boundaries.
+
+The repository and GitHub Pages URL retain the existing `career-pipeline` path.
 
 ## Structured Job Link Import
 
@@ -119,7 +123,7 @@ npm run build
 
 ## Project Status
 
-Career Pipeline is a working local-first prototype, not a production SaaS app. The GitHub Pages site is a static portfolio demo with reset-on-refresh sample data.
+PursuitHQ is a working local-first prototype, not a production SaaS app. The GitHub Pages site is a static portfolio demo with reset-on-refresh sample data.
 
 Implemented: Greenhouse and Lever structured link imports, best-effort custom Greenhouse discovery, experimental locally loaded Greenhouse browser identifier capture, Indeed and LinkedIn browser text capture, one-time local transfer, and editable review with no autosave.
 

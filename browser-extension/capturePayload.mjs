@@ -55,7 +55,7 @@ export function buildCapturePayload(detectionResult) {
   const originalJobLink = getOriginalJobLink(detectionResult.original_job_link);
 
   if (typeof boardToken !== "string" || !BOARD_TOKEN_PATTERN.test(boardToken) || !jobId || !originalJobLink) {
-    throw new Error("The detected Greenhouse job could not be prepared for Career Pipeline.");
+    throw new Error("The detected Greenhouse job could not be prepared for PursuitHQ.");
   }
 
   return {
@@ -71,7 +71,7 @@ export function encodeCapturePayload(payload) {
   const encodedPayload = base64UrlEncode(JSON.stringify(payload));
 
   if (!encodedPayload || encodedPayload.length > MAX_ENCODED_CAPTURE_LENGTH) {
-    throw new Error("The Career Pipeline capture payload is too large.");
+    throw new Error("The PursuitHQ capture payload is too large.");
   }
 
   return encodedPayload;

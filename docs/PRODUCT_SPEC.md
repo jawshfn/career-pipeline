@@ -2,7 +2,7 @@
 
 ## Product Vision
 
-Career Pipeline is a job-search command center that helps applicants capture opportunities quickly, track applications consistently, manage follow-ups, and understand which sources and resume strategies are producing progress.
+PursuitHQ is a job-search command center that helps applicants capture opportunities quickly, track applications consistently, manage follow-ups, and understand which sources and resume strategies are producing progress.
 
 The product should feel like a practical daily workspace, not a data-entry chore. Add Job stays lightweight, while richer details, risk tracking, follow-up actions, and metrics live in focused views.
 
@@ -10,7 +10,7 @@ The product should feel like a practical daily workspace, not a data-entry chore
 
 Job seekers often apply across many platforms and conversations at once. Important details get scattered across browser tabs, email, spreadsheets, job boards, recruiter calls, and notes apps. As volume grows, users lose track of application status, follow-up timing, resume variants, next actions, warning signs, and which sources are actually creating momentum.
 
-Career Pipeline centralizes that activity into a simple workflow that supports fast capture first and structured tracking second.
+PursuitHQ centralizes that activity into a simple workflow that supports fast capture first and structured tracking second.
 
 ## Target Users
 
@@ -162,7 +162,7 @@ Editable areas include company name, role title, job link, source, status, resum
 
 Status appears in the compact summary strip on focused edit tabs. Applied date, follow-up date, and next action live in Follow-up. Saved date is read-only Added to tracker metadata in Overview. Company, role, source, job link, location, compensation, employment type, and Personal Notes live in Job Details. Job Posting is a reading-first editable snapshot that remains optional and may be added later. Resume version and prep notes live in Resume & Prep. Existing notes are not automatically migrated into Job Posting Snapshot.
 
-`date_saved` means the date the job was added to Career Pipeline. `date_applied` means the date the user actually submitted the application. Changing status to Applied or later can default an empty Applied Date, but existing Applied Date values are not automatically overwritten or cleared.
+`date_saved` means the date the job was added to PursuitHQ. `date_applied` means the date the user actually submitted the application. Changing status to Applied or later can default an empty Applied Date, but existing Applied Date values are not automatically overwritten or cleared.
 
 The Resume & Prep tab stores resume assignment and preparation notes. Prep notes can include recruiter context, assessment details, talking points, or questions to ask without becoming a shared contacts table or full CRM.
 

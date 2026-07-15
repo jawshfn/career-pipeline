@@ -41,7 +41,7 @@ test("adds the active employer URL only to a successful browser handoff", async 
   assert.deepEqual(result, detectedResult);
 });
 
-test("allows only a valid detected result to open Career Pipeline", async () => {
+test("allows only a valid detected result to open PursuitHQ", async () => {
   const create = async (details) => {
     create.calls.push(details);
   };

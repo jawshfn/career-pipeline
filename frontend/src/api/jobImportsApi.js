@@ -17,7 +17,7 @@ export function importCustomGreenhouseJob({ jobUrl }) {
     {
       job_url: jobUrl,
     },
-    "Career Pipeline could not verify the Greenhouse configuration for this career page.",
+    "PursuitHQ could not verify the Greenhouse configuration for this career page.",
   );
 }
 

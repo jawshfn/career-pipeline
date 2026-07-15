@@ -43,7 +43,7 @@ class BrowserTextCaptureStore:
         current_time = now or datetime.now(UTC)
         self._clean_expired(current_time)
         if len(self._captures) >= MAX_ACTIVE_CAPTURES:
-            raise BrowserTextCaptureError("Career Pipeline cannot receive another browser capture right now.", status_code=503)
+            raise BrowserTextCaptureError("PursuitHQ cannot receive another browser capture right now.", status_code=503)
 
         token = secrets.token_urlsafe(32)
         self._captures[token] = BrowserTextCapture(

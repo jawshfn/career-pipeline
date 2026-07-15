@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Career Pipeline Capture Helper",
+  "name": "PursuitHQ Capture",
   "version": "0.3.0",
-  "description": "Capture supported job pages into the local Career Pipeline review workflow.",
+  "description": "Capture supported job pages into the local PursuitHQ review workflow.",
   "permissions": ["activeTab", "scripting"],
   "host_permissions": ["http://127.0.0.1:8000/*"],
   "action": {
-    "default_title": "Capture this job in Career Pipeline",
+    "default_title": "Capture this job in PursuitHQ",
     "default_popup": "popup.html"
   }
 }

@@ -1,6 +1,6 @@
 # Development Guide
 
-Career Pipeline should be built as a serious product prototype with a small, reliable core. The goal is to make the job-search workflow faster and clearer before adding advanced integrations.
+PursuitHQ should be built as a serious product prototype with a small, reliable core. The goal is to make the job-search workflow faster and clearer before adding advanced integrations.
 
 ## Development Principles
 
@@ -191,7 +191,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 
 - Load the Greenhouse helper unpacked and reload it after extension changes.
 - Ordinary HTTP or HTTPS pages report no supported Greenhouse job when no match exists; protected Chrome pages report that inspection is unavailable.
-- A verified Greenhouse detection exposes Open in Career Pipeline and opens a new local tab.
+- A verified Greenhouse detection exposes Open in PursuitHQ and opens a new local tab.
 - The local app receives an editable Paste Job Link review; it does not save automatically.
 - Confirm the manifest remains limited to `activeTab` and `scripting`, with no network transmission or persistent storage of employer-page data.
 
@@ -231,7 +231,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 
 ### Applied Dates And Detail Fields
 
-- `date_saved` represents when the job was added to Career Pipeline.
+- `date_saved` represents when the job was added to PursuitHQ.
 - `date_applied` represents when the user actually applied.
 - Changing status from Saved to Applied or later defaults an empty Applied Date to today.
 - Existing Applied Date is not overwritten by status changes.

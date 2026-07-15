@@ -112,13 +112,13 @@ function renderResult(result) {
     appendText("result-detail", result.role_title);
     if (result.company_name) appendText("result-detail", result.company_name);
     appendText("result-detail", `${result.description_character_count.toLocaleString()} characters captured`);
-    appendText("local-capture-guidance", "Career Pipeline must be running locally at http://localhost:5173.");
-    appendButton("Open in Career Pipeline", async () => {
+    appendText("local-capture-guidance", "PursuitHQ must be running locally at http://localhost:5173.");
+    appendButton("Open in PursuitHQ", async () => {
       try {
         await openBrowserTextCareerPipeline(result);
         window.close();
       } catch {
-        appendText("result-detail", "Career Pipeline could not receive this job. Confirm the local backend is running.");
+        appendText("result-detail", "PursuitHQ could not receive this job. Confirm the local backend is running.");
       }
     });
     return;
@@ -131,14 +131,14 @@ function renderResult(result) {
     const evidence = result.evidence_types.map((type) => evidenceLabels[type] || "Greenhouse configuration");
     appendText("result-detail", `Evidence: ${evidence.join(", ")}`);
     if (canOpenCareerPipeline(result)) {
-      appendText("local-capture-guidance", "Career Pipeline must be running locally at http://localhost:5173.");
-      appendButton("Open in Career Pipeline", async () => {
+      appendText("local-capture-guidance", "PursuitHQ must be running locally at http://localhost:5173.");
+      appendButton("Open in PursuitHQ", async () => {
         try {
           await openCareerPipeline(result);
           window.close();
         } catch (error) {
-          console.error("Career Pipeline Greenhouse Detector handoff error", error);
-          appendText("result-detail", "Career Pipeline could not be opened. Confirm the local app is running.");
+          console.error("PursuitHQ Greenhouse Detector handoff error", error);
+          appendText("result-detail", "PursuitHQ could not be opened. Confirm the local app is running.");
         }
       });
     }
@@ -149,19 +149,19 @@ function renderResult(result) {
     "not-indeed": "This page is not a supported Indeed job page.",
     "not-linkedin": "This page is not a supported LinkedIn job page.",
     "not-ziprecruiter": "This page is not a supported ZipRecruiter selected job.",
-    "no-current-job": "Career Pipeline could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
-    "ambiguous-job": "Career Pipeline could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
+    "no-current-job": "PursuitHQ could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
+    "ambiguous-job": "PursuitHQ could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
     "capture-too-large": "This Indeed job is too large to capture. Copy the job posting and use Paste Job Text.",
     "no-supported-job-id": "This page does not expose one supported Greenhouse job ID.",
     "no-verified-board": "No verified Greenhouse board was detected on this page.",
     "ambiguous-board": "Multiple Greenhouse boards were detected, so no result was selected.",
     "unsupported-page": "Chrome cannot inspect this protected browser page.",
     "extension-error": result?.error_code === "indeed-injection-failed"
-      ? "Career Pipeline could not inspect this Indeed page. Reload the extension and try again."
+      ? "PursuitHQ could not inspect this Indeed page. Reload the extension and try again."
       : result?.error_code === "linkedin-injection-failed"
-      ? "Career Pipeline could not inspect this LinkedIn page. Reload the extension and try again."
+      ? "PursuitHQ could not inspect this LinkedIn page. Reload the extension and try again."
       : result?.error_code === "ziprecruiter-injection-failed"
-      ? "Career Pipeline could not inspect this ZipRecruiter page. Reload the extension and try again."
+      ? "PursuitHQ could not inspect this ZipRecruiter page. Reload the extension and try again."
       : "The detector encountered an unexpected error. Check the extension error details.",
   };
   const providerLabel = result?.provider === "linkedin" ? "LinkedIn" : result?.provider === "indeed" ? "Indeed" : result?.provider === "ziprecruiter" ? "ZipRecruiter" : "";
@@ -214,7 +214,7 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
     }
     return provider === "linkedin" || provider === "indeed" || provider === "ziprecruiter" ? { ...detectionResult, provider } : detectionResult;
   } catch (error) {
-    console.error("Career Pipeline Greenhouse Detector inspection error", error);
+    console.error("PursuitHQ Greenhouse Detector inspection error", error);
     const classification = classifyInspectionError(error);
     return providerForUrl(activeTab?.url) && classification.status === "extension-error"
       ? { ...classification, error_code: `${providerForUrl(activeTab.url)}-injection-failed` }

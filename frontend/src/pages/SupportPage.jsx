@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 export const SUPPORT_EMAIL = "nunezjf2001@gmail.com";
-export const SUPPORT_MAILTO_SUBJECT = "Career Pipeline Capture Issue";
+export const SUPPORT_MAILTO_SUBJECT = "PursuitHQ Capture Issue";
 export const SUPPORT_MAILTO_BODY = [
   "Capture method:",
   "",
@@ -9,7 +9,7 @@ export const SUPPORT_MAILTO_BODY = [
   "",
   "Job link or page type:",
   "",
-  "What Career Pipeline captured:",
+  "What PursuitHQ captured:",
   "",
   "What I expected:",
   "",
@@ -92,11 +92,11 @@ export default function SupportPage() {
           </div>
         </div>
         <ol className="support-workflow-list">
-          <li>Start the local Career Pipeline backend and frontend.</li>
+          <li>Start the local PursuitHQ backend and frontend.</li>
           <li>Open one supported job posting.</li>
-          <li>Click Career Pipeline Capture Helper.</li>
+          <li>Click PursuitHQ Capture.</li>
           <li>Confirm the detected job in the popup.</li>
-          <li>Select Open in Career Pipeline.</li>
+          <li>Select Open in PursuitHQ.</li>
           <li>Review the populated fields.</li>
           <li>Explicitly save the opportunity.</li>
         </ol>
@@ -127,7 +127,7 @@ export default function SupportPage() {
             <li>After changing extension source files, reload the unpacked extension in chrome://extensions and hard-refresh the job page.</li>
             <li>Try closing and reopening the extension popup if the page has just changed.</li>
             <li>Use Paste Job Text when the helper cannot confidently identify the current job.</li>
-            <li>A new local Career Pipeline tab opens for each handoff so existing unsaved work is not overwritten.</li>
+            <li>A new local PursuitHQ tab opens for each handoff so existing unsaved work is not overwritten.</li>
           </ul>
         </section>
 
@@ -138,9 +138,9 @@ export default function SupportPage() {
           <ul className="support-checklist">
             <li>Capture runs only after you click the extension, and only the active page is inspected.</li>
             <li>The helper has no persistent browsing monitor.</li>
-            <li>Indeed and LinkedIn text is sent only to the local FastAPI backend after you choose Open in Career Pipeline.</li>
+            <li>Indeed and LinkedIn text is sent only to the local FastAPI backend after you choose Open in PursuitHQ.</li>
             <li>The handoff uses a short-lived, one-time token and captured text is not stored in SQLite before save.</li>
-            <li>The helper makes no Career Pipeline request to LinkedIn or Indeed.</li>
+            <li>The helper makes no PursuitHQ request to LinkedIn or Indeed.</li>
             <li>You must review fields before saving; no application is submitted or saved automatically.</li>
           </ul>
         </section>

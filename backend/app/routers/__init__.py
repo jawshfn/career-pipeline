@@ -1,1 +1,1 @@
-"""API routers for Career Pipeline."""
+"""API routers for PursuitHQ."""

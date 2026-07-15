@@ -134,7 +134,7 @@ export function createDemoState() {
       next_action: "Prepare two project stories for the screen.",
       contact_name: "Jordan Lee",
       contact_info: "jordan.lee@example.com",
-      prep_notes: "Review Career Pipeline architecture and responsive layout polish.",
+      prep_notes: "Review PursuitHQ architecture and responsive layout polish.",
       resume_version_id: 1,
       notes: "Recruiter screen scheduled for a fictional frontend role.",
       updated_at: timestamp(1),

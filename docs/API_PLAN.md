@@ -1,6 +1,6 @@
 # API Plan
 
-Career Pipeline currently exposes a local-first FastAPI JSON API under the `/api` prefix. This document separates implemented endpoints from planned future endpoints so the public docs match the current prototype.
+PursuitHQ currently exposes a local-first FastAPI JSON API under the `/api` prefix. This document separates implemented endpoints from planned future endpoints so the public docs match the current prototype.
 
 ## Implemented API
 

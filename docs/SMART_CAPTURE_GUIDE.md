@@ -2,7 +2,7 @@
 
 Browser Capture is the recommended local workflow when you are already viewing a supported Greenhouse, Indeed, or LinkedIn page. Paste Job Text is the broad deterministic fallback for unsupported pages or layouts, recruiter messages, copied text, and cases where browser detection is uncertain.
 
-Paste Job Text is Career Pipeline's deterministic workflow for copied job postings. It helps you turn text you explicitly paste into editable application fields without AI extraction.
+Paste Job Text is PursuitHQ's deterministic workflow for copied job postings. It helps you turn text you explicitly paste into editable application fields without AI extraction.
 
 Use it from Add Job -> Paste Job Text. Paste the copied posting text, click Prepare review, check the suggested fields, edit anything that looks wrong, then save the opportunity.
 

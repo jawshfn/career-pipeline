@@ -8,7 +8,7 @@ const DEMO_GREENHOUSE_JOB = {
   company_name: "Northstar Analytics",
   location: "Richmond, VA",
   description_text: [
-    "Northstar Analytics is a fictional analytics team used for the Career Pipeline demo.",
+    "Northstar Analytics is a fictional analytics team used for the PursuitHQ demo.",
     "",
     "This role supports operations reporting, data quality checks, and dashboard maintenance for regional teams.",
   ].join("\n"),
@@ -34,7 +34,7 @@ const DEMO_LEVER_JOB = {
   department: "Operations Technology",
   workplace_type: "Hybrid",
   description_text: [
-    "Northstar Platform is a fictional employer used for the Career Pipeline demo.",
+    "Northstar Platform is a fictional employer used for the PursuitHQ demo.",
     "This role supports internal systems, reporting workflows, and cross-functional operations.",
   ].join("\n\n"),
   hosted_url: DEMO_LEVER_LINK,

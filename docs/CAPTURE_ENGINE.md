@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Career Pipeline's capture flow should support multiple ways to create an editable application draft without creating a different review shape for every source. The Capture Engine provides one frontend contract that capture methods can return, then converts that contract into the current Add Job review state.
+PursuitHQ's capture flow should support multiple ways to create an editable application draft without creating a different review shape for every source. The Capture Engine provides one frontend contract that capture methods can return, then converts that contract into the current Add Job review state.
 
 The three user-facing Add Job modes are Manual Entry, Paste Job Link, and Paste Job Text. Browser Capture is the preferred local transport when a supported job is already open; it feeds the same editable review contract. Capture metadata is not displayed to users yet and is not persisted to the database.
 
@@ -11,7 +11,7 @@ The three user-facing Add Job modes are Manual Entry, Paste Job Link, and Paste 
 Implemented now:
 
 - `deterministic-text` - wraps the existing deterministic Paste Job Text parser in `frontend/src/utils/jobTextExtraction.js`.
-- `greenhouse-api` - imports structured published job data from hosted or verified custom Greenhouse job links through the Career Pipeline backend.
+- `greenhouse-api` - imports structured published job data from hosted or verified custom Greenhouse job links through the PursuitHQ backend.
 - `lever-api` - imports a canonical hosted Lever posting through Lever's documented public Postings API.
 - `link-only` - creates an editable review from a valid user-entered job link without inferring job fields.
 
@@ -37,12 +37,12 @@ Lever URL import uses `capture_method: "lever-api"`, `detected_format: "lever"`,
 
 Transport:
 
-- Local mode: Career Pipeline frontend -> Career Pipeline backend -> Greenhouse Job Board API or Lever Postings API.
+- Local mode: PursuitHQ frontend -> PursuitHQ backend -> Greenhouse Job Board API or Lever Postings API.
 - Demo mode: fictional in-memory Greenhouse and Lever fixtures.
 
 The experimental locally loaded Greenhouse detector is a transport bridge rather than a separate capture method. It can hand a successful browser detection to a new local app tab at `http://localhost:5173/`, where the normal `greenhouse-api` capture method runs. The bridge uses a short versioned fragment payload with only the provider, verified board token, verified job ID, and original employer job URL. The frontend clears the fragment immediately, validates it again, preserves the original employer URL as Job Link, defaults Source to Company Website, and opens the normal editable review. The extension itself makes no network request, does not search existing tabs, and does not require broad tab or host permissions. No application is saved automatically. Static demo mode does not perform browser-assisted imports.
 
-The same local helper can capture a confidently detected Indeed or LinkedIn description after the user clicks it. The extension formats a bounded text package, then transfers it only to the local FastAPI backend through a random one-time token. The token is consumed into the existing deterministic Paste Job Text review with the matching Source and original Job Link preserved. LinkedIn supports search-results current-job panels and standalone job pages. The text remains in process memory for at most two minutes, is never put in the URL or SQLite before save, and no Career Pipeline request is made to either job board.
+The same local helper can capture a confidently detected Indeed, LinkedIn, or experimental ZipRecruiter selected-job description after the user clicks it. The extension formats a bounded text package, then transfers it only to the local FastAPI backend through a random one-time token. The token is consumed into the existing deterministic Paste Job Text review with the matching Source and original Job Link preserved. LinkedIn supports search-results current-job panels and standalone job pages. ZipRecruiter currently targets signed-in `/jobs-search` pages with one `lk` selection key and remains pending live QA. The text remains in process memory for at most two minutes, is never put in the URL or SQLite before save, and no PursuitHQ request is made to any job board.
 
 Multiple transports feed the same editable review contract:
 
@@ -69,7 +69,7 @@ Job Link routing is local and deterministic:
 - Other valid public job links can continue as a link-only review or transfer to Paste Job Text.
 - A custom employer link with one positive `gh_jid` uses best-effort Greenhouse discovery from strong configuration evidence present in the original public HTML. Failed or ambiguous discovery returns to the same link-only and Paste Job Text fallbacks.
 
-There is no arbitrary public-fetch endpoint or generic employer-page parser. Custom discovery uses the isolated safe HTML service only for Greenhouse configuration evidence and never returns fetched HTML. Some custom career sites expose that configuration only after browser JavaScript runs; Career Pipeline does not execute page JavaScript or fetch arbitrary subresources, so those sites fall back to link-only capture or Paste Job Text. A `gh_jid` alone never identifies a board token. Demo mode performs no custom employer-page fetch. Link-only capture preserves the explicit Job Link and user-selected Source, leaves company and role blank for review, and never invents job fields.
+There is no arbitrary public-fetch endpoint or generic employer-page parser. Custom discovery uses the isolated safe HTML service only for Greenhouse configuration evidence and never returns fetched HTML. Some custom career sites expose that configuration only after browser JavaScript runs; PursuitHQ does not execute page JavaScript or fetch arbitrary subresources, so those sites fall back to link-only capture or Paste Job Text. A `gh_jid` alone never identifies a board token. Demo mode performs no custom employer-page fetch. Link-only capture preserves the explicit Job Link and user-selected Source, leaves company and role blank for review, and never invents job fields.
 
 ## Planned Methods
 
@@ -131,7 +131,7 @@ Only `company_name` and `role_title` are required review fields. Missing optiona
 - Source remains user-selected.
 - Greenhouse URL import still requires user review before saving.
 - Lever URL import still requires user review before saving and does not submit applications.
-- Career Pipeline does not submit applications to Greenhouse.
+- PursuitHQ does not submit applications to Greenhouse.
 - Greenhouse URL import uses the documented Greenhouse Job Board API. Custom discovery retrieves one bounded public HTML page through the SSRF-protected fetch service only to verify board configuration; it does not execute JavaScript, fetch subresources, crawl pages, or use browser automation.
 - Field values must not be invented.
 - Evidence must be truthful; unknown evidence remains `null`.

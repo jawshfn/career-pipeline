@@ -45,7 +45,7 @@ export function getBrowserCaptureStartupState(windowObject = typeof window === "
 
   return {
     browserCaptureError: hasCaptureIssue
-      ? "Career Pipeline could not verify the browser capture. Paste the job link to continue."
+      ? "PursuitHQ could not verify the browser capture. Paste the job link to continue."
       : "",
     incomingBrowserCapture: captureResult.status === "valid" ? captureResult.payload : null,
     incomingBrowserTextCaptureToken: textCaptureResult.status === "valid" ? textCaptureResult.token : null,

@@ -27,7 +27,7 @@ test("builds a versioned Greenhouse payload with a string job ID", () => {
   });
 });
 
-test("builds a local Career Pipeline fragment URL", () => {
+test("builds a local PursuitHQ fragment URL", () => {
   const url = new URL(buildCareerPipelineCaptureUrl(detectedResult));
   assert.equal(`${url.origin}${url.pathname}`, CAREER_PIPELINE_LOCAL_URL);
   assert.match(url.hash, new RegExp(`^#${CAPTURE_HASH_KEY}=[A-Za-z0-9_-]+$`));

@@ -10,10 +10,10 @@ from .safe_public_html import FetchedHtmlPage, SafePublicHtmlError, fetch_public
 
 CUSTOM_GREENHOUSE_INVALID_MESSAGE = "Paste a valid custom Greenhouse job link."
 CUSTOM_GREENHOUSE_NOT_VERIFIED_MESSAGE = (
-    "Career Pipeline could not verify the Greenhouse configuration for this career page."
+    "PursuitHQ could not verify the Greenhouse configuration for this career page."
 )
 CUSTOM_GREENHOUSE_FETCH_MESSAGE = (
-    "Career Pipeline could not retrieve this career page safely. Continue with the link or paste the job text."
+    "PursuitHQ could not retrieve this career page safely. Continue with the link or paste the job text."
 )
 MAX_GREENHOUSE_JOB_ID_DIGITS = 18
 

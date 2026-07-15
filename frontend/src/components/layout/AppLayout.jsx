@@ -27,7 +27,7 @@ export default function AppLayout({ activePage, children, isDemoMode = false, on
     <div className="app-shell">
       <aside className="app-sidebar" aria-label="Primary">
         <div>
-          <p className="app-brand-kicker">Career Pipeline</p>
+          <p className="app-brand-kicker">PursuitHQ</p>
           <h1>{pageTitles[activePage] || "Applications"}</h1>
         </div>
         <nav className="app-nav" aria-label="Current section">

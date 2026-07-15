@@ -1,6 +1,6 @@
 # Roadmap
 
-Career Pipeline is built in small, product-first increments. The roadmap below records completed work and keeps future work realistic for the current local-first prototype.
+PursuitHQ is built in small, product-first increments. The roadmap below records completed work and keeps future work realistic for the current local-first prototype.
 
 ## Phase 0 — Product Planning
 
@@ -167,7 +167,7 @@ Status: complete through Phase 15.4b
 - Phase 15.3c — Simplify custom discovery to strong structural evidence.
 - Phase 15.3d — Align frontend and backend Greenhouse hostname routing.
 - Phase 15.4a — Add and validate the click-initiated Greenhouse browser-detection prototype.
-- Phase 15.4b — Add the local browser-to-Career Pipeline capture bridge.
+- Phase 15.4b — Add the local browser-to-PursuitHQ capture bridge.
 
 ## Phase 16 - Additional Structured Job Providers
 
@@ -198,6 +198,18 @@ Status: complete through Phase 18.0
 
 - Phase 18.0 — Separate captured posting content from Personal Notes with a dedicated editable Job Posting tab and end-to-end capture integration.
 - Phase 18.1 — Simplify application compensation tracking to one flexible compensation field and retire redundant numeric salary minimum/maximum fields.
+
+## Phase 19 — ZipRecruiter Browser Capture
+
+Status: complete through Phase 19.0
+
+- Phase 19.0 — Add and stabilize bounded signed-in ZipRecruiter selected-job capture with editable review, compensation and employment metadata, rated posting support, and advertised-title preservation.
+
+## Phase 20 — Product Identity
+
+Status: in progress
+
+- Phase 20.0 — Adopt PursuitHQ across public-facing product surfaces while preserving current repository and deployment paths.
 
 ## Later Optional Enhancements
 

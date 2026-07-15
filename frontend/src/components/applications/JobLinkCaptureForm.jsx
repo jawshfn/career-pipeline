@@ -67,7 +67,7 @@ export function getLinkFallbackMessage(routeResult, captureState) {
   }
 
   if (routeResult?.route === JOB_LINK_ROUTES.GREENHOUSE_CUSTOM_DISCOVERY) {
-    return "Career Pipeline could not verify the Greenhouse configuration for this career page. Continue with the link or paste the job text.";
+    return "PursuitHQ could not verify the Greenhouse configuration for this career page. Continue with the link or paste the job text.";
   }
 
   if (captureState === JOB_LINK_CAPTURE_STATES.IMPORT_ERROR) {
@@ -284,7 +284,7 @@ export default function JobLinkCaptureForm({
     <section className="panel quick-add-panel smart-capture-panel" aria-labelledby="job-link-capture-title">
       <div className="section-heading">
         <h2 id="job-link-capture-title">Paste Job Link</h2>
-        <p>Career Pipeline will import supported job pages or help you continue with the link.</p>
+        <p>PursuitHQ will import supported job pages or help you continue with the link.</p>
       </div>
 
       {reviewData ? (

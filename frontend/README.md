@@ -1,6 +1,6 @@
-# Career Pipeline Frontend
+# PursuitHQ Frontend
 
-React/Vite frontend for the Career Pipeline local job-search workspace. Normal local mode talks to the FastAPI backend; demo mode uses bundled fictional in-memory data for GitHub Pages.
+React/Vite frontend for the PursuitHQ local job-search workspace. Normal local mode talks to the FastAPI backend; demo mode uses bundled fictional in-memory data for GitHub Pages.
 
 ## Pages
 

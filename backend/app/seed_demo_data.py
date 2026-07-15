@@ -322,7 +322,7 @@ def run_seed(*, reset: bool = False) -> dict[str, int]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Seed fictional local Career Pipeline demo data.")
+    parser = argparse.ArgumentParser(description="Seed fictional local PursuitHQ demo data.")
     parser.add_argument(
         "--reset",
         action="store_true",
@@ -337,7 +337,7 @@ def main() -> None:
         raise SystemExit(1) from error
 
     print(
-        "Seeded fictional Career Pipeline demo data: "
+        "Seeded fictional PursuitHQ demo data: "
         f"{counts['resume_versions']} resume versions, "
         f"{counts['applications']} applications, "
         f"{counts['activities']} activity entries."
