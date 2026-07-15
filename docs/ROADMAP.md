@@ -215,6 +215,7 @@ Status: in progress
 
 - Phase 20.3 — Refine the Reminders page with independently sized follow-up sections, clearer urgency hierarchy, and polished reminder actions.
 - Phase 20.4 — Refine Dashboard metric layouts, workflow guidance, breakdown panels, and source/resume results across desktop and mobile.
+- Phase 20.5 — Refine the Applications list, filters, table hierarchy, and responsive application cards.
 
 ## Later Optional Enhancements
 

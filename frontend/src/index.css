@@ -933,15 +933,20 @@ a {
 }
 
 .application-view-tabs {
-  display: flex;
+  display: inline-flex;
+  width: fit-content;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 12px;
+  border: 1px solid #cbd6f4;
+  border-radius: 999px;
+  padding: 4px;
+  background: var(--color-primary-soft);
 }
 
 .application-view-tab {
-  border: 1px solid #cbd6d3;
-  border-radius: 999px;
+  border: 1px solid transparent;
+  border-radius: 6px;
   padding: 7px 12px;
   color: var(--color-primary);
   background: #ffffff;
@@ -951,7 +956,7 @@ a {
 
 .application-view-tab:hover {
   border-color: var(--color-primary);
-  background: #eef7f5;
+  background: var(--color-primary-soft);
 }
 
 .application-view-tab.is-active {
@@ -965,6 +970,10 @@ a {
   gap: 12px;
   margin-bottom: 16px;
   min-width: 0;
+}
+
+.applications-panel {
+  container: applications-list / inline-size;
 }
 
 .application-filters-primary,
@@ -982,9 +991,9 @@ a {
 .application-advanced-filters {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 12px;
-  border: 1px solid #d8e4e1;
+  border: 1px solid #cbd6f4;
   border-radius: 8px;
-  background: #f7faf9;
+  background: #f5f7ff;
 }
 
 .application-filters label {
@@ -1821,10 +1830,26 @@ a {
 }
 
 .applications-table th {
-  color: #52605d;
+  border-bottom-color: var(--color-border-strong);
+  color: #40515c;
   font-size: 0.78rem;
+  font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+@media (min-width: 721px) {
+  .applications-table th:nth-child(2),
+  .applications-table td:nth-child(2) {
+    width: 118px;
+    white-space: nowrap;
+  }
+
+  .applications-table th:nth-child(4),
+  .applications-table td:nth-child(4) {
+    min-width: 112px;
+    white-space: nowrap;
+  }
 }
 
 .applications-table td {
@@ -1832,7 +1857,7 @@ a {
 }
 
 .applications-table tbody tr:hover {
-  background: #f7faf9;
+  background: var(--color-primary-surface);
 }
 
 .opportunity-cell {
@@ -1897,6 +1922,14 @@ a {
   color: #8a5a00;
 }
 
+.follow-up-future {
+  color: #245f9f;
+}
+
+.follow-up-none {
+  color: #7a8784;
+}
+
 .notes-indicator-button {
   border: 1px solid #cbd6d3;
   border-radius: 999px;
@@ -1928,6 +1961,12 @@ a {
   background: #fff1ee;
   font-size: 0.8rem;
   font-weight: 800;
+}
+
+.applications-table .red-flag-indicator {
+  border: 1px solid #f0c9c2;
+  color: #913d31;
+  background: #fae5e1;
 }
 
 .status-badge {
@@ -3949,6 +3988,138 @@ textarea:focus-visible {
     padding: 18px;
   }
 }
+
+@container applications-list (max-width: 980px) {
+  .application-filters-primary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .application-advanced-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .application-filter-disclosure,
+  .application-filter-actions {
+    justify-self: stretch;
+    width: 100%;
+  }
+}
+
+@container applications-list (max-width: 620px) {
+  .application-filters-primary > label {
+    grid-column: 1 / -1;
+  }
+
+  .application-advanced-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container applications-list (max-width: 900px) {
+  .table-wrap {
+    overflow: visible;
+  }
+
+  .applications-table,
+  .applications-table tbody,
+  .applications-table tr,
+  .applications-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .applications-table {
+    min-width: 0;
+  }
+
+  .applications-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .applications-table tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  .applications-table td:nth-child(2) {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .applications-table td:nth-child(2) .status-badge {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .applications-table td:nth-child(6) .red-flag-indicator,
+  .applications-table td:nth-child(7) .notes-indicator-button {
+    justify-self: start;
+    width: fit-content;
+  }
+
+  .applications-table td:nth-child(8) .table-action-button {
+    width: 100%;
+  }
+
+  .applications-table tbody tr {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 6px 12px;
+    background: var(--color-surface-raised);
+    box-shadow: 0 5px 16px rgba(23, 32, 42, 0.04);
+  }
+
+  .applications-table th,
+  .applications-table td {
+    border-bottom: 1px solid #edf2f0;
+    padding: 9px 0;
+  }
+
+  .applications-table td {
+    display: grid;
+    grid-template-columns: minmax(88px, 0.7fr) minmax(0, 1.3fr);
+    align-items: start;
+    gap: 12px;
+  }
+
+  .applications-table td::before {
+    content: attr(data-label);
+    color: var(--color-muted);
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .applications-table td:last-child {
+    border-bottom: 0;
+  }
+
+  .opportunity-cell {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .resume-cell {
+    max-width: none;
+  }
+}
+
+@container applications-list (max-width: 420px) {
+  .application-filters-primary {
+    grid-template-columns: 1fr;
+  }
+
+  .application-filter-disclosure,
+  .application-filter-actions {
+    grid-column: auto;
+  }
+}
 /* PursuitHQ shared control foundation */
 .quick-add-mode-tab, .application-view-tab, .detail-tab, .pipeline-filter-button, .follow-up-presets button, .quick-add-disclosure, .secondary-button, .quiet-button, .table-action-button { border-color: var(--color-border-strong); color: var(--color-primary); background: var(--color-surface); }
 .quick-add-mode-tab:hover, .application-view-tab:hover, .detail-tab:hover, .pipeline-filter-button:hover, .follow-up-presets button:hover, .quick-add-disclosure:hover, .secondary-button:hover, .quiet-button:hover, .table-action-button:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-soft); }
@@ -3961,7 +4132,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 .detail-field-group, .pipeline-column, .applications-table th { background: var(--color-surface-subtle); }
 
 /* Add Job experience polish */
-.quick-add-mode-tabs { display: inline-flex; align-self: start; width: fit-content; padding: 3px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface-subtle); }
+.quick-add-mode-tabs { display: inline-flex; align-self: start; width: fit-content; padding: 4px; border: 1px solid #cbd6f4; border-radius: 999px; background: var(--color-primary-soft); }
 .quick-add-mode-tab { border-color: transparent; }
 .quick-add-mode-tab.is-active { box-shadow: 0 2px 6px rgba(18, 24, 43, 0.12); }
 .quick-add-disclosure { display: inline-flex; align-items: center; gap: 7px; }

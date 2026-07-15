@@ -42,7 +42,7 @@ function getFollowUpClassName(value) {
   const followUpDate = parseLocalDateValue(value);
 
   if (!followUpDate) {
-    return "";
+    return " follow-up-none";
   }
 
   const today = parseLocalDateValue(formatLocalDate(new Date()));
@@ -56,7 +56,7 @@ function getFollowUpClassName(value) {
     return " follow-up-due-today";
   }
 
-  return "";
+  return " follow-up-future";
 }
 
 function ClampedTableText({ className = "", value }) {
@@ -115,9 +115,9 @@ function getRedFlagCount(application) {
   ].filter(Boolean).length;
 }
 
-export default function ApplicationsTable({ applications, onOpenDetails, resumeVersions }) {
+export default function ApplicationsTable({ applications, hasFilteredResults = false, onOpenDetails, resumeVersions }) {
   if (applications.length === 0) {
-    return <EmptyApplicationsState />;
+    return <EmptyApplicationsState isFiltered={hasFilteredResults} />;
   }
 
   const resumeVersionsById = new Map(resumeVersions.map((resumeVersion) => [resumeVersion.id, resumeVersion]));
@@ -144,33 +144,33 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
 
             return (
               <tr key={application.id}>
-                <td>
+                <td data-label="Opportunity">
                   <OpportunityCell application={application} />
                 </td>
-                <td>
+                <td data-label="Status">
                   <StatusBadge status={application.status} />
                 </td>
-                <td>
+                <td data-label="Applied">
                   {application.date_applied ? formatDisplayDate(application.date_applied) : (
                     <span className="muted-table-value">-</span>
                   )}
                 </td>
-                <td>
+                <td data-label="Follow-up">
                   <span className={`follow-up-table-value${getFollowUpClassName(application.follow_up_date)}`}>
                     {getFollowUpDisplay(application.follow_up_date)}
                   </span>
                 </td>
-                <td className="resume-cell">
+                <td className="resume-cell" data-label="Resume">
                   <ClampedTableText value={resumeLabel === "-" ? "" : resumeLabel} />
                 </td>
-                <td>
+                <td data-label="Flags">
                   {getRedFlagCount(application) > 0 ? (
                     <span className="red-flag-indicator">{getRedFlagCount(application)}</span>
                   ) : (
                     <span className="muted-table-value">-</span>
                   )}
                 </td>
-                <td>
+                <td data-label="Notes">
                   {hasNotes ? (
                     <button
                       className="notes-indicator-button"
@@ -184,7 +184,7 @@ export default function ApplicationsTable({ applications, onOpenDetails, resumeV
                     <span className="muted-table-value">-</span>
                   )}
                 </td>
-                <td>
+                <td data-label="Actions">
                   <button
                     className="table-action-button"
                     type="button"

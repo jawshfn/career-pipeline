@@ -452,6 +452,7 @@ export default function ApplicationsPage({
         {!isLoading && !error ? (
           <ApplicationsTable
             applications={filteredApplications}
+            hasFilteredResults={viewedApplications.length > 0 && hasActiveFilters}
             onOpenDetails={openDetails}
             resumeVersions={resumeVersions}
           />
