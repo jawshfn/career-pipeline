@@ -804,6 +804,11 @@ function getLinkedInLocationFromMetadataLine(line) {
   return match[1];
 }
 
+function getLinkedInLabeledLocationFromLine(line) {
+  const match = normalizeWhitespace(line).match(/^location:\s*(.+)$/iu);
+  return match?.[1]?.trim() || "";
+}
+
 function detectLinkedInLocation(headerLines) {
   return headerLines.map(getLinkedInLocationFromMetadataLine).find(Boolean) || "";
 }
@@ -827,6 +832,7 @@ function getLinkedInWorkArrangementFromLine(line) {
 function isLinkedInRoleCandidateLine(line) {
   return (
     isRoleCandidateLine(line) &&
+    !/^location:\s*/iu.test(line) &&
     !/^(?:remote|hybrid|on[-\s]?site|in[-\s]?person|full-time|part-time|contract(?:or)?|internship|temporary)$/iu.test(line)
   );
 }
@@ -917,16 +923,15 @@ function extractLinkedInFields(rawText) {
   const headerLines = getHeaderLines(rawText, /^about the job$/iu);
   const companyFromLogo = getLinkedInCompanyFromLogoLine(headerLines.find(isLinkedInLogoLine) || "");
   const baseFields = extractHeaderFields(rawText, { descriptionHeadingPattern: /^about the job$/iu });
+  const linkedInLabeledLocation = headerLines.map(getLinkedInLabeledLocationFromLine).find(Boolean) || "";
   const linkedInMetadataLocation = detectLinkedInLocation(headerLines);
   const linkedInWorkArrangement = detectLinkedInWorkArrangement(headerLines);
-  const linkedInFallbackLocation =
-    baseFields.location && linkedInWorkArrangement && !/^remote$/iu.test(baseFields.location)
-      ? appendWorkArrangement(baseFields.location, linkedInWorkArrangement)
-      : baseFields.location;
+  const linkedInGeographicLocation = linkedInLabeledLocation || linkedInMetadataLocation || baseFields.location;
   const linkedInLocation =
-    linkedInMetadataLocation && linkedInWorkArrangement
-      ? `${linkedInMetadataLocation} - ${linkedInWorkArrangement}`
-      : linkedInMetadataLocation || linkedInFallbackLocation;
+    linkedInGeographicLocation && linkedInWorkArrangement &&
+    normalizeComparisonValue(linkedInGeographicLocation) !== normalizeComparisonValue(linkedInWorkArrangement)
+      ? appendWorkArrangement(linkedInGeographicLocation, linkedInWorkArrangement)
+      : linkedInGeographicLocation;
   const normalizedCompany = normalizeComparisonValue(companyFromLogo);
   const companyLineIndex = headerLines.findIndex(
     (line) => isCompanyCandidateLine(line) && normalizeComparisonValue(line) === normalizedCompany,

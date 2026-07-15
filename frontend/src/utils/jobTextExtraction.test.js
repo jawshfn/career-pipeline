@@ -117,6 +117,47 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.source).toBe("LinkedIn");
   });
 
+  it("combines a labeled broad LinkedIn location with its separate Remote pill", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Company logo for, Fictional Company.",
+        "Fictional Company",
+        "Fictional Graduate Software Engineer",
+        "Location: United States",
+        "Remote",
+        "Full-time",
+        "About the job",
+        "Build reliable fictional systems.",
+      ].join("\n"),
+      jobLink: "https://www.linkedin.com/jobs/view/123456",
+      source: "LinkedIn",
+    });
+    expect(reviewData.role_title).toBe("Fictional Graduate Software Engineer");
+    expect(reviewData.location).toBe("United States - Remote");
+    expect(reviewData.employment_type).toBe("Full-time");
+  });
+
+  it("does not promote labeled LinkedIn location or Remote metadata into a missing role", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Company logo for, Fictional Company.",
+        "Fictional Company",
+        "Remote",
+        "Location: United States",
+        "Remote",
+        "Full-time",
+        "About the job",
+        "Build fictional systems.",
+      ].join("\n"),
+      jobLink: "https://www.linkedin.com/jobs/view/123456",
+      source: "LinkedIn",
+    });
+    expect(reviewData.company_name).toBe("Fictional Company");
+    expect(reviewData.role_title).toBe("");
+    expect(reviewData.location).toBe("United States - Remote");
+    expect(reviewData.employment_type).toBe("Full-time");
+  });
+
   it("ignores a standalone job-post marker in malformed Indeed-style pasted text", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: [

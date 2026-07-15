@@ -102,7 +102,7 @@ test("uses currentJobId and matching semantic side-panel evidence before generic
   const dom = new JSDOM(`<!doctype html><body>
     <aside><a href="/jobs/view/111111">Left result role</a></aside>
     <section data-testid="lazy-column" data-component-type="LazyColumn">
-      <article data-view-name="job-header"><a href="/jobs/view/222222">Fictional Selected Role</a><span aria-label="Company, Northstar Selected"></span></article>
+      <div data-view-name="job-header"><div><div><span aria-label="Company, Northstar Selected."></span></div><p><a href="/jobs/view/222222">Fictional Selected Role</a></p></div><p>Richmond, VA · 1 week ago · 18 applicants</p><div><span>Remote</span><span>Full-time</span></div></div>
       <article componentkey="JobMatchRef_222222">Profile match</article>
       <article componentkey="JobDetailsPeopleWhoCanHelpSlot_222222">People you can reach out to</article>
       <article componentkey="JobDetails_AboutTheJob_222222"><div data-sdui-component="aboutTheJob"><h2>About the job</h2><div data-testid="expandable-text-box">${description}</div></div></article>
@@ -121,7 +121,105 @@ test("uses currentJobId and matching semantic side-panel evidence before generic
     assert.equal(result.status, "detected");
     assert.equal(result.role_title, "Fictional Selected Role");
     assert.equal(result.company_name, "Northstar Selected");
+    assert.match(result.raw_text, /Fictional Selected Role\nRichmond, VA\nRemote\nFull-time\nAbout the job/u);
     assert.doesNotMatch(result.raw_text, /Left result|Profile match|People you can reach out to/u);
+    assert.equal(dom.window.document.querySelectorAll('[data-career-pipeline-linkedin-outline]').length, 1);
+    assert.equal(dom.window.document.querySelector('[data-career-pipeline-linkedin-outline]')?.getAttribute("data-testid"), "expandable-text-box");
+  } finally {
+    globalThis.document = originalDocument;
+    globalThis.window = originalWindow;
+    globalThis.getComputedStyle = originalGetComputedStyle;
+    globalThis.setTimeout = originalSetTimeout;
+  }
+});
+
+test("discovers a standalone expandable description despite side-panel markers", () => {
+  const originalDocument = globalThis.document;
+  const originalWindow = globalThis.window;
+  const originalGetComputedStyle = globalThis.getComputedStyle;
+  const originalSetTimeout = globalThis.setTimeout;
+  const dom = new JSDOM(`<!doctype html><body><main id="workspace" role="main"><section data-testid="lazy-column" data-component-type="LazyColumn">
+    <div><div><span aria-label="Company, Northstar Learning."></span><p>Fictional Graduate Software Engineer <a href="#"><span role="img" aria-label="Verified job"></span></a></p><p>United States · 1 day ago · Over 100 applicants</p><p>Promoted by hirer · Actively reviewing applicants</p></div><div><a href="/jobs/view/444444/">$50K/yr</a><a href="/jobs/view/444444/">Remote</a><a href="/jobs/view/444444/">Full-time</a></div><button>Apply</button><button>Save</button></div>
+    <div><h2>Your profile and resume match</h2><p>Unrelated AI profile card</p></div>
+    <div><h2>People you can reach out to</h2><p>Unrelated people card</p></div>
+    <div><h2>Premium</h2><p>Unrelated premium card</p></div>
+    <div componentkey="JobDetails_AboutTheJob_444444"><div data-sdui-component="aboutTheJob"><div><h2>About the job</h2><div data-testid="expandable-text-box">${description}</div></div></div></div>
+    <div><h2>Recommended job</h2><p>Unrelated recommended role</p></div>
+  </section></main></body>`, { url: "https://www.linkedin.com/jobs/view/444444/" });
+  try {
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window;
+    globalThis.getComputedStyle = dom.window.getComputedStyle.bind(dom.window);
+    globalThis.setTimeout = () => 0;
+    Object.defineProperty(dom.window.HTMLElement.prototype, "innerText", { configurable: true, get() { return this.textContent; } });
+    dom.window.HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRect() {
+      const top = this.closest('[data-testid="job-details"]') ? 600 : 100;
+      return { left: 400, right: 900, top, bottom: top + 100, width: 500, height: 100 };
+    };
+    const result = detectLinkedInJobPage();
+    assert.equal(result.status, "detected");
+    assert.equal(result.role_title, "Fictional Graduate Software Engineer");
+    assert.notEqual(result.role_title, "$50K/yr");
+    assert.notEqual(result.role_title, "Remote");
+    assert.notEqual(result.role_title, "Full-time");
+    assert.equal(result.company_name, "Northstar Learning");
+    assert.equal(dom.window.location.pathname, "/jobs/view/444444/");
+    const verifiedIcons = Array.from(dom.window.document.querySelectorAll('[role="img"][aria-label="Verified job"]'));
+    assert.equal(verifiedIcons.length, 1);
+    const verifiedAnchor = verifiedIcons[0]?.closest("a");
+    assert.equal(verifiedAnchor?.getAttribute("href"), "#");
+    assert.equal(verifiedAnchor?.href, "https://www.linkedin.com/jobs/view/444444/#");
+    const jobLinks = Array.from(dom.window.document.querySelectorAll('a[href*="/jobs/view/"]'));
+    assert.equal(jobLinks.length, 3);
+    assert.equal(jobLinks.includes(verifiedAnchor), false);
+    assert.equal(verifiedAnchor?.innerText, "");
+    assert.equal(jobLinks[0]?.innerText, "$50K/yr");
+    assert.equal(jobLinks[1]?.innerText, "Remote");
+    assert.equal(jobLinks[2]?.innerText, "Full-time");
+    assert.match(result.raw_text, /Fictional Graduate Software Engineer\nLocation: United States\nRemote\nFull-time\nAbout the job/u);
+    assert.doesNotMatch(result.raw_text, /Promoted by hirer|Actively reviewing applicants/u);
+    assert.equal((result.raw_text.match(/\bRemote\b/gu) || []).length, 1);
+    assert.equal((result.raw_text.match(/\bFull-time\b/gu) || []).length, 1);
+    assert.match(result.raw_text, new RegExp(description.slice(0, 40), "u"));
+    assert.doesNotMatch(result.raw_text, /Verified job|Unrelated|Apply|Save/u);
+    assert.match(result.raw_text, /^Company logo for, Northstar Learning\.$/mu);
+    assert.equal(dom.window.document.querySelectorAll('[data-career-pipeline-linkedin-outline]').length, 1);
+    assert.equal(dom.window.document.querySelector('[data-career-pipeline-linkedin-outline]')?.getAttribute("data-testid"), "expandable-text-box");
+    assert.doesNotThrow(() => structuredClone(result));
+  } finally {
+    globalThis.document = originalDocument;
+    globalThis.window = originalWindow;
+    globalThis.getComputedStyle = originalGetComputedStyle;
+    globalThis.setTimeout = originalSetTimeout;
+  }
+});
+
+test("finds a standalone expandable description through its bounded About heading", () => {
+  const originalDocument = globalThis.document;
+  const originalWindow = globalThis.window;
+  const originalGetComputedStyle = globalThis.getComputedStyle;
+  const originalSetTimeout = globalThis.setTimeout;
+  const dom = new JSDOM(`<!doctype html><body><main id="workspace" role="main">
+    <div><span aria-label="Company, Fictional Vertex."></span><p>Fictional Platform Engineer <a href="#"><span role="img" aria-label="Verified job"></span></a></p><p>United States · Reposted 2 weeks ago · Over 100 people clicked apply</p><p>Promoted by hirer · Responses managed off LinkedIn</p><div><a href="/jobs/view/555555/">Remote</a><a href="/jobs/view/555555/">Full-time</a></div></div>
+    <div><h2>About the job</h2><div data-testid="expandable-text-box">${description}</div></div>
+  </main></body>`, { url: "https://www.linkedin.com/jobs/view/555555/" });
+  try {
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window;
+    globalThis.getComputedStyle = dom.window.getComputedStyle.bind(dom.window);
+    globalThis.setTimeout = () => 0;
+    Object.defineProperty(dom.window.HTMLElement.prototype, "innerText", { configurable: true, get() { return this.textContent; } });
+    dom.window.HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRect() {
+      const top = this.getAttribute("data-testid") === "expandable-text-box" ? 600 : 100;
+      return { left: 400, right: 900, top, bottom: top + 100, width: 500, height: 100 };
+    };
+    const result = detectLinkedInJobPage();
+    assert.equal(result.status, "detected");
+    assert.equal(result.role_title, "Fictional Platform Engineer");
+    assert.equal(result.company_name, "Fictional Vertex");
+    assert.match(result.raw_text, /Fictional Platform Engineer\nLocation: United States\nRemote\nFull-time\nAbout the job/u);
+    assert.doesNotMatch(result.raw_text, /Promoted by hirer|Responses managed/u);
+    assert.equal(dom.window.document.querySelector('[data-career-pipeline-linkedin-outline]')?.getAttribute("data-testid"), "expandable-text-box");
   } finally {
     globalThis.document = originalDocument;
     globalThis.window = originalWindow;
