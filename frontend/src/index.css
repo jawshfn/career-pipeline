@@ -3744,3 +3744,59 @@ textarea:focus-visible {
 input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary); }
 .panel, .dashboard-metric-card, .resume-version-card, .command-center-item, .pipeline-card { border-color: var(--color-border); background: var(--color-surface-raised); }
 .detail-field-group, .pipeline-column, .applications-table th { background: var(--color-surface-subtle); }
+
+/* Add Job experience polish */
+.quick-add-mode-tabs { display: inline-flex; align-self: start; width: fit-content; padding: 3px; border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface-subtle); }
+.quick-add-mode-tab { border-color: transparent; }
+.quick-add-mode-tab.is-active { box-shadow: 0 2px 6px rgba(18, 24, 43, 0.12); }
+.quick-add-disclosure { display: inline-flex; align-items: center; gap: 7px; }
+.quick-add-disclosure-cue::before { content: "›"; font-size: 1rem; line-height: 1; }
+.quick-add-disclosure[aria-expanded="true"] .quick-add-disclosure-cue::before { content: "⌄"; }
+.quick-add-tracking-details { padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.smart-capture-form { padding: 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-primary-surface); }
+.smart-capture-review-form { gap: 18px; }
+.smart-capture-review-section { padding-top: 16px; border-top: 1px solid var(--color-border); }
+.smart-capture-review-section:first-of-type { padding-top: 0; border-top: 0; }
+.capture-panel-heading-review { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.capture-review-clear { flex: 0 0 auto; }
+.capture-review-summary { position: relative; overflow: hidden; padding: 14px 16px 14px 20px; border: 1px solid #cbd4f8; border-radius: var(--radius-md); color: var(--color-text); background: var(--color-primary-surface); }
+.capture-review-summary::before { position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--color-signal); content: ""; }
+.capture-review-summary-kicker { margin: 0 0 5px; color: var(--color-primary); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.capture-review-summary-heading { display: grid; gap: 2px; }
+.capture-review-summary-heading strong { color: var(--color-primary); }
+.capture-review-summary-heading span { color: var(--color-text-soft); font-size: 0.86rem; }
+.capture-review-summary-helper { margin: 10px 0 0; color: var(--color-text-soft); font-size: 0.86rem; }
+.capture-review-summary .smart-capture-status-chips { margin-top: 10px; }
+.capture-review-summary .smart-capture-status-chip { border-color: var(--color-border); color: var(--color-text-soft); background: var(--color-surface); }
+.capture-review-summary .smart-capture-status-chip strong { color: var(--color-text); }
+.capture-review-summary .capture-review-warning-chips .smart-capture-status-chip { border-color: #edcf8f; color: #81560d; background: #fff0c2; }
+.smart-capture-review-section { padding-top: 0; border-top: 0; }
+.captured-details-group { display: grid; gap: 14px; padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.captured-details-group .quick-add-tracking-details { padding: 0; border: 0; border-radius: 0; background: transparent; }
+.capture-utility-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.capture-utility-panel > .quick-add-disclosure, .capture-utility-panel > .secondary-button { align-self: start; }
+.capture-utility-panel > .notes-field { grid-column: 1 / -1; }
+.job-posting-dialog-backdrop { position: fixed; z-index: 20; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(18, 24, 43, 0.46); }
+.job-posting-dialog { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; width: min(960px, 78vw); height: min(760px, 78vh); max-width: 100%; max-height: 100%; padding: 20px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: 0 24px 60px rgba(18, 24, 43, 0.28); }
+.job-posting-dialog-header, .job-posting-dialog-actions { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.job-posting-dialog-header { margin-bottom: 14px; }
+.job-posting-dialog-header h3, .job-posting-dialog-header p { margin: 0; }
+.job-posting-dialog-header p { margin-top: 3px; color: var(--color-muted); }
+.job-posting-dialog-textarea { width: 100%; min-height: 0; resize: none; }
+.job-posting-dialog-actions { justify-content: flex-end; margin-top: 14px; }
+.quick-add-success-panel { position: relative; overflow: hidden; border-color: #9bd6b5; background: #eefaf3; box-shadow: var(--shadow-sm); }
+.quick-add-success-panel::before { position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--color-success); content: ""; }
+.quick-add-success-panel h2 { color: #1f713f; }
+.quick-add-success-panel p { color: var(--color-text); }
+@media (max-width: 640px) {
+  .quick-add-mode-tabs { display: flex; width: 100%; }
+  .quick-add-mode-tab { flex: 1 1 130px; }
+  .capture-panel-heading-review { align-items: stretch; flex-direction: column; }
+  .capture-review-clear { align-self: flex-start; }
+  .capture-utility-panel { grid-template-columns: 1fr; }
+  .capture-utility-panel > .quick-add-disclosure, .capture-utility-panel > .secondary-button { justify-self: start; }
+  .job-posting-dialog-backdrop { padding: 12px; }
+  .job-posting-dialog { width: 100%; height: calc(100dvh - 24px); padding: 16px; }
+  .job-posting-dialog-actions { align-items: stretch; flex-direction: column-reverse; }
+  .job-posting-dialog-actions button { width: 100%; }
+}

@@ -211,6 +211,7 @@ Status: in progress
 
 - Phase 20.0 — Adopt PursuitHQ across public-facing product surfaces while preserving current repository and deployment paths.
 - Phase 20.1 — Establish the PursuitHQ visual system across shared colors, surfaces, navigation, controls, and typography.
+- Phase 20.2 — Polish the Add Job experience across Manual Entry, Paste Job Link, and Paste Job Text, and prevent discarded browser captures from reappearing after mode changes.
 
 ## Later Optional Enhancements
 

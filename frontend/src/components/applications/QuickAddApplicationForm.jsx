@@ -218,7 +218,8 @@ export default function QuickAddApplicationForm({
           type="button"
           onClick={() => setShowTrackingDetails((current) => !current)}
         >
-          {showTrackingDetails ? "Hide tracking details" : "Tracking details - optional"}
+          <span aria-hidden="true" className="quick-add-disclosure-cue" />
+          {showTrackingDetails ? "Hide optional details" : "Optional details"}
         </button>
 
         {showTrackingDetails ? (

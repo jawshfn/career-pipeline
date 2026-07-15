@@ -45,6 +45,7 @@ export default function SmartCaptureForm({
   initialRawText = "",
   initialSource = DEFAULT_APPLICATION_SOURCE,
   autoPrepareReview = false,
+  captureOrigin = "pasted-text",
   resumeVersions,
   onCreateApplication,
   onCreateSuccess,
@@ -159,10 +160,9 @@ export default function SmartCaptureForm({
 
       {reviewData ? (
         <CaptureReviewForm
+          captureOrigin={captureOrigin}
           capturedReviewFields={capturedReviewFields}
-          detailsHelperText="Pasted job text will be saved for later reference."
           existingApplications={existingApplications}
-          hideDetailsButtonLabel="Hide pasted text"
           introText="Smart Capture prepared editable fields from your pasted text. Review anything that looks wrong."
           onCreateApplication={onCreateApplication}
           onCreateSuccess={onCreateSuccess}
@@ -170,7 +170,6 @@ export default function SmartCaptureForm({
           onReviewDataChange={setReviewData}
           resumeVersions={resumeVersions}
           reviewData={reviewData}
-          showDetailsButtonLabel="Show / edit pasted text"
         />
       ) : null}
     </section>

@@ -70,6 +70,7 @@ export default function QuickAddPage({
         jobLink: incomingBrowserTextCapture.original_job_link,
         source: incomingBrowserTextCapture.source,
         autoPrepareReview: true,
+        captureOrigin: "browser-capture",
       });
       onBrowserTextCaptureConsumed?.();
       setActiveModeHasUnsavedChanges(false);
@@ -88,7 +89,13 @@ export default function QuickAddPage({
 
   function handleCreateSuccess(application) {
     setSmartCaptureTransfer(null);
+    setBrowserCaptureTransfer(null);
     setCreatedApplication(application);
+  }
+
+  function handleBrowserCaptureConsumed() {
+    setBrowserCaptureTransfer(null);
+    onBrowserCaptureConsumed?.();
   }
 
   function handleModeChange(nextMode) {
@@ -106,6 +113,9 @@ export default function QuickAddPage({
     setActiveModeHasUnsavedChanges(false);
     if (activeMode === "smart-capture") {
       setSmartCaptureTransfer(null);
+    }
+    if (activeMode === "job-link") {
+      setBrowserCaptureTransfer(null);
     }
     setActiveMode(nextMode);
   }
@@ -188,7 +198,7 @@ export default function QuickAddPage({
           browserCaptureError={browserCaptureError}
           existingApplications={existingApplications}
           initialBrowserCapture={browserCaptureTransfer}
-          onBrowserCaptureConsumed={onBrowserCaptureConsumed}
+          onBrowserCaptureConsumed={handleBrowserCaptureConsumed}
           onBrowserCaptureErrorConsumed={onBrowserCaptureErrorConsumed}
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}
@@ -203,6 +213,7 @@ export default function QuickAddPage({
           initialRawText={smartCaptureTransfer?.rawText || ""}
           initialSource={smartCaptureTransfer?.source || DEFAULT_APPLICATION_SOURCE}
           autoPrepareReview={Boolean(smartCaptureTransfer?.autoPrepareReview)}
+          captureOrigin={smartCaptureTransfer?.captureOrigin || "pasted-text"}
           initialError={smartCaptureTransfer?.error || ""}
           resumeVersions={resumeVersions}
           onCreateApplication={onCreateApplication}

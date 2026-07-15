@@ -282,27 +282,24 @@ export default function JobLinkCaptureForm({
 
   return (
     <section className="panel quick-add-panel smart-capture-panel" aria-labelledby="job-link-capture-title">
-      <div className="section-heading">
-        <h2 id="job-link-capture-title">Paste Job Link</h2>
-        <p>PursuitHQ will import supported job pages or help you continue with the link.</p>
+      <div className={`section-heading capture-panel-heading ${reviewData ? "capture-panel-heading-review" : ""}`}>
+        <div>
+          <h2 id="job-link-capture-title">Paste Job Link</h2>
+          <p>PursuitHQ will import supported job pages or help you continue with the link.</p>
+        </div>
+        {reviewData ? (
+          <button className="secondary-button capture-review-clear" type="button" onClick={handleStartOver}>
+            Clear review
+          </button>
+        ) : null}
       </div>
 
       {reviewData ? (
         <>
-          <div className="form-actions form-actions-wrap">
-            <button className="secondary-button" type="button" onClick={handleStartOver}>
-              Start over
-            </button>
-          </div>
           <CaptureReviewForm
+            captureOrigin="job-link-import"
             capturedReviewFields={capturedReviewFields}
-            detailsHelperText={
-              reviewData.parser_format === "joblink"
-                ? "Add context you want to save with this job link."
-                : "Imported job description will be saved as a Job Posting Snapshot."
-            }
             existingApplications={existingApplications}
-            hideDetailsButtonLabel={reviewData.parser_format === "joblink" ? "Hide notes" : "Hide imported description"}
             introText={
               reviewData.parser_format === "joblink"
                 ? "This job link is ready for review. Add the company and role before saving."
@@ -316,7 +313,6 @@ export default function JobLinkCaptureForm({
             onReviewDataChange={setReviewData}
             resumeVersions={resumeVersions}
             reviewData={reviewData}
-            showDetailsButtonLabel={reviewData.parser_format === "joblink" ? "Add notes" : "Show / edit imported description"}
           />
         </>
       ) : (

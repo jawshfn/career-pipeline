@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   DEFAULT_APPLICATION_SOURCE,
@@ -15,6 +15,7 @@ import {
 } from "../../utils/applicationPayloads.js";
 import { findSimilarOpportunities } from "../../utils/opportunityDuplicates.js";
 import DuplicateOpportunityWarning from "./DuplicateOpportunityWarning.jsx";
+import JobPostingSnapshotDialog from "./JobPostingSnapshotDialog.jsx";
 
 function getResumeVersionLabel(resumeVersion) {
   return resumeVersion.target_role
@@ -37,6 +38,30 @@ export function getParserFormatLabel(format) {
   return labels[format] || "Generic";
 }
 
+export function getCaptureSummaryContent({ captureOrigin = "pasted-text", reviewData }) {
+  const source = reviewData?.source || "";
+  const format = getParserFormatLabel(reviewData?.parser_format);
+
+  if (captureOrigin === "browser-capture") {
+    return {
+      detail: "PursuitHQ Capture",
+      heading: `Imported from ${source || format}`,
+    };
+  }
+
+  if (captureOrigin === "job-link-import") {
+    if (reviewData?.parser_format === "joblink") {
+      return { detail: "Link-only review", heading: "Prepared from job link" };
+    }
+    return { detail: "Structured job-link import", heading: `Imported from ${format}` };
+  }
+
+  return {
+    detail: "Pasted job text",
+    heading: reviewData?.parser_format === "generic" ? "Recognized as a general job posting" : `Recognized as ${format}`,
+  };
+}
+
 const parsedJobDetailFields = [
   { name: "location", label: "Location" },
   { name: "employment_type", label: "Employment type" },
@@ -47,23 +72,15 @@ function hasReviewValue(value) {
   return Boolean(String(value || "").trim());
 }
 
-function getReviewStatus(value) {
-  return hasReviewValue(value) ? "Captured" : "Needs review";
-}
-
-function getReviewStatusClass(value) {
-  return hasReviewValue(value) ? "is-captured" : "is-needs-review";
-}
-
 function getUncapturedParsedJobDetailFields(capturedReviewFields) {
   return parsedJobDetailFields.filter((field) => !capturedReviewFields[field.name]);
 }
 
-function getReviewStatusItems(reviewData) {
+export function getRequiredReviewWarnings(reviewData) {
   return [
     ["Company", reviewData.company_name],
     ["Role", reviewData.role_title],
-  ];
+  ].filter(([, value]) => !hasReviewValue(value));
 }
 
 function CaptureDetailField({ fieldName, reviewData, updateReviewField }) {
@@ -109,21 +126,30 @@ function CaptureDetailField({ fieldName, reviewData, updateReviewField }) {
   );
 }
 
-export function CaptureReviewSummary({ reviewData }) {
-  const reviewStatusItems = getReviewStatusItems(reviewData);
+export function CaptureReviewSummary({ captureOrigin = "pasted-text", reviewData }) {
+  const requiredReviewWarnings = getRequiredReviewWarnings(reviewData);
+  const summary = getCaptureSummaryContent({ captureOrigin, reviewData });
+  const helperText = captureOrigin === "pasted-text"
+    ? "Review all extracted fields before saving."
+    : "Review all imported fields before saving.";
 
   return (
-    <aside className="smart-capture-review-summary" aria-label="Smart Capture review summary">
-      <span className="smart-capture-format-pill">
-        Detected format: {getParserFormatLabel(reviewData.parser_format)}
-      </span>
-      <div className="smart-capture-status-chips" aria-label="Captured field status">
-        {reviewStatusItems.map(([label, value]) => (
-          <span className="smart-capture-status-chip" key={label}>
-            {label}: <strong className={getReviewStatusClass(value)}>{getReviewStatus(value)}</strong>
-          </span>
-        ))}
+    <aside className="smart-capture-review-summary capture-review-summary" aria-label="Capture summary">
+      <p className="capture-review-summary-kicker">Capture summary</p>
+      <div className="capture-review-summary-heading">
+        <strong>{summary.heading}</strong>
+        <span>{summary.detail}</span>
       </div>
+      <p className="capture-review-summary-helper">{helperText}</p>
+      {requiredReviewWarnings.length ? (
+        <div className="smart-capture-status-chips capture-review-warning-chips" aria-label="Fields needing review">
+          {requiredReviewWarnings.map(([label]) => (
+            <span className="smart-capture-status-chip" key={label}>
+              {label} needs review
+            </span>
+          ))}
+        </div>
+      ) : null}
     </aside>
   );
 }
@@ -135,10 +161,9 @@ export function getCapturedReviewFields(reviewData) {
 }
 
 export default function CaptureReviewForm({
+  captureOrigin = "pasted-text",
   capturedReviewFields,
-  detailsHelperText = "Pasted job text will be saved for later reference.",
   existingApplications = [],
-  hideDetailsButtonLabel = "Hide pasted text",
   introText,
   onCreateApplication,
   onCreateSuccess,
@@ -146,16 +171,18 @@ export default function CaptureReviewForm({
   onReviewDataChange,
   resumeVersions,
   reviewData,
-  showDetailsButtonLabel = "Show / edit pasted text",
 }) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTrackingDetails, setShowTrackingDetails] = useState(false);
   const [showJobDetails, setShowJobDetails] = useState(false);
+  const [showPersonalNotes, setShowPersonalNotes] = useState(() => Boolean(reviewData?.notes));
+  const postingTriggerRef = useRef(null);
 
   useEffect(() => {
     setShowTrackingDetails(false);
     setShowJobDetails(false);
+    setShowPersonalNotes(Boolean(reviewData?.notes));
   }, [reviewData?.parser_format]);
 
   function updateReviewField(event) {
@@ -190,6 +217,7 @@ export default function CaptureReviewForm({
       onCreateSuccess?.(createdApplication);
     } catch (creationError) {
       setError(creationError.message || "Could not create application.");
+      setShowPersonalNotes(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -210,6 +238,11 @@ export default function CaptureReviewForm({
   );
   const uncapturedParsedJobDetailFields = getUncapturedParsedJobDetailFields(normalizedCapturedReviewFields);
 
+  function closePostingDialog() {
+    setShowJobDetails(false);
+    window.setTimeout(() => postingTriggerRef.current?.focus(), 0);
+  }
+
   return (
     <form className="quick-add-form smart-capture-review-form" onSubmit={handleSubmitReview}>
       <div className="section-heading smart-capture-review-heading">
@@ -217,7 +250,7 @@ export default function CaptureReviewForm({
         {introText ? <p>{introText}</p> : null}
       </div>
 
-      <CaptureReviewSummary reviewData={reviewData} />
+      <CaptureReviewSummary captureOrigin={captureOrigin} reviewData={reviewData} />
 
       {error ? (
         <div className="message message-error" role="alert">
@@ -278,12 +311,12 @@ export default function CaptureReviewForm({
         </div>
       </section>
 
-      {capturedParsedJobDetailFields.length ? (
-        <section className="smart-capture-review-section" aria-labelledby="smart-capture-captured-details-title">
-          <div className="smart-capture-review-section-heading">
-            <h4 id="smart-capture-captured-details-title">Captured details</h4>
-          </div>
+      <section className="smart-capture-review-section captured-details-group" aria-labelledby="smart-capture-captured-details-title">
+        <div className="smart-capture-review-section-heading">
+          <h4 id="smart-capture-captured-details-title">Captured details</h4>
+        </div>
 
+        {capturedParsedJobDetailFields.length ? (
           <div className="quick-add-row smart-capture-detail-row">
             {capturedParsedJobDetailFields.map((field) => (
               <CaptureDetailField
@@ -294,25 +327,24 @@ export default function CaptureReviewForm({
               />
             ))}
           </div>
-        </section>
-      ) : null}
+        ) : null}
 
-      <button
-        aria-controls="smart-capture-optional-details"
-        aria-expanded={showTrackingDetails}
-        className="quick-add-disclosure"
-        type="button"
-        onClick={() => setShowTrackingDetails((current) => !current)}
-      >
-        {showTrackingDetails ? "Hide optional details" : "Optional details"}
-      </button>
-
-      {showTrackingDetails ? (
-        <section
-          className="quick-add-tracking-details smart-capture-review-section"
-          id="smart-capture-optional-details"
-          aria-labelledby="smart-capture-optional-details-title"
+        <button
+          aria-controls="smart-capture-optional-details"
+          aria-expanded={showTrackingDetails}
+          className="quick-add-disclosure"
+          type="button"
+          onClick={() => setShowTrackingDetails((current) => !current)}
         >
+          {showTrackingDetails ? "Hide optional details" : "Optional details"}
+        </button>
+
+        {showTrackingDetails ? (
+          <div
+            className="quick-add-tracking-details"
+            id="smart-capture-optional-details"
+            aria-labelledby="smart-capture-optional-details-title"
+          >
           <div className="smart-capture-review-section-heading">
             <h4 id="smart-capture-optional-details-title">Optional details</h4>
             <p>Add missing job details or tracking info now, or fill them in later.</p>
@@ -375,53 +407,61 @@ export default function CaptureReviewForm({
               placeholder="Review posting and apply"
             />
           </label>
-        </section>
-      ) : null}
-
-      <section className="smart-capture-review-section" aria-labelledby="smart-capture-job-description-title">
-        <div className="smart-capture-review-section-heading">
-          <h4 id="smart-capture-job-description-title">Job Posting Snapshot</h4>
-          <p>Review the captured employer posting before saving. You can edit it later under Job Posting.</p>
-        </div>
-
-        <button
-          aria-controls="smart-capture-job-description-text"
-          aria-expanded={showJobDetails}
-          className="quick-add-disclosure"
-          type="button"
-          onClick={() => setShowJobDetails((current) => !current)}
-        >
-          {showJobDetails ? hideDetailsButtonLabel : showDetailsButtonLabel}
-        </button>
-
-        {showJobDetails ? (
-          <label className="notes-field" id="smart-capture-job-description-text">
-            <textarea
-              name="job_description"
-              value={reviewData.job_description}
-              onChange={updateReviewField}
-              rows="12"
-              placeholder="Captured job posting text"
-            />
-          </label>
+          </div>
         ) : null}
       </section>
 
-      <section className="smart-capture-review-section" aria-labelledby="smart-capture-personal-notes-title">
-        <div className="smart-capture-review-section-heading">
-          <h4 id="smart-capture-personal-notes-title">Personal Notes</h4>
-          <p>Add your own observations, recruiter context, or reminders.</p>
-        </div>
-        <label className="notes-field">
-          <textarea
-            name="notes"
-            value={reviewData.notes}
-            onChange={updateReviewField}
-            rows="5"
-            placeholder="Your notes about the company, role, recruiter, application, or next steps"
-          />
-        </label>
+      <section className="smart-capture-review-section capture-utility-panel" aria-labelledby="smart-capture-job-description-title">
+          <div className="smart-capture-review-section-heading">
+            <h4 id="smart-capture-job-description-title">Job Posting Snapshot</h4>
+            <p>Review the captured employer posting before saving. You can edit it later under Job Posting.</p>
+          </div>
+          <button
+            className="secondary-button"
+            ref={postingTriggerRef}
+            type="button"
+            onClick={() => setShowJobDetails(true)}
+          >
+            View / edit posting
+          </button>
       </section>
+      <section className="smart-capture-review-section capture-utility-panel" aria-labelledby="smart-capture-personal-notes-title">
+          <div className="smart-capture-review-section-heading">
+            <h4 id="smart-capture-personal-notes-title">Personal Notes</h4>
+            <p>Add your own observations, recruiter context, or reminders.</p>
+          </div>
+          <button
+            aria-controls="smart-capture-personal-notes-content"
+            aria-expanded={showPersonalNotes}
+            className="quick-add-disclosure"
+            type="button"
+            onClick={() => setShowPersonalNotes((current) => !current)}
+          >
+            <span aria-hidden="true" className="quick-add-disclosure-cue" />
+            {showPersonalNotes ? "Hide personal notes" : "Add personal notes"}
+          </button>
+          {showPersonalNotes ? (
+            <label className="notes-field" id="smart-capture-personal-notes-content">
+              <textarea
+                name="notes"
+                value={reviewData.notes}
+                onChange={updateReviewField}
+                rows="5"
+                placeholder="Your notes about the company, role, recruiter, application, or next steps"
+              />
+            </label>
+          ) : null}
+      </section>
+
+      <JobPostingSnapshotDialog
+        isOpen={showJobDetails}
+        onApply={(jobDescription) => {
+          onReviewDataChange((current) => ({ ...current, job_description: jobDescription }));
+          closePostingDialog();
+        }}
+        onClose={closePostingDialog}
+        value={reviewData.job_description}
+      />
 
       <div className="form-actions">
         <button type="submit" disabled={isSubmitting}>
