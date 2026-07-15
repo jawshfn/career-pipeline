@@ -32,6 +32,18 @@ def linkedin_capture_payload(**overrides):
     return payload
 
 
+def ziprecruiter_capture_payload(**overrides):
+    payload = {
+        "version": 1,
+        "provider": "ziprecruiter",
+        "source": "ZipRecruiter",
+        "original_job_link": "https://www.ziprecruiter.com/jobs-search?search=fictional&lk=selected-key",
+        "raw_text": "Fictional Data Analyst\nFictional Data\nHampton, VA\nFull-time\nJob description\n" + "Helpful work. " * 10,
+    }
+    payload.update(overrides)
+    return payload
+
+
 def test_browser_text_capture_store_is_one_time_and_expires():
     store = BrowserTextCaptureStore()
     now = datetime(2026, 1, 1, tzinfo=UTC)
@@ -111,6 +123,20 @@ def test_linkedin_browser_capture_is_validated_one_time_and_does_not_persist(cli
     assert client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": token}).status_code == 404
 
 
+def test_ziprecruiter_browser_capture_is_validated_one_time_and_does_not_persist(client, db_session, monkeypatch):
+    store = BrowserTextCaptureStore()
+    monkeypatch.setattr("app.routers.browser_captures.browser_text_capture_store", store)
+    created = client.post("/api/browser-text-captures", json=ziprecruiter_capture_payload())
+    assert created.status_code == 200
+    token = created.json()["capture_token"]
+    consumed = client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": token})
+    assert consumed.status_code == 200
+    assert consumed.json()["provider"] == "ziprecruiter"
+    assert consumed.json()["source"] == "ZipRecruiter"
+    assert db_session.query(Application).count() == 0
+    assert client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": token}).status_code == 404
+
+
 def test_browser_capture_endpoint_rejects_untrusted_input(client):
     invalid_payloads = [
         capture_payload(provider="linkedin"),
@@ -125,6 +151,12 @@ def test_browser_capture_endpoint_rejects_untrusted_input(client):
         linkedin_capture_payload(original_job_link="https://user:pass@www.linkedin.com/jobs/view/123"),
         linkedin_capture_payload(original_job_link="https://www.linkedin.com:8443/jobs/view/123"),
         linkedin_capture_payload(original_job_link="ftp://www.linkedin.com/jobs/view/123"),
+        ziprecruiter_capture_payload(source="Indeed"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search?search=fictional"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search?lk=one&lk=two"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search//?lk=fake"),
+        ziprecruiter_capture_payload(original_job_link="https://ziprecruiter.com.evil.test/jobs-search?lk=fake"),
+        ziprecruiter_capture_payload(original_job_link="https://user:pass@www.ziprecruiter.com/jobs-search?lk=fake"),
     ]
     for payload in invalid_payloads:
         assert client.post("/api/browser-text-captures", json=payload).status_code == 422

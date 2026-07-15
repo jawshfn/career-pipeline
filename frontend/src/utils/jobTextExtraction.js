@@ -913,9 +913,58 @@ function extractIndeedFields(rawText) {
   };
 }
 
-function extractZipRecruiterFields(rawText) {
+function isZipRecruiterActionOrHeading(line) {
+  return /^(?:job description|company description|apply|easy apply|1-click apply|save|share|posted\s+\d+\s+(?:day|week|month)s?\s+ago|\d+\s+(?:day|week|month)s?\s+ago)$/iu.test(line);
+}
+
+function isZipRecruiterEmploymentTypeLine(line) {
+  return /^(?:full[-\s]?time|part[-\s]?time|contract|internship|temporary)$/iu.test(line);
+}
+
+function isCredibleZipRecruiterCompanyLine(line) {
+  return (
+    Boolean(line) &&
+    !isNoisyLine(line) &&
+    !isLocationLine(line) &&
+    !getCompensationFromLine(line) &&
+    !isZipRecruiterEmploymentTypeLine(line) &&
+    !isZipRecruiterActionOrHeading(line)
+  );
+}
+
+function isCredibleZipRecruiterRoleLine(line) {
+  return (
+    Boolean(line) &&
+    !isNoisyLine(line) &&
+    !getCompensationFromLine(line) &&
+    !isZipRecruiterEmploymentTypeLine(line) &&
+    !isZipRecruiterActionOrHeading(line)
+  );
+}
+
+function extractZipRecruiterIdentity(rawText) {
+  const headerLines = getHeaderLines(rawText);
+  const [roleTitle = "", companyName = ""] = headerLines;
+
+  if (!isCredibleZipRecruiterRoleLine(roleTitle) || !isCredibleZipRecruiterCompanyLine(companyName)) {
+    return { company_name: "", role_title: "", location: "" };
+  }
+
   return {
-    ...extractHeaderFields(rawText),
+    company_name: companyName,
+    role_title: normalizeTitle(roleTitle),
+    location: detectCityStateLocation(headerLines.slice(2)) || detectStreetAddressLocation(headerLines.slice(2)),
+  };
+}
+
+function extractZipRecruiterFields(rawText) {
+  const baseFields = extractHeaderFields(rawText);
+  const orderedIdentity = extractZipRecruiterIdentity(rawText);
+
+  return {
+    ...baseFields,
+    ...(orderedIdentity.company_name && orderedIdentity.role_title ? orderedIdentity : {}),
+    location: orderedIdentity.location || baseFields.location,
     job_description: buildJobDescriptionFromMarker(rawText, /^\s*Job description\s*$/imu),
   };
 }

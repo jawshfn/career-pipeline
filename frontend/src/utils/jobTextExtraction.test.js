@@ -1067,6 +1067,128 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.employment_type).toBe("Full-time");
   });
 
+  it("preserves an advertised ZipRecruiter title that ends with a city and state", () => {
+    const title = "Data Architect with Active Secret Security Clearance - Onsite in Portsmouth, VA";
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        title,
+        "Northstar Data Systems, LLC",
+        "Portsmouth, VA â€¢ On-site",
+        "$62 - $79.75/hr",
+        "Full-time",
+        "Posted 28 days ago",
+        "Job description",
+        "Support a fictional shipyard analytics program.",
+      ].join("\n"),
+      jobLink: "https://www.ziprecruiter.com/jobs-search?lk=selected-key",
+      source: "ZipRecruiter",
+    });
+
+    expect(reviewData.parser_format).toBe("ziprecruiter");
+    expect(reviewData.role_title).toBe(title);
+    expect(reviewData.company_name).toBe("Northstar Data Systems, LLC");
+    expect(reviewData.location).toBe("Portsmouth, VA - On-site");
+    expect(reviewData.compensation).toBe("$62 - $79.75/hr");
+    expect(reviewData.employment_type).toBe("Full-time");
+    expect(reviewData.job_description).toBe("Support a fictional shipyard analytics program.");
+    expect(reviewData.notes).toBe("");
+  });
+
+  it.each([
+    "Senior Data Analyst - Norfolk, VA",
+    "Systems Engineer – Onsite in Hampton, VA",
+    "Database Administrator — Remote in Richmond, VA",
+    "Security Analyst (Virginia Beach, VA)",
+    "Project Manager - Washington, DC",
+    "Fictional Operations Analyst",
+  ])("preserves the ordered ZipRecruiter advertised title: %s", (title) => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        title,
+        "Fictional Systems, Inc.",
+        "Norfolk, VA",
+        "Full-time",
+        "Job description",
+        "Support fictional operations.",
+      ].join("\n"),
+      jobLink: "",
+      source: "ZipRecruiter",
+    });
+
+    expect(reviewData.role_title).toBe(title);
+    expect(reviewData.company_name).toBe("Fictional Systems, Inc.");
+    expect(reviewData.location).toBe("Norfolk, VA");
+  });
+
+  it.each(["Portsmouth, VA", "$62 - $79.75/hr", "Full-time", "Posted 28 days ago", "1-Click Apply", "Job description"])(
+    "does not use ZipRecruiter metadata as an ordered company line: %s",
+    (invalidCompanyLine) => {
+      const reviewData = buildSmartCaptureReviewState({
+        rawText: [
+          "Fictional Data Architect",
+          invalidCompanyLine,
+          "Portsmouth, VA",
+          "Job description",
+          "Support fictional operations.",
+        ].join("\n"),
+        jobLink: "",
+        source: "ZipRecruiter",
+      });
+
+      expect(reviewData.company_name).not.toBe(invalidCompanyLine);
+    },
+  );
+
+  it("prepares a browser-shaped ZipRecruiter capture with a separate posting snapshot", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Supply Chain Data Analyst",
+        "Fictional Aerospace",
+        "Hampton, VA",
+        "$100K - $120K/yr",
+        "Full-time",
+        "Posted 7 days ago",
+        "Job description",
+        "Build reliable reporting tools for fictional operations teams.",
+      ].join("\n"),
+      jobLink: "https://www.ziprecruiter.com/jobs-search?lk=selected-key",
+      source: "ZipRecruiter",
+    });
+
+    expect(reviewData.parser_format).toBe("ziprecruiter");
+    expect(reviewData.company_name).toBe("Fictional Aerospace");
+    expect(reviewData.role_title).toBe("Supply Chain Data Analyst");
+    expect(reviewData.location).toBe("Hampton, VA");
+    expect(reviewData.compensation).toBe("$100K - $120K/yr");
+    expect(reviewData.employment_type).toBe("Full-time");
+    expect(reviewData.job_description).toBe("Build reliable reporting tools for fictional operations teams.");
+    expect(reviewData.notes).toBe("");
+  });
+
+  it.each([
+    ["$62 - $79.75/hr", "$62 - $79.75/hr"],
+    ["$100K - $135K/yr", "$100K - $135K/yr"],
+  ])("keeps supported ZipRecruiter compensation from detector metadata: %s", (compensation, expectedCompensation) => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Data Analyst",
+        "Fictional Analytics",
+        "Norfolk, VA",
+        compensation,
+        "Full-time",
+        "Posted 2 days ago",
+        "Job description",
+        "Analyze fictional operational data.",
+      ].join("\n"),
+      jobLink: "https://www.ziprecruiter.com/jobs-search?lk=selected-key",
+      source: "ZipRecruiter",
+    });
+
+    expect(reviewData.parser_format).toBe("ziprecruiter");
+    expect(reviewData.compensation).toBe(expectedCompensation);
+    expect(reviewData.employment_type).toBe("Full-time");
+  });
+
   it("falls back to generic parsing for generic pasted text", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: "Company: Fictional Labs\nRole title: Research Assistant\nLocation: Remote\nHelp with research operations.",

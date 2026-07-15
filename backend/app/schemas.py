@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 from typing import ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
@@ -236,8 +236,13 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
     is_supported_host = (
         (provider == "indeed" and (hostname == "indeed.com" or hostname.endswith(".indeed.com")))
         or (provider == "linkedin" and (hostname == "linkedin.com" or hostname.endswith(".linkedin.com")))
+        or (provider == "ziprecruiter" and (hostname == "ziprecruiter.com" or hostname.endswith(".ziprecruiter.com")))
     )
-    is_supported_path = provider != "linkedin" or parsed.path.startswith("/jobs/")
+    is_supported_path = (
+        (provider != "linkedin" or parsed.path.startswith("/jobs/"))
+        and (provider != "ziprecruiter" or parsed.path in {"/jobs-search", "/jobs-search/"})
+    )
+    selected_job_keys = parse_qs(parsed.query, keep_blank_values=True).get("lk", [])
     if (
         parsed.scheme not in {"http", "https"}
         or parsed.username
@@ -245,6 +250,7 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
         or port not in {None, 80, 443}
         or not is_supported_host
         or not is_supported_path
+        or (provider == "ziprecruiter" and (len(selected_job_keys) != 1 or not selected_job_keys[0].strip()))
     ):
         raise ValueError("original_job_link must be a supported browser capture URL")
     return value
@@ -252,8 +258,8 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
 
 class BrowserTextCaptureCreateRequest(BaseModel):
     version: Literal[1]
-    provider: Literal["indeed", "linkedin"]
-    source: Literal["Indeed", "LinkedIn"]
+    provider: Literal["indeed", "linkedin", "ziprecruiter"]
+    source: Literal["Indeed", "LinkedIn", "ZipRecruiter"]
     original_job_link: StrictStr
     raw_text: StrictStr = Field(min_length=1, max_length=MAX_BROWSER_CAPTURE_TEXT_LENGTH)
 
@@ -265,7 +271,7 @@ class BrowserTextCaptureCreateRequest(BaseModel):
     @field_validator("source")
     @classmethod
     def validate_provider_source_pair(cls, value: str, info) -> str:
-        pairs = {"indeed": "Indeed", "linkedin": "LinkedIn"}
+        pairs = {"indeed": "Indeed", "linkedin": "LinkedIn", "ziprecruiter": "ZipRecruiter"}
         if pairs.get(info.data.get("provider")) != value:
             raise ValueError("provider and source must be a supported matching pair")
         return value
@@ -290,8 +296,8 @@ class BrowserTextCaptureConsumeRequest(BaseModel):
 
 class BrowserTextCaptureConsumeResponse(BaseModel):
     version: Literal[1]
-    provider: Literal["indeed", "linkedin"]
-    source: Literal["Indeed", "LinkedIn"]
+    provider: Literal["indeed", "linkedin", "ziprecruiter"]
+    source: Literal["Indeed", "LinkedIn", "ZipRecruiter"]
     original_job_link: str
     raw_text: str
 

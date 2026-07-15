@@ -7,6 +7,7 @@ import {
   inspectActivePage,
   isIndeedHostname,
   isLinkedInHostname,
+  isZipRecruiterJobUrl,
   openBrowserTextCareerPipeline,
   openIndeedCareerPipeline,
   openCareerPipeline,
@@ -108,6 +109,18 @@ test("routes an active LinkedIn page to the focused detector", async () => {
   assert.equal(isLinkedInHostname("https://linkedin.com.evil.test/jobs/view/123456"), false);
 });
 
+test("routes only a selected ZipRecruiter search detail to the focused detector", async () => {
+  const result = await inspectActivePage({
+    tabs: { query: async () => [{ id: 16, url: "https://www.ziprecruiter.com/jobs-search?lk=selected-key" }] },
+    scripting: { executeScript: async (details) => { assert.equal(typeof details.func, "function"); return [{ result: { status: "no-current-job", version: 1 } }]; } },
+  });
+  assert.equal(result.status, "no-current-job");
+  assert.equal(result.provider, "ziprecruiter");
+  assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobs-search?lk=selected-key"), true);
+  assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobs-search?search=data"), false);
+  assert.equal(isZipRecruiterJobUrl("https://ziprecruiter.com.evil.test/jobs-search?lk=selected-key"), false);
+});
+
 test("marks an actual Indeed injection failure without exposing page data", async () => {
   const result = await inspectActivePage({
     tabs: { query: async () => [{ id: 14, url: "https://www.indeed.com/viewjob?jk=fake" }] },
@@ -162,4 +175,19 @@ test("posts a LinkedIn capture only after the open action using its matching pro
   assert.deepEqual(JSON.parse(fetchCalls[0].options.body).provider, "linkedin");
   assert.deepEqual(JSON.parse(fetchCalls[0].options.body).source, "LinkedIn");
   assert.match(calls[0].url, /^http:\/\/localhost:5173\/#career-pipeline-text-capture=/);
+});
+
+test("posts a ZipRecruiter capture only after the open action with a token-only URL", async () => {
+  const calls = [];
+  const fetchCalls = [];
+  await openBrowserTextCareerPipeline(
+    { status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: "https://www.ziprecruiter.com/jobs-search?lk=fake", raw_text: "Fictional Analyst\nFictional Company\nJob description\n" + "Helpful text ".repeat(10) },
+    { tabs: { create: async (details) => calls.push(details) } },
+    async (url, options) => { fetchCalls.push({ url, options }); return { ok: true, json: async () => ({ version: 1, capture_token: "c".repeat(43) }) }; },
+  );
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(JSON.parse(fetchCalls[0].options.body).provider, "ziprecruiter");
+  assert.equal(JSON.parse(fetchCalls[0].options.body).source, "ZipRecruiter");
+  assert.match(calls[0].url, /^http:\/\/localhost:5173\/#career-pipeline-text-capture=/);
+  assert.doesNotMatch(calls[0].url, /Fictional Analyst/u);
 });

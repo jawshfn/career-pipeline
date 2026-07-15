@@ -2,6 +2,7 @@ import { detectGreenhousePage } from "./detector.mjs";
 import { buildCareerPipelineCaptureUrl } from "./capturePayload.mjs";
 import { detectIndeedJobPage } from "./indeedDetector.mjs";
 import { detectLinkedInJobPage } from "./linkedinDetector.mjs";
+import { detectZipRecruiterJobPage } from "./zipRecruiterDetector.mjs";
 import { buildBrowserTextCaptureUrl, createBrowserTextCapture } from "./textCaptureApi.mjs";
 
 const resultPanel = typeof document === "undefined" ? null : document.querySelector("#result");
@@ -78,6 +79,18 @@ export function isLinkedInHostname(rawUrl) {
   } catch { return false; }
 }
 
+export function isZipRecruiterJobUrl(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    const hostname = url.hostname.toLowerCase();
+    const selectedJobKeys = url.searchParams.getAll("lk");
+    return (url.protocol === "http:" || url.protocol === "https:") && !url.username && !url.password &&
+      (url.port === "" || url.port === "80" || url.port === "443") &&
+      (hostname === "ziprecruiter.com" || hostname.endsWith(".ziprecruiter.com")) &&
+      /^\/jobs-search\/?$/u.test(url.pathname) && selectedJobKeys.length === 1 && Boolean(selectedJobKeys[0].trim());
+  } catch { return false; }
+}
+
 export async function openIndeedCareerPipeline(detectionResult, chromeApi = globalThis.chrome, fetchImpl = fetch) {
   return openBrowserTextCareerPipeline(detectionResult, chromeApi, fetchImpl);
 }
@@ -93,8 +106,8 @@ function renderResult(result) {
   }
   resultPanel.replaceChildren();
 
-  if (result?.status === "detected" && (result.provider === "indeed" || result.provider === "linkedin")) {
-    const providerLabel = result.provider === "linkedin" ? "LinkedIn" : "Indeed";
+  if (result?.status === "detected" && (result.provider === "indeed" || result.provider === "linkedin" || result.provider === "ziprecruiter")) {
+    const providerLabel = result.provider === "linkedin" ? "LinkedIn" : result.provider === "ziprecruiter" ? "ZipRecruiter" : "Indeed";
     appendText("status-title", `${providerLabel} job detected`);
     appendText("result-detail", result.role_title);
     if (result.company_name) appendText("result-detail", result.company_name);
@@ -135,6 +148,7 @@ function renderResult(result) {
   const messages = {
     "not-indeed": "This page is not a supported Indeed job page.",
     "not-linkedin": "This page is not a supported LinkedIn job page.",
+    "not-ziprecruiter": "This page is not a supported ZipRecruiter selected job.",
     "no-current-job": "Career Pipeline could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
     "ambiguous-job": "Career Pipeline could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
     "capture-too-large": "This Indeed job is too large to capture. Copy the job posting and use Paste Job Text.",
@@ -146,10 +160,12 @@ function renderResult(result) {
       ? "Career Pipeline could not inspect this Indeed page. Reload the extension and try again."
       : result?.error_code === "linkedin-injection-failed"
       ? "Career Pipeline could not inspect this LinkedIn page. Reload the extension and try again."
+      : result?.error_code === "ziprecruiter-injection-failed"
+      ? "Career Pipeline could not inspect this ZipRecruiter page. Reload the extension and try again."
       : "The detector encountered an unexpected error. Check the extension error details.",
   };
-  const providerLabel = result?.provider === "linkedin" ? "LinkedIn" : result?.provider === "indeed" ? "Indeed" : "";
-  if (["no-current-job", "ambiguous-job", "capture-too-large", "not-linkedin", "not-indeed"].includes(result?.status) && providerLabel) {
+  const providerLabel = result?.provider === "linkedin" ? "LinkedIn" : result?.provider === "indeed" ? "Indeed" : result?.provider === "ziprecruiter" ? "ZipRecruiter" : "";
+  if (["no-current-job", "ambiguous-job", "capture-too-large", "not-linkedin", "not-indeed", "not-ziprecruiter"].includes(result?.status) && providerLabel) {
     const action = result.status === "capture-too-large" ? "is too large to capture" : "could not confidently identify the current job";
     appendText("status-title", `${providerLabel} ${action}. Copy the job posting and use Paste Job Text.`);
     return;
@@ -187,16 +203,16 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
       return { status: "unsupported-page" };
     }
 
-    const provider = isLinkedInHostname(activeTab.url) ? "linkedin" : isIndeedHostname(activeTab.url) ? "indeed" : "greenhouse";
+    const provider = isLinkedInHostname(activeTab.url) ? "linkedin" : isIndeedHostname(activeTab.url) ? "indeed" : isZipRecruiterJobUrl(activeTab.url) ? "ziprecruiter" : "greenhouse";
     const injectionResults = await chromeApi.scripting.executeScript({
       target: { tabId: activeTab.id },
-      func: provider === "linkedin" ? detectLinkedInJobPage : provider === "indeed" ? detectIndeedJobPage : detectGreenhousePage,
+      func: provider === "linkedin" ? detectLinkedInJobPage : provider === "indeed" ? detectIndeedJobPage : provider === "ziprecruiter" ? detectZipRecruiterJobPage : detectGreenhousePage,
     });
     const detectionResult = unwrapInjectionResult(injectionResults);
     if (detectionResult.status === "detected") {
       return { ...detectionResult, original_job_link: activeTab.url };
     }
-    return provider === "linkedin" || provider === "indeed" ? { ...detectionResult, provider } : detectionResult;
+    return provider === "linkedin" || provider === "indeed" || provider === "ziprecruiter" ? { ...detectionResult, provider } : detectionResult;
   } catch (error) {
     console.error("Career Pipeline Greenhouse Detector inspection error", error);
     const classification = classifyInspectionError(error);
@@ -209,6 +225,7 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
 function providerForUrl(url) {
   if (isLinkedInHostname(url)) return "linkedin";
   if (isIndeedHostname(url)) return "indeed";
+  if (isZipRecruiterJobUrl(url)) return "ziprecruiter";
   return "";
 }
 

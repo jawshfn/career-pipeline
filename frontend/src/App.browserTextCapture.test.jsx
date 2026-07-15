@@ -125,4 +125,38 @@ describe("browser text capture startup", () => {
     expect(container.textContent).not.toContain("expired or was already used");
     expect(mocks.createApplication).not.toHaveBeenCalled();
   });
+
+  it("consumes a ZipRecruiter browser capture once in StrictMode and prepares its editable review without saving", async () => {
+    mocks.consumeBrowserTextCapture.mockResolvedValue({
+      version: 1,
+      provider: "ziprecruiter",
+      source: "ZipRecruiter",
+      original_job_link: "https://www.ziprecruiter.com/jobs-search?lk=selected-key",
+      raw_text: [
+        "Fictional Supply Chain Analyst",
+        "Fictional Aerospace",
+        "Hampton, VA",
+        "$100K - $120K/yr",
+        "Full-time",
+        "Job description",
+        "Build reliable fictional data tools.",
+      ].join("\n"),
+    });
+
+    await act(async () => {
+      root.render(<StrictMode><App /></StrictMode>);
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(mocks.consumeBrowserTextCapture).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain("Review before saving");
+    expect(container.textContent).toContain("Fictional Aerospace");
+    expect(container.querySelector('select[name="source"]').value).toBe("ZipRecruiter");
+    expect(container.querySelector('input[name="job_link"]').value).toBe("https://www.ziprecruiter.com/jobs-search?lk=selected-key");
+    expect(container.textContent).not.toContain("expired or was already used");
+    expect(mocks.createApplication).not.toHaveBeenCalled();
+  });
 });

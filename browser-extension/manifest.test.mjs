@@ -8,6 +8,7 @@ test("manifest uses narrow click-initiated and local-backend permissions", async
   const manifest = JSON.parse(await readFile(new URL("manifest.json", extensionDirectory), "utf8"));
 
   assert.equal(manifest.manifest_version, 3);
+  assert.equal(manifest.version, "0.3.0");
   assert.deepEqual(manifest.permissions, ["activeTab", "scripting"]);
   assert.deepEqual(manifest.host_permissions, ["http://127.0.0.1:8000/*"]);
   assert.equal(manifest.host_permissions.includes("<all_urls>"), false);
