@@ -213,6 +213,8 @@ Status: in progress
 - Phase 20.1 — Establish the PursuitHQ visual system across shared colors, surfaces, navigation, controls, and typography.
 - Phase 20.2 — Polish the Add Job experience across Manual Entry, Paste Job Link, and Paste Job Text, and prevent discarded browser captures from reappearing after mode changes.
 
+- Phase 20.3 — Refine the Reminders page with independently sized follow-up sections, clearer urgency hierarchy, and polished reminder actions.
+
 ## Later Optional Enhancements
 
 - Public demo deployment improvements

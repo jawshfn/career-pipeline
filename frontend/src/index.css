@@ -2257,8 +2257,9 @@ a {
 
 .command-center-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+  align-items: start;
 }
 
 .command-center-secondary {
@@ -2267,6 +2268,9 @@ a {
 
 .command-center-message {
   margin: 0;
+  border: 1px solid #b9d9d4;
+  color: var(--color-signal-strong);
+  background: var(--color-primary-soft);
 }
 
 .command-center-section {
@@ -2336,6 +2340,7 @@ a {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
   min-width: 0;
 }
@@ -2359,6 +2364,10 @@ a {
   overflow-wrap: anywhere;
 }
 
+.command-center-item-heading .status-badge {
+  margin-left: auto;
+}
+
 .command-center-item-meta {
   display: grid;
   gap: 6px;
@@ -2376,7 +2385,16 @@ a {
   font-weight: 700;
 }
 
+.command-center-date-value {
+  color: var(--color-text);
+  font-weight: 800;
+}
+
 .command-center-next-action {
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--color-text);
+  background: var(--color-surface-subtle);
   font-weight: 700;
 }
 
@@ -2392,15 +2410,53 @@ a {
 }
 
 .command-center-action-details summary {
-  width: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 32px;
+  list-style: none;
   cursor: pointer;
   color: var(--color-primary);
   font-size: 0.86rem;
   font-weight: 800;
 }
 
+.command-center-action-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.command-center-action-details summary::marker {
+  content: "";
+}
+
+.command-center-action-details summary:focus-visible {
+  outline: 3px solid rgba(69, 87, 216, 0.24);
+  outline-offset: 3px;
+}
+
+.command-center-action-chevron {
+  flex: 0 0 auto;
+  font-size: 1.15rem;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
 .command-center-action-details[open] summary {
   margin-bottom: 8px;
+}
+
+.command-center-action-details[open] .command-center-action-chevron {
+  transform: rotate(90deg);
+}
+
+.command-center-action-panel {
+  display: grid;
+  gap: 10px;
+  border-radius: 8px;
+  padding: 11px;
+  background: var(--color-surface-subtle);
 }
 
 .command-center-action-note {
@@ -3112,7 +3168,7 @@ textarea:focus-visible {
 }
 
 .command-center-section-stale::before {
-  background: #d39b2a;
+  background: #75828f;
 }
 
 .command-center-section-overdue .command-center-section-header span {
@@ -3120,14 +3176,46 @@ textarea:focus-visible {
   background: #f8e8e5;
 }
 
+.command-center-section-overdue .command-center-date-value {
+  color: #873c31;
+}
+
 .command-center-section-upcoming .command-center-section-header span {
   color: var(--color-signal-strong);
   background: #e2f4f1;
 }
 
+.command-center-section-upcoming .command-center-date-value {
+  color: var(--color-primary);
+}
+
 .command-center-section-stale .command-center-section-header span {
-  color: #725312;
-  background: #fff2cc;
+  color: #40515c;
+  background: #eef3f5;
+}
+
+.command-center-section-stale .command-center-date-value {
+  color: #52605d;
+}
+
+.command-center-section-stale {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 1240px) {
+  .command-center-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .command-center-section-stale {
+    grid-column: auto;
+  }
+}
+
+.empty-state.command-center-all-clear {
+  border-color: #b9d9d4;
+  color: var(--color-signal-strong);
+  background: var(--color-primary-soft);
 }
 
 .command-center-item {
