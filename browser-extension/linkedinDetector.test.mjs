@@ -53,7 +53,7 @@ test("runs after source reconstruction without module scope and returns plain da
   assert.doesNotThrow(() => structuredClone(result));
 });
 
-test("associates separate header and About-the-job cards within the current detail pane", () => {
+test("associates separate header and About cards through the bounded detail-pane fallback", () => {
   const originalDocument = globalThis.document;
   const originalWindow = globalThis.window;
   const originalGetComputedStyle = globalThis.getComputedStyle;
@@ -66,7 +66,7 @@ test("associates separate header and About-the-job cards within the current deta
       <article><h2>People you can reach out to</h2><p>Unrelated card</p></article>
       <article data-testid="job-details"><h2>About the job</h2><div data-live-test-job-description>${description}</div></article>
       <article><h2>Recommended job</h2><h1>Recommended Role</h1><a href="/company/recommended">Recommended Company</a></article>
-    </main></body>`, { url: "https://www.linkedin.com/jobs/view/123456789" });
+    </main></body>`, { url: "https://www.linkedin.com/jobs/search/?keywords=fictional" });
   try {
     globalThis.document = dom.window.document;
     globalThis.window = dom.window;
