@@ -397,10 +397,8 @@ export default function ApplicationDetailPanel({
     }
   }
 
-  const opportunityTitle =
-    formData.role_title.trim() && formData.company_name.trim()
-      ? `${formData.role_title.trim()} at ${formData.company_name.trim()}`
-      : formData.role_title.trim() || formData.company_name.trim() || "Untitled opportunity";
+  const roleTitle = getDisplayValue(formData.role_title, "Untitled role");
+  const companyName = getDisplayValue(formData.company_name, "Unknown company");
   const appliedSummary = formData.date_applied ? formatDisplayDate(formData.date_applied, "") : "Not applied";
   const followUpSummary = getFollowUpSummary(formData.follow_up_date);
   const selectedResumeVersion = resumeVersions.find(
@@ -412,15 +410,10 @@ export default function ApplicationDetailPanel({
   const jobLinkValue = formData.job_link.trim();
   const openableJobLink = getOpenableJobLink(jobLinkValue);
   const overviewSnapshotItems = [
-    ["Company / role", opportunityTitle],
-    ["Status", getDisplayValue(formData.status)],
     ["Added to tracker", formData.date_saved ? formatDisplayDate(formData.date_saved, "") : "Not recorded"],
-    ["Applied", appliedSummary],
-    ["Follow-up", followUpSummary],
-    ["Resume", resumeSummary],
     ["Source", getDisplayValue(formData.source)],
     ["Location", getDisplayValue(formData.location, "No location saved")],
-    ["Job link", openableJobLink ? "Saved" : "No link saved"],
+    ...(openableJobLink ? [] : [["Job Link", "No link saved"]]),
     ["Job posting", formData.job_description.trim() ? "Saved" : "Not saved"],
     ["Red flags", redFlagCount ? `${redFlagCount} marked` : "None marked"],
   ];
@@ -443,7 +436,8 @@ export default function ApplicationDetailPanel({
       <div className="section-heading detail-heading">
         <div>
           <p className="eyebrow">Application detail</p>
-          <h2 id="application-detail-title">{opportunityTitle}</h2>
+          <h2 id="application-detail-title">{roleTitle}</h2>
+          <p className="detail-company-name">at {companyName}</p>
           <p>Track status, follow-ups, notes, and prep for this opportunity.</p>
         </div>
         <button className="secondary-button" type="button" onClick={handleClose}>
@@ -471,21 +465,23 @@ export default function ApplicationDetailPanel({
             </div>
           ) : null}
 
-          <div className="detail-tabs" role="tablist" aria-label="Application detail sections">
-            {detailTabs.map((tab) => (
-              <button
-                aria-controls={`application-detail-tab-${tab.id}`}
-                aria-selected={activeTab === tab.id}
-                className={`detail-tab${activeTab === tab.id ? " is-active" : ""}`}
-                id={`application-detail-tab-button-${tab.id}`}
-                key={tab.id}
-                role="tab"
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="detail-tabs-viewport">
+            <div className="detail-tabs" role="tablist" aria-label="Application detail sections">
+              {detailTabs.map((tab) => (
+                <button
+                  aria-controls={`application-detail-tab-${tab.id}`}
+                  aria-selected={activeTab === tab.id}
+                  className={`detail-tab${activeTab === tab.id ? " is-active" : ""}`}
+                  id={`application-detail-tab-button-${tab.id}`}
+                  key={tab.id}
+                  role="tab"
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <ApplicationDetailSummaryStrip
@@ -508,7 +504,6 @@ export default function ApplicationDetailPanel({
               <ApplicationDetailOverview
                 attentionItems={attentionItems}
                 onOpenTab={setActiveTab}
-                openableJobLink={openableJobLink}
                 overviewSnapshotItems={overviewSnapshotItems}
               />
             ) : null}

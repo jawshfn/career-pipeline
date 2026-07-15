@@ -3,26 +3,20 @@ import React from "react";
 export default function ApplicationDetailOverview({
   attentionItems,
   onOpenTab,
-  openableJobLink,
   overviewSnapshotItems,
 }) {
   return (
     <div className="detail-overview-panel">
       <h3>Overview</h3>
       <p className="detail-tab-helper">
-        Start here for the current status, follow-up, resume, source, and quick context for this opportunity.
+        Review the supporting details and quick context for this opportunity.
       </p>
 
       <div className="detail-overview-grid" aria-label="Opportunity snapshot">
         {overviewSnapshotItems.map(([label, value]) => (
-          <div className="detail-overview-card" key={label}>
+          <div className={`detail-overview-card detail-overview-card-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} key={label}>
             <span>{label}</span>
             <strong>{value}</strong>
-            {label === "Job link" && openableJobLink ? (
-              <a href={openableJobLink} rel="noreferrer" target="_blank">
-                Open posting
-              </a>
-            ) : null}
           </div>
         ))}
       </div>
@@ -54,7 +48,7 @@ export default function ApplicationDetailOverview({
         ) : (
           <div className="detail-overview-empty-state">
             <strong>Looks organized</strong>
-            <p>All key details have been filled in. Use the tabs above if you want to make changes.</p>
+            <p>All key details have been filled in.</p>
           </div>
         )}
       </div>
