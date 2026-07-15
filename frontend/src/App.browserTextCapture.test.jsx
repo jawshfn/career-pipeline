@@ -46,7 +46,7 @@ describe("browser text capture startup", () => {
       version: 1,
       provider: "indeed",
       source: "Indeed",
-      original_job_link: "https://www.indeed.test/viewjob?jk=fictional",
+      original_job_link: "https://www.indeed.com/?vjk=0123456789abcdef",
       raw_text: [
         "Fictional Support Specialist - job post",
         "Northstar Systems",
@@ -86,6 +86,9 @@ describe("browser text capture startup", () => {
     expect(mocks.consumeBrowserTextCapture).toHaveBeenCalledWith("a".repeat(43));
     expect(container.textContent).toContain("Review before saving");
     expect(container.textContent).toContain("Northstar Systems");
+    expect(container.querySelector('input[name="job_link"]').value).toBe(
+      "https://www.indeed.com/viewjob?jk=0123456789abcdef",
+    );
     expect(container.textContent).not.toContain("expired or was already used");
     expect(mocks.createApplication).not.toHaveBeenCalled();
     expect(mocks.getApplications).toHaveBeenCalledTimes(2);

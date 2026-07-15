@@ -1,6 +1,34 @@
 import { describe, expect, it } from "vitest";
 
-import { getOpenableJobLink, normalizeExplicitJobLink } from "./jobLinks.js";
+import { canonicalizeIndeedJobLink, getOpenableJobLink, normalizeExplicitJobLink } from "./jobLinks.js";
+
+describe("canonicalizeIndeedJobLink", () => {
+  it("converts strict Indeed side-panel links into standalone URLs", () => {
+    expect(canonicalizeIndeedJobLink("https://www.indeed.com/?vjk=0123456789abcdef")).toBe(
+      "https://www.indeed.com/viewjob?jk=0123456789abcdef",
+    );
+    expect(canonicalizeIndeedJobLink("https://www.indeed.com/?from=search&vjk=ABCDEF0123456789&utm_source=test#panel")).toBe(
+      "https://www.indeed.com/viewjob?jk=ABCDEF0123456789",
+    );
+  });
+
+  it("leaves canonical, malformed, non-Indeed, and non-HTTP inputs unchanged", () => {
+    expect(canonicalizeIndeedJobLink("https://www.indeed.com/viewjob?jk=0123456789abcdef")).toBe(
+      "https://www.indeed.com/viewjob?jk=0123456789abcdef",
+    );
+    expect(canonicalizeIndeedJobLink("https://www.indeed.com/?vjk=")).toBe("https://www.indeed.com/?vjk=");
+    expect(canonicalizeIndeedJobLink("https://www.indeed.com/?vjk=01234567")).toBe("https://www.indeed.com/?vjk=01234567");
+    expect(canonicalizeIndeedJobLink("https://www.indeed.com/?vjk=not-a-job-key")).toBe("https://www.indeed.com/?vjk=not-a-job-key");
+    expect(canonicalizeIndeedJobLink("https://www.indeed.com/?vjk=0123456789abcdef&vjk=fedcba9876543210")).toBe(
+      "https://www.indeed.com/?vjk=0123456789abcdef&vjk=fedcba9876543210",
+    );
+    expect(canonicalizeIndeedJobLink("https://www.linkedin.com/?vjk=0123456789abcdef")).toBe(
+      "https://www.linkedin.com/?vjk=0123456789abcdef",
+    );
+    expect(canonicalizeIndeedJobLink("mailto:test@indeed.com")).toBe("mailto:test@indeed.com");
+    expect(canonicalizeIndeedJobLink("not a URL")).toBe("not a URL");
+  });
+});
 
 describe("normalizeExplicitJobLink", () => {
   it("returns an empty string for empty or whitespace-only input", () => {
@@ -23,6 +51,14 @@ describe("normalizeExplicitJobLink", () => {
     expect(normalizeExplicitJobLink("http://indeed.com/viewjob?jk=abc")).toBe(
       "http://indeed.com/viewjob?jk=abc",
     );
+  });
+
+  it("canonicalizes Indeed side-panel links for persistence and outbound navigation", () => {
+    const sidePanelLink = "https://www.indeed.com/?vjk=0123456789abcdef";
+    const canonicalLink = "https://www.indeed.com/viewjob?jk=0123456789abcdef";
+
+    expect(normalizeExplicitJobLink(sidePanelLink)).toBe(canonicalLink);
+    expect(getOpenableJobLink(sidePanelLink)).toBe(canonicalLink);
   });
 
   it("trims surrounding whitespace", () => {
