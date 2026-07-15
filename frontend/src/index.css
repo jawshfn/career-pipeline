@@ -889,6 +889,8 @@ a {
 }
 
 .job-posting-snapshot {
+  max-height: min(28rem, 52vh);
+  overflow-y: auto;
   white-space: pre-wrap;
 }
 

@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 
-export default function JobPostingSnapshotDialog({ isOpen, onApply, onClose, value }) {
+export default function JobPostingSnapshotDialog({
+  description = "Captured employer content",
+  isOpen,
+  onApply,
+  onClose,
+  value,
+}) {
   const dialogRef = useRef(null);
   const textareaRef = useRef(null);
   const openedValueRef = useRef("");
@@ -51,7 +57,15 @@ export default function JobPostingSnapshotDialog({ isOpen, onApply, onClose, val
   }
 
   return (
-    <div className="job-posting-dialog-backdrop" role="presentation">
+    <div
+      className="job-posting-dialog-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          requestClose();
+        }
+      }}
+      role="presentation"
+    >
       <section
         aria-describedby="job-posting-dialog-description"
         aria-labelledby="job-posting-dialog-title"
@@ -64,7 +78,7 @@ export default function JobPostingSnapshotDialog({ isOpen, onApply, onClose, val
         <div className="job-posting-dialog-header">
           <div>
             <h3 id="job-posting-dialog-title">Job Posting Snapshot</h3>
-            <p id="job-posting-dialog-description">Captured employer content</p>
+            <p id="job-posting-dialog-description">{description}</p>
           </div>
           <button aria-label="Close job posting editor" className="quiet-button" type="button" onClick={requestClose}>
             Close

@@ -334,6 +334,11 @@ export default function ApplicationDetailPanel({
     setSaveMessage("");
   }
 
+  function applyJobPostingSnapshot(value) {
+    setFormData((current) => ({ ...current, job_description: value }));
+    setSaveMessage("");
+  }
+
   function handleClose() {
     if (
       hasUnsavedChanges &&
@@ -527,7 +532,9 @@ export default function ApplicationDetailPanel({
               />
             ) : null}
 
-            {activeTab === "job-posting" ? <JobPostingTab formData={formData} updateField={updateField} /> : null}
+            {activeTab === "job-posting" ? (
+              <JobPostingTab formData={formData} onApplySnapshot={applyJobPostingSnapshot} />
+            ) : null}
 
             {activeTab === "contact-prep" ? (
               <ContactPrepTab

@@ -1,8 +1,29 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-export default function JobPostingTab({ formData, updateField }) {
+import JobPostingSnapshotDialog from "./JobPostingSnapshotDialog.jsx";
+
+export default function JobPostingTab({ formData, onApplySnapshot }) {
   const hasSnapshot = Boolean(formData.job_description?.trim());
-  const [isEditing, setIsEditing] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const triggerRef = useRef(null);
+  const shouldReturnFocusRef = useRef(false);
+
+  useEffect(() => {
+    if (!isDialogOpen && shouldReturnFocusRef.current) {
+      triggerRef.current?.focus();
+      shouldReturnFocusRef.current = false;
+    }
+  }, [isDialogOpen]);
+
+  function closeDialog() {
+    shouldReturnFocusRef.current = true;
+    setIsDialogOpen(false);
+  }
+
+  function applySnapshot(value) {
+    onApplySnapshot(value);
+    closeDialog();
+  }
 
   return (
     <section className="detail-tab-content job-posting-tab">
@@ -11,38 +32,27 @@ export default function JobPostingTab({ formData, updateField }) {
           <h3>Job Posting Snapshot</h3>
           <p>Saved posting content for this opportunity. Personal notes remain under Job Details.</p>
         </div>
-        {hasSnapshot && !isEditing ? (
-          <button className="secondary-button" type="button" onClick={() => setIsEditing(true)}>
-            Edit snapshot
-          </button>
-        ) : null}
+        <button className="secondary-button" ref={triggerRef} type="button" onClick={() => setIsDialogOpen(true)}>
+          {hasSnapshot ? "View / edit snapshot" : "Add snapshot"}
+        </button>
       </div>
 
-      {isEditing ? (
-        <label className="detail-notes-field">
-          Job Posting Snapshot
-          <textarea
-            name="job_description"
-            value={formData.job_description}
-            onChange={updateField}
-            rows="18"
-            placeholder="Paste or edit the job posting text"
-          />
-          <button className="secondary-button" type="button" onClick={() => setIsEditing(false)}>
-            Done editing
-          </button>
-        </label>
-      ) : hasSnapshot ? (
+      {hasSnapshot ? (
         <div className="job-posting-snapshot">{formData.job_description}</div>
       ) : (
         <div className="job-posting-empty-state">
-          <h4>No job posting snapshot saved</h4>
-          <p>This opportunity was added without captured posting text.</p>
-          <button className="secondary-button" type="button" onClick={() => setIsEditing(true)}>
-            Add posting text
-          </button>
+          <h4>No job posting saved</h4>
+          <p>Saving the posting keeps it available if the original listing disappears.</p>
         </div>
       )}
+
+      <JobPostingSnapshotDialog
+        description="Apply changes updates the application draft. Save changes is still required."
+        isOpen={isDialogOpen}
+        onApply={applySnapshot}
+        onClose={closeDialog}
+        value={formData.job_description}
+      />
     </section>
   );
 }

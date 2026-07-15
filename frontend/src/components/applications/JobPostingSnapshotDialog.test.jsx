@@ -58,6 +58,7 @@ describe("JobPostingSnapshotDialog", () => {
 
   it("treats cancel and Escape as discard actions", async () => {
     const onClose = vi.fn();
+    vi.stubGlobal("confirm", vi.fn());
     await renderDialog({ onClose });
 
     await act(async () => {
@@ -69,6 +70,7 @@ describe("JobPostingSnapshotDialog", () => {
       window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
     });
     expect(onClose).toHaveBeenCalledTimes(2);
+    expect(window.confirm).not.toHaveBeenCalled();
   });
 
   it("keeps dirty drafts open when discard is canceled and discards only after confirmation", async () => {
@@ -114,5 +116,24 @@ describe("JobPostingSnapshotDialog", () => {
 
     expect(window.confirm).toHaveBeenCalledWith("Discard changes to the job posting?");
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the same dirty-draft confirmation for backdrop close", async () => {
+    const onClose = vi.fn();
+    vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+    await renderDialog({ onClose });
+
+    const textarea = container.querySelector("textarea");
+    await act(async () => {
+      const setValue = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set;
+      setValue.call(textarea, "Changed");
+      textarea.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      container.querySelector(".job-posting-dialog-backdrop").dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    });
+
+    expect(window.confirm).toHaveBeenCalledWith("Discard changes to the job posting?");
+    expect(onClose).not.toHaveBeenCalled();
   });
 });
