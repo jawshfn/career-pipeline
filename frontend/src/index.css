@@ -1523,6 +1523,10 @@ a {
   .detail-job-link-action {
     grid-column: auto;
   }
+
+  .detail-prep-resume-field {
+    width: 100%;
+  }
 }
 
 .detail-field-grid {
@@ -1595,6 +1599,16 @@ a {
 }
 
 .detail-personal-notes-field {
+  min-height: 2.5rem;
+  overflow-x: hidden;
+  resize: none;
+}
+
+.detail-prep-resume-field {
+  width: min(100%, 28rem);
+}
+
+.detail-prep-notes-field {
   min-height: 2.5rem;
   overflow-x: hidden;
   resize: none;

@@ -220,6 +220,7 @@ Status: in progress
 - Phase 20.6b — Refine the Application Detail Follow-up date layout and multiline next-action workflow.
 - Phase 20.6c — Refine Job Details grouping and compact auto-growing Personal Notes.
 - Phase 20.6d — Replace the inline Job Posting editor with a compact preview and draft-based modal workflow.
+- Phase 20.6e — Refine Resume & Prep with compact auto-growing preparation notes.
 
 ## Later Optional Enhancements
 
