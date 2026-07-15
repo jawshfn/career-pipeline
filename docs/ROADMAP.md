@@ -214,6 +214,7 @@ Status: in progress
 - Phase 20.2 — Polish the Add Job experience across Manual Entry, Paste Job Link, and Paste Job Text, and prevent discarded browser captures from reappearing after mode changes.
 
 - Phase 20.3 — Refine the Reminders page with independently sized follow-up sections, clearer urgency hierarchy, and polished reminder actions.
+- Phase 20.4 — Refine Dashboard metric layouts, workflow guidance, breakdown panels, and source/resume results across desktop and mobile.
 
 ## Later Optional Enhancements
 

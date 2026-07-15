@@ -26,7 +26,18 @@ function MetricCard({ label, tone, value }) {
   );
 }
 
-function BreakdownList({ emptyMessage, items }) {
+const statusCountClasses = {
+  Applied: "status-applied",
+  Assessment: "status-assessment",
+  Interview: "status-interview",
+  Offer: "status-offer",
+  "Recruiter Screen": "status-screen",
+  Rejected: "status-closed",
+  Saved: "status-saved",
+  Withdrawn: "status-withdrawn",
+};
+
+function BreakdownList({ emptyMessage, items, tone = "neutral" }) {
   if (items.length === 0) {
     return <p className="dashboard-empty-panel">{emptyMessage}</p>;
   }
@@ -36,7 +47,9 @@ function BreakdownList({ emptyMessage, items }) {
       {items.map((item) => (
         <div key={item.label}>
           <dt>{item.label}</dt>
-          <dd>{item.count}</dd>
+          <dd className={`dashboard-breakdown-count dashboard-breakdown-count-${tone} ${statusCountClasses[item.label] || ""}`}>
+            {item.count}
+          </dd>
         </div>
       ))}
     </dl>
@@ -68,14 +81,15 @@ export function EffectivenessGrid({ ariaLabel, firstColumnLabel, items }) {
   );
 }
 
-function DashboardDisclosureSection({ children, defaultOpen = true, id, summary, title }) {
+function DashboardDisclosureSection({ children, defaultOpen = true, id, summary, title, tone }) {
   return (
-    <details className="panel dashboard-panel dashboard-disclosure" open={defaultOpen}>
+    <details className={`panel dashboard-panel dashboard-disclosure dashboard-panel-${tone}`} open={defaultOpen}>
       <summary className="dashboard-disclosure-summary" aria-controls={id}>
-        <span>
+        <span className="dashboard-disclosure-copy">
           <strong>{title}</strong>
           <small>{summary}</small>
         </span>
+        <span aria-hidden="true" className="dashboard-disclosure-chevron" />
       </summary>
       <div className="dashboard-disclosure-content" id={id}>
         {children}
@@ -192,26 +206,30 @@ export default function DashboardPage({ onOpenStatusBoard }) {
               id="dashboard-status-panel"
               summary={summarizeBreakdown(dashboardSummary.status_breakdown, "status", "statuses")}
               title="Application Status"
+              tone="status"
             >
-              <BreakdownList emptyMessage="No status data yet." items={dashboardSummary.status_breakdown} />
+              <BreakdownList emptyMessage="No status data yet." items={dashboardSummary.status_breakdown} tone="status" />
             </DashboardDisclosureSection>
 
             <DashboardDisclosureSection
               id="dashboard-source-panel"
               summary={`${sourceTotal} applications from ${dashboardSummary.source_breakdown.length} sources`}
               title="Sources"
+              tone="sources"
             >
-              <BreakdownList emptyMessage="No source data yet." items={dashboardSummary.source_breakdown} />
+              <BreakdownList emptyMessage="No source data yet." items={dashboardSummary.source_breakdown} tone="sources" />
             </DashboardDisclosureSection>
 
             <DashboardDisclosureSection
               id="dashboard-red-flags-panel"
               summary={`${redFlaggedCount} application${redFlaggedCount === 1 ? "" : "s"} flagged`}
               title="Red Flags"
+              tone="red-flags"
             >
               <BreakdownList
                 emptyMessage="No red flags marked on applications."
                 items={dashboardSummary.red_flag_snapshot.items}
+                tone="red-flags"
               />
             </DashboardDisclosureSection>
           </div>
@@ -221,6 +239,7 @@ export default function DashboardPage({ onOpenStatusBoard }) {
               id="dashboard-source-results-panel"
               summary={`${dashboardSummary.source_effectiveness.length} sources compared`}
               title="Source Results"
+              tone="source-results"
             >
               {dashboardSummary.source_effectiveness.length === 0 ? (
                 <p className="dashboard-empty-panel">No source data yet.</p>
@@ -237,6 +256,7 @@ export default function DashboardPage({ onOpenStatusBoard }) {
               id="dashboard-resume-results-panel"
               summary={resumeCoverageSummary}
               title="Resume Results"
+              tone="resume-results"
             >
               {dashboardSummary.resume_version_effectiveness.length === 0 ? (
                 <p className="dashboard-empty-panel">No resume-version data yet.</p>
