@@ -103,6 +103,6 @@ describe("Application Detail overview hierarchy", () => {
     );
 
     expect(markup).toContain('<h2 id="application-detail-title">Senior Product Designer</h2>');
-    expect(markup).toContain('<p class="detail-company-name">Pursuit Labs</p>');
+    expect(markup).toContain('<p class="detail-company-name">at Pursuit Labs</p>');
   });
 });
