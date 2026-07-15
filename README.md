@@ -21,7 +21,7 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 - **Reminders:** review overdue follow-ups, upcoming follow-ups, and Needs check-in items.
 - **Dashboard:** see summary metrics, source results, resume results, and red-flag snapshots.
 - **Resumes:** manage reusable resume variants and connect them to applications.
-- **Application Detail:** edit follow-up, job details, resume/prep notes, red flags, and activity timeline entries.
+- **Application Detail:** edit follow-up, job details, a dedicated Job Posting Snapshot, resume/prep notes, red flags, and activity timeline entries.
 
 ## Browser Capture - Recommended Local Workflow
 
@@ -129,7 +129,7 @@ Not implemented: Chrome Web Store distribution, production backend/SaaS deployme
 
 - [Product Spec](docs/PRODUCT_SPEC.md)
 - [Roadmap](docs/ROADMAP.md)
-- [Smart Capture Guide](docs/SMART_CAPTURE_GUIDE.md)
+- [Paste Job Text Guide](docs/SMART_CAPTURE_GUIDE.md)
 - [Capture Engine](docs/CAPTURE_ENGINE.md)
 - [Browser Extension Guide](browser-extension/README.md)
 - [Data Model](docs/DATA_MODEL.md)

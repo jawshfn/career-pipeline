@@ -25,6 +25,7 @@ import ApplicationDetailOverview from "./ApplicationDetailOverview.jsx";
 import ApplicationDetailSummaryStrip from "./ApplicationDetailSummaryStrip.jsx";
 import ContactPrepTab from "./ContactPrepTab.jsx";
 import JobDetailsTab from "./JobDetailsTab.jsx";
+import JobPostingTab from "./JobPostingTab.jsx";
 import RedFlagsTab from "./RedFlagsTab.jsx";
 import StatusFollowUpTab from "./StatusFollowUpTab.jsx";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
@@ -49,6 +50,7 @@ const initialFormState = {
   salary_min: "",
   salary_max: "",
   employment_type: "",
+  job_description: "",
   notes: "",
   vague_job_description: false,
   unrealistic_salary: false,
@@ -59,10 +61,11 @@ const initialFormState = {
   red_flags_notes: "",
 };
 
-const detailTabs = [
+export const detailTabs = [
   { id: "overview", label: "Overview" },
   { id: "dates", label: "Follow-up" },
   { id: "job-details", label: "Job Details" },
+  { id: "job-posting", label: "Job Posting" },
   { id: "contact-prep", label: "Resume & Prep" },
   { id: "red-flags", label: "Red Flags" },
   { id: "activity", label: "Activity" },
@@ -98,6 +101,7 @@ function toFormState(application) {
     salary_min: application.salary_min ?? "",
     salary_max: application.salary_max ?? "",
     employment_type: application.employment_type || "",
+    job_description: application.job_description || "",
     notes: application.notes || "",
     vague_job_description: Boolean(application.vague_job_description),
     unrealistic_salary: Boolean(application.unrealistic_salary),
@@ -364,6 +368,7 @@ export default function ApplicationDetailPanel({
       salary_min: normalizeOptionalNumber(formData.salary_min),
       salary_max: normalizeOptionalNumber(formData.salary_max),
       employment_type: normalizeOptionalText(formData.employment_type),
+      job_description: normalizeOptionalText(formData.job_description),
       date_saved: formData.date_saved,
       date_applied: normalizeOptionalDate(formData.date_applied),
       follow_up_date: normalizeOptionalDate(formData.follow_up_date),
@@ -423,6 +428,7 @@ export default function ApplicationDetailPanel({
     ["Source", getDisplayValue(formData.source)],
     ["Location", getDisplayValue(formData.location, "No location saved")],
     ["Job link", openableJobLink ? "Saved" : "No link saved"],
+    ["Job posting", formData.job_description.trim() ? "Saved" : "Not saved"],
     ["Red flags", redFlagCount ? `${redFlagCount} marked` : "None marked"],
   ];
   const attentionItems = [
@@ -532,6 +538,8 @@ export default function ApplicationDetailPanel({
                 updateField={updateField}
               />
             ) : null}
+
+            {activeTab === "job-posting" ? <JobPostingTab formData={formData} updateField={updateField} /> : null}
 
             {activeTab === "contact-prep" ? (
               <ContactPrepTab

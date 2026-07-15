@@ -33,7 +33,8 @@ Stores the main record for each job opportunity or application.
 - contact_info: optional flexible contact detail, such as email, profile link, phone, or recruiter profile
 - prep_notes: optional preparation notes for interviews, assessments, talking points, or questions
 - resume_version_id: optional foreign key to resume_versions
-- notes: general user notes
+- job_description: nullable Text containing captured or user-added job posting content
+- notes: nullable Text containing user-authored Personal Notes
 - vague_job_description: boolean red-flag field
 - unrealistic_salary: boolean red-flag field
 - asks_for_payment: boolean red-flag field
@@ -44,6 +45,8 @@ Stores the main record for each job opportunity or application.
 - is_archived: boolean for hiding inactive records from active workflow views
 - created_at: creation timestamp
 - updated_at: last update timestamp
+
+Older application rows may have a null `job_description`. Existing notes are not automatically moved because they may mix personal context, recruiter details, and copied posting text. The application model stores no browser history or capture provenance.
 
 ### Status Values
 

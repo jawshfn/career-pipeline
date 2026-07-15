@@ -27,6 +27,7 @@ export const initialQuickAddFormState = {
   date_applied: "",
   follow_up_date: "",
   notes: "",
+  job_description: "",
 };
 
 function normalizeDirtyValue(value) {
@@ -125,6 +126,7 @@ export default function QuickAddApplicationForm({
       date_applied: normalizeOptionalDate(formData.date_applied),
       follow_up_date: normalizeOptionalDate(formData.follow_up_date),
       notes: normalizeOptionalText(formData.notes),
+      job_description: normalizeOptionalText(formData.job_description),
     };
 
     try {

@@ -299,7 +299,7 @@ export default function JobLinkCaptureForm({
             detailsHelperText={
               reviewData.parser_format === "joblink"
                 ? "Add context you want to save with this job link."
-                : "Imported job description will be saved for later reference."
+                : "Imported job description will be saved as a Job Posting Snapshot."
             }
             existingApplications={existingApplications}
             hideDetailsButtonLabel={reviewData.parser_format === "joblink" ? "Hide notes" : "Hide imported description"}

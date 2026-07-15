@@ -860,6 +860,38 @@ a {
   line-height: 1.5;
 }
 
+.job-posting-tab {
+  display: grid;
+  gap: 16px;
+}
+
+.job-posting-snapshot,
+.job-posting-empty-state {
+  min-width: 0;
+  border: 1px solid #e4ebe9;
+  border-radius: 8px;
+  padding: 16px;
+  color: #34413f;
+  background: #fbfdfc;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.job-posting-snapshot {
+  white-space: pre-wrap;
+}
+
+.job-posting-empty-state {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.job-posting-empty-state h4,
+.job-posting-empty-state p {
+  margin: 0;
+}
+
 .support-copy-status {
   min-height: 0;
   color: #1f625b;

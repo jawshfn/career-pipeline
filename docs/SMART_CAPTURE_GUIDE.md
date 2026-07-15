@@ -11,7 +11,7 @@ Paste Job Link and Browser Capture are separate capture methods. They do not rea
 ## What Smart Capture Does
 
 - Reads the pasted text you provide in the Add Job form.
-- Prepares suggested fields such as company, role, location, employment type, compensation, and saved notes when those details are visible in the copied text.
+- Prepares suggested fields such as company, role, location, employment type, compensation, and an editable Job Posting Snapshot when those details are visible in the copied text.
 - Keeps the review step editable so you can correct or complete the details before saving.
 - Works best with copied posting text from LinkedIn-style, Indeed-style, and ZipRecruiter-style pages.
 
@@ -85,9 +85,10 @@ Check these fields carefully:
 - Location and work arrangement
 - Employment type
 - Compensation
-- Saved notes
+- Job Posting Snapshot
+- Personal Notes
 
-If a field is missing or wrong, edit it in the review form. Smart Capture is meant to speed up capture, not replace your review.
+Pasted employer content becomes the editable Job Posting Snapshot. Personal Notes are for your own company, recruiter, application, and next-step context. If a field is missing or wrong, edit it in the review form. Smart Capture is meant to speed up capture, not replace your review.
 
 ## Demo Mode Note
 

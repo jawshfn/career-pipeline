@@ -63,30 +63,10 @@ export function getLeverLocation(location, workplaceType) {
   return locationText ? `${locationText} - ${workplaceText}` : workplaceText;
 }
 
-export function buildLeverNotes(importedJob) {
-  const metadata = [
-    ["Team", importedJob?.team],
-    ["Department", importedJob?.department],
-  ]
-    .filter(([, value]) => hasValue(value))
-    .map(([label, value]) => `${label}: ${String(value).trim()}`);
-  const description = String(importedJob?.description_text || "").trim();
-  const sections = [];
-
-  if (metadata.length) {
-    sections.push(`Imported job details:\n\n${metadata.join("\n")}`);
-  }
-  if (description) {
-    sections.push(`Imported job description:\n\n${description}`);
-  }
-
-  return sections.join("\n\n");
-}
-
 export function buildLeverCaptureResult({ importedJob, jobLink, source }) {
   const employmentType = mapLeverCommitment(importedJob?.commitment);
   const location = getLeverLocation(importedJob?.location, importedJob?.workplace_type);
-  const notes = buildLeverNotes(importedJob);
+  const description = String(importedJob?.description_text || "").trim();
   const warnings = hasValue(importedJob?.commitment) && !employmentType ? ["unmapped-employment-type"] : [];
   const fields = {
     company_name: createLeverField(""),
@@ -94,7 +74,8 @@ export function buildLeverCaptureResult({ importedJob, jobLink, source }) {
     location: createLeverField(location),
     compensation: createLeverField(importedJob?.salary_description),
     employment_type: createLeverField(employmentType),
-    notes: createLeverField(notes),
+    job_description: createLeverField(description),
+    notes: createLeverField(""),
     job_link: hasValue(jobLink)
       ? createCaptureField({
           value: jobLink,

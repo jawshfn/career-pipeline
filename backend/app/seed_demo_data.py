@@ -85,7 +85,8 @@ def seed_demo_data(db: Session, *, reset: bool = False, today: date | None = Non
             contact_info="alex.rivera@example.com",
             prep_notes="Review the API project story and be ready to discuss React form tradeoffs.",
             resume_version_id=resume_versions[0].id,
-            notes="Fictional LinkedIn posting for a product-minded junior developer role.",
+            job_description="Build product-minded frontend features for fictional customer teams.\n\nCollaborate on accessible, reliable interfaces.",
+            notes="Ask which product area this junior developer role will support first.",
         ),
         Application(
             company_name="Blue Harbor Analytics",

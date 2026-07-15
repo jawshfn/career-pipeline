@@ -83,7 +83,8 @@ describe("buildGreenhouseCaptureResult", () => {
       compensation: "Salary Range: $72,000-$88,000 USD",
       source: "Company Website",
       job_link: "https://boards.greenhouse.io/northstaranalytics/jobs/123456",
-      notes: "Imported job description:\n\nBuild operational dashboards.",
+      job_description: "Build operational dashboards.",
+      notes: "",
     });
   });
 

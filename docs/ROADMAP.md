@@ -190,8 +190,13 @@ Status: complete through Phase 17.2
 - Final recruiter-facing screenshot audit
 - Final responsive browser QA
 - Production distribution research only if the product reaches that stage
-- Final responsive browser QA pass
 - Optional lightweight frontend smoke tests if the UI stabilizes enough to justify them
+
+## Phase 18 — Job Posting Snapshot
+
+Status: complete through Phase 18.0
+
+- Phase 18.0 — Separate captured posting content from Personal Notes with a dedicated editable Job Posting tab and end-to-end capture integration.
 
 ## Later Optional Enhancements
 

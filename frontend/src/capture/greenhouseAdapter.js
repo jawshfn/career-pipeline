@@ -121,7 +121,6 @@ export function buildGreenhouseCaptureResult({ importedJob, jobLink, source }) {
       ? ""
       : getGreenhouseDescriptionCompensation(descriptionText);
   const compensation = structuredCompensation || descriptionCompensation;
-  const notes = descriptionText ? `Imported job description:\n\n${descriptionText}` : "";
   const fields = {
     company_name: createGreenhouseField(importedJob?.company_name),
     role_title: createGreenhouseField(importedJob?.title),
@@ -131,7 +130,8 @@ export function buildGreenhouseCaptureResult({ importedJob, jobLink, source }) {
       descriptionCompensation ? CAPTURE_CONFIDENCE.MEDIUM : CAPTURE_CONFIDENCE.HIGH,
     ),
     employment_type: createGreenhouseField(""),
-    notes: createGreenhouseField(notes),
+    job_description: createGreenhouseField(descriptionText),
+    notes: createGreenhouseField(""),
     job_link: createConfirmedUserField(jobLink, CAPTURE_PROVENANCE.USER_INPUT),
     source: createCaptureField({
       value: source,

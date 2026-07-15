@@ -38,6 +38,7 @@ export const CAPTURE_FIELD_NAMES = [
   "employment_type",
   "follow_up_date",
   "next_action",
+  "job_description",
   "notes",
 ];
 
@@ -47,6 +48,7 @@ const deterministicTextFieldNames = new Set([
   "location",
   "compensation",
   "employment_type",
+  "job_description",
   "notes",
 ]);
 

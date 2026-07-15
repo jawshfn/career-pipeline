@@ -28,6 +28,7 @@ class ApplicationBase(BaseModel):
     contact_info: str | None = None
     prep_notes: str | None = None
     resume_version_id: int | None = None
+    job_description: str | None = None
     notes: str | None = None
     vague_job_description: bool = False
     unrealistic_salary: bool = False
@@ -81,6 +82,7 @@ class ApplicationUpdate(BaseModel):
     contact_info: str | None = None
     prep_notes: str | None = None
     resume_version_id: int | None = None
+    job_description: str | None = None
     notes: str | None = None
     vague_job_description: bool | None = None
     unrealistic_salary: bool | None = None

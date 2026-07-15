@@ -132,6 +132,7 @@ export function createDemoApplication(payload) {
     contact_info: payload.contact_info || "",
     prep_notes: payload.prep_notes || "",
     resume_version_id: payload.resume_version_id ?? null,
+    job_description: payload.job_description || "",
     notes: payload.notes || "",
     vague_job_description: Boolean(payload.vague_job_description),
     unrealistic_salary: Boolean(payload.unrealistic_salary),

@@ -52,6 +52,7 @@ class Application(Base):
     contact_info: Mapped[str | None] = mapped_column(Text, nullable=True)
     prep_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     resume_version_id: Mapped[int | None] = mapped_column(ForeignKey("resume_versions.id"), nullable=True)
+    job_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     vague_job_description: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     unrealistic_salary: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

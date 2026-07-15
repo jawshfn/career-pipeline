@@ -114,7 +114,7 @@ Every supported review field is present in `fields`, even when its value is blan
 
 ## Provenance And Confidence
 
-- Posting-text fields such as company, role, location, compensation, employment type, and notes use `deterministic-text` with `medium` confidence when present.
+- Posting-text fields such as company, role, location, compensation, employment type, and `job_description` use `deterministic-text` with `medium` confidence when present.
 - Missing extracted values use `missing` provenance and `missing` confidence.
 - Job Link uses `user-input` and `confirmed` only when the user explicitly entered it.
 - Source uses `user-selection` and `confirmed`.
@@ -139,3 +139,4 @@ Only `company_name` and `role_title` are required review fields. Missing optiona
 - Restricted job boards are not scraped.
 - Future network adapters must use documented or permitted access methods.
 - Capture metadata is not yet persisted to the database.
+- Structured provider `description_text`, browser text capture, and pasted text map to `job_description`. `notes` remains the user-authored Personal Notes field and is no longer the default destination for posting text.

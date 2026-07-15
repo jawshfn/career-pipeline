@@ -110,7 +110,7 @@ describe("Capture Engine contract", () => {
   it("marks nonempty deterministic parser fields with medium deterministic provenance", () => {
     const result = buildCaptureResult(linkedInCaptureData);
 
-    for (const fieldName of ["company_name", "role_title", "location", "compensation", "employment_type", "notes"]) {
+    for (const fieldName of ["company_name", "role_title", "location", "compensation", "employment_type", "job_description"]) {
       expect(result.fields[fieldName]).toMatchObject({
         provenance: CAPTURE_PROVENANCE.DETERMINISTIC_TEXT,
         confidence: CAPTURE_CONFIDENCE.MEDIUM,

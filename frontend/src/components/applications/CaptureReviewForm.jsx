@@ -180,6 +180,7 @@ export default function CaptureReviewForm({
       compensation: normalizeOptionalText(reviewData.compensation),
       follow_up_date: normalizeOptionalDate(reviewData.follow_up_date),
       next_action: normalizeOptionalText(reviewData.next_action),
+      job_description: normalizeOptionalText(reviewData.job_description),
       notes: normalizeOptionalText(reviewData.notes),
     };
 
@@ -377,14 +378,14 @@ export default function CaptureReviewForm({
         </section>
       ) : null}
 
-      <section className="smart-capture-review-section" aria-labelledby="smart-capture-job-details-title">
+      <section className="smart-capture-review-section" aria-labelledby="smart-capture-job-description-title">
         <div className="smart-capture-review-section-heading">
-          <h4 id="smart-capture-job-details-title">Job details</h4>
-          <p>{detailsHelperText}</p>
+          <h4 id="smart-capture-job-description-title">Job Posting Snapshot</h4>
+          <p>Review the captured employer posting before saving. You can edit it later under Job Posting.</p>
         </div>
 
         <button
-          aria-controls="smart-capture-job-details-text"
+          aria-controls="smart-capture-job-description-text"
           aria-expanded={showJobDetails}
           className="quick-add-disclosure"
           type="button"
@@ -394,16 +395,32 @@ export default function CaptureReviewForm({
         </button>
 
         {showJobDetails ? (
-          <label className="notes-field" id="smart-capture-job-details-text">
+          <label className="notes-field" id="smart-capture-job-description-text">
             <textarea
-              name="notes"
-              value={reviewData.notes}
+              name="job_description"
+              value={reviewData.job_description}
               onChange={updateReviewField}
               rows="12"
-              placeholder="Pasted job text and optional context"
+              placeholder="Captured job posting text"
             />
           </label>
         ) : null}
+      </section>
+
+      <section className="smart-capture-review-section" aria-labelledby="smart-capture-personal-notes-title">
+        <div className="smart-capture-review-section-heading">
+          <h4 id="smart-capture-personal-notes-title">Personal Notes</h4>
+          <p>Add your own observations, recruiter context, or reminders.</p>
+        </div>
+        <label className="notes-field">
+          <textarea
+            name="notes"
+            value={reviewData.notes}
+            onChange={updateReviewField}
+            rows="5"
+            placeholder="Your notes about the company, role, recruiter, application, or next steps"
+          />
+        </label>
       </section>
 
       <div className="form-actions">

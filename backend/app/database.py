@@ -46,6 +46,7 @@ def add_application_additive_columns() -> None:
         "contact_name": "VARCHAR(160)",
         "contact_info": "TEXT",
         "prep_notes": "TEXT",
+        "job_description": "TEXT",
         "compensation": "VARCHAR(160)",
         "vague_job_description": "BOOLEAN NOT NULL DEFAULT 0",
         "unrealistic_salary": "BOOLEAN NOT NULL DEFAULT 0",

@@ -89,7 +89,8 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.location).toBe("Richmond, VA - Hybrid");
     expect(reviewData.employment_type).toBe("Full-time");
     expect(reviewData.compensation).toBe("$76,000 - $92,000 a year");
-    expect(reviewData.notes.startsWith("About the job")).toBe(true);
+    expect(reviewData.job_description).toContain("Build reliable systems.");
+    expect(reviewData.notes).toBe("");
     expect(reviewData.job_link).toBe("https://www.linkedin.com/jobs/view/123456");
     expect(reviewData.source).toBe("LinkedIn");
   });
@@ -112,7 +113,8 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.role_title).toBe("");
     expect(reviewData.location).toBe("Remote");
     expect(reviewData.employment_type).toBe("Full-time");
-    expect(reviewData.notes.startsWith("About the job")).toBe(true);
+    expect(reviewData.job_description).toBe("Build reliable fictional systems.");
+    expect(reviewData.notes).toBe("");
     expect(reviewData.job_link).toBe("https://www.linkedin.com/jobs/view/123456");
     expect(reviewData.source).toBe("LinkedIn");
   });
@@ -334,7 +336,8 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.location).toBe("Norfolk, VA - On-site");
     expect(reviewData.compensation).toBe("$62K/yr - $92K/yr");
     expect(reviewData.employment_type).toBe("Full-time");
-    expect(reviewData.notes).toMatch(/^About the job/u);
+    expect(reviewData.job_description).toBe("Build reporting dashboards.");
+    expect(reviewData.notes).toBe("");
   });
 
   it("extracts LinkedIn description salary when structured header compensation is missing", () => {
@@ -566,7 +569,8 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.location).toBe("Norfolk, VA 23510 - Hybrid work");
     expect(reviewData.compensation).toBe("$60,000 - $65,000 a year");
     expect(reviewData.employment_type).toBe("Full-time");
-    expect(reviewData.notes).toMatch(/^Full job description/u);
+    expect(reviewData.job_description).toBe("Design custom refrigeration systems.");
+    expect(reviewData.notes).toBe("");
   });
 
   it("preserves Indeed structured street-address locations", () => {
@@ -1037,7 +1041,8 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.location).toBe("Hampton, VA - Remote");
     expect(reviewData.compensation).toBe("$29/hr");
     expect(reviewData.employment_type).toBe("Full-time");
-    expect(reviewData.notes).toMatch(/^Job description/u);
+    expect(reviewData.job_description).toBe("Review content quality.");
+    expect(reviewData.notes).toBe("");
   });
 
   it("detects ZipRecruiter-style text without a posting-age line", () => {
@@ -1072,7 +1077,8 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.parser_format).toBe("generic");
     expect(reviewData.source).toBe("Other");
     expect(reviewData.location).toBe("Remote");
-    expect(reviewData.notes).toMatch(/^Pasted job text:/u);
+    expect(reviewData.job_description).toBe("Company: Fictional Labs\nRole title: Research Assistant\nLocation: Remote\nHelp with research operations.");
+    expect(reviewData.notes).toBe("");
   });
 
   it("keeps long sentence-like generic company and role names eligible", () => {
@@ -1128,7 +1134,8 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.employment_type).toBe("Part-time");
     expect(reviewData.source).toBe("Other");
     expect(reviewData.job_link).toBe("");
-    expect(reviewData.notes).toMatch(/^Pasted job text:/u);
+    expect(reviewData.job_description).toContain("You will serve as a RESOURCE DATA ANALYST");
+    expect(reviewData.notes).toBe("");
   });
 
   it("parses a reversed Google Jobs title header", () => {

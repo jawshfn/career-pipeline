@@ -33,7 +33,8 @@ describe("Lever capture adapter", () => {
     expect(result.fields.compensation.value).toBe("USD 120,000 - 150,000 annually");
     expect(result.fields.job_link.value).toContain("source=test");
     expect(result.fields.source.value).toBe("Referral");
-    expect(result.fields.notes.value).toContain("Team: Engineering");
+    expect(result.fields.job_description.value).toContain("Build reliable developer tools.");
+    expect(result.fields.notes.value).toBe("");
   });
 
   it("maps known commitments conservatively and warns about unknown values", () => {

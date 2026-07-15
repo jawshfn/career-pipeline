@@ -112,13 +112,16 @@ export default function JobDetailsTab({
         </label>
 
         <label className="detail-notes-field detail-field-grid-span">
-          Notes
+          Personal Notes
+          <span className="field-helper">
+            Add your own notes about the company, role, recruiter, or application. Captured posting content is stored separately under Job Posting.
+          </span>
           <textarea
             name="notes"
             value={formData.notes}
             onChange={updateField}
             rows="5"
-            placeholder="General company, role, or posting notes"
+            placeholder="Your notes about the company, role, recruiter, application, or next steps"
           />
         </label>
       </div>

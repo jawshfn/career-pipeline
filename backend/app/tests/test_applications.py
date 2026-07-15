@@ -39,6 +39,7 @@ def test_create_application(client):
     assert data["contact_name"] is None
     assert data["contact_info"] is None
     assert data["prep_notes"] is None
+    assert data["job_description"] is None
 
 
 def test_create_application_without_status_defaults_to_saved(client):
@@ -198,6 +199,28 @@ def test_non_status_update_does_not_create_status_activity(client):
 
     assert response.status_code == 200
     assert get_activities(client, created["id"]) == []
+
+
+def test_job_description_persists_independently_from_personal_notes(client):
+    snapshot = "First paragraph.\n\nSecond paragraph."
+    created = create_application(client, job_description=snapshot, notes="Personal recruiter note.").json()
+
+    assert created["job_description"] == snapshot
+    assert created["notes"] == "Personal recruiter note."
+
+    updated = client.patch(
+        f"/api/applications/{created['id']}",
+        json={"job_description": "Replacement snapshot.", "notes": "Updated personal note."},
+    )
+
+    assert updated.status_code == 200
+    assert updated.json()["job_description"] == "Replacement snapshot."
+    assert updated.json()["notes"] == "Updated personal note."
+
+    cleared = client.patch(f"/api/applications/{created['id']}", json={"job_description": None})
+    assert cleared.status_code == 200
+    assert cleared.json()["job_description"] is None
+    assert cleared.json()["notes"] == "Updated personal note."
 
 
 def test_multi_field_status_update_creates_one_activity(client):

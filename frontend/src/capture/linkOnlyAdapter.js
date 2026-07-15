@@ -47,6 +47,7 @@ export function buildLinkOnlyCaptureResult({ jobLink, source }) {
     employment_type: createMissingField(),
     follow_up_date: createTrackingDefaultField(""),
     next_action: createTrackingDefaultField(""),
+    job_description: createMissingField(),
     notes: createMissingField(),
   };
 

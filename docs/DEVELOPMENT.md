@@ -165,7 +165,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Paste Job Text prepares a review form without creating an application.
 - Smart Capture review fields can be edited before Save application creates the record.
 - Smart Capture review is organized into Review before saving, Essentials, Captured details when present, Optional details, and Job details.
-- Smart Capture notes include the pasted job text.
+- Paste Job Text stores copied posting content in `job_description`; Personal Notes starts blank.
 - Strict hosted Greenhouse links open an editable imported review through the official API.
 - Canonical hosted Lever links on `jobs.lever.co` or `jobs.eu.lever.co` open an editable imported review through the public Postings API; users do not select a provider, and Company remains a review field.
 - Eligible custom Greenhouse links use best-effort server discovery; failed or unsupported links expose link-only and Paste Job Text fallbacks.
@@ -211,12 +211,13 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Details opens from filtered and sorted results.
 - Details opens Application Detail on the Overview tab.
 - Selecting Details scrolls the detail panel into view.
-- Detail tabs show Overview, Follow-up, Job Details, Resume & Prep, Red Flags, and Activity.
+- Detail tabs show Overview, Follow-up, Job Details, Job Posting, Resume & Prep, Red Flags, and Activity.
 - Overview is read-only and shows a scannable command snapshot with contextual helpful next-step items.
 - Overview does not show a static Quick edit button row because the main tabs already provide broad navigation.
 - The compact summary strip appears below the tab buttons across Application Detail tabs for stable navigation.
 - When there are no helpful next-step items, Overview shows a calm organized empty state.
-- Company name, role title, Source, Job link, location, compensation, employment type, and notes edit from Job Details.
+- Company name, role title, Source, Job link, location, compensation, employment type, and Personal Notes edit from Job Details.
+- Job Posting Snapshot can be created, updated, cleared, and read with long-text wrapping; it remains separate from Personal Notes and does not appear in compact list surfaces.
 - Job link values with full `http://` or `https://` protocols open as entered; obvious bare domains open with `https://`; incomplete text does not render as an external link.
 - Status edits from the persistent summary strip.
 - Applied Date, Follow-up Date, and Next Action edit from Follow-up.

@@ -40,6 +40,7 @@ function application(overrides) {
     contact_info: "",
     prep_notes: "",
     resume_version_id: null,
+    job_description: "",
     notes: "",
     vague_job_description: false,
     unrealistic_salary: false,
@@ -114,7 +115,9 @@ export function createDemoState() {
       contact_info: "maya.chen@example.com",
       prep_notes: "Mention dashboard cleanup and API testing examples.",
       resume_version_id: 2,
-      notes: "Fictional demo posting for analytics work with dashboard ownership.",
+      job_description:
+        "Build clear reporting workflows for fictional customer teams.\n\nPartner with stakeholders to improve dashboard quality.",
+      notes: "Ask how the analytics team prioritizes recurring reporting requests.",
       updated_at: timestamp(9),
     }),
     application({

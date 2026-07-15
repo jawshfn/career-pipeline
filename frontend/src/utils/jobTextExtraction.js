@@ -17,6 +17,7 @@ const initialReviewState = {
   employment_type: "",
   follow_up_date: "",
   next_action: "",
+  job_description: "",
   notes: "",
 };
 
@@ -745,24 +746,24 @@ function formatIndeedCompensation(baseCompensation, bonuses) {
     : `Base: ${baseCompensation}; Bonuses: ${bonuses.join("; ")}`;
 }
 
-function buildGenericNotes(rawText) {
+function buildGenericJobDescription(rawText) {
   const trimmedText = rawText.trim();
 
   if (!trimmedText) {
     return "";
   }
 
-  return `Pasted job text:\n\n${trimmedText}`;
+  return trimmedText;
 }
 
-function buildSourceSpecificNotes(rawText, headingPattern) {
+function buildJobDescriptionFromMarker(rawText, headingPattern) {
   const match = rawText.match(headingPattern);
 
   if (typeof match?.index !== "number") {
-    return buildGenericNotes(rawText);
+    return buildGenericJobDescription(rawText);
   }
 
-  return rawText.slice(match.index).trim();
+  return rawText.slice(match.index + match[0].length).trim();
 }
 
 function getHeaderLines(rawText, descriptionHeadingPattern = /^(full job description|job description)$/iu) {
@@ -908,14 +909,14 @@ function extractIndeedFields(rawText) {
     ...baseFields,
     location: indeedLocation,
     compensation: formatIndeedCompensation(baseFields.compensation, indeedBonuses),
-    notes: buildSourceSpecificNotes(rawText, /^\s*Full job description\s*$/imu),
+    job_description: buildJobDescriptionFromMarker(rawText, /^\s*(?:Full job description|Job description)\s*$/imu),
   };
 }
 
 function extractZipRecruiterFields(rawText) {
   return {
     ...extractHeaderFields(rawText),
-    notes: buildSourceSpecificNotes(rawText, /^\s*Job description\s*$/imu),
+    job_description: buildJobDescriptionFromMarker(rawText, /^\s*Job description\s*$/imu),
   };
 }
 
@@ -949,7 +950,7 @@ function extractLinkedInFields(rawText) {
     role_title: normalizeTitle(roleTitle),
     location: linkedInLocation || baseFields.location,
     compensation: baseFields.compensation || getLinkedInDescriptionCompensation(rawText),
-    notes: buildSourceSpecificNotes(rawText, /^\s*About the job\s*$/imu),
+    job_description: buildJobDescriptionFromMarker(rawText, /^\s*About the job\s*$/imu),
   };
 }
 
@@ -969,7 +970,7 @@ function extractGoogleJobsFields(rawText) {
       location: "",
       compensation: "",
       employment_type: "",
-      notes: buildGenericNotes(rawText),
+      job_description: buildGenericJobDescription(rawText),
     };
   }
 
@@ -996,7 +997,7 @@ function extractGoogleJobsFields(rawText) {
       getGoogleMetadataCompensation(metadataLines) ||
       getExplicitGoogleCompensationFromPostingContent(postingContentLines),
     employment_type: detectEmploymentType(metadataLines),
-    notes: buildGenericNotes(rawText),
+    job_description: buildJobDescriptionFromMarker(rawText, /^\s*(?:Job description|About the role|Position description)\s*$/imu),
   };
 }
 
@@ -1020,7 +1021,7 @@ function getGenericFallbackFields(rawText) {
     role_title: roleTitle || (hasEnoughUnlabeledHeaderContext ? headerFields.role_title : ""),
     location: headerFields.location,
     compensation: headerFields.compensation || detectCompensation(headerLines),
-    notes: buildGenericNotes(rawText),
+    job_description: buildJobDescriptionFromMarker(rawText, /^\s*(?:Job description|About the role|Position description)\s*$/imu),
   };
 }
 

@@ -61,7 +61,7 @@ The current prototype includes:
 - Advisory duplicate and similar-opportunity warnings in Manual Entry and Smart Capture review
 - Application create, list, update, detail editing, and archive behavior
 - Applications page with Active, Closed, and All views plus search, filters, sorting, opportunity-focused table rows, Notes shortcut, and detail access
-- Application Detail tabs for Overview, Follow-up, Job Details, Resume & Prep, Red Flags, and Activity
+- Application Detail tabs for Overview, Follow-up, Job Details, Job Posting, Resume & Prep, Red Flags, and Activity
 - Read-only Application Detail Overview command snapshot with contextual helpful next-step shortcuts into focused editing tabs
 - Optional Next Action field shown in Application Detail and Reminders cards
 - Applied-date behavior that distinguishes saved date from the date the user actually applied
@@ -122,7 +122,7 @@ Follow-up presets help schedule common dates quickly. If the user selects Applie
 
 Paste Job Link provides a provider-neutral review path for valid public links. Supported hosted Greenhouse links import structured job data directly through the official Greenhouse Job Board API. Canonical hosted Lever links import one posting through Lever's public Postings API, while retaining the user's original Job Link and selected Source; Company stays editable and requires review because the provider does not expose a dependable display name. Custom employer career links with one explicit `gh_jid` can use best-effort server-side board discovery from strong structural evidence; failed or unsupported links retain link-only and Paste Job Text fallbacks. The optional local browser helper can hand a verified Greenhouse board and job ID from a clicked employer page to this mode. Every path opens an editable review before save.
 
-Paste Job Text is the deterministic paste-review fallback. The user pastes a job post, recruiter message, or copied listing text, optionally adds an explicit job link, selects a source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, employment type, and notes containing the relevant pasted text. The parser can internally recognize common LinkedIn, Indeed, ZipRecruiter, or generic paste formats to improve extraction quality, but it does not change the saved Source. Job link also stays user-controlled and is not guessed from arbitrary pasted URLs. Explicit user-entered bare domains can be normalized to `https://` for safe opening. Company career pages can still be pasted, but they are best-effort and should be reviewed carefully before saving. AI-assisted extraction is not implemented.
+Paste Job Text is the deterministic paste-review fallback. The user pastes a job post, recruiter message, or copied listing text, optionally adds an explicit job link, selects a source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, employment type, and an editable Job Posting Snapshot containing the relevant pasted text. Personal Notes remain separate and user-authored. The parser can internally recognize common LinkedIn, Indeed, ZipRecruiter, or generic paste formats to improve extraction quality, but it does not change the saved Source. Job link also stays user-controlled and is not guessed from arbitrary pasted URLs. Explicit user-entered bare domains can be normalized to `https://` for safe opening. Company career pages can still be pasted, but they are best-effort and should be reviewed carefully before saving. AI-assisted extraction is not implemented.
 
 Add Job and Smart Capture Review can show advisory duplicate warnings before saving. These warnings are deterministic and do not block save. Same normalized job links are treated as likely duplicates. Same or similar company, role, and location are also likely duplicates. Same or similar company and role with missing or different location are shown as similar opportunities. Archived applications are ignored for these warnings.
 
@@ -151,15 +151,16 @@ Current tabs:
 - Overview
 - Follow-up
 - Job Details
+- Job Posting
 - Resume & Prep
 - Red Flags
 - Activity
 
 Overview is a read-only command snapshot with compact opportunity context, read-only Added to tracker metadata, and contextual helpful next-step shortcuts into the focused editing tabs. When nothing needs attention, it shows a calm organized state instead of duplicating the main tab navigation. The compact summary strip appears below the tab buttons on non-Overview Application Detail tabs so navigation stays stable.
 
-Editable areas include company name, role title, job link, source, status, resume version, applied date, follow-up date, next action, prep notes, location, compensation, salary range, employment type, notes, red flags, and red-flag notes.
+Editable areas include company name, role title, job link, source, status, resume version, applied date, follow-up date, next action, prep notes, location, compensation, salary range, employment type, Job Posting Snapshot, Personal Notes, red flags, and red-flag notes.
 
-Status appears in the compact summary strip on focused edit tabs. Applied date, follow-up date, and next action live in Follow-up. Saved date is read-only Added to tracker metadata in Overview. Company, role, source, job link, location, compensation, employment type, and notes live in Job Details. Resume version and prep notes live in Resume & Prep.
+Status appears in the compact summary strip on focused edit tabs. Applied date, follow-up date, and next action live in Follow-up. Saved date is read-only Added to tracker metadata in Overview. Company, role, source, job link, location, compensation, employment type, and Personal Notes live in Job Details. Job Posting is a reading-first editable snapshot that remains optional and may be added later. Resume version and prep notes live in Resume & Prep. Existing notes are not automatically migrated into Job Posting Snapshot.
 
 `date_saved` means the date the job was added to Career Pipeline. `date_applied` means the date the user actually submitted the application. Changing status to Applied or later can default an empty Applied Date, but existing Applied Date values are not automatically overwritten or cleared.
 
