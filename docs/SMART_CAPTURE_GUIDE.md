@@ -1,10 +1,12 @@
-# Smart Capture Guide
+# Paste Job Text Guide
 
-Smart Capture is Career Pipeline's deterministic Paste Job Text workflow for copied job postings. It helps you turn text you explicitly paste into editable application fields without scraping or AI extraction.
+Browser Capture is the recommended local workflow when you are already viewing a supported Greenhouse, Indeed, or LinkedIn page. Paste Job Text is the broad deterministic fallback for unsupported pages or layouts, recruiter messages, copied text, and cases where browser detection is uncertain.
+
+Paste Job Text is Career Pipeline's deterministic workflow for copied job postings. It helps you turn text you explicitly paste into editable application fields without AI extraction.
 
 Use it from Add Job -> Paste Job Text. Paste the copied posting text, click Prepare review, check the suggested fields, edit anything that looks wrong, then save the opportunity.
 
-Paste Job Link and the optional local Greenhouse browser helper are separate capture methods. They do not read pasted text or change how Smart Capture works.
+Paste Job Link and Browser Capture are separate capture methods. They do not read pasted text or change how the deterministic Paste Job Text workflow works.
 
 ## What Smart Capture Does
 
@@ -23,7 +25,7 @@ Paste Job Link and the optional local Greenhouse browser helper are separate cap
 
 Source remains the value you choose in the Source dropdown. Job Link remains explicit and user-controlled through the Job link field. Smart Capture is most effective with LinkedIn, Indeed, and ZipRecruiter-style copied text.
 
-For a supported Greenhouse opportunity, use Paste Job Link or the optional local browser helper when available. Paste Job Text remains a useful fallback when structured link import is unavailable.
+For a supported Greenhouse, Indeed, or LinkedIn opportunity, use Browser Capture when the local helper is available. Paste Job Link remains useful for supported structured Greenhouse and Lever links. Paste Job Text remains a useful fallback when either path is unavailable.
 
 ## Copying LinkedIn-Style Posts
 
@@ -89,4 +91,4 @@ If a field is missing or wrong, edit it in the review form. Smart Capture is mea
 
 ## Demo Mode Note
 
-The GitHub Pages demo uses fictional sample data and resets when the page reloads. You can try Add Job and Smart Capture in the demo, but changes are temporary and are not saved to a backend database.
+The GitHub Pages demo uses fictional sample data and resets when the page reloads. You can try Add Job and Paste Job Text in the demo, but changes are temporary and are not saved to a backend database. Browser Capture requires the local full-stack app and is not available in the demo.

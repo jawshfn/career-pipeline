@@ -14,6 +14,7 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 
 ## Product Highlights
 
+- **Browser Capture:** recommended local workflow for supported Greenhouse, Indeed, and LinkedIn pages; opens an editable review without manually copying the posting.
 - **Add Job:** choose Manual Entry, Paste Job Link, or deterministic Paste Job Text review.
 - **Applications:** search, filter, sort, and open detailed records across Active, Closed, and All views.
 - **Status Board:** scan opportunities by stage and update statuses quickly.
@@ -22,21 +23,23 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 - **Resumes:** manage reusable resume variants and connect them to applications.
 - **Application Detail:** edit follow-up, job details, resume/prep notes, red flags, and activity timeline entries.
 
-## Smart Capture / Paste Job Text
+## Browser Capture - Recommended Local Workflow
 
-Career Pipeline includes a review-first Smart Capture workflow for copied job postings. Paste the job text, review suggested fields, then save the opportunity. It works best when the copied text includes the posting header and the full job description. The Source and Job Link stay user-controlled.
+The experimental, locally loaded Career Pipeline Capture Helper is the fastest local workflow when you are already viewing a supported job. It supports verified Greenhouse identifiers, bounded Indeed text capture, LinkedIn search-results current-job panels, and LinkedIn standalone job pages. After you confirm a detection, it opens an editable review; nothing is saved automatically.
 
-Read the [Smart Capture Guide](docs/SMART_CAPTURE_GUIDE.md) for copy-and-review tips.
+Browser Capture requires the local frontend and FastAPI backend. It is not Chrome Web Store distributed, and the GitHub Pages demo does not support the helper. The helper reads only the active page after you click it, then transfers only the approved bounded job data to the local app.
+
+See the [Browser Extension Guide](browser-extension/README.md) for local setup and privacy boundaries.
 
 ## Structured Job Link Import
 
 Paste Job Link automatically recognizes supported hosted Greenhouse and Lever postings, then opens structured details in an editable review. Lever supports canonical global and EU hosted links through its public Postings API; company remains a review field because Lever does not provide a dependable display name. Custom employer career links with one explicit `gh_jid` use best-effort Greenhouse configuration discovery. Unknown links retain link-only and Paste Job Text fallbacks. Nothing is saved automatically.
 
-## Optional Browser Helper
+## Paste Job Text Fallback
 
-The experimental local Chrome helper supports verified Greenhouse identifier capture and click-initiated Indeed and LinkedIn text capture. It reads only the active page when clicked, outlines the detected description, and sends bounded text to the local FastAPI backend only after you choose Open in Career Pipeline. The one-time transfer opens an editable Paste Job Text review; nothing reaches SQLite until you review and save. The helper makes no request to LinkedIn and needs no LinkedIn host permission. GitHub Pages does not support browser-assisted capture.
+Paste Job Text remains the broad deterministic fallback for unsupported sites or layouts, recruiter messages, copied postings, and recovery when Browser Capture cannot confidently identify a job. Paste text, review suggested fields, correct anything that looks wrong, then explicitly save. Source and Job Link remain user-controlled.
 
-See the [Browser Extension Guide](browser-extension/README.md) for local setup and privacy boundaries.
+Read the [Paste Job Text Guide](docs/SMART_CAPTURE_GUIDE.md) for copy-and-review tips.
 
 ## Tech Stack
 
@@ -118,7 +121,7 @@ npm run build
 
 Career Pipeline is a working local-first prototype, not a production SaaS app. The GitHub Pages site is a static portfolio demo with reset-on-refresh sample data.
 
-Implemented: official Greenhouse and Lever job-link import, best-effort custom Greenhouse discovery, and an experimental locally loaded Greenhouse browser helper with local browser-to-app transfer.
+Implemented: Greenhouse and Lever structured link imports, best-effort custom Greenhouse discovery, experimental locally loaded Greenhouse browser identifier capture, Indeed and LinkedIn browser text capture, one-time local transfer, and editable review with no autosave.
 
 Not implemented: Chrome Web Store distribution, production backend/SaaS deployment, generic job-board scraping, authentication, multi-user synchronization, AI extraction, import/export, or email/calendar integrations.
 

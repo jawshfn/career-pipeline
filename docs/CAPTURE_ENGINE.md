@@ -4,7 +4,7 @@
 
 Career Pipeline's capture flow should support multiple ways to create an editable application draft without creating a different review shape for every source. The Capture Engine provides one frontend contract that capture methods can return, then converts that contract into the current Add Job review state.
 
-The three user-facing Add Job modes are Manual Entry, Paste Job Link, and Paste Job Text. Capture metadata is not displayed to users yet and is not persisted to the database.
+The three user-facing Add Job modes are Manual Entry, Paste Job Link, and Paste Job Text. Browser Capture is the preferred local transport when a supported job is already open; it feeds the same editable review contract. Capture metadata is not displayed to users yet and is not persisted to the database.
 
 ## Current Methods
 
@@ -42,7 +42,18 @@ Transport:
 
 The experimental locally loaded Greenhouse detector is a transport bridge rather than a separate capture method. It can hand a successful browser detection to a new local app tab at `http://localhost:5173/`, where the normal `greenhouse-api` capture method runs. The bridge uses a short versioned fragment payload with only the provider, verified board token, verified job ID, and original employer job URL. The frontend clears the fragment immediately, validates it again, preserves the original employer URL as Job Link, defaults Source to Company Website, and opens the normal editable review. The extension itself makes no network request, does not search existing tabs, and does not require broad tab or host permissions. No application is saved automatically. Static demo mode does not perform browser-assisted imports.
 
-The same local helper can capture a confidently detected Indeed or LinkedIn description after the user clicks it. The extension formats a bounded text package, then transfers it only to the local FastAPI backend through a random one-time token. The token is consumed into the existing deterministic Paste Job Text review with the matching Source and original Job Link preserved. The text remains in process memory for at most two minutes, is never put in the URL or SQLite before save, and no Career Pipeline request is made to either job board. LinkedIn capture remains pending live manual QA.
+The same local helper can capture a confidently detected Indeed or LinkedIn description after the user clicks it. The extension formats a bounded text package, then transfers it only to the local FastAPI backend through a random one-time token. The token is consumed into the existing deterministic Paste Job Text review with the matching Source and original Job Link preserved. LinkedIn supports search-results current-job panels and standalone job pages. The text remains in process memory for at most two minutes, is never put in the URL or SQLite before save, and no Career Pipeline request is made to either job board.
+
+Multiple transports feed the same editable review contract:
+
+- Structured link imports
+- Browser-assisted Greenhouse handoff, which feeds `greenhouse-api`
+- Browser-assisted Indeed text capture, which feeds `deterministic-text`
+- Browser-assisted LinkedIn text capture, which feeds `deterministic-text`
+- Deterministic pasted-text fallback
+- Link-only review
+
+Browser capture is a transport into existing capture methods, not a separate database persistence model. Missing information remains blank, capture metadata is not persisted, and user review is always required before save.
 
 Hosted Greenhouse links are imported directly:
 

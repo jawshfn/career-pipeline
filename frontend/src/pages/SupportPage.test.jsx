@@ -17,23 +17,48 @@ describe("SupportPage", () => {
     vi.unstubAllGlobals();
   });
 
-  it("appears as the final sidebar navigation item", () => {
-    expect(navigationItems.at(-1)).toEqual({ id: "support", label: "Support" });
+  it("appears as the final Help navigation item while preserving the support page ID", () => {
+    expect(navigationItems.at(-1)).toEqual({ id: "support", label: "Help" });
   });
 
-  it("renders through the app layout as the active Support page", () => {
+  it("renders through the app layout as the active Help page", () => {
     const markup = renderToStaticMarkup(
       <AppLayout activePage="support" onNavigate={() => {}}>
         <SupportPage />
       </AppLayout>,
     );
 
-    expect(markup).toContain("Support");
-    expect(markup).toContain("Report job-posting formats that Smart Capture does not handle correctly.");
+    expect(markup).toContain("Help &amp; Feedback");
+    expect(markup).toContain("Fastest way to add a supported job");
     expect(markup).toContain("app-nav-item-active");
   });
 
-  it("shows the support email and report mailto action", () => {
+  it("prioritizes Browser Capture before feedback and presents the four capture methods", () => {
+    const markup = renderToStaticMarkup(<SupportPage />);
+
+    expect(markup.indexOf("Fastest way to add a supported job")).toBeLessThan(markup.indexOf("Report a capture issue"));
+    expect(markup).toContain("Recommended");
+    expect(markup).toContain("Greenhouse, Indeed, or LinkedIn");
+    expect(markup).toContain("Browser Capture");
+    expect(markup).toContain("Paste Job Link");
+    expect(markup).toContain("Paste Job Text");
+    expect(markup).toContain("Manual Entry");
+    expect(markup).toContain("GitHub Pages demo");
+    expect(markup).toContain("Explicitly save the opportunity.");
+    expect(markup).toContain("no application is submitted or saved automatically");
+  });
+
+  it("shows browser capture troubleshooting and review boundaries", () => {
+    const markup = renderToStaticMarkup(<SupportPage />);
+
+    expect(markup).toContain("chrome://extensions");
+    expect(markup).toContain("hard-refresh the job page");
+    expect(markup).toContain("short-lived, one-time token");
+    expect(markup).toContain("not stored in SQLite before save");
+    expect(markup).toContain("no persistent browsing monitor");
+  });
+
+  it("shows the support email and capture-neutral mailto action", () => {
     const markup = renderToStaticMarkup(<SupportPage />);
     const mailtoHref = getSupportMailtoHref();
 
@@ -46,26 +71,17 @@ describe("SupportPage", () => {
     expect(decodeURIComponent(mailtoHref)).toContain(SUPPORT_EMAIL);
   });
 
-  it("prioritizes the copy report action before secondary support actions", () => {
-    const markup = renderToStaticMarkup(<SupportPage />);
+  it("prefills the capture-neutral report template", () => {
+    const decodedHref = decodeURIComponent(getSupportMailtoHref());
 
-    expect(markup.indexOf("Copy report template")).toBeLessThan(markup.indexOf("Copy email address"));
-    expect(markup.indexOf("Copy email address")).toBeLessThan(markup.indexOf("Open email app"));
-    expect(markup).toContain("class=\"support-action-control support-primary-action\"");
-  });
-
-  it("prefills the mailto body template", () => {
-    const mailtoHref = getSupportMailtoHref();
-    const decodedHref = decodeURIComponent(mailtoHref);
-
-    expect(SUPPORT_MAILTO_BODY).toContain("Job board/source");
-    expect(SUPPORT_MAILTO_BODY).toContain("What Smart Capture entered");
+    expect(SUPPORT_MAILTO_SUBJECT).toBe("Career Pipeline Capture Issue");
+    expect(SUPPORT_MAILTO_BODY).toContain("Capture method");
+    expect(SUPPORT_MAILTO_BODY).toContain("Job board or source");
+    expect(SUPPORT_MAILTO_BODY).toContain("Job link or page type");
+    expect(SUPPORT_MAILTO_BODY).toContain("What Career Pipeline captured");
     expect(SUPPORT_MAILTO_BODY).toContain("What I expected");
-    expect(SUPPORT_MAILTO_BODY).toContain("Copied job posting");
-    expect(decodedHref).toContain("Job board/source");
-    expect(decodedHref).toContain("What Smart Capture entered");
-    expect(decodedHref).toContain("What I expected");
-    expect(decodedHref).toContain("Copied job posting");
+    expect(SUPPORT_MAILTO_BODY).toContain("Optional sanitized screenshot or copied posting text");
+    expect(decodedHref).toContain("Capture method");
   });
 
   it("builds a complete copyable report template", () => {
@@ -73,10 +89,8 @@ describe("SupportPage", () => {
 
     expect(reportTemplate).toContain(`To: ${SUPPORT_EMAIL}`);
     expect(reportTemplate).toContain(`Subject: ${SUPPORT_MAILTO_SUBJECT}`);
-    expect(reportTemplate).toContain("Job board/source");
-    expect(reportTemplate).toContain("What Smart Capture entered");
-    expect(reportTemplate).toContain("What I expected");
-    expect(reportTemplate).toContain("Copied job posting");
+    expect(reportTemplate).toContain("Job board or source");
+    expect(reportTemplate).toContain("What Career Pipeline captured");
   });
 
   it("copies the support email with accessible success feedback", async () => {
@@ -92,9 +106,7 @@ describe("SupportPage", () => {
     vi.stubGlobal("navigator", { clipboard: { writeText } });
     const reportTemplate = getSupportReportTemplate();
 
-    await expect(
-      copyTextToClipboard(reportTemplate, "Report copied — open your email and paste it into a new message."),
-    ).resolves.toBe("Report copied — open your email and paste it into a new message.");
+    await expect(copyTextToClipboard(reportTemplate, "Report template copied")).resolves.toBe("Report template copied");
     expect(writeText).toHaveBeenCalledWith(reportTemplate);
   });
 
@@ -107,30 +119,18 @@ describe("SupportPage", () => {
     );
   });
 
-  it("renders selectable fallback email and report template text", () => {
+  it("renders selectable fallback text and privacy warnings without unsupported claims", () => {
     const markup = renderToStaticMarkup(<SupportPage />);
 
-    expect(markup).toContain("The most reliable option is to copy the report template");
-    expect(markup).toContain("Opening an email app requires a configured browser or system mail handler.");
-    expect(markup).toContain("<strong>nunezjf2001@gmail.com</strong>");
-    expect(markup).not.toContain("<input");
-    expect(markup).not.toContain("<textarea");
-    expect(markup).toContain("Report template");
+    expect(markup).toContain("Email app did not open?");
     expect(markup).toContain("support-template-preview");
-    expect(markup).toContain(`To: ${SUPPORT_EMAIL}`);
     expect(markup).toContain("aria-live=\"polite\"");
-    expect(markup).toContain("Copy email address");
-    expect(markup).toContain("Copy report template");
-  });
-
-  it("includes privacy guidance and avoids unsupported capability claims", () => {
-    const markup = renderToStaticMarkup(<SupportPage />);
-
     expect(markup).toContain("Remove personal information");
     expect(markup).toContain("private recruiter messages");
     expect(markup).toContain("passwords or login details");
-    expect(markup).toContain("does not scrape job-board pages");
+    expect(markup).toContain("cookies, tokens, account details");
     expect(markup.toLowerCase()).not.toContain("artificial intelligence");
     expect(markup).not.toContain(">AI<");
+    expect(markup).not.toContain("GitHub Pages demo supports Browser Capture");
   });
 });

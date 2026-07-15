@@ -175,17 +175,21 @@ Status: complete through Phase 16.0
 
 - Phase 16.0 - Add automatic global and EU Lever job-link import through the public Postings API.
 
-## Phase 17 - Browser-Assisted Text Capture
+## Phase 17 - Browser-Assisted Capture
 
-Status: complete through Phase 17.0
+Status: complete through Phase 17.2
 
-- Phase 17.0 - Add user-initiated Indeed job extraction and one-time local transfer into Paste Job Text.
-- Phase 17.1 - Add bounded browser-assisted LinkedIn text capture into the same local editable review flow; pending live manual QA.
+- Phase 17.0 - Add user-initiated Indeed job extraction and one-time local transfer into an editable Paste Job Text review.
+- Phase 17.1 - Add and stabilize bounded LinkedIn capture for search-results current-job panels and standalone job pages.
+- Phase 17.2 - Reposition Browser Capture as the preferred local workflow and transform Support into a broader Help & Feedback experience.
 
 ## Near-Term Future Work
 
-- Demo screenshots and fuller Smart Capture visual walkthrough
+- Browser Capture installation walkthrough or screenshots
+- Additional supported page layouts/providers
 - Final recruiter-facing screenshot audit
+- Final responsive browser QA
+- Production distribution research only if the product reaches that stage
 - Final responsive browser QA pass
 - Optional lightweight frontend smoke tests if the UI stabilizes enough to justify them
 

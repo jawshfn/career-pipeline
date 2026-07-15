@@ -1,15 +1,19 @@
 import React, { useState } from "react";
 
 export const SUPPORT_EMAIL = "nunezjf2001@gmail.com";
-export const SUPPORT_MAILTO_SUBJECT = "Career Pipeline Smart Capture Issue";
+export const SUPPORT_MAILTO_SUBJECT = "Career Pipeline Capture Issue";
 export const SUPPORT_MAILTO_BODY = [
-  "Job board/source:",
+  "Capture method:",
   "",
-  "What Smart Capture entered:",
+  "Job board or source:",
+  "",
+  "Job link or page type:",
+  "",
+  "What Career Pipeline captured:",
   "",
   "What I expected:",
   "",
-  "Copied job posting:",
+  "Optional sanitized screenshot or copied posting text:",
 ].join("\n");
 
 export function getSupportMailtoHref(email = SUPPORT_EMAIL) {
@@ -35,6 +39,25 @@ export async function copyTextToClipboard(text, successMessage) {
   }
 }
 
+const captureMethods = [
+  {
+    title: "Browser Capture",
+    description: "Recommended while viewing a supported Greenhouse, Indeed, or LinkedIn job page locally.",
+  },
+  {
+    title: "Paste Job Link",
+    description: "Use supported Greenhouse and Lever links for structured import, or keep another public link in review.",
+  },
+  {
+    title: "Paste Job Text",
+    description: "Paste copied posting text when Browser Capture is unavailable, unsupported, or uncertain.",
+  },
+  {
+    title: "Manual Entry",
+    description: "Quickly save company, role, source, and job link, then enrich the opportunity later.",
+  },
+];
+
 export default function SupportPage() {
   const [copyStatus, setCopyStatus] = useState("");
   const reportTemplate = getSupportReportTemplate();
@@ -44,64 +67,89 @@ export default function SupportPage() {
   }
 
   async function handleCopyReportTemplate() {
-    setCopyStatus(
-      await copyTextToClipboard(reportTemplate, "Report copied — open your email and paste it into a new message."),
-    );
+    setCopyStatus(await copyTextToClipboard(reportTemplate, "Report template copied"));
   }
 
   return (
     <div className="support-page">
       <header className="page-header">
         <div>
-          <p className="eyebrow">Help & feedback</p>
-          <h2>Support</h2>
-          <p>Report job-posting formats that Smart Capture does not handle correctly.</p>
+          <p className="eyebrow">Guides &amp; troubleshooting</p>
+          <h2>Help &amp; Feedback</h2>
+          <p>Learn the fastest way to capture a job, choose the right fallback, and report capture problems.</p>
         </div>
       </header>
 
-      <section className="panel support-panel" aria-labelledby="support-smart-capture-heading">
-        <div className="section-heading">
-          <h2 id="support-smart-capture-heading">Help improve Smart Capture</h2>
-          <p>
-            Smart Capture supports common job-posting formats, but job boards can change layouts or use different
-            wording. If a posting is missed or parsed incorrectly, copy the text directly from the original listing and
-            include the complete posting header and full job description.
-          </p>
-        </div>
-
-        <div className="support-content-grid">
-          <section className="support-section" aria-labelledby="support-include-heading">
-            <h3 id="support-include-heading">What to include</h3>
-            <ul className="support-checklist">
-              <li>The job board or source, such as Indeed, LinkedIn, or ZipRecruiter.</li>
-              <li>The full copied posting, including its header and description.</li>
-              <li>Which fields Smart Capture entered incorrectly or left blank.</li>
-              <li>What you expected those fields to contain.</li>
-            </ul>
-          </section>
-
-          <section className="support-section support-privacy-note" aria-labelledby="support-privacy-heading">
-            <h3 id="support-privacy-heading">Privacy reminder</h3>
+      <section className="panel support-panel support-browser-capture-panel" aria-labelledby="browser-capture-heading">
+        <div className="support-panel-heading">
+          <div>
+            <p className="support-recommended-label">Recommended</p>
+            <h2 id="browser-capture-heading">Fastest way to add a supported job</h2>
             <p>
-              Remove personal information, application answers, private recruiter messages, passwords or login details,
-              and any other nonpublic information before sending an example.
+              Browser Capture is the recommended local workflow while you are already viewing a supported Greenhouse,
+              Indeed, or LinkedIn job page.
             </p>
-          </section>
+          </div>
         </div>
-
-        <section className="support-product-note" aria-labelledby="support-product-heading">
-          <h3 id="support-product-heading">How to send the most useful report</h3>
-          <p>
-            Smart Capture uses pasted text. Career Pipeline does not scrape job-board pages, so reports are most useful
-            when you copy the posting directly from the original job listing and describe what looked wrong.
-          </p>
-        </section>
+        <ol className="support-workflow-list">
+          <li>Start the local Career Pipeline backend and frontend.</li>
+          <li>Open one supported job posting.</li>
+          <li>Click Career Pipeline Capture Helper.</li>
+          <li>Confirm the detected job in the popup.</li>
+          <li>Select Open in Career Pipeline.</li>
+          <li>Review the populated fields.</li>
+          <li>Explicitly save the opportunity.</li>
+        </ol>
       </section>
+
+      <section className="panel support-panel" aria-labelledby="capture-methods-heading">
+        <div className="section-heading">
+          <h2 id="capture-methods-heading">Choose a capture method</h2>
+        </div>
+        <div className="support-method-grid">
+          {captureMethods.map((method) => (
+            <section className="support-method-card" key={method.title} aria-labelledby={`${method.title}-heading`}>
+              <h3 id={`${method.title}-heading`}>{method.title}</h3>
+              <p>{method.description}</p>
+            </section>
+          ))}
+        </div>
+      </section>
+
+      <div className="support-content-grid">
+        <section className="panel support-panel" aria-labelledby="troubleshooting-heading">
+          <div className="section-heading">
+            <h2 id="troubleshooting-heading">Browser Capture troubleshooting</h2>
+          </div>
+          <ul className="support-checklist">
+            <li>Start both the local backend and frontend. Browser Capture is not available in the GitHub Pages demo.</li>
+            <li>Wait for the current job page to finish loading, and make sure the intended LinkedIn job is displayed.</li>
+            <li>After changing extension source files, reload the unpacked extension in chrome://extensions and hard-refresh the job page.</li>
+            <li>Try closing and reopening the extension popup if the page has just changed.</li>
+            <li>Use Paste Job Text when the helper cannot confidently identify the current job.</li>
+            <li>A new local Career Pipeline tab opens for each handoff so existing unsaved work is not overwritten.</li>
+          </ul>
+        </section>
+
+        <section className="panel support-panel support-privacy-note" aria-labelledby="privacy-review-heading">
+          <div className="section-heading">
+            <h2 id="privacy-review-heading">Privacy and review</h2>
+          </div>
+          <ul className="support-checklist">
+            <li>Capture runs only after you click the extension, and only the active page is inspected.</li>
+            <li>The helper has no persistent browsing monitor.</li>
+            <li>Indeed and LinkedIn text is sent only to the local FastAPI backend after you choose Open in Career Pipeline.</li>
+            <li>The handoff uses a short-lived, one-time token and captured text is not stored in SQLite before save.</li>
+            <li>The helper makes no Career Pipeline request to LinkedIn or Indeed.</li>
+            <li>You must review fields before saving; no application is submitted or saved automatically.</li>
+          </ul>
+        </section>
+      </div>
 
       <section className="panel support-panel support-report-panel" aria-labelledby="support-report-heading">
         <div className="section-heading">
-          <h2 id="support-report-heading">Send a Smart Capture report</h2>
-          <p>Copy the report template, fill in what went wrong, and send it through your usual email service.</p>
+          <h2 id="support-report-heading">Report a capture issue</h2>
+          <p>Copy the report template, fill in what happened, and send it through your usual email service.</p>
         </div>
 
         <div className="support-report-grid">
@@ -111,12 +159,8 @@ export default function SupportPage() {
               <strong>{SUPPORT_EMAIL}</strong>
             </div>
 
-            <div className="support-action-controls" aria-label="Support report actions">
-              <button
-                className="support-action-control support-primary-action"
-                type="button"
-                onClick={handleCopyReportTemplate}
-              >
+            <div className="support-action-controls" aria-label="Capture issue actions">
+              <button className="support-action-control support-primary-action" type="button" onClick={handleCopyReportTemplate}>
                 Copy report template
               </button>
               <button className="support-action-control secondary-button" type="button" onClick={handleCopyEmail}>
@@ -127,13 +171,8 @@ export default function SupportPage() {
               </a>
             </div>
 
-            <p className="support-mail-handler-note">
-              Opening an email app requires a configured browser or system mail handler.
-            </p>
-
             <p className="support-fallback-guidance">
-              The most reliable option is to copy the report template, open your usual email service, and paste it into
-              a new message.
+              Email app did not open? Copy the email address and report template, then send the message through your usual email service.
             </p>
 
             <div className="support-copy-status" aria-live="polite" role="status">
@@ -144,6 +183,11 @@ export default function SupportPage() {
           <div className="support-template-area">
             <h3>Report template</h3>
             <pre className="support-template-preview">{reportTemplate}</pre>
+            <p className="support-privacy-reminder">
+              Remove personal information, application answers, private recruiter messages, passwords or login details,
+              cookies, tokens, account details, and other nonpublic information. Do not send full authenticated HTML,
+              browser storage, account exports, or complete private messages.
+            </p>
           </div>
         </div>
       </section>

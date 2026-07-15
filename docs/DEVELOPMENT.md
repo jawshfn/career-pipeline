@@ -170,7 +170,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - Canonical hosted Lever links on `jobs.lever.co` or `jobs.eu.lever.co` open an editable imported review through the public Postings API; users do not select a provider, and Company remains a review field.
 - Eligible custom Greenhouse links use best-effort server discovery; failed or unsupported links expose link-only and Paste Job Text fallbacks.
 - Browser-assisted captures open Add Job -> Paste Job Link in a new local tab, preserve the original employer URL as Job Link, and default Source to Company Website while keeping it editable.
-- Browser-assisted Indeed and LinkedIn capture open Add Job -> Paste Job Text with a one-time local token, preserve the active-tab URL, set the matching Source, and prepare the ordinary editable deterministic review without saving automatically. LinkedIn remains pending live manual QA.
+- Browser-assisted Indeed and LinkedIn capture open Add Job -> Paste Job Text with a one-time local token, preserve the active-tab URL, set the matching Source, and prepare the ordinary editable deterministic review without saving automatically. LinkedIn supports search-results current-job panels and standalone job pages.
 - No Add Job capture persists an application until the user presses the existing save action.
 - Static demo mode does not perform browser-assisted live Greenhouse imports.
 - Smart Capture leaves Job link blank unless the user enters an explicit link.

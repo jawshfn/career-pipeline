@@ -9,7 +9,7 @@ export const navigationItems = [
   { id: "applications", label: "Applications" },
   { id: "pipeline", label: "Status Board" },
   { id: "resume-versions", label: "Resumes" },
-  { id: "support", label: "Support" },
+  { id: "support", label: "Help" },
 ];
 
 const pageTitles = {
@@ -19,7 +19,7 @@ const pageTitles = {
   applications: "Applications",
   pipeline: "Status Board",
   "resume-versions": "Resumes",
-  support: "Support",
+  support: "Help",
 };
 
 export default function AppLayout({ activePage, children, isDemoMode = false, onNavigate }) {

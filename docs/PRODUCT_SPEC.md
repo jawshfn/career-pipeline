@@ -52,6 +52,8 @@ The current prototype includes:
 - Best-effort custom Greenhouse board discovery using SSRF-protected bounded public HTML verification
 - Experimental local click-initiated Greenhouse detection and browser-to-local-app versioned fragment bridge
 - Experimental local click-initiated Indeed text capture with one-time in-memory local transfer into Paste Job Text
+- Experimental local click-initiated LinkedIn bounded text capture for search-results current-job panels and standalone job pages
+- Short-lived consume-once local browser-capture transfers that always open an editable review before explicit save
 - Editable imported reviews with no automatic save
 - Deterministic Smart Capture helpers that prepare conservative editable suggested fields from pasted job text before save
 - Internal Smart Capture parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while preserving the user's selected Source
@@ -95,7 +97,14 @@ The current prototype includes:
 
 ### Add a Job
 
-The user opens Add Job and chooses Manual Entry, Paste Job Link, or Paste Job Text.
+The user can choose the capture method that fits the moment:
+
+1. Use Browser Capture when already viewing a supported Greenhouse, Indeed, or LinkedIn job in the local app workflow.
+2. Use Paste Job Link for supported structured links or an editable link-only review.
+3. Use Paste Job Text as the broad deterministic fallback for copied text and unsupported layouts.
+4. Use Manual Entry for lightweight basic capture.
+
+Browser Capture is a transport into the existing editable review, not a new persistence model. It remains unavailable in the reset-on-refresh GitHub Pages demo.
 
 Manual Entry fields include:
 
@@ -113,7 +122,7 @@ Follow-up presets help schedule common dates quickly. If the user selects Applie
 
 Paste Job Link provides a provider-neutral review path for valid public links. Supported hosted Greenhouse links import structured job data directly through the official Greenhouse Job Board API. Canonical hosted Lever links import one posting through Lever's public Postings API, while retaining the user's original Job Link and selected Source; Company stays editable and requires review because the provider does not expose a dependable display name. Custom employer career links with one explicit `gh_jid` can use best-effort server-side board discovery from strong structural evidence; failed or unsupported links retain link-only and Paste Job Text fallbacks. The optional local browser helper can hand a verified Greenhouse board and job ID from a clicked employer page to this mode. Every path opens an editable review before save.
 
-Smart Capture is an additional paste-review workflow. The user pastes a job post, recruiter message, or copied listing text, optionally adds an explicit job link, selects a source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, employment type, and notes containing the relevant pasted text. The parser can internally recognize common LinkedIn, Indeed, ZipRecruiter, or generic paste formats to improve extraction quality, but it does not change the saved Source. Job link also stays user-controlled and is not guessed from arbitrary pasted URLs. Explicit user-entered bare domains can be normalized to `https://` for safe opening. A compact review guardrails panel summarizes the best-match parser, captured-field status, and Source/Job link reminders before saving. Company career pages can still be pasted, but they are best-effort and should be reviewed carefully before saving. AI-assisted extraction is not implemented yet.
+Paste Job Text is the deterministic paste-review fallback. The user pastes a job post, recruiter message, or copied listing text, optionally adds an explicit job link, selects a source, then prepares a review form. Rule-based suggestions prioritize high-confidence fields such as role title, company name, location hint, obvious header-level compensation, employment type, and notes containing the relevant pasted text. The parser can internally recognize common LinkedIn, Indeed, ZipRecruiter, or generic paste formats to improve extraction quality, but it does not change the saved Source. Job link also stays user-controlled and is not guessed from arbitrary pasted URLs. Explicit user-entered bare domains can be normalized to `https://` for safe opening. Company career pages can still be pasted, but they are best-effort and should be reviewed carefully before saving. AI-assisted extraction is not implemented.
 
 Add Job and Smart Capture Review can show advisory duplicate warnings before saving. These warnings are deterministic and do not block save. Same normalized job links are treated as likely duplicates. Same or similar company, role, and location are also likely duplicates. Same or similar company and role with missing or different location are shown as similar opportunities. Archived applications are ignored for these warnings.
 
@@ -249,6 +258,7 @@ Archived applications are excluded from normal dashboard metrics.
 
 - A user can add a job opportunity in under a minute.
 - A supported Greenhouse opportunity can reach an editable review without retyping its structured job details.
+- A supported Greenhouse, Indeed, or LinkedIn job can reach an editable review without manually retyping its core posting details.
 - A user can track at least 25 applications without losing important context.
 - A user can distinguish active opportunities from closed outcomes.
 - A user can identify overdue follow-ups and upcoming follow-ups due within 3 days.
