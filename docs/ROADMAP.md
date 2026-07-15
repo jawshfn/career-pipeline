@@ -218,6 +218,7 @@ Status: in progress
 - Phase 20.5 — Refine the Applications list, filters, table hierarchy, and responsive application cards.
 - Phase 20.6a — Refine the Application Detail identity, tab selector, current state summary, and Overview hierarchy.
 - Phase 20.6b — Refine the Application Detail Follow-up date layout and multiline next-action workflow.
+- Phase 20.6c — Refine Job Details grouping and compact auto-growing Personal Notes.
 
 ## Later Optional Enhancements
 
