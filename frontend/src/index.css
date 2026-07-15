@@ -1,33 +1,44 @@
 :root {
-  --color-page: #f5f7f8;
-  --color-page-accent: #eef4f2;
+  --color-brand-midnight: #12182b;
+  --color-brand-midnight-raised: #1a2238;
+  --color-brand-blue: #4557d8;
+  --color-brand-blue-hover: #3648c6;
+  --color-brand-aqua: #24b8ac;
+  --color-brand-coral: #e96155;
+  --color-page: #f5f7fb;
+  --color-page-accent: #eef2f8;
   --color-surface: #ffffff;
-  --color-surface-subtle: #f8fbfa;
-  --color-surface-elevated: #ffffff;
-  --color-text: #17202a;
-  --color-text-soft: #34413f;
-  --color-muted: #64736f;
-  --color-muted-strong: #52605d;
-  --color-border: #dbe5e2;
-  --color-border-strong: #c6d2ce;
-  --color-accent: #25766d;
-  --color-accent-strong: #1f625b;
-  --color-accent-soft: #eaf6f3;
-  --color-accent-surface: #f3faf8;
-  --color-success: #1f6b4d;
+  --color-surface-subtle: #f0f3f8;
+  --color-surface-raised: #ffffff;
+  --color-text: #172033;
+  --color-text-soft: #364156;
+  --color-muted: #657186;
+  --color-muted-strong: #536075;
+  --color-border: #d8e0ea;
+  --color-border-strong: #c4cedb;
+  --color-primary: #4557d8;
+  --color-primary-hover: #3648c6;
+  --color-primary-soft: #eef0ff;
+  --color-primary-surface: #f6f7ff;
+  --color-signal: #24b8ac;
+  --color-signal-soft: #e8f8f6;
+  --color-signal-strong: #176b78;
+  --color-attention: #e96155;
+  --color-attention-soft: #fff0ee;
+  --color-success: #1f713f;
   --color-success-soft: #eaf8f1;
   --color-warning: #76540e;
   --color-warning-soft: #fff7df;
-  --color-danger: #8b2f20;
-  --color-danger-soft: #fff0ed;
-  --color-info: #214e7a;
-  --color-info-soft: #eef6ff;
+  --color-danger: #913d31;
+  --color-danger-soft: #fae5e1;
+  --color-info: #245f9f;
+  --color-info-soft: #e8f2ff;
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
-  --shadow-sm: 0 6px 18px rgba(23, 32, 42, 0.05);
-  --shadow-md: 0 12px 32px rgba(23, 32, 42, 0.07);
-  --focus-ring: 0 0 0 3px rgba(37, 118, 109, 0.16);
+  --shadow-sm: 0 6px 18px rgba(18, 24, 43, 0.05);
+  --shadow-md: 0 12px 32px rgba(18, 24, 43, 0.08);
+  --focus-ring: 0 0 0 3px rgba(69, 87, 216, 0.28);
   color: var(--color-text);
   background: var(--color-page);
   font-family:
@@ -164,14 +175,14 @@ a {
 }
 
 .quick-add-mode-tab:hover {
-  border-color: #287c73;
-  background: #f3faf8;
+  border-color: var(--color-primary);
+  background: var(--color-primary-surface);
 }
 
 .quick-add-mode-tab.is-active {
-  border-color: #287c73;
+  border-color: var(--color-primary);
   color: #ffffff;
-  background: #287c73;
+  background: var(--color-primary);
 }
 
 .quick-add-form {
@@ -224,7 +235,7 @@ a {
 }
 
 .quick-add-disclosure:hover {
-  border-color: #287c73;
+  border-color: var(--color-primary);
   background: #eef7f5;
 }
 
@@ -276,8 +287,8 @@ a {
 .quick-add-form input:focus,
 .quick-add-form select:focus,
 .quick-add-form textarea:focus {
-  border-color: #287c73;
-  outline: 3px solid rgba(40, 124, 115, 0.14);
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(69, 87, 216, 0.2);
 }
 
 .notes-field {
@@ -499,19 +510,19 @@ a {
   border: 1px solid #cbd6d3;
   border-radius: 999px;
   padding: 5px 9px;
-  color: #287c73;
+  color: var(--color-primary);
   background: #f7faf9;
   font-size: 0.78rem;
   font-weight: 800;
 }
 
 .follow-up-presets button:hover {
-  border-color: #287c73;
+  border-color: var(--color-primary);
   background: #eef7f5;
 }
 
 .follow-up-presets button:focus-visible {
-  outline: 3px solid rgba(40, 124, 115, 0.18);
+  outline: 3px solid rgba(69, 87, 216, 0.24);
   outline-offset: 2px;
 }
 
@@ -530,12 +541,12 @@ a {
   border-radius: 6px;
   padding: 10px 16px;
   color: #ffffff;
-  background: #287c73;
+  background: var(--color-primary);
   font-weight: 800;
 }
 
 .form-actions button:hover {
-  background: #1f6860;
+  background: var(--color-primary-hover);
 }
 
 .form-actions button:disabled {
@@ -545,13 +556,13 @@ a {
 
 .form-actions .secondary-button {
   border: 1px solid #cbd6d3;
-  color: #287c73;
+  color: var(--color-primary);
   background: #ffffff;
 }
 
 .form-actions .secondary-button:hover {
-  border-color: #287c73;
-  color: #1f6860;
+  border-color: var(--color-primary);
+  color: var(--color-primary-hover);
   background: #eef7f5;
 }
 
@@ -561,7 +572,7 @@ a {
 .table-action-button {
   border: 1px solid #cbd6d3;
   border-radius: 6px;
-  color: #287c73;
+  color: var(--color-primary);
   background: #ffffff;
   font-weight: 800;
 }
@@ -587,7 +598,7 @@ a {
 .secondary-button:hover,
 .quiet-button:hover,
 .table-action-button:hover {
-  border-color: #287c73;
+  border-color: var(--color-primary);
   background: #eef7f5;
 }
 
@@ -680,7 +691,7 @@ a {
 }
 
 .support-recommended-label {
-  color: #1f625b !important;
+  color: var(--color-primary-hover) !important;
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0.03em;
@@ -838,12 +849,12 @@ a {
 .support-primary-action {
   border: 0;
   color: #ffffff;
-  background: #287c73;
+  background: var(--color-primary);
   font-weight: 900;
 }
 
 .support-primary-action:hover {
-  background: #1f6860;
+  background: var(--color-primary-hover);
 }
 
 .support-mail-handler-note,
@@ -894,7 +905,7 @@ a {
 
 .support-copy-status {
   min-height: 0;
-  color: #1f625b;
+  color: var(--color-primary-hover);
   font-size: 0.88rem;
   font-weight: 800;
 }
@@ -932,21 +943,21 @@ a {
   border: 1px solid #cbd6d3;
   border-radius: 999px;
   padding: 7px 12px;
-  color: #287c73;
+  color: var(--color-primary);
   background: #ffffff;
   font-size: 0.86rem;
   font-weight: 800;
 }
 
 .application-view-tab:hover {
-  border-color: #287c73;
+  border-color: var(--color-primary);
   background: #eef7f5;
 }
 
 .application-view-tab.is-active {
-  border-color: #287c73;
+  border-color: var(--color-primary);
   color: #ffffff;
-  background: #287c73;
+  background: var(--color-primary);
 }
 
 .application-filters {
@@ -1002,8 +1013,8 @@ a {
 
 .application-filters input:focus,
 .application-filters select:focus {
-  border-color: #287c73;
-  outline: 3px solid rgba(40, 124, 115, 0.14);
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(69, 87, 216, 0.2);
 }
 
 .application-filter-actions {
@@ -1084,8 +1095,8 @@ a {
 .application-detail-form input:focus,
 .application-detail-form select:focus,
 .application-detail-form textarea:focus {
-  border-color: #287c73;
-  outline: 3px solid rgba(40, 124, 115, 0.14);
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(69, 87, 216, 0.2);
 }
 
 .application-detail-form .message {
@@ -1143,8 +1154,8 @@ a {
 }
 
 .detail-summary-status-control select:focus {
-  border-color: #287c73;
-  outline: 3px solid rgba(40, 124, 115, 0.14);
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(69, 87, 216, 0.2);
 }
 
 .detail-job-link-action {
@@ -1174,26 +1185,26 @@ a {
   border: 1px solid #cbd6d3;
   border-radius: 999px;
   padding: 8px 12px;
-  color: #287c73;
+  color: var(--color-primary);
   background: #ffffff;
   font-size: 0.88rem;
   font-weight: 800;
 }
 
 .detail-tab:hover {
-  border-color: #287c73;
+  border-color: var(--color-primary);
   background: #eef7f5;
 }
 
 .detail-tab:focus-visible {
-  outline: 3px solid rgba(40, 124, 115, 0.18);
+  outline: 3px solid rgba(69, 87, 216, 0.24);
   outline-offset: 2px;
 }
 
 .detail-tab.is-active {
-  border-color: #287c73;
+  border-color: var(--color-primary);
   color: #ffffff;
-  background: #287c73;
+  background: var(--color-primary);
 }
 
 .detail-tab-panel {
@@ -1288,7 +1299,7 @@ a {
 }
 
 .detail-overview-card a {
-  color: #287c73;
+  color: var(--color-primary);
   font-size: 0.82rem;
   font-weight: 900;
   text-decoration: none;
@@ -1332,8 +1343,8 @@ a {
 }
 
 .detail-attention-item:hover {
-  border-color: #287c73;
-  background: #f3faf8;
+  border-color: var(--color-primary);
+  background: var(--color-primary-surface);
 }
 
 .detail-attention-item span {
@@ -1356,7 +1367,7 @@ a {
 
 .detail-attention-item em {
   flex: 0 0 auto;
-  color: #287c73;
+  color: var(--color-primary);
   font-size: 0.78rem;
   font-style: normal;
   font-weight: 900;
@@ -1524,8 +1535,8 @@ a {
 .activity-form-grid input:focus,
 .activity-form-grid select:focus,
 .activity-form-grid textarea:focus {
-  border-color: #287c73;
-  outline: 3px solid rgba(40, 124, 115, 0.14);
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(69, 87, 216, 0.2);
 }
 
 .activity-form-actions {
@@ -1607,12 +1618,12 @@ a {
   border-radius: 6px;
   padding: 9px 15px;
   color: #ffffff;
-  background: #287c73;
+  background: var(--color-primary);
   font-weight: 800;
 }
 
 .detail-actions button[type="submit"]:hover {
-  background: #1f6860;
+  background: var(--color-primary-hover);
 }
 
 .detail-actions button:disabled {
@@ -1653,8 +1664,8 @@ a {
 .resume-version-form textarea:focus,
 .resume-version-edit-form input:focus,
 .resume-version-edit-form textarea:focus {
-  border-color: #287c73;
-  outline: 3px solid rgba(40, 124, 115, 0.14);
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(69, 87, 216, 0.2);
 }
 
 .resume-version-create-panel .message {
@@ -1681,7 +1692,7 @@ a {
 .include-inactive-toggle input {
   width: 16px;
   height: 16px;
-  accent-color: #287c73;
+  accent-color: var(--color-primary);
 }
 
 .resume-version-list {
@@ -1728,7 +1739,7 @@ a {
   min-height: 28px;
   border-radius: 999px;
   padding: 4px 10px;
-  color: #164f47;
+  color: var(--color-success);
   background: #cdeee7;
   font-size: 0.8rem;
   font-weight: 800;
@@ -1776,12 +1787,12 @@ a {
   border-radius: 6px;
   padding: 9px 14px;
   color: #ffffff;
-  background: #287c73;
+  background: var(--color-primary);
   font-weight: 800;
 }
 
 .primary-small-button:hover {
-  background: #1f6860;
+  background: var(--color-primary-hover);
 }
 
 .primary-small-button:disabled,
@@ -1890,14 +1901,14 @@ a {
   border: 1px solid #cbd6d3;
   border-radius: 999px;
   padding: 5px 9px;
-  color: #287c73;
+  color: var(--color-primary);
   background: #f7faf9;
   font-size: 0.78rem;
   font-weight: 800;
 }
 
 .notes-indicator-button:hover {
-  border-color: #287c73;
+  border-color: var(--color-primary);
   background: #eef7f5;
 }
 
@@ -1952,7 +1963,7 @@ a {
 }
 
 .status-offer {
-  color: #164f47;
+  color: var(--color-success);
   background: #cdeee7;
 }
 
@@ -2084,7 +2095,7 @@ a {
   height: 26px;
   border: 1px solid #d5dfdc;
   border-radius: 999px;
-  color: #287c73;
+  color: var(--color-primary);
   background: #f8fbfa;
   font-weight: 900;
 }
@@ -2153,7 +2164,7 @@ a {
   margin: 0;
   border-radius: 999px;
   padding: 3px 9px;
-  color: #143d3a;
+  color: var(--color-text);
   background: #eef3f1;
   font-size: 0.82rem;
   font-weight: 800;
@@ -2233,7 +2244,7 @@ a {
   min-height: 28px;
   border-radius: 999px;
   padding: 4px 9px;
-  color: #143d3a;
+  color: var(--color-text);
   background: #eef3f1;
   font-size: 0.82rem;
   font-weight: 800;
@@ -2291,7 +2302,7 @@ a {
   min-width: 30px;
   min-height: 30px;
   border-radius: 999px;
-  color: #143d3a;
+  color: var(--color-text);
   background: #eef3f1;
   font-weight: 800;
 }
@@ -2383,7 +2394,7 @@ a {
 .command-center-action-details summary {
   width: fit-content;
   cursor: pointer;
-  color: #287c73;
+  color: var(--color-primary);
   font-size: 0.86rem;
   font-weight: 800;
 }
@@ -2430,8 +2441,8 @@ a {
 }
 
 .pipeline-toolbar input:focus {
-  border-color: #287c73;
-  outline: 3px solid rgba(40, 124, 115, 0.14);
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(69, 87, 216, 0.2);
 }
 
 .pipeline-filter {
@@ -2444,35 +2455,35 @@ a {
   border: 1px solid #cbd6d3;
   border-radius: 999px;
   padding: 7px 12px;
-  color: #287c73;
+  color: var(--color-primary);
   background: #ffffff;
   font-size: 0.86rem;
   font-weight: 800;
 }
 
 .pipeline-filter-button:hover {
-  border-color: #287c73;
+  border-color: var(--color-primary);
   background: #eef7f5;
 }
 
 .pipeline-filter-button:focus-visible {
-  outline: 3px solid rgba(40, 124, 115, 0.18);
+  outline: 3px solid rgba(69, 87, 216, 0.24);
   outline-offset: 2px;
 }
 
 .pipeline-filter-button-active {
-  border-color: #174f48;
+  border-color: var(--color-primary-hover);
   color: #ffffff;
-  background: #1f6860;
+  background: var(--color-primary-hover);
   box-shadow:
-    0 0 0 3px rgba(40, 124, 115, 0.18),
-    0 8px 18px rgba(31, 104, 96, 0.22);
+    0 0 0 3px rgba(69, 87, 216, 0.24),
+    0 8px 18px rgba(54, 72, 198, 0.22);
   transform: translateY(-1px);
 }
 
 .pipeline-filter-button-active:hover {
-  border-color: #174f48;
-  background: #174f48;
+  border-color: var(--color-primary-hover);
+  background: var(--color-primary-hover);
 }
 
 .pipeline-groups {
@@ -2513,7 +2524,7 @@ a {
   min-width: 28px;
   min-height: 28px;
   border-radius: 999px;
-  color: #143d3a;
+  color: var(--color-text);
   background: #ffffff;
   font-size: 0.82rem;
   font-weight: 800;
@@ -2651,16 +2662,14 @@ a {
 }
 
 .pipeline-status-select select:focus {
-  border-color: #287c73;
-  outline: 3px solid rgba(40, 124, 115, 0.14);
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(69, 87, 216, 0.2);
 }
 
 /* Visual system polish layer */
 body {
   color: var(--color-text);
-  background:
-    radial-gradient(circle at top left, rgba(37, 118, 109, 0.08), transparent 28rem),
-    linear-gradient(180deg, var(--color-page), #f9fbfb 58%);
+  background: var(--color-page);
 }
 
 button {
@@ -2734,14 +2743,14 @@ textarea:focus-visible {
 .application-view-tab.is-active,
 .detail-tab.is-active,
 .pipeline-filter-button-active {
-  background: var(--color-accent);
+  background: var(--color-primary);
 }
 
 .form-actions button:hover,
 .primary-small-button:hover,
 .detail-actions button[type="submit"]:hover,
 .pipeline-filter-button-active:hover {
-  background: var(--color-accent-strong);
+  background: var(--color-primary-hover);
 }
 
 .secondary-button,
@@ -2755,7 +2764,7 @@ textarea:focus-visible {
   border-color: var(--color-border-strong);
   border-radius: var(--radius-sm);
   background: var(--color-surface);
-  color: var(--color-accent);
+  color: var(--color-primary);
 }
 
 .application-view-tab,
@@ -2772,24 +2781,24 @@ textarea:focus-visible {
 .detail-tab:hover,
 .pipeline-filter-button:hover,
 .follow-up-presets button:hover {
-  border-color: var(--color-accent);
-  background: var(--color-accent-soft);
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
 }
 
 .pipeline-filter-button.pipeline-filter-button-active {
-  border-color: #174f48;
+  border-color: var(--color-primary-hover);
   color: #ffffff;
-  background: #1f6860;
+  background: var(--color-primary-hover);
   box-shadow:
-    0 0 0 3px rgba(40, 124, 115, 0.18),
-    0 8px 18px rgba(31, 104, 96, 0.22);
+    0 0 0 3px rgba(69, 87, 216, 0.24),
+    0 8px 18px rgba(54, 72, 198, 0.22);
   transform: translateY(-1px);
 }
 
 .pipeline-filter-button.pipeline-filter-button-active:hover {
-  border-color: #174f48;
+  border-color: var(--color-primary-hover);
   color: #ffffff;
-  background: #174f48;
+  background: var(--color-primary-hover);
 }
 
 .demo-mode-banner {
@@ -2798,11 +2807,11 @@ textarea:focus-visible {
   padding: 10px 14px;
   border: 1px solid #c6d8d4;
   border-radius: 8px;
-  color: #174f48;
+  color: var(--color-primary-hover);
   background: #eef7f4;
   font-size: 0.92rem;
   font-weight: 700;
-  box-shadow: 0 8px 18px rgba(31, 104, 96, 0.08);
+  box-shadow: 0 8px 18px rgba(36, 184, 172, 0.08);
 }
 
 .quiet-danger-button {
@@ -2852,7 +2861,7 @@ textarea:focus-visible {
 .resume-version-edit-form input:focus,
 .resume-version-edit-form textarea:focus,
 .pipeline-status-select select:focus {
-  border-color: var(--color-accent);
+  border-color: var(--color-primary);
   outline: none;
   box-shadow: var(--focus-ring);
 }
@@ -2906,7 +2915,7 @@ textarea:focus-visible {
 }
 
 .applications-table tbody tr:hover {
-  background: var(--color-accent-surface);
+  background: var(--color-primary-surface);
 }
 
 .dashboard-breakdown-list div,
@@ -2918,8 +2927,8 @@ textarea:focus-visible {
 .effectiveness-row:not(.effectiveness-header) span:not(:first-child),
 .command-center-section-header span,
 .pipeline-column-header span {
-  color: #164f47;
-  background: var(--color-accent-soft);
+  color: var(--color-success);
+  background: var(--color-primary-soft);
 }
 
 .dashboard-metric-card {
@@ -2932,7 +2941,7 @@ textarea:focus-visible {
   position: absolute;
   inset: 0 auto 0 0;
   width: 4px;
-  background: var(--color-accent);
+  background: var(--color-primary);
 }
 
 .dashboard-metric-card strong {
@@ -3028,7 +3037,7 @@ textarea:focus-visible {
 
 .status-applied {
   border-color: #b9d9d4;
-  color: #185f57;
+  color: var(--color-signal-strong);
   background: #e2f4f1;
 }
 
@@ -3099,7 +3108,7 @@ textarea:focus-visible {
 }
 
 .command-center-section-upcoming::before {
-  background: var(--color-accent);
+  background: var(--color-primary);
 }
 
 .command-center-section-stale::before {
@@ -3112,7 +3121,7 @@ textarea:focus-visible {
 }
 
 .command-center-section-upcoming .command-center-section-header span {
-  color: #185f57;
+  color: var(--color-signal-strong);
   background: #e2f4f1;
 }
 
@@ -3146,7 +3155,7 @@ textarea:focus-visible {
 }
 
 .pipeline-card-applied::before {
-  background: var(--color-accent);
+  background: var(--color-primary);
 }
 
 .pipeline-card-assessment::before {
@@ -3211,7 +3220,7 @@ textarea:focus-visible {
   height: 10px;
   border: 2px solid var(--color-surface);
   border-radius: 999px;
-  background: var(--color-accent);
+  background: var(--color-primary);
   box-shadow: 0 0 0 1px var(--color-border-strong);
 }
 
@@ -3222,13 +3231,13 @@ textarea:focus-visible {
 
 .activity-type-badge {
   border: 1px solid #b9d9d4;
-  color: #185f57;
+  color: var(--color-signal-strong);
   background: #e2f4f1;
 }
 
 .effectiveness-row:not(.effectiveness-header):hover,
 .dashboard-breakdown-list div:hover {
-  background: var(--color-accent-surface);
+  background: var(--color-primary-surface);
 }
 
 /* Targeted color distinction polish */
@@ -3725,3 +3734,13 @@ textarea:focus-visible {
     padding: 18px;
   }
 }
+/* PursuitHQ shared control foundation */
+.quick-add-mode-tab, .application-view-tab, .detail-tab, .pipeline-filter-button, .follow-up-presets button, .quick-add-disclosure, .secondary-button, .quiet-button, .table-action-button { border-color: var(--color-border-strong); color: var(--color-primary); background: var(--color-surface); }
+.quick-add-mode-tab:hover, .application-view-tab:hover, .detail-tab:hover, .pipeline-filter-button:hover, .follow-up-presets button:hover, .quick-add-disclosure:hover, .secondary-button:hover, .quiet-button:hover, .table-action-button:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-soft); }
+.quick-add-mode-tab.is-active, .application-view-tab.is-active, .detail-tab.is-active, .pipeline-filter-button-active, .form-actions button:not(.secondary-button), .primary-small-button, .support-primary-action, .detail-actions button[type="submit"] { border-color: var(--color-primary); color: #ffffff; background: var(--color-primary); }
+.quick-add-mode-tab.is-active:hover, .application-view-tab.is-active:hover, .detail-tab.is-active:hover, .pipeline-filter-button-active:hover, .form-actions button:not(.secondary-button):hover, .primary-small-button:hover, .support-primary-action:hover, .detail-actions button[type="submit"]:hover { border-color: var(--color-primary-hover); color: #ffffff; background: var(--color-primary-hover); }
+.quick-add-form input, .quick-add-form select, .quick-add-form textarea, .application-filters input, .application-filters select, .application-detail-form input, .application-detail-form select, .application-detail-form textarea, .activity-form-grid input, .activity-form-grid select, .activity-form-grid textarea, .resume-version-form input, .resume-version-form textarea, .resume-version-edit-form input, .resume-version-edit-form textarea, .detail-summary-status-control select, .pipeline-toolbar input, .pipeline-status-select select { border-color: var(--color-border-strong); color: var(--color-text); background: var(--color-surface); }
+.quick-add-form input:focus, .quick-add-form select:focus, .quick-add-form textarea:focus, .application-filters input:focus, .application-filters select:focus, .application-detail-form input:focus, .application-detail-form select:focus, .application-detail-form textarea:focus, .activity-form-grid input:focus, .activity-form-grid select:focus, .activity-form-grid textarea:focus, .resume-version-form input:focus, .resume-version-form textarea:focus, .resume-version-edit-form input:focus, .resume-version-edit-form textarea:focus, .detail-summary-status-control select:focus, .pipeline-toolbar input:focus, .pipeline-status-select select:focus { border-color: var(--color-primary); outline: none; box-shadow: var(--focus-ring); }
+input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary); }
+.panel, .dashboard-metric-card, .resume-version-card, .command-center-item, .pipeline-card { border-color: var(--color-border); background: var(--color-surface-raised); }
+.detail-field-group, .pipeline-column, .applications-table th { background: var(--color-surface-subtle); }

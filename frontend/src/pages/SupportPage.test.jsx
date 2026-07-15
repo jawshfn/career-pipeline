@@ -32,6 +32,16 @@ describe("SupportPage", () => {
     expect(markup).toContain("PursuitHQ");
     expect(markup).toContain("Fastest way to add a supported job");
     expect(markup).toContain("app-nav-item-active");
+    expect(markup).toContain('aria-current="page"');
+    expect(navigationItems.map((item) => item.label)).toEqual([
+      "Reminders",
+      "Dashboard",
+      "Add Job",
+      "Applications",
+      "Status Board",
+      "Resumes",
+      "Help",
+    ]);
   });
 
   it("prioritizes Browser Capture before feedback and presents the four capture methods", () => {

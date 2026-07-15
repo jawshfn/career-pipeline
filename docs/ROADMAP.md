@@ -210,6 +210,7 @@ Status: complete through Phase 19.0
 Status: in progress
 
 - Phase 20.0 — Adopt PursuitHQ across public-facing product surfaces while preserving current repository and deployment paths.
+- Phase 20.1 — Establish the PursuitHQ visual system across shared colors, surfaces, navigation, controls, and typography.
 
 ## Later Optional Enhancements
 
