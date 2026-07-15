@@ -51,8 +51,10 @@ export default function StatusFollowUpTab({
 
         <label className="detail-field-grid-span">
           Next Action
-          <input
+          <textarea
+            className="detail-next-action-field"
             name="next_action"
+            rows={2}
             value={formData.next_action}
             onChange={updateField}
             placeholder="Follow up with recruiter, prepare for interview, check portal..."
