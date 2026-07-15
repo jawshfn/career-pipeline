@@ -121,8 +121,6 @@ export function createDemoApplication(payload) {
     status: payload.status || "Saved",
     location: payload.location || "",
     compensation: payload.compensation || "",
-    salary_min: payload.salary_min ?? null,
-    salary_max: payload.salary_max ?? null,
     employment_type: payload.employment_type || "",
     date_saved: payload.date_saved || getTodayValue(),
     date_applied: normalizeDateOnly(payload.date_applied),

@@ -58,6 +58,21 @@ test("derives the job and board from a strict hosted Greenhouse page", () => {
   assert.deepEqual(result.evidence_types, ["page-url"]);
 });
 
+test("accepts only bounded regional Greenhouse board hosts", () => {
+  const acceptedUrls = [
+    "https://job-boards.anz.greenhouse.io/droneshield/jobs/4004822201",
+    "https://job-boards.eu.greenhouse.io/example/jobs/123456",
+    "https://job-boards.greenhouse.io/example/jobs/123456",
+    "https://boards.greenhouse.io/example/jobs/123456",
+  ];
+
+  for (const pageUrl of acceptedUrls) {
+    const result = detectGreenhousePage(snapshot({ pageUrl }));
+    assert.equal(result.status, "detected");
+    assert.equal(result.evidence_types.includes("page-url"), true);
+  }
+});
+
 test("accepts matching job evidence and rejects a mismatched job ID", () => {
   const matching = detectGreenhousePage(
     snapshot({ linkUrls: ["https://boards.greenhouse.io/fictional-board/jobs/123456"] }),
@@ -127,6 +142,22 @@ test("rejects unsafe and lookalike Greenhouse evidence URLs", () => {
   for (const evidenceUrl of evidenceUrls) {
     const result = detectGreenhousePage(snapshot({ scriptUrls: [evidenceUrl] }));
     assert.equal(result.status, "no-verified-board");
+  }
+});
+
+test("rejects non-hosted regional Greenhouse board URL shapes", () => {
+  const rejectedUrls = [
+    "https://job-boards.anz.greenhouse.io.evil.test/droneshield/jobs/4004822201",
+    "https://job-boards.a.b.greenhouse.io/example/jobs/123456",
+    "https://job-boards..greenhouse.io/example/jobs/123456",
+    "https://support.greenhouse.io/example/jobs/123456",
+    "https://boards-api.greenhouse.io/example/jobs/123456",
+    "https://user:pass@job-boards.anz.greenhouse.io/example/jobs/123456",
+  ];
+
+  for (const pageUrl of rejectedUrls) {
+    const result = detectGreenhousePage(snapshot({ pageUrl }));
+    assert.notEqual(result.status, "detected");
   }
 });
 

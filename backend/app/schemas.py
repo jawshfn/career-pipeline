@@ -17,8 +17,6 @@ class ApplicationBase(BaseModel):
     status: str = SAVED_APPLICATION_STATUS
     location: str | None = None
     compensation: str | None = None
-    salary_min: float | None = None
-    salary_max: float | None = None
     employment_type: str | None = None
     date_saved: date | None = None
     date_applied: date | None = None
@@ -71,8 +69,6 @@ class ApplicationUpdate(BaseModel):
     status: str | None = None
     location: str | None = None
     compensation: str | None = None
-    salary_min: float | None = None
-    salary_max: float | None = None
     employment_type: str | None = None
     date_saved: date | None = None
     date_applied: date | None = None

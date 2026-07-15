@@ -1,6 +1,7 @@
 export function detectGreenhousePage(snapshotOverride = null) {
   const VERSION = 1;
-  const BOARD_HOSTS = new Set(["boards.greenhouse.io", "job-boards.greenhouse.io"]);
+  const REGIONAL_JOB_BOARDS_HOSTNAME_PATTERN =
+    /^job-boards\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.greenhouse\.io$/i;
   const API_HOST = "boards-api.greenhouse.io";
   const TOKEN_PATTERN = /^[A-Za-z0-9_-]{1,80}$/;
   const JOB_ID_PATTERN = /^[1-9][0-9]{0,17}$/;
@@ -103,11 +104,18 @@ export function detectGreenhousePage(snapshotOverride = null) {
     return TOKEN_PATTERN.test(token) ? token : null;
   }
 
+  function isHostedGreenhouseBoardHostname(hostname) {
+    const normalizedHostname = typeof hostname === "string" ? hostname.toLowerCase() : "";
+    return normalizedHostname === "boards.greenhouse.io" ||
+      normalizedHostname === "job-boards.greenhouse.io" ||
+      REGIONAL_JOB_BOARDS_HOSTNAME_PATTERN.test(normalizedHostname);
+  }
+
   function strictHostedJob(parsedUrl) {
     if (
       !parsedUrl ||
       parsedUrl.protocol !== "https:" ||
-      !BOARD_HOSTS.has(parsedUrl.hostname.toLowerCase())
+      !isHostedGreenhouseBoardHostname(parsedUrl.hostname)
     ) {
       return null;
     }
@@ -130,7 +138,7 @@ export function detectGreenhousePage(snapshotOverride = null) {
     const hostname = parsed.hostname.toLowerCase();
     const parts = pathParts(parsed);
 
-    if (BOARD_HOSTS.has(hostname)) {
+    if (isHostedGreenhouseBoardHostname(hostname)) {
       if (parts.length >= 3 && parts[1] === "jobs") {
         if (parts[2] !== String(jobId)) {
           return null;

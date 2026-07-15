@@ -218,6 +218,7 @@ Run the relevant parts of this checklist before starting a new product phase or 
 - When there are no helpful next-step items, Overview shows a calm organized empty state.
 - Company name, role title, Source, Job link, location, compensation, employment type, and Personal Notes edit from Job Details.
 - Job Posting Snapshot can be created, updated, cleared, and read with long-text wrapping; it remains separate from Personal Notes and does not appear in compact list surfaces.
+- Flexible annual and hourly compensation text persists exactly; numeric salary min/max fields are absent, and legacy SQLite columns remain compatible when present.
 - Job link values with full `http://` or `https://` protocols open as entered; obvious bare domains open with `https://`; incomplete text does not render as an external link.
 - Status edits from the persistent summary strip.
 - Applied Date, Follow-up Date, and Next Action edit from Follow-up.

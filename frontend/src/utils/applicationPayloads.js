@@ -14,12 +14,6 @@ export function normalizeOptionalDate(value) {
   return String(value || "").trim() || null;
 }
 
-export function normalizeOptionalNumber(value) {
-  const trimmedValue = String(value ?? "").trim();
-
-  return trimmedValue === "" ? null : Number(trimmedValue);
-}
-
 export function normalizeOptionalId(value) {
   const trimmedValue = String(value ?? "").trim();
 

@@ -1,8 +1,19 @@
 import { normalizeExplicitJobLink } from "../utils/jobLinks.js";
 
-const GREENHOUSE_HOSTNAMES = new Set(["boards.greenhouse.io", "job-boards.greenhouse.io"]);
+const REGIONAL_JOB_BOARDS_HOSTNAME_PATTERN =
+  /^job-boards\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.greenhouse\.io$/i;
 const BOARD_TOKEN_PATTERN = /^[a-z0-9_-]{1,80}$/i;
 const JOB_ID_PATTERN = /^[1-9][0-9]*$/;
+
+export function isHostedGreenhouseBoardHostname(hostname) {
+  const normalizedHostname = typeof hostname === "string" ? hostname.toLowerCase() : "";
+
+  return (
+    normalizedHostname === "boards.greenhouse.io" ||
+    normalizedHostname === "job-boards.greenhouse.io" ||
+    REGIONAL_JOB_BOARDS_HOSTNAME_PATTERN.test(normalizedHostname)
+  );
+}
 
 export function parseGreenhouseJobUrl(rawUrl) {
   const normalizedInput = normalizeExplicitJobLink(rawUrl);
@@ -18,7 +29,7 @@ export function parseGreenhouseJobUrl(rawUrl) {
     url.protocol !== "https:" ||
     url.username ||
     url.password ||
-    !GREENHOUSE_HOSTNAMES.has(url.hostname.toLowerCase())
+    !isHostedGreenhouseBoardHostname(url.hostname)
   ) {
     throw new Error("Paste a supported Greenhouse job link.");
   }

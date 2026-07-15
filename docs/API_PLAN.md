@@ -55,8 +55,6 @@ Example response:
     "resume_version_id": 2,
     "location": "Remote",
     "compensation": "$70k-$85k",
-    "salary_min": 70000,
-    "salary_max": 85000,
     "employment_type": "Full-time",
     "vague_job_description": false,
     "unrealistic_salary": false,

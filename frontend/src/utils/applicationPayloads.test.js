@@ -4,7 +4,6 @@ import {
   normalizeOptionalDate,
   normalizeOptionalId,
   normalizeOptionalJobLink,
-  normalizeOptionalNumber,
   normalizeOptionalText,
   normalizeRequiredText,
 } from "./applicationPayloads.js";
@@ -23,13 +22,6 @@ describe("application payload normalization", () => {
   it("normalizes optional dates to date strings or null", () => {
     expect(normalizeOptionalDate("2026-07-08")).toBe("2026-07-08");
     expect(normalizeOptionalDate("")).toBeNull();
-  });
-
-  it("normalizes optional numbers without dropping zero", () => {
-    expect(normalizeOptionalNumber("75000")).toBe(75000);
-    expect(normalizeOptionalNumber("0")).toBe(0);
-    expect(normalizeOptionalNumber(0)).toBe(0);
-    expect(normalizeOptionalNumber("")).toBeNull();
   });
 
   it("normalizes optional IDs to numbers or null", () => {

@@ -197,6 +197,7 @@ Status: complete through Phase 17.2
 Status: complete through Phase 18.0
 
 - Phase 18.0 — Separate captured posting content from Personal Notes with a dedicated editable Job Posting tab and end-to-end capture integration.
+- Phase 18.1 — Simplify application compensation tracking to one flexible compensation field and retire redundant numeric salary minimum/maximum fields.
 
 ## Later Optional Enhancements
 

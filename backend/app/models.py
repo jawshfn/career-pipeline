@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -41,8 +41,6 @@ class Application(Base):
     status: Mapped[str] = mapped_column(String(40), default=SAVED_APPLICATION_STATUS, nullable=False, index=True)
     location: Mapped[str | None] = mapped_column(String(160), nullable=True)
     compensation: Mapped[str | None] = mapped_column(String(160), nullable=True)
-    salary_min: Mapped[float | None] = mapped_column(Float, nullable=True)
-    salary_max: Mapped[float | None] = mapped_column(Float, nullable=True)
     employment_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
     date_saved: Mapped[date] = mapped_column(Date, default=date.today, nullable=False)
     date_applied: Mapped[date | None] = mapped_column(Date, nullable=True)

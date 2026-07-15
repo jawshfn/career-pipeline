@@ -70,7 +70,7 @@ export default function JobDetailsTab({
             name="compensation"
             value={formData.compensation}
             onChange={updateField}
-            placeholder="$70,000 - $90,000, $29/hr, competitive"
+            placeholder="$76,240 - $95,300, $29/hr, competitive"
           />
         </label>
 
@@ -83,32 +83,6 @@ export default function JobDetailsTab({
               </option>
             ))}
           </select>
-        </label>
-
-        <label>
-          Salary min
-          <input
-            min="0"
-            name="salary_min"
-            placeholder="Minimum"
-            step="1"
-            type="number"
-            value={formData.salary_min}
-            onChange={updateField}
-          />
-        </label>
-
-        <label>
-          Salary max
-          <input
-            min="0"
-            name="salary_max"
-            placeholder="Maximum"
-            step="1"
-            type="number"
-            value={formData.salary_max}
-            onChange={updateField}
-          />
         </label>
 
         <label className="detail-notes-field detail-field-grid-span">

@@ -158,7 +158,7 @@ Current tabs:
 
 Overview is a read-only command snapshot with compact opportunity context, read-only Added to tracker metadata, and contextual helpful next-step shortcuts into the focused editing tabs. When nothing needs attention, it shows a calm organized state instead of duplicating the main tab navigation. The compact summary strip appears below the tab buttons on non-Overview Application Detail tabs so navigation stays stable.
 
-Editable areas include company name, role title, job link, source, status, resume version, applied date, follow-up date, next action, prep notes, location, compensation, salary range, employment type, Job Posting Snapshot, Personal Notes, red flags, and red-flag notes.
+Editable areas include company name, role title, job link, source, status, resume version, applied date, follow-up date, next action, prep notes, location, compensation, employment type, Job Posting Snapshot, Personal Notes, red flags, and red-flag notes.
 
 Status appears in the compact summary strip on focused edit tabs. Applied date, follow-up date, and next action live in Follow-up. Saved date is read-only Added to tracker metadata in Overview. Company, role, source, job link, location, compensation, employment type, and Personal Notes live in Job Details. Job Posting is a reading-first editable snapshot that remains optional and may be added later. Resume version and prep notes live in Resume & Prep. Existing notes are not automatically migrated into Job Posting Snapshot.
 

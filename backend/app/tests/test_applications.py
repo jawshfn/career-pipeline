@@ -201,6 +201,23 @@ def test_non_status_update_does_not_create_status_activity(client):
     assert get_activities(client, created["id"]) == []
 
 
+def test_compensation_accepts_flexible_text_and_can_be_cleared(client):
+    created = create_application(client, compensation="$76,240 - $95,300").json()
+    assert created["compensation"] == "$76,240 - $95,300"
+
+    hourly = client.patch(f"/api/applications/{created['id']}", json={"compensation": "$25 - $35/hr"})
+    assert hourly.status_code == 200
+    assert hourly.json()["compensation"] == "$25 - $35/hr"
+
+    descriptive = client.patch(f"/api/applications/{created['id']}", json={"compensation": "Competitive salary"})
+    assert descriptive.status_code == 200
+    assert descriptive.json()["compensation"] == "Competitive salary"
+
+    cleared = client.patch(f"/api/applications/{created['id']}", json={"compensation": None})
+    assert cleared.status_code == 200
+    assert cleared.json()["compensation"] is None
+
+
 def test_job_description_persists_independently_from_personal_notes(client):
     snapshot = "First paragraph.\n\nSecond paragraph."
     created = create_application(client, job_description=snapshot, notes="Personal recruiter note.").json()
@@ -260,8 +277,6 @@ def test_update_application_detail_fields(client):
             "status": "Assessment",
             "location": "Remote",
             "compensation": "$62,000 - $78,000 a year",
-            "salary_min": 62000,
-            "salary_max": 78000,
             "employment_type": "Full-time",
             "date_applied": "2026-06-20",
             "follow_up_date": "2026-06-27",
@@ -283,8 +298,8 @@ def test_update_application_detail_fields(client):
     assert data["status"] == "Assessment"
     assert data["location"] == "Remote"
     assert data["compensation"] == "$62,000 - $78,000 a year"
-    assert data["salary_min"] == 62000
-    assert data["salary_max"] == 78000
+    assert "salary_min" not in data
+    assert "salary_max" not in data
     assert data["employment_type"] == "Full-time"
     assert data["date_applied"] == "2026-06-20"
     assert data["follow_up_date"] == "2026-06-27"
@@ -321,8 +336,6 @@ def test_create_application_with_optional_contract_fields(client):
         status="Applied",
         location="Norfolk, VA",
         compensation="$60,000 - $70,000 a year",
-        salary_min=60000,
-        salary_max=70000,
         employment_type="Full-time",
         date_applied="2026-06-21",
         follow_up_date="2026-06-28",
@@ -348,8 +361,8 @@ def test_create_application_with_optional_contract_fields(client):
     assert data["status"] == "Applied"
     assert data["location"] == "Norfolk, VA"
     assert data["compensation"] == "$60,000 - $70,000 a year"
-    assert data["salary_min"] == 60000
-    assert data["salary_max"] == 70000
+    assert "salary_min" not in data
+    assert "salary_max" not in data
     assert data["employment_type"] == "Full-time"
     assert data["date_applied"] == "2026-06-21"
     assert data["follow_up_date"] == "2026-06-28"
@@ -378,8 +391,6 @@ def test_update_application_can_clear_nullable_contract_fields(client):
         job_link="https://example.com/jobs/123",
         location="Remote",
         compensation="$62,000 - $78,000 a year",
-        salary_min=62000,
-        salary_max=78000,
         employment_type="Full-time",
         date_applied="2026-06-20",
         follow_up_date="2026-06-27",
@@ -398,8 +409,6 @@ def test_update_application_can_clear_nullable_contract_fields(client):
             "job_link": None,
             "location": None,
             "compensation": None,
-            "salary_min": None,
-            "salary_max": None,
             "employment_type": None,
             "date_applied": None,
             "follow_up_date": None,
@@ -418,8 +427,8 @@ def test_update_application_can_clear_nullable_contract_fields(client):
     assert data["job_link"] is None
     assert data["location"] is None
     assert data["compensation"] is None
-    assert data["salary_min"] is None
-    assert data["salary_max"] is None
+    assert "salary_min" not in data
+    assert "salary_max" not in data
     assert data["employment_type"] is None
     assert data["date_applied"] is None
     assert data["follow_up_date"] is None

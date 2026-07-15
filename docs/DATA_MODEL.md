@@ -21,9 +21,7 @@ Stores the main record for each job opportunity or application.
 - source: where the opportunity came from, such as LinkedIn, Indeed, referral, recruiter, company site, or other
 - status: current application status
 - location: optional job location or remote label
-- compensation: optional flexible compensation text, such as "$29/hr" or "Competitive salary"
-- salary_min: optional numeric lower salary value
-- salary_max: optional numeric upper salary value
+- compensation: optional flexible posting compensation text, including annual ranges, hourly rates, estimates, or descriptive wording
 - employment_type: optional employment type label
 - date_saved: date the opportunity was saved
 - date_applied: optional date the user applied

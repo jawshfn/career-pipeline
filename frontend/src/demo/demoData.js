@@ -29,8 +29,6 @@ function application(overrides) {
     status: "Saved",
     location: "",
     compensation: "",
-    salary_min: null,
-    salary_max: null,
     employment_type: "",
     date_saved: addDays(-12),
     date_applied: null,
