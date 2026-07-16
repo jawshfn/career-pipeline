@@ -5,6 +5,10 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../ui/AutoGrowingTextarea.jsx", () => ({
+  default: (props) => <textarea data-auto-growing-textarea="true" {...props} />,
+}));
+
 import StatusFollowUpTab from "./StatusFollowUpTab.jsx";
 
 describe("StatusFollowUpTab", () => {
@@ -53,7 +57,7 @@ describe("StatusFollowUpTab", () => {
     return { getEditedNextAction: () => editedNextAction, setFollowUpDate, updateField };
   }
 
-  it("renders date inputs, presets, and a multiline next-action editor", async () => {
+  it("renders date inputs, presets, and the auto-growing next-action editor", async () => {
     await renderTab();
 
     expect(container.querySelector('input[name="date_applied"]')).not.toBeNull();
@@ -67,8 +71,11 @@ describe("StatusFollowUpTab", () => {
 
     const nextAction = container.querySelector('textarea[name="next_action"]');
     expect(nextAction).not.toBeNull();
-    expect(nextAction.rows).toBe(2);
+    expect(nextAction.dataset.autoGrowingTextarea).toBe("true");
+    expect(nextAction.rows).toBe(1);
     expect(nextAction.value).toBe("Send a concise follow-up email.");
+    expect(nextAction.placeholder).toBe("Follow up with recruiter, prepare for interview, check portal...");
+    expect(container.textContent).toContain("The next thing you plan to do for this opportunity.");
   });
 
   it("preserves next-action editing through the existing field handler", async () => {

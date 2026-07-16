@@ -224,6 +224,7 @@ Status: in progress
 
 - Phase 20.6f — Refine the Red Flags checklist layout, selected states, and compact auto-growing notes.
 - Phase 20.6g — Refine the Activity composer responsiveness, auto-growing note, and timeline date presentation.
+- Phase 20.6h — Complete Application Detail consistency with an auto-growing Next Action field and unified tab-panel surfaces.
 
 ## Later Optional Enhancements
 

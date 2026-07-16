@@ -51,6 +51,7 @@ describe("Application Detail overview hierarchy", () => {
     expect(markup).toContain("Job Link");
     expect(markup).toContain("No link saved");
     expect(markup).toContain("Posting link not saved");
+    expect(markup).toContain("Helpful next steps");
     expect(markup).not.toContain("Open posting");
   });
 

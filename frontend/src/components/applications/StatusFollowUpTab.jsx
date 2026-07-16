@@ -1,5 +1,7 @@
 import React from "react";
 
+import AutoGrowingTextarea from "../ui/AutoGrowingTextarea.jsx";
+
 export default function StatusFollowUpTab({
   followUpPresets,
   formData,
@@ -51,10 +53,11 @@ export default function StatusFollowUpTab({
 
         <label className="detail-field-grid-span">
           Next Action
-          <textarea
+          <AutoGrowingTextarea
             className="detail-next-action-field"
+            maxRows={4}
             name="next_action"
-            rows={2}
+            rows={1}
             value={formData.next_action}
             onChange={updateField}
             placeholder="Follow up with recruiter, prepare for interview, check portal..."

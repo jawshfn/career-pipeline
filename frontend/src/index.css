@@ -1550,9 +1550,8 @@ a {
 }
 
 .detail-next-action-field {
-  min-height: 4.75rem;
   overflow-x: hidden;
-  resize: vertical;
+  resize: none;
 }
 
 .detail-field-group-status .detail-field-grid {
@@ -3079,6 +3078,7 @@ textarea:focus-visible {
 }
 
 .detail-field-group,
+.detail-overview-panel,
 .pipeline-column {
   border-color: var(--color-border);
   border-radius: var(--radius-lg);
@@ -4393,7 +4393,7 @@ textarea:focus-visible {
 .quick-add-form input:focus, .quick-add-form select:focus, .quick-add-form textarea:focus, .application-filters input:focus, .application-filters select:focus, .application-detail-form input:focus, .application-detail-form select:focus, .application-detail-form textarea:focus, .activity-form-grid input:focus, .activity-form-grid select:focus, .activity-form-grid textarea:focus, .resume-version-form input:focus, .resume-version-form textarea:focus, .resume-version-edit-form input:focus, .resume-version-edit-form textarea:focus, .detail-summary-status-control select:focus, .pipeline-toolbar input:focus, .pipeline-status-select select:focus { border-color: var(--color-primary); outline: none; box-shadow: var(--focus-ring); }
 input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary); }
 .panel, .dashboard-metric-card, .resume-version-card, .command-center-item, .pipeline-card { border-color: var(--color-border); background: var(--color-surface-raised); }
-.detail-field-group, .pipeline-column, .applications-table th { background: var(--color-surface-subtle); }
+.detail-field-group, .detail-overview-panel, .pipeline-column, .applications-table th { background: var(--color-surface-subtle); }
 
 /* Add Job experience polish */
 .quick-add-mode-tabs { display: inline-flex; align-self: start; width: fit-content; padding: 4px; border: 1px solid #cbd6f4; border-radius: 999px; background: var(--color-primary-soft); }
