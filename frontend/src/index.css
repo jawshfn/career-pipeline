@@ -1883,6 +1883,25 @@ a {
   gap: 14px;
 }
 
+.resume-version-disclosure-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.resume-version-disclosure-summary::-webkit-details-marker,
+.resume-version-disclosure-summary::marker { display: none; content: ""; }
+.resume-version-disclosure-summary:focus-visible { border-radius: 6px; outline: none; box-shadow: var(--focus-ring); }
+.resume-version-disclosure-summary span:first-child { display: grid; gap: 3px; }
+.resume-version-disclosure-summary strong:not(.resume-version-workflow-cue) { color: #17202a; }
+.resume-version-disclosure-summary small { color: #60706d; }
+.resume-version-disclosure-chevron::before { content: "›"; color: var(--color-primary); font-size: 1.25rem; font-weight: 800; }
+.resume-version-disclosure[open] .resume-version-disclosure-chevron::before { content: "⌄"; }
+.resume-version-disclosure-content { margin-top: 16px; }
+
 .resume-version-form label,
 .resume-version-edit-form label,
 .include-inactive-toggle {
@@ -1942,8 +1961,12 @@ a {
 
 .resume-version-list {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
+
+.resume-version-list-panel { container-type: inline-size; }
+.resume-version-list-feedback { margin-bottom: 14px; }
 
 .resume-version-card {
   display: grid;
@@ -1955,8 +1978,24 @@ a {
 }
 
 .resume-version-card-inactive {
+  border-color: #d5ddda;
   background: #f8faf9;
 }
+
+.resume-version-card-inactive .resume-version-card-header p,
+.resume-version-card-inactive .resume-version-description,
+.resume-version-card-inactive .resume-version-meta dd { color: #60706d; }
+
+.resume-version-card-editing {
+  grid-column: 1 / -1;
+  margin-bottom: 14px;
+  border-color: #9aa9e7;
+  background: #f7f8ff;
+  box-shadow: 0 0 0 3px rgba(69, 87, 216, 0.1);
+}
+
+.resume-version-workflow-cue { color: var(--color-primary); font-family: inherit; font-size: 0.82rem; font-weight: 800; line-height: 1.2; letter-spacing: 0.02em; text-transform: uppercase; }
+.resume-version-editing-cue { grid-column: 1 / -1; margin: 0; }
 
 .resume-version-card-header {
   display: flex;
@@ -1977,6 +2016,8 @@ a {
   margin: 4px 0 0;
   color: #52605d;
 }
+
+.resume-version-description { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 
 .resume-version-state {
   display: inline-flex;
@@ -2024,6 +2065,13 @@ a {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #e5ebe9;
+}
+
+@container (max-width: 640px) {
+  .resume-version-list { grid-template-columns: 1fr; }
 }
 
 .primary-small-button {

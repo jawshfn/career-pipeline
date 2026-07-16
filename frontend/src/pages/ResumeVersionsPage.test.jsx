@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   RESUME_EDIT_CANCEL_CONFIRM_MESSAGE,
   RESUME_EDIT_SWITCH_CONFIRM_MESSAGE,
+  formatResumeUpdatedDate,
   isResumeEditDirty,
   resolveResumeEditCancel,
   resolveResumeEditSwitch,
@@ -168,5 +169,16 @@ describe("resume edit in-page protection", () => {
       target_role: "",
     });
     expect(result.editingId).toBe(resumeA.id);
+  });
+});
+
+describe("resume update dates", () => {
+  const now = new Date(2026, 4, 20, 12, 0, 0);
+
+  it("uses local calendar dates for friendly resume update labels", () => {
+    expect(formatResumeUpdatedDate(new Date(2026, 4, 20, 0, 5, 0).toISOString(), now)).toBe("Updated today");
+    expect(formatResumeUpdatedDate(new Date(2026, 4, 19, 23, 55, 0).toISOString(), now)).toBe("Updated yesterday");
+    expect(formatResumeUpdatedDate(new Date(2026, 4, 16, 12, 0, 0).toISOString(), now)).toBe("Updated 4 days ago");
+    expect(formatResumeUpdatedDate(new Date(2026, 4, 13, 12, 0, 0).toISOString(), now)).toBe("Updated May 13, 2026");
   });
 });

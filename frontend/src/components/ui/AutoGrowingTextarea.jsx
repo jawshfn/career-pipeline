@@ -25,5 +25,11 @@ export default function AutoGrowingTextarea({ maxRows = 4, value, ...props }) {
     resizeTextareaToContent(textareaRef.current, maxRows);
   }, [maxRows, value]);
 
+  useLayoutEffect(() => {
+    const resize = () => resizeTextareaToContent(textareaRef.current, maxRows);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, [maxRows]);
+
   return <textarea ref={textareaRef} value={value} {...props} />;
 }

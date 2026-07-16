@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
+import AutoGrowingTextarea from "../components/ui/AutoGrowingTextarea.jsx";
 
 const initialCreateForm = {
   name: "",
@@ -94,9 +95,33 @@ function toPayload(formData) {
   };
 }
 
-function formatDateTime(value) {
+export function formatResumeUpdatedDate(value, now = new Date()) {
   if (!value) {
     return "-";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const updatedDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const daysAgo = Math.round((today - updatedDay) / 86_400_000);
+  if (daysAgo === 0) return "Updated today";
+  if (daysAgo === 1) return "Updated yesterday";
+  if (daysAgo > 1 && daysAgo < 7) return `Updated ${daysAgo} days ago`;
+
+  return `Updated ${new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date)}`;
+}
+
+export function formatResumeUpdatedTimestamp(value) {
+  if (!value || Number.isNaN(new Date(value).getTime())) {
+    return "";
   }
 
   return new Intl.DateTimeFormat(undefined, {
@@ -120,13 +145,28 @@ export default function ResumeVersionsPage({
   const [editFormBaseline, setEditFormBaseline] = useState(initialCreateForm);
   const [includeInactive, setIncludeInactive] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [createError, setCreateError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [savingId, setSavingId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(resumeVersions.length === 0);
+  const createDisclosureInitialized = useRef(false);
+  const editSurfaceRef = useRef(null);
 
   useEffect(() => {
     onLoadResumeVersions({ includeInactive });
   }, [includeInactive, onLoadResumeVersions]);
+
+  useEffect(() => {
+    if (!isLoading && !createDisclosureInitialized.current) {
+      setIsCreateOpen(resumeVersions.length === 0);
+      createDisclosureInitialized.current = true;
+    }
+  }, [isLoading, resumeVersions.length]);
+
+  useEffect(() => {
+    if (editingId) editSurfaceRef.current?.focus();
+  }, [editingId]);
 
   const hasCreateFormChanges = isResumeFormDirty(createForm, initialCreateForm);
   const hasEditFormChanges = editingId ? isResumeFormDirty(editForm, editFormBaseline) : false;
@@ -145,16 +185,19 @@ export default function ResumeVersionsPage({
     const { name, value } = event.target;
     setCreateForm((current) => ({ ...current, [name]: value }));
     setActionMessage("");
+    setCreateError("");
   }
 
   function updateEditField(event) {
     const { name, value } = event.target;
     setEditForm((current) => ({ ...current, [name]: value }));
     setActionMessage("");
+    setActionError("");
   }
 
   async function handleCreate(event) {
     event.preventDefault();
+    setCreateError("");
     setActionError("");
     setActionMessage("");
     setIsCreating(true);
@@ -162,9 +205,11 @@ export default function ResumeVersionsPage({
     try {
       const created = await onCreateResumeVersion(toPayload(createForm));
       setCreateForm(initialCreateForm);
+      setIsCreateOpen(false);
       setActionMessage(`${created.name} created.`);
     } catch (creationError) {
-      setActionError(creationError.message || "Could not create resume version.");
+      setIsCreateOpen(true);
+      setCreateError(creationError.message || "Could not create resume version.");
     } finally {
       setIsCreating(false);
     }
@@ -188,6 +233,9 @@ export default function ResumeVersionsPage({
     setEditFormBaseline(nextState.editFormBaseline);
     setActionError(nextState.actionError);
     setActionMessage(nextState.actionMessage);
+    if (nextState.editingId === resumeVersion.id) {
+      setIsCreateOpen(false);
+    }
   }
 
   function cancelEditing() {
@@ -243,6 +291,8 @@ export default function ResumeVersionsPage({
   const visibleResumeVersions = includeInactive
     ? resumeVersions
     : resumeVersions.filter((resumeVersion) => resumeVersion.is_active);
+  const editingResumeVersion = resumeVersions.find((resumeVersion) => resumeVersion.id === editingId);
+  const remainingVisibleResumeVersions = visibleResumeVersions.filter((resumeVersion) => resumeVersion.id !== editingId);
 
   return (
     <div className="resume-versions-page">
@@ -255,19 +305,18 @@ export default function ResumeVersionsPage({
       </header>
 
       <section className="panel resume-version-create-panel" aria-labelledby="create-resume-version-title">
-        <div className="section-heading">
-          <h2 id="create-resume-version-title">Create Resume Version</h2>
-          <p>Add a reusable resume variant without changing application records.</p>
-        </div>
+        <details className="resume-version-disclosure" onToggle={(event) => setIsCreateOpen(event.currentTarget.open)} open={isCreateOpen}>
+          <summary id="create-resume-version-title" className="resume-version-disclosure-summary">
+            <span>
+              <strong className="resume-version-disclosure-cue resume-version-workflow-cue">New resume version</strong>
+              <small>Add a reusable resume variant without changing application records.</small>
+            </span>
+            <span aria-hidden="true" className="resume-version-disclosure-chevron" />
+          </summary>
+          <div className="resume-version-disclosure-content">
+            {createError ? <ErrorMessage message={createError} /> : null}
 
-        {actionError ? <ErrorMessage message={actionError} /> : null}
-        {actionMessage ? (
-          <div className="message message-success" role="status">
-            {actionMessage}
-          </div>
-        ) : null}
-
-        <form className="resume-version-form" onSubmit={handleCreate}>
+            <form className="resume-version-form" onSubmit={handleCreate}>
           <label>
             Name
             <input
@@ -291,11 +340,12 @@ export default function ResumeVersionsPage({
 
           <label className="resume-version-description-field">
             Description
-            <textarea
+            <AutoGrowingTextarea
               name="description"
               value={createForm.description}
               onChange={updateCreateField}
-              rows="3"
+              maxRows={4}
+              rows="1"
               placeholder="Short positioning note or key differences"
             />
           </label>
@@ -305,7 +355,9 @@ export default function ResumeVersionsPage({
               {isCreating ? "Creating..." : "Create version"}
             </button>
           </div>
-        </form>
+            </form>
+          </div>
+        </details>
       </section>
 
       <section className="panel resume-version-list-panel" aria-labelledby="resume-version-list-title">
@@ -326,6 +378,9 @@ export default function ResumeVersionsPage({
           </label>
         </div>
 
+        {actionMessage ? <div className="message message-success resume-version-list-feedback" role="status">{actionMessage}</div> : null}
+        {!isLoading && !editingId && actionError ? <ErrorMessage message={actionError} /> : null}
+
         {isLoading ? <LoadingState message="Loading resume versions..." /> : null}
         {!isLoading && error ? <ErrorMessage message={error} /> : null}
 
@@ -336,10 +391,61 @@ export default function ResumeVersionsPage({
           </div>
         ) : null}
 
-        {!isLoading && !error && visibleResumeVersions.length > 0 ? (
+        {!isLoading && !error && editingResumeVersion ? (
+          <article className="resume-version-card resume-version-card-editing" ref={editSurfaceRef} tabIndex={-1}>
+            <div className="resume-version-edit-form">
+              <p className="resume-version-editing-cue resume-version-workflow-cue">Editing resume version</p>
+              {actionError ? <ErrorMessage message={actionError} /> : null}
+              <label>
+                Name
+                <input
+                  name="name"
+                  value={editForm.name}
+                  onChange={updateEditField}
+                  required
+                />
+              </label>
+
+              <label>
+                Target role
+                <input
+                  name="target_role"
+                  value={editForm.target_role}
+                  onChange={updateEditField}
+                />
+              </label>
+
+              <label className="resume-version-description-field">
+                Description
+                <AutoGrowingTextarea
+                  name="description"
+                  value={editForm.description}
+                  onChange={updateEditField}
+                  maxRows={4}
+                  rows="1"
+                />
+              </label>
+
+              <div className="resume-version-actions">
+                <button className="secondary-button" type="button" onClick={cancelEditing}>
+                  Cancel
+                </button>
+                <button
+                  className="primary-small-button"
+                  type="button"
+                  disabled={savingId === editingResumeVersion.id}
+                  onClick={() => handleSaveEdit(editingResumeVersion.id)}
+                >
+                  {savingId === editingResumeVersion.id ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          </article>
+        ) : null}
+
+        {!isLoading && !error && remainingVisibleResumeVersions.length > 0 ? (
           <div className="resume-version-list">
-            {visibleResumeVersions.map((resumeVersion) => {
-              const isEditing = editingId === resumeVersion.id;
+            {remainingVisibleResumeVersions.map((resumeVersion) => {
               const isSaving = savingId === resumeVersion.id;
 
               return (
@@ -347,53 +453,7 @@ export default function ResumeVersionsPage({
                   className={`resume-version-card ${resumeVersion.is_active ? "" : "resume-version-card-inactive"}`}
                   key={resumeVersion.id}
                 >
-                  {isEditing ? (
-                    <div className="resume-version-edit-form">
-                      <label>
-                        Name
-                        <input
-                          name="name"
-                          value={editForm.name}
-                          onChange={updateEditField}
-                          required
-                        />
-                      </label>
-
-                      <label>
-                        Target role
-                        <input
-                          name="target_role"
-                          value={editForm.target_role}
-                          onChange={updateEditField}
-                        />
-                      </label>
-
-                      <label className="resume-version-description-field">
-                        Description
-                        <textarea
-                          name="description"
-                          value={editForm.description}
-                          onChange={updateEditField}
-                          rows="3"
-                        />
-                      </label>
-
-                      <div className="resume-version-actions">
-                        <button className="secondary-button" type="button" onClick={cancelEditing}>
-                          Cancel
-                        </button>
-                        <button
-                          className="primary-small-button"
-                          type="button"
-                          disabled={isSaving}
-                          onClick={() => handleSaveEdit(resumeVersion.id)}
-                        >
-                          {isSaving ? "Saving..." : "Save"}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
+                  <>
                       <div className="resume-version-card-header">
                         <div>
                           <h3>{resumeVersion.name}</h3>
@@ -404,14 +464,22 @@ export default function ResumeVersionsPage({
                         </span>
                       </div>
 
-                      <p className="resume-version-description">
-                        {resumeVersion.description || "No description yet."}
-                      </p>
+                      {resumeVersion.description ? (
+                        <p className="resume-version-description">{resumeVersion.description}</p>
+                      ) : null}
 
                       <dl className="resume-version-meta">
                         <div>
                           <dt>Updated</dt>
-                          <dd>{formatDateTime(resumeVersion.updated_at)}</dd>
+                          <dd>
+                            <time
+                              aria-label={formatResumeUpdatedTimestamp(resumeVersion.updated_at) || "Updated date unavailable"}
+                              dateTime={resumeVersion.updated_at || undefined}
+                              title={formatResumeUpdatedTimestamp(resumeVersion.updated_at) || undefined}
+                            >
+                              {formatResumeUpdatedDate(resumeVersion.updated_at)}
+                            </time>
+                          </dd>
                         </div>
                       </dl>
 
@@ -432,8 +500,7 @@ export default function ResumeVersionsPage({
                               : "Reactivate"}
                         </button>
                       </div>
-                    </>
-                  )}
+                  </>
                 </article>
               );
             })}
