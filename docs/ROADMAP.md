@@ -222,6 +222,8 @@ Status: in progress
 - Phase 20.6d — Replace the inline Job Posting editor with a compact preview and draft-based modal workflow.
 - Phase 20.6e — Refine Resume & Prep with compact auto-growing preparation notes.
 
+- Phase 20.6f — Refine the Red Flags checklist layout, selected states, and compact auto-growing notes.
+
 ## Later Optional Enhancements
 
 - Public demo deployment improvements
