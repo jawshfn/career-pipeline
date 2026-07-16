@@ -62,6 +62,7 @@ export default function App() {
     browserCaptureStartup.shouldOpenQuickAdd ? "quick-add" : "command-center",
   );
   const [activePageHasUnsavedChanges, setActivePageHasUnsavedChanges] = useState(false);
+  const [requestedApplicationId, setRequestedApplicationId] = useState(null);
   const [applications, setApplications] = useState([]);
   const [resumeVersions, setResumeVersions] = useState([]);
   const [allResumeVersions, setAllResumeVersions] = useState([]);
@@ -163,6 +164,27 @@ export default function App() {
   const handlePageUnsavedChangesChange = useCallback((hasUnsavedChanges) => {
     setActivePageHasUnsavedChanges(Boolean(hasUnsavedChanges));
   }, []);
+
+  const handleOpenApplicationDetails = useCallback((applicationId) => {
+    const navigationResult = resolvePageNavigation(
+      activePage,
+      "applications",
+      activePageHasUnsavedChanges,
+      window.confirm,
+    );
+
+    if (!navigationResult.shouldNavigate) {
+      return false;
+    }
+
+    if (navigationResult.shouldClearDirtyState) {
+      setActivePageHasUnsavedChanges(false);
+    }
+
+    setRequestedApplicationId(applicationId);
+    setActivePage("applications");
+    return true;
+  }, [activePage, activePageHasUnsavedChanges]);
 
   const navigateToPage = useCallback(
     (requestedPage) => {
@@ -285,6 +307,7 @@ export default function App() {
           applications={activeApplications}
           error={loadError}
           isLoading={isLoading}
+          onOpenDetails={handleOpenApplicationDetails}
           onUpdateApplication={handleUpdateApplication}
         />
       ) : activePage === "support" ? (
@@ -295,7 +318,9 @@ export default function App() {
           error={loadError}
           isLoading={isLoading}
           onUnsavedChangesChange={handlePageUnsavedChangesChange}
+          onRequestedApplicationHandled={() => setRequestedApplicationId(null)}
           onUpdateApplication={handleUpdateApplication}
+          requestedApplicationId={requestedApplicationId}
           resumeVersions={allResumeVersions}
         />
       )}

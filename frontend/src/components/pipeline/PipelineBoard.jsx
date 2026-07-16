@@ -11,11 +11,13 @@ const statusFilters = [ALL_STATUSES_FILTER, ...USER_SELECTABLE_APPLICATION_STATU
 
 export default function PipelineBoard({
   applications,
+  onOpenDetails,
   onStatusChange,
   updatingApplicationId,
 }) {
   const [selectedStatus, setSelectedStatus] = useState(ALL_STATUSES_FILTER);
   const [searchTerm, setSearchTerm] = useState("");
+  const [openStatusMenuApplicationId, setOpenStatusMenuApplicationId] = useState(null);
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
   const applicationsByStatus = USER_SELECTABLE_APPLICATION_STATUSES.reduce((groupedApplications, status) => {
     groupedApplications[status] = [];
@@ -79,7 +81,10 @@ export default function PipelineBoard({
             <PipelineColumn
               applications={applicationsByStatus[status]}
               key={status}
+              openStatusMenuApplicationId={openStatusMenuApplicationId}
+              onOpenDetails={onOpenDetails}
               onStatusChange={onStatusChange}
+              onStatusMenuChange={(applicationId, isOpen) => setOpenStatusMenuApplicationId(isOpen ? applicationId : null)}
               status={status}
               updatingApplicationId={updatingApplicationId}
             />

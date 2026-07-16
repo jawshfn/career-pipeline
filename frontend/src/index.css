@@ -3018,6 +3018,171 @@ a {
   outline: 3px solid rgba(69, 87, 216, 0.2);
 }
 
+/* Phase 20.7a: compact Status Board cards and status actions. */
+.pipeline-card-list {
+  grid-template-columns: repeat(3, minmax(0, 410px));
+  justify-content: start;
+}
+
+.pipeline-card {
+  grid-template-columns: minmax(0, 1fr) 142px;
+  grid-template-areas: "content status";
+  align-items: start;
+}
+
+.pipeline-card-content {
+  display: grid;
+  grid-area: content;
+  gap: 7px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.pipeline-card-content:hover .pipeline-card-heading h4 {
+  color: var(--color-primary);
+}
+
+.pipeline-card-content:focus-visible {
+  border-radius: 4px;
+  outline: 3px solid rgba(69, 87, 216, 0.32);
+  outline-offset: 2px;
+}
+
+.pipeline-card-content .pipeline-card-heading,
+.pipeline-card-content .pipeline-card-meta {
+  grid-area: auto;
+}
+
+.pipeline-card-action {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pipeline-card-action-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pipeline-status-select {
+  position: relative;
+  align-self: start;
+}
+
+.pipeline-status-trigger {
+  width: 128px;
+  min-height: 30px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 6px 7px;
+  color: var(--color-muted-strong);
+  background: var(--color-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pipeline-status-trigger-chevron {
+  flex: 0 0 auto;
+  font-size: 0.95rem;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.pipeline-status-trigger[aria-expanded="true"] .pipeline-status-trigger-chevron {
+  transform: rotate(90deg);
+}
+
+.pipeline-status-trigger:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.pipeline-status-trigger:focus-visible {
+  border-color: var(--color-primary);
+  outline: 3px solid rgba(69, 87, 216, 0.32);
+  outline-offset: 2px;
+}
+
+.pipeline-status-trigger:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.pipeline-status-menu {
+  position: absolute;
+  z-index: 2;
+  top: calc(100% + 5px);
+  right: 0;
+  display: grid;
+  width: max-content;
+  min-width: 170px;
+  max-width: min(250px, calc(100vw - 40px));
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 6px;
+  padding: 4px;
+  background: var(--color-surface-raised);
+  box-shadow: 0 8px 18px rgba(23, 32, 42, 0.16);
+}
+
+.pipeline-status-menu button {
+  border: 0;
+  border-radius: 4px;
+  padding: 7px 8px;
+  color: var(--color-text);
+  background: transparent;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pipeline-status-menu button:hover,
+.pipeline-status-menu button:focus-visible {
+  background: var(--color-primary-soft);
+  outline: none;
+}
+
+.pipeline-status-menu .pipeline-status-menu-current {
+  color: var(--color-muted-strong);
+  cursor: default;
+}
+
+.pipeline-column-withdrawn .pipeline-column-header span {
+  border: 1px solid #9da7ac;
+  color: #3f4a50;
+  background: #e6ebed;
+}
+
+@media (max-width: 980px) {
+  .pipeline-card-list {
+    grid-template-columns: repeat(2, minmax(0, 410px));
+  }
+}
+
+@media (max-width: 640px) {
+  .pipeline-card-list {
+    grid-template-columns: minmax(0, 410px);
+  }
+
+  .pipeline-card {
+    grid-template-columns: 1fr;
+    grid-template-areas: "content" "status";
+  }
+}
+
 /* Visual system polish layer */
 body {
   color: var(--color-text);
@@ -4043,31 +4208,37 @@ textarea:focus-visible {
 }
 
 .pipeline-column-applied .pipeline-column-header span {
+  border: 1px solid #7baee1;
   color: #245f9f;
   background: #e8f2ff;
 }
 
 .pipeline-column-assessment .pipeline-column-header span {
+  border: 1px solid #9a8bd2;
   color: #5a43a0;
   background: #f0ecff;
 }
 
 .pipeline-column-recruiter-screen .pipeline-column-header span {
+  border: 1px solid #76bdc7;
   color: #176b78;
   background: #e1f7fb;
 }
 
 .pipeline-column-interview .pipeline-column-header span {
+  border: 1px solid #e0b95e;
   color: #81560d;
   background: #fff0c2;
 }
 
 .pipeline-column-offer .pipeline-column-header span {
+  border: 1px solid #78bd94;
   color: #1f713f;
   background: #ddf7e8;
 }
 
 .pipeline-column-rejected .pipeline-column-header span {
+  border: 1px solid #d88a7e;
   color: #913d31;
   background: #fae5e1;
 }
@@ -4075,6 +4246,10 @@ textarea:focus-visible {
 .pipeline-column-withdrawn .pipeline-column-header span {
   color: #5b666b;
   background: #f0f2f3;
+}
+
+.pipeline-column-saved .pipeline-column-header span {
+  border: 1px solid #89969d;
 }
 
 .pipeline-card-applied::before {
@@ -4449,4 +4624,39 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
   .job-posting-dialog { width: 100%; height: calc(100dvh - 24px); padding: 16px; }
   .job-posting-dialog-actions { align-items: stretch; flex-direction: column-reverse; }
   .job-posting-dialog-actions button { width: 100%; }
+}
+
+/* Phase 20.7a responsive overrides. */
+.pipeline-column { container: pipeline-column / inline-size; }
+.pipeline-card-list { grid-template-columns: repeat(3, minmax(0, 1fr)); justify-content: stretch; }
+.pipeline-card {
+  container: pipeline-card / inline-size;
+  grid-template-columns: minmax(0, 1fr) 142px;
+  grid-template-areas: "heading status" "meta meta";
+  overflow: visible;
+}
+.pipeline-card-menu-open { z-index: 3; }
+.pipeline-card-content { grid-area: heading; }
+.pipeline-card-content .pipeline-card-heading { grid-area: auto; }
+.pipeline-card-meta { grid-area: meta; min-width: 0; }
+.pipeline-card-action { flex: 1 1 170px; min-width: 0; }
+.pipeline-card-action-label { flex: 0 0 auto; white-space: nowrap; }
+.pipeline-card-action-text { flex: 1 1 auto; }
+.pipeline-status-menu { z-index: 4; max-height: calc(100vh - 24px); overflow-y: auto; }
+.pipeline-status-menu-upward { top: auto; bottom: calc(100% + 5px); }
+
+@container pipeline-column (max-width: 1040px) {
+  .pipeline-card-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container pipeline-column (max-width: 640px) {
+  .pipeline-card-list { grid-template-columns: minmax(0, 1fr); }
+}
+
+@container pipeline-card (max-width: 340px) {
+  .pipeline-card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "heading" "meta" "status";
+  }
+  .pipeline-status-select, .pipeline-status-trigger { width: 100%; }
 }

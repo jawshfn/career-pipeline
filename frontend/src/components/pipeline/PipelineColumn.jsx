@@ -8,7 +8,10 @@ function getStatusAccentClass(status) {
 
 export default function PipelineColumn({
   applications,
+  openStatusMenuApplicationId,
+  onOpenDetails,
   onStatusChange,
+  onStatusMenuChange,
   status,
   updatingApplicationId,
 }) {
@@ -26,8 +29,11 @@ export default function PipelineColumn({
           applications.map((application) => (
             <PipelineCard
               application={application}
+              isStatusMenuOpen={openStatusMenuApplicationId === application.id}
               key={application.id}
+              onOpenDetails={onOpenDetails}
               onStatusChange={onStatusChange}
+              onStatusMenuChange={(isOpen) => onStatusMenuChange(application.id, isOpen)}
               isUpdating={updatingApplicationId === application.id}
             />
           ))

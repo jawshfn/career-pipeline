@@ -27,6 +27,7 @@ export default function PipelinePage({
   applications,
   error,
   isLoading,
+  onOpenDetails,
   onUpdateApplication,
 }) {
   const [statusUpdateError, setStatusUpdateError] = useState("");
@@ -49,6 +50,7 @@ export default function PipelinePage({
       await onUpdateApplication(application.id, payload);
     } catch (updateError) {
       setStatusUpdateError(updateError.message || "Could not update application status.");
+      throw updateError;
     } finally {
       setUpdatingApplicationId(null);
     }
@@ -70,6 +72,7 @@ export default function PipelinePage({
       {!isLoading && !error ? (
         <PipelineBoard
           applications={applications}
+          onOpenDetails={onOpenDetails}
           onStatusChange={handleStatusChange}
           updatingApplicationId={updatingApplicationId}
         />

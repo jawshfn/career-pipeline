@@ -213,6 +213,8 @@ export default function ApplicationsPage({
   error,
   isLoading,
   onUnsavedChangesChange,
+  requestedApplicationId,
+  onRequestedApplicationHandled,
   onUpdateApplication,
   resumeVersions,
 }) {
@@ -306,6 +308,15 @@ export default function ApplicationsPage({
 
     setSelectedApplicationId(applicationId);
   }
+
+  useEffect(() => {
+    if (!requestedApplicationId) {
+      return;
+    }
+
+    openDetails(requestedApplicationId);
+    onRequestedApplicationHandled?.();
+  }, [onRequestedApplicationHandled, requestedApplicationId]);
 
   return (
     <div className="applications-page">
