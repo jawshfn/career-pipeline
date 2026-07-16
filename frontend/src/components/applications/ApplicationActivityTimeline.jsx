@@ -249,6 +249,7 @@ export default function ApplicationActivityTimeline({
                 name="note"
                 rows="1"
                 maxRows={4}
+                isVisible={isActive}
                 value={draftData.note}
                 onChange={updateField}
                 placeholder="Recruiter replied, assessment completed, interview scheduled..."

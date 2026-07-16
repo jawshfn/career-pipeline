@@ -18,18 +18,24 @@ export function resizeTextareaToContent(textarea, maxRows = 4) {
   textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
 }
 
-export default function AutoGrowingTextarea({ maxRows = 4, value, ...props }) {
+export default function AutoGrowingTextarea({ isVisible = true, maxRows = 4, value, ...props }) {
   const textareaRef = useRef(null);
 
   useLayoutEffect(() => {
-    resizeTextareaToContent(textareaRef.current, maxRows);
-  }, [maxRows, value]);
+    if (isVisible) {
+      resizeTextareaToContent(textareaRef.current, maxRows);
+    }
+  }, [isVisible, maxRows, value]);
 
   useLayoutEffect(() => {
-    const resize = () => resizeTextareaToContent(textareaRef.current, maxRows);
+    const resize = () => {
+      if (isVisible) {
+        resizeTextareaToContent(textareaRef.current, maxRows);
+      }
+    };
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
-  }, [maxRows]);
+  }, [isVisible, maxRows]);
 
   return <textarea ref={textareaRef} value={value} {...props} />;
 }
