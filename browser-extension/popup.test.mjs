@@ -111,13 +111,25 @@ test("routes an active LinkedIn page to the focused detector", async () => {
 
 test("routes only a selected ZipRecruiter search detail to the focused detector", async () => {
   const result = await inspectActivePage({
-    tabs: { query: async () => [{ id: 16, url: "https://www.ziprecruiter.com/jobs-search?lk=selected-key" }] },
-    scripting: { executeScript: async (details) => { assert.equal(typeof details.func, "function"); return [{ result: { status: "no-current-job", version: 1 } }]; } },
+    tabs: { query: async () => [{ id: 16, url: "https://www.ziprecruiter.com/jobs-search/2?lk=selected-key" }] },
+    scripting: { executeScript: async (details) => { assert.equal(details.func.name, "detectZipRecruiterJobPage"); return [{ result: { status: "no-current-job", version: 1 } }]; } },
   });
   assert.equal(result.status, "no-current-job");
   assert.equal(result.provider, "ziprecruiter");
   assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobs-search?lk=selected-key"), true);
+  assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobs-search/2?lk=page-two-key"), true);
+  assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobs-search/25/?lk=later-page-key"), true);
   assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobs-search?search=data"), false);
+  for (const url of [
+    "https://www.ziprecruiter.com/jobs-search/0?lk=value",
+    "https://www.ziprecruiter.com/jobs-search/page/2?lk=value",
+    "https://www.ziprecruiter.com/jobs-search/2/extra?lk=value",
+    "https://www.ziprecruiter.com/jobs-search/2",
+    "https://www.ziprecruiter.com/jobs-search/2?lk=",
+    "https://www.ziprecruiter.com/jobs-search/2?lk=one&lk=two",
+  ]) {
+    assert.equal(isZipRecruiterJobUrl(url), false);
+  }
   assert.equal(isZipRecruiterJobUrl("https://ziprecruiter.com.evil.test/jobs-search?lk=selected-key"), false);
 });
 

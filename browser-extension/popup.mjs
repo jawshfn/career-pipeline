@@ -140,7 +140,7 @@ export function isZipRecruiterJobUrl(rawUrl) {
     return (url.protocol === "http:" || url.protocol === "https:") && !url.username && !url.password &&
       (url.port === "" || url.port === "80" || url.port === "443") &&
       (hostname === "ziprecruiter.com" || hostname.endsWith(".ziprecruiter.com")) &&
-      /^\/jobs-search\/?$/u.test(url.pathname) && selectedJobKeys.length === 1 && Boolean(selectedJobKeys[0].trim());
+      /^\/jobs-search(?:\/[1-9]\d*)?\/?$/u.test(url.pathname) && selectedJobKeys.length === 1 && Boolean(selectedJobKeys[0].trim());
   } catch { return false; }
 }
 

@@ -1,3 +1,4 @@
+import re
 from datetime import date, datetime
 from urllib.parse import parse_qs, urlparse
 from typing import ClassVar, Literal
@@ -221,6 +222,7 @@ class LeverJobImportRead(BaseModel):
 MAX_BROWSER_CAPTURE_TEXT_LENGTH = 100_000
 MAX_BROWSER_CAPTURE_URL_LENGTH = 2_048
 BROWSER_CAPTURE_TOKEN_PATTERN = r"^[A-Za-z0-9_-]{32,128}$"
+ZIPRECRUITER_SEARCH_PATH_PATTERN = re.compile(r"^/jobs-search(?:/[1-9]\d*)?/?$")
 
 
 def validate_browser_capture_url(value: str, provider: str) -> str:
@@ -240,7 +242,7 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
     )
     is_supported_path = (
         (provider != "linkedin" or parsed.path.startswith("/jobs/"))
-        and (provider != "ziprecruiter" or parsed.path in {"/jobs-search", "/jobs-search/"})
+        and (provider != "ziprecruiter" or ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path))
     )
     selected_job_keys = parse_qs(parsed.query, keep_blank_values=True).get("lk", [])
     if (

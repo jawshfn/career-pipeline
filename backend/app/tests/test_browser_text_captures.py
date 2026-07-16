@@ -137,6 +137,18 @@ def test_ziprecruiter_browser_capture_is_validated_one_time_and_does_not_persist
     assert client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": token}).status_code == 404
 
 
+def test_ziprecruiter_browser_capture_accepts_page_one_and_paginated_selected_job_urls(client):
+    for original_job_link in [
+        "https://www.ziprecruiter.com/jobs-search?lk=pageOneKey",
+        "https://www.ziprecruiter.com/jobs-search/2?lk=pageTwoKey",
+        "https://www.ziprecruiter.com/jobs-search/25/?lk=laterPageKey",
+    ]:
+        assert client.post(
+            "/api/browser-text-captures",
+            json=ziprecruiter_capture_payload(original_job_link=original_job_link),
+        ).status_code == 200
+
+
 def test_browser_capture_endpoint_rejects_untrusted_input(client):
     invalid_payloads = [
         capture_payload(provider="linkedin"),
@@ -155,6 +167,11 @@ def test_browser_capture_endpoint_rejects_untrusted_input(client):
         ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search?search=fictional"),
         ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search?lk=one&lk=two"),
         ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search//?lk=fake"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search/0?lk=fake"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search/00?lk=fake"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search/page/2?lk=fake"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search/2/extra?lk=fake"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search/2?lk="),
         ziprecruiter_capture_payload(original_job_link="https://ziprecruiter.com.evil.test/jobs-search?lk=fake"),
         ziprecruiter_capture_payload(original_job_link="https://user:pass@www.ziprecruiter.com/jobs-search?lk=fake"),
     ]

@@ -118,6 +118,21 @@ test("keeps remote metadata and blank compensation without reading description d
   });
 });
 
+test("captures selected jobs from paginated ZipRecruiter search paths", () => {
+  withDom(fixture(), "https://www.ziprecruiter.com/jobs-search/2?lk=page-two-key", () => {
+    const result = detectZipRecruiterJobPage();
+    assert.equal(result.status, "detected");
+    assert.equal(result.role_title, "Supply Chain Data Analyst");
+    assert.equal(result.company_name, "Howmet Aerospace");
+    assert.match(result.raw_text, /Job description\nBuild reliable/u);
+  });
+
+  assert.equal(
+    detectZipRecruiterJobPage({ pageUrl: "https://www.ziprecruiter.com/jobs-search/25/?lk=later-page-key", candidates: [] }).status,
+    "no-current-job",
+  );
+});
+
 test("associates a rated posting with its compact header and excludes rating or benefits text", () => {
   withDom(ratedFixture(), "https://www.ziprecruiter.com/jobs-search?lk=rated-selected-key", (dom) => {
     const result = detectZipRecruiterJobPage();
@@ -157,6 +172,14 @@ test("rejects invalid selected-job routes and ambiguous or hidden detail panes",
   assert.equal(detectZipRecruiterJobPage({ pageUrl: "https://www.ziprecruiter.com/jobs-search?search=data" }).status, "not-ziprecruiter");
   assert.equal(detectZipRecruiterJobPage({ pageUrl: "https://ziprecruiter.com.evil.test/jobs-search?lk=fake" }).status, "not-ziprecruiter");
   assert.equal(detectZipRecruiterJobPage({ pageUrl: "https://www.ziprecruiter.com/jobs-search?lk=one&lk=two" }).status, "not-ziprecruiter");
+  for (const pageUrl of [
+    "https://www.ziprecruiter.com/jobs-search/0?lk=fake",
+    "https://www.ziprecruiter.com/jobs-search/00?lk=fake",
+    "https://www.ziprecruiter.com/jobs-search/page/2?lk=fake",
+    "https://www.ziprecruiter.com/jobs-search/2/extra?lk=fake",
+  ]) {
+    assert.equal(detectZipRecruiterJobPage({ pageUrl }).status, "not-ziprecruiter");
+  }
   withDom(`${fixture()}${fixture()}`, "https://www.ziprecruiter.com/jobs-search?lk=fake", () => {
     assert.equal(detectZipRecruiterJobPage().status, "ambiguous-job");
   });

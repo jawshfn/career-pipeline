@@ -223,6 +223,9 @@ Status: complete through Phase 20.9b
 - Phase 20.9b — Refine runtime-aware capture guidance, troubleshooting disclosures, privacy presentation, and responsive capture-method layouts.
 
 ## Phase 21 — Browser Capture Reliability and Coverage
+
+Status: in progress
+
 - Phase 21.1a — Refresh Browser Capture with PursuitHQ identity, clearer captured-job hierarchy, consistent popup states, and source-neutral fallback guidance.
 - Phase 21.1b — Preserve LinkedIn role titles that resemble location values by using source-specific header context.
 
