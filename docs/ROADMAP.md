@@ -217,6 +217,7 @@ Status: in progress
 - Phase 20.6g — Refine the Activity composer responsiveness, auto-growing note, and timeline date presentation.
 - Phase 20.6h — Complete Application Detail consistency with an auto-growing Next Action field and unified tab-panel surfaces.
 - Phase 20.7a — Status Board card actions and visual consistency
+- Phase 20.7b — Status Board workflow filters
 
 ## Later Optional Enhancements
 

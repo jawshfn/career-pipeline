@@ -1,13 +1,19 @@
 import React, { useState } from "react";
 
 import {
+  ACTIVE_APPLICATION_STATUSES,
+  CLOSED_APPLICATION_STATUSES,
   SAVED_APPLICATION_STATUS,
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
 import PipelineColumn from "./PipelineColumn.jsx";
 
 const ALL_STATUSES_FILTER = "All";
-const statusFilters = [ALL_STATUSES_FILTER, ...USER_SELECTABLE_APPLICATION_STATUSES];
+const ACTIVE_STATUSES_FILTER = "Active";
+const CLOSED_STATUSES_FILTER = "Closed";
+const activeStatuses = USER_SELECTABLE_APPLICATION_STATUSES.filter((status) => ACTIVE_APPLICATION_STATUSES.has(status));
+const closedStatuses = USER_SELECTABLE_APPLICATION_STATUSES.filter((status) => CLOSED_APPLICATION_STATUSES.has(status));
+const statusFilters = [ALL_STATUSES_FILTER, ACTIVE_STATUSES_FILTER, CLOSED_STATUSES_FILTER, ...activeStatuses];
 
 export default function PipelineBoard({
   applications,
@@ -36,10 +42,18 @@ export default function PipelineBoard({
     applicationsByStatus[status].push({ ...application, status });
   });
 
-  const visibleStatuses =
-    selectedStatus === ALL_STATUSES_FILTER
-      ? USER_SELECTABLE_APPLICATION_STATUSES.filter((status) => applicationsByStatus[status].length > 0)
-      : [selectedStatus];
+  let selectedStatuses = USER_SELECTABLE_APPLICATION_STATUSES;
+  if (selectedStatus === ACTIVE_STATUSES_FILTER) {
+    selectedStatuses = activeStatuses;
+  } else if (selectedStatus === CLOSED_STATUSES_FILTER) {
+    selectedStatuses = closedStatuses;
+  } else if (selectedStatus !== ALL_STATUSES_FILTER) {
+    selectedStatuses = [selectedStatus];
+  }
+
+  const visibleStatuses = normalizedSearchTerm
+    ? selectedStatuses.filter((status) => applicationsByStatus[status].length > 0)
+    : selectedStatuses;
 
   return (
     <section className="pipeline-board" aria-label="Applications grouped by status">
@@ -69,12 +83,8 @@ export default function PipelineBoard({
         ))}
       </div>
 
-      {visibleStatuses.length === 0 ? (
-        <p className="pipeline-empty-board">
-          {normalizedSearchTerm
-            ? "No applications match that Status Board search."
-            : "No active applications yet. Add one with Add Job to start building your status board."}
-        </p>
+      {normalizedSearchTerm && visibleStatuses.length === 0 ? (
+        <p className="pipeline-empty-board">No applications match that Status Board search.</p>
       ) : (
         <div className="pipeline-groups">
           {visibleStatuses.map((status) => (

@@ -25,8 +25,33 @@ const applications = [
   },
 ];
 
+const workflowApplications = [
+  { company_name: "Aurora Studio", id: 11, role_title: "Product Engineer", status: "Saved" },
+  { company_name: "Beacon Works", id: 12, role_title: "Frontend Engineer", status: "Applied" },
+  { company_name: "Cobalt Systems", id: 13, role_title: "UX Researcher", status: "Assessment" },
+  { company_name: "Dovetail Partners", id: 14, role_title: "Recruiting Coordinator", status: "Recruiter Screen" },
+  { company_name: "Elm Digital", id: 15, role_title: "Software Engineer", status: "Interview" },
+  { company_name: "Fjord Labs", id: 16, role_title: "Product Manager", status: "Offer" },
+  { company_name: "Terminal Co", id: 17, role_title: "Data Analyst", status: "Rejected" },
+  { company_name: "Willow Group", id: 18, role_title: "Designer", status: "Withdrawn" },
+];
+
 function getButton(container, label) {
   return [...container.querySelectorAll("button")].find((button) => button.textContent.includes(label));
+}
+
+function getFilterButton(container, label) {
+  return [...container.querySelectorAll(".pipeline-filter-button")].find((button) => button.textContent === label);
+}
+
+function getVisibleStageNames(container) {
+  return [...container.querySelectorAll(".pipeline-column-header h3")].map((heading) => heading.textContent);
+}
+
+async function setSearchValue(input, value) {
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+  valueSetter.call(input, value);
+  await act(async () => input.dispatchEvent(new Event("input", { bubbles: true })));
 }
 
 describe("PipelineBoard", () => {
@@ -86,6 +111,102 @@ describe("PipelineBoard", () => {
     const currentStatus = getButton(container, "Applied (current)");
     expect(currentStatus.disabled).toBe(true);
     expect(container.querySelectorAll(".pipeline-status-menu button")).toHaveLength(USER_SELECTABLE_APPLICATION_STATUSES.length);
+    expect(container.querySelector(".pipeline-status-menu").textContent).not.toContain("Active");
+    expect(container.querySelector(".pipeline-status-menu").textContent).not.toContain("Closed");
+  });
+
+  it("shows the revised workflow filter order with All selected initially", async () => {
+    await renderBoard({ applications: workflowApplications });
+    const filterButtons = [...container.querySelectorAll(".pipeline-filter-button")];
+
+    expect(filterButtons.map((button) => button.textContent)).toEqual([
+      "All",
+      "Active",
+      "Closed",
+      "Saved",
+      "Applied",
+      "Assessment",
+      "Recruiter Screen",
+      "Interview",
+      "Offer",
+    ]);
+    expect(getFilterButton(container, "All").getAttribute("aria-pressed")).toBe("true");
+    expect(getFilterButton(container, "Rejected")).toBeUndefined();
+    expect(getFilterButton(container, "Withdrawn")).toBeUndefined();
+    expect(getVisibleStageNames(container)).toEqual(USER_SELECTABLE_APPLICATION_STATUSES);
+  });
+
+  it("filters the board to active, closed, and individual active stages", async () => {
+    await renderBoard({ applications: workflowApplications });
+
+    await act(async () => getFilterButton(container, "Active").click());
+    expect(getVisibleStageNames(container)).toEqual([
+      "Saved",
+      "Applied",
+      "Assessment",
+      "Recruiter Screen",
+      "Interview",
+      "Offer",
+    ]);
+
+    await act(async () => getFilterButton(container, "Closed").click());
+    expect(getVisibleStageNames(container)).toEqual(["Rejected", "Withdrawn"]);
+
+    await act(async () => getFilterButton(container, "Interview").click());
+    expect(getVisibleStageNames(container)).toEqual(["Interview"]);
+  });
+
+  it("keeps empty allowed stages visible until a search term is active", async () => {
+    await renderBoard();
+    const searchInput = container.querySelector('input[type="search"]');
+
+    expect(getVisibleStageNames(container)).toEqual(USER_SELECTABLE_APPLICATION_STATUSES);
+
+    await setSearchValue(searchInput, "Northstar");
+    expect(getVisibleStageNames(container)).toEqual(["Applied"]);
+
+    await setSearchValue(searchInput, "");
+    expect(getVisibleStageNames(container)).toEqual(USER_SELECTABLE_APPLICATION_STATUSES);
+  });
+
+  it("combines search with aggregate filters and keeps the existing no-results message", async () => {
+    await renderBoard({ applications: workflowApplications });
+    const searchInput = container.querySelector('input[type="search"]');
+
+    await act(async () => getFilterButton(container, "Active").click());
+    await setSearchValue(searchInput, "Aurora");
+    expect(container.textContent).toContain("Aurora Studio");
+    expect(container.textContent).not.toContain("Terminal Co");
+    expect(getVisibleStageNames(container)).toEqual(["Saved"]);
+
+    await act(async () => getFilterButton(container, "Closed").click());
+    await setSearchValue(searchInput, "Terminal");
+    expect(container.textContent).toContain("Terminal Co");
+    expect(container.textContent).not.toContain("Aurora Studio");
+    expect(getVisibleStageNames(container)).toEqual(["Rejected"]);
+
+    await setSearchValue(searchInput, "");
+    expect(getVisibleStageNames(container)).toEqual(["Rejected", "Withdrawn"]);
+
+    await setSearchValue(searchInput, "No matching application");
+    expect(container.textContent).toContain("No applications match that Status Board search.");
+  });
+
+  it("removes applications that move out of the selected aggregate view", async () => {
+    const props = await renderBoard({ applications: workflowApplications });
+
+    await act(async () => getFilterButton(container, "Active").click());
+    expect(container.textContent).toContain("Aurora Studio");
+
+    const updatedApplications = workflowApplications.map((application) => (
+      application.id === 11 ? { ...application, status: "Rejected" } : application
+    ));
+    await act(async () => {
+      root.render(<PipelineBoard {...props} applications={updatedApplications} />);
+    });
+
+    expect(container.textContent).not.toContain("Aurora Studio");
+    expect(getVisibleStageNames(container)).toHaveLength(6);
   });
 
   it("updates a status and closes the menu after a successful selection", async () => {
