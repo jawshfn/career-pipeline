@@ -64,8 +64,13 @@ describe("SupportPage", () => {
     expect(markup).toContain("Paste Job Link");
     expect(markup).toContain("Paste Job Text");
     expect(markup).toContain("Manual Entry");
+    expect(markup).toContain("Best for supported job pages");
+    expect(markup).toContain("Best fallback");
+    expect(markup).toContain("support-method-card-recommended");
+    expect(markup).not.toContain("Recommended in demo");
+    expect(markup).toContain("Greenhouse or Lever link for structured import");
     expect(markup).toContain("GitHub Pages demo");
-    expect(markup).toContain("no application is submitted or saved automatically");
+    expect(markup).toContain("never saves an opportunity or submits an application automatically");
   });
 
   it("renders demo guidance without local Browser Capture recommendations", () => {
@@ -74,6 +79,10 @@ describe("SupportPage", () => {
     expect(markup).toContain("Explore PursuitHQ with fictional data");
     expect(markup).toContain("Browser Capture is unavailable in the GitHub Pages demo");
     expect(markup).toContain("Choose Paste Job Text or Manual Entry.");
+    expect(markup).toContain("Local app only");
+    expect(markup).toContain("Recommended in demo");
+    expect(markup).toContain("Paste copied job-posting text to explore the review and save workflow");
+    expect(markup).toContain("support-method-card-unavailable");
     expect(markup).not.toContain("Full local workflow available");
     expect(markup).not.toContain("Run PursuitHQ Capture.");
   });
@@ -104,14 +113,33 @@ describe("SupportPage", () => {
     container.remove();
   });
 
-  it("shows browser capture troubleshooting and review boundaries", () => {
+  it("uses collapsed native disclosures for troubleshooting and privacy details", () => {
     const markup = renderToStaticMarkup(<SupportPage />);
 
+    [
+      "Browser Capture does not recognize the page",
+      "The popup shows the wrong job",
+      "Open in PursuitHQ does not work",
+      "I changed the extension code",
+      "I am using the GitHub Pages demo",
+    ].forEach((summary) => expect(markup).toContain(summary));
+    expect(markup).toContain("<details");
+    expect(markup).not.toContain("<details open");
     expect(markup).toContain("chrome://extensions");
     expect(markup).toContain("hard-refresh the job page");
+    expect(markup).toContain("local FastAPI backend and frontend are running");
+    expect(markup).toContain("Browser Capture is not available in the public demo");
+    expect(markup).toContain("Paste Job Text or Manual Entry");
+    expect(markup).toContain("User initiated");
+    expect(markup).toContain("Active page only");
+    expect(markup).toContain("Review before save");
+    expect(markup).toContain("No automatic saving or submission");
+    expect(markup).toContain("PursuitHQ never saves an opportunity or submits an application automatically.");
+    expect(markup).toContain("Technical privacy details");
     expect(markup).toContain("short-lived, one-time token");
     expect(markup).toContain("not stored in SQLite before save");
     expect(markup).toContain("no persistent browsing monitor");
+    expect(markup).not.toContain('class="support-checklist"');
   });
 
   it("shows the support email and generalized mailto action", () => {

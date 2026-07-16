@@ -222,6 +222,7 @@ Status: in progress
 - Phase 20.8b — Add resume duplication, assignment usage context, and protected resume-workflow switching.
 - Phase 20.8c — Add safe permanent resume deletion, assignment-impact protection, and recency-based Resume Library ordering.
 - Phase 20.9a — Establish a runtime-aware Help Center with common-task navigation, in-page guidance, back-to-top access, and generalized issue reporting.
+- Phase 20.9b — Refine runtime-aware capture guidance, troubleshooting disclosures, privacy presentation, and responsive capture-method layouts.
 
 ## Later Optional Enhancements
 

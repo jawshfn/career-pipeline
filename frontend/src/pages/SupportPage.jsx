@@ -51,23 +51,97 @@ export async function copyTextToClipboard(text, successMessage) {
   }
 }
 
-const captureMethods = [
+function getCaptureMethods(isDemoMode) {
+  return [
+    {
+      title: "Browser Capture",
+      label: isDemoMode ? "Local app only" : "Best for supported job pages",
+      description: isDemoMode
+        ? "Browser Capture is unavailable in the GitHub Pages demo."
+        : "Use while viewing a supported Greenhouse, Indeed, or LinkedIn job page in your browser.",
+      state: isDemoMode ? "unavailable" : "recommended",
+    },
+    {
+      title: "Paste Job Link",
+      label: isDemoMode ? "Supported links only" : "Best for supported links",
+      description: isDemoMode
+        ? "Paste a supported Greenhouse or Lever link when available, or keep another public link for review."
+        : "Paste a Greenhouse or Lever link for structured import, or keep another public job link available for review.",
+      state: "standard",
+    },
+    {
+      title: "Paste Job Text",
+      label: isDemoMode ? "Recommended in demo" : "Best fallback",
+      description: isDemoMode
+        ? "Paste copied job-posting text to explore the review and save workflow with fictional demo data."
+        : "Paste copied posting text when Browser Capture is unavailable, unsupported, or uncertain.",
+      state: isDemoMode ? "recommended" : "standard",
+    },
+    {
+      title: "Manual Entry",
+      label: "Always available",
+      description: isDemoMode
+        ? "Enter the core opportunity details manually and add more information later."
+        : "Quickly save the company, role, source, and job link, then add more details later.",
+      state: "standard",
+    },
+  ];
+}
+
+const troubleshootingItems = [
   {
-    title: "Browser Capture",
-    description: "Recommended while viewing a supported Greenhouse, Indeed, or LinkedIn job page locally.",
+    summary: "Browser Capture does not recognize the page",
+    content: (
+      <ul>
+        <li>Wait for the current job page to finish loading and confirm the intended job posting is visible.</li>
+        <li>Use Paste Job Text when the helper cannot confidently identify the current job.</li>
+      </ul>
+    ),
   },
   {
-    title: "Paste Job Link",
-    description: "Use supported Greenhouse and Lever links for structured import, or keep another public link in review.",
+    summary: "The popup shows the wrong job",
+    content: (
+      <ul>
+        <li>Make sure the intended LinkedIn or supported job posting is currently displayed.</li>
+        <li>Close and reopen the extension popup after the page changes. Refresh the job page when necessary before trying again.</li>
+      </ul>
+    ),
   },
   {
-    title: "Paste Job Text",
-    description: "Paste copied posting text when Browser Capture is unavailable, unsupported, or uncertain.",
+    summary: "Open in PursuitHQ does not work",
+    content: (
+      <ul>
+        <li>Confirm both the local FastAPI backend and frontend are running. Browser Capture requires the local app.</li>
+        <li>A new local PursuitHQ tab opens for each handoff so existing unsaved work is not overwritten.</li>
+        <li>If the handoff still fails, use Paste Job Text or Manual Entry.</li>
+      </ul>
+    ),
   },
   {
-    title: "Manual Entry",
-    description: "Quickly save company, role, source, and job link, then enrich the opportunity later.",
+    summary: "I changed the extension code",
+    content: (
+      <ul>
+        <li>Reload the unpacked extension from chrome://extensions.</li>
+        <li>hard-refresh the job page, then close and reopen the popup before testing again.</li>
+      </ul>
+    ),
   },
+  {
+    summary: "I am using the GitHub Pages demo",
+    content: (
+      <ul>
+        <li>Browser Capture is not available in the public demo.</li>
+        <li>Use Paste Job Text or Manual Entry. Demo data is fictional and resets when the page reloads.</li>
+      </ul>
+    ),
+  },
+];
+
+const privacyPrinciples = [
+  ["User initiated", "Capture runs only after you activate the Browser Capture companion."],
+  ["Active page only", "Only the job page currently open in the active browser tab is inspected."],
+  ["Review before save", "Captured information is placed into a review workflow so you can correct it before saving."],
+  ["No automatic saving or submission", "PursuitHQ never saves an opportunity or submits an application automatically."],
 ];
 
 const commonTasks = [
@@ -84,6 +158,7 @@ export default function SupportPage({ isDemoMode = false, onNavigate = () => {} 
   const [showBackToTop, setShowBackToTop] = useState(false);
   const topRegionRef = useRef(null);
   const reportTemplate = getSupportReportTemplate();
+  const captureMethods = getCaptureMethods(isDemoMode);
 
   useEffect(() => {
     const topRegion = topRegionRef.current;
@@ -151,10 +226,12 @@ export default function SupportPage({ isDemoMode = false, onNavigate = () => {} 
       <section className="panel support-panel" id="help-capture" aria-labelledby="capture-methods-heading">
         <div className="section-heading">
           <h2 id="capture-methods-heading">Choose a capture method</h2>
+          <p>Choose the method that best matches the job information you already have.</p>
         </div>
         <div className="support-method-grid">
           {captureMethods.map((method) => (
-            <section className="support-method-card" key={method.title} aria-labelledby={`${method.title}-heading`}>
+            <section className={"support-method-card support-method-card-" + method.state} key={method.title} aria-labelledby={method.title + "-heading"}>
+              <p className="support-method-label">{method.label}</p>
               <h3 id={`${method.title}-heading`}>{method.title}</h3>
               <p>{method.description}</p>
             </section>
@@ -166,29 +243,43 @@ export default function SupportPage({ isDemoMode = false, onNavigate = () => {} 
         <section className="panel support-panel" aria-labelledby="troubleshooting-heading">
           <div className="section-heading">
             <h2 id="troubleshooting-heading">Browser Capture troubleshooting</h2>
+            <p>Open the problem that most closely matches what you are seeing.</p>
           </div>
-          <ul className="support-checklist">
-            <li>Start both the local backend and frontend. Browser Capture is not available in the GitHub Pages demo.</li>
-            <li>Wait for the current job page to finish loading, and make sure the intended LinkedIn job is displayed.</li>
-            <li>After changing extension source files, reload the unpacked extension in chrome://extensions and hard-refresh the job page.</li>
-            <li>Try closing and reopening the extension popup if the page has just changed.</li>
-            <li>Use Paste Job Text when the helper cannot confidently identify the current job.</li>
-            <li>A new local PursuitHQ tab opens for each handoff so existing unsaved work is not overwritten.</li>
-          </ul>
+          <div className="support-disclosure-list">
+            {troubleshootingItems.map((item) => (
+              <details className="support-disclosure" key={item.summary}>
+                <summary>{item.summary}</summary>
+                <div className="support-disclosure-content">{item.content}</div>
+              </details>
+            ))}
+          </div>
         </section>
 
         <section className="panel support-panel support-privacy-note" aria-labelledby="privacy-review-heading">
           <div className="section-heading">
             <h2 id="privacy-review-heading">Privacy and review</h2>
+            <p>PursuitHQ keeps capture deliberate, local, and review-first.</p>
           </div>
-          <ul className="support-checklist">
-            <li>Capture runs only after you click the extension, and only the active page is inspected.</li>
-            <li>The helper has no persistent browsing monitor.</li>
-            <li>Indeed and LinkedIn text is sent only to the local FastAPI backend after you choose Open in PursuitHQ.</li>
-            <li>The handoff uses a short-lived, one-time token and captured text is not stored in SQLite before save.</li>
-            <li>The helper makes no PursuitHQ request to LinkedIn or Indeed.</li>
-            <li>You must review fields before saving; no application is submitted or saved automatically.</li>
-          </ul>
+          <div className="support-privacy-principles">
+            {privacyPrinciples.map(([title, description]) => (
+              <section className="support-privacy-principle" key={title}>
+                <h3>{title}</h3>
+                <p>{description}</p>
+              </section>
+            ))}
+          </div>
+          <details className="support-disclosure support-technical-privacy">
+            <summary>Technical privacy details</summary>
+            <div className="support-disclosure-content">
+              <ul>
+                <li>The helper has no persistent browsing monitor.</li>
+                <li>Indeed and LinkedIn text is sent only to the local FastAPI backend after you choose Open in PursuitHQ.</li>
+                <li>The handoff uses a short-lived, one-time token.</li>
+                <li>Captured text is not stored in SQLite before save.</li>
+                <li>The helper makes no PursuitHQ request to LinkedIn or Indeed.</li>
+              </ul>
+            </div>
+          </details>
         </section>
       </div>
 
