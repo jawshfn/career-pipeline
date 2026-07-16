@@ -7,6 +7,7 @@ import {
 } from "../../services/applicationActivitiesService.js";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
+import AutoGrowingTextarea from "../ui/AutoGrowingTextarea.jsx";
 
 const activityTypeOptions = [
   "Note",
@@ -38,8 +39,40 @@ function getInitialActivityForm() {
 
 export { getInitialActivityForm };
 
-function formatDate(value) {
-  return value || "-";
+export function formatActivityDate(value) {
+  const dateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value || "");
+  if (!dateParts) {
+    return value || "-";
+  }
+
+  const [, year, month, day] = dateParts;
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  if (
+    date.getFullYear() !== Number(year) ||
+    date.getMonth() !== Number(month) - 1 ||
+    date.getDate() !== Number(day)
+  ) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+export function formatLoggedTime(value) {
+  const date = new Date(value);
+  if (!value || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
 }
 
 export function shouldShowActivityLoadingState({
@@ -212,9 +245,10 @@ export default function ApplicationActivityTimeline({
             </label>
             <label className="activity-note-field">
               Note
-              <textarea
+              <AutoGrowingTextarea
                 name="note"
-                rows="3"
+                rows="1"
+                maxRows={4}
                 value={draftData.note}
                 onChange={updateField}
                 placeholder="Recruiter replied, assessment completed, interview scheduled..."
@@ -228,7 +262,10 @@ export default function ApplicationActivityTimeline({
           </div>
 
           {activities.length === 0 ? (
-            <p className="activity-empty-state">No activity yet. Add updates as this opportunity moves forward.</p>
+            <div className="activity-empty-state">
+              <h4>No activity yet</h4>
+              <p>Add updates as this opportunity moves forward.</p>
+            </div>
           ) : null}
           {activities.length > 0 ? (
             <div className="activity-list">
@@ -236,8 +273,11 @@ export default function ApplicationActivityTimeline({
                 <article className="activity-item" key={activity.id}>
                   <div className="activity-item-header">
                     <div>
-                      <time dateTime={activity.activity_date}>{formatDate(activity.activity_date)}</time>
+                      <time dateTime={activity.activity_date}>{formatActivityDate(activity.activity_date)}</time>
                       <span className="activity-type-badge">{activity.activity_type}</span>
+                      {formatLoggedTime(activity.created_at) ? (
+                        <span className="activity-logged-time">Logged at {formatLoggedTime(activity.created_at)}</span>
+                      ) : null}
                     </div>
                     <button
                       className="quiet-danger-button"

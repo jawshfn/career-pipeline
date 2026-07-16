@@ -223,6 +223,7 @@ Status: in progress
 - Phase 20.6e — Refine Resume & Prep with compact auto-growing preparation notes.
 
 - Phase 20.6f — Refine the Red Flags checklist layout, selected states, and compact auto-growing notes.
+- Phase 20.6g — Refine the Activity composer responsiveness, auto-growing note, and timeline date presentation.
 
 ## Later Optional Enhancements
 

@@ -1696,6 +1696,7 @@ a {
 
 .activity-timeline-section {
   margin-top: 0;
+  container-type: inline-size;
 }
 
 .activity-timeline-section[hidden] {
@@ -1716,8 +1717,12 @@ a {
 
 .activity-form-grid {
   display: grid;
-  grid-template-columns: minmax(0, 180px) minmax(0, 220px) minmax(0, 1fr) auto;
-  align-items: end;
+  grid-template-areas:
+    "date type"
+    "note note"
+    "actions actions";
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
   gap: 12px;
   min-width: 0;
 }
@@ -1754,6 +1759,24 @@ a {
 .activity-form-actions {
   display: flex;
   min-width: 0;
+  grid-area: actions;
+  justify-content: flex-end;
+}
+
+.activity-note-field {
+  grid-area: note;
+}
+
+.activity-form-grid > label:first-child {
+  grid-area: date;
+}
+
+.activity-form-grid > label:nth-child(2) {
+  grid-area: type;
+}
+
+.activity-note-field textarea {
+  overflow-x: hidden;
 }
 
 .activity-empty-state {
@@ -1764,6 +1787,17 @@ a {
   color: #60706d;
   background: #f9fbfa;
   font-weight: 700;
+}
+
+.activity-empty-state h4,
+.activity-empty-state p {
+  margin: 0;
+}
+
+.activity-empty-state p {
+  margin-top: 3px;
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .activity-list {
@@ -3558,13 +3592,26 @@ textarea:focus-visible {
   gap: 12px;
 }
 
+.activity-list::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 19px;
+  bottom: 19px;
+  left: 5px;
+  width: 2px;
+  background: #c7d9d5;
+}
+
 .activity-item {
   position: relative;
+  z-index: 1;
   margin-left: 10px;
   padding-left: 16px;
 }
 
 .activity-item::before {
+  z-index: 1;
   top: 14px;
   left: -10px;
   width: 10px;
@@ -3584,6 +3631,42 @@ textarea:focus-visible {
   border: 1px solid #b9d9d4;
   color: var(--color-signal-strong);
   background: #e2f4f1;
+}
+
+.activity-logged-time {
+  flex-basis: 100%;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+@container (min-width: 760px) {
+  .activity-form-grid {
+    grid-template-areas:
+      "date type . ."
+      "note note note actions";
+    grid-template-columns: minmax(0, 180px) minmax(0, 220px) minmax(0, 1fr) auto;
+  }
+
+  .activity-form-actions {
+    align-self: start;
+    padding-top: 27px;
+  }
+}
+
+@container (max-width: 420px) {
+  .activity-form-grid {
+    grid-template-areas:
+      "date"
+      "type"
+      "note"
+      "actions";
+    grid-template-columns: 1fr;
+  }
+
+  .activity-form-actions button {
+    width: 100%;
+  }
 }
 
 .effectiveness-row:not(.effectiveness-header):hover,
@@ -4033,15 +4116,6 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .activity-form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .activity-note-field,
-  .activity-form-actions {
-    grid-column: 1 / -1;
-  }
-
   .resume-version-form,
   .resume-version-edit-form {
     grid-template-columns: 1fr;
@@ -4107,19 +4181,6 @@ textarea:focus-visible {
 
   .detail-dates-grid {
     grid-template-columns: 1fr;
-  }
-
-  .activity-form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .activity-note-field,
-  .activity-form-actions {
-    grid-column: auto;
-  }
-
-  .activity-form-actions button {
-    width: 100%;
   }
 
   .pipeline-card {
