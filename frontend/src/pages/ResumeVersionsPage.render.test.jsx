@@ -5,7 +5,11 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import ResumeVersionsPage from "./ResumeVersionsPage.jsx";
+import ResumeVersionsPage, {
+  RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE,
+  RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE,
+  RESUME_DUPLICATE_REPLACE_CREATE_CONFIRM_MESSAGE,
+} from "./ResumeVersionsPage.jsx";
 
 const resume = {
   description: "A focused engineering resume.",
@@ -122,7 +126,151 @@ describe("ResumeVersionsPage library experience", () => {
     expect(editSurface.querySelector('textarea[name="description"]').value).toBe(resume.description);
   });
 
-  it("collapses creation for editing while retaining its unfinished draft", async () => {
+  it("closes a clean edit and opens New resume version without confirmation", async () => {
+    const confirm = vi.spyOn(window, "confirm");
+    await renderPage();
+    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
+    await act(async () => edit.click());
+    const disclosure = container.querySelector("details");
+    const createName = container.querySelector('.resume-version-create-panel input[name="name"]');
+    await act(async () => disclosure.querySelector("summary").click());
+
+    expect(confirm).not.toHaveBeenCalled();
+    expect(container.querySelector(".resume-version-card-editing")).toBeNull();
+    expect(disclosure.open).toBe(true);
+    expect(document.activeElement).toBe(createName);
+    confirm.mockRestore();
+  });
+
+  it("keeps a dirty edit open when opening New resume version is declined", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    await renderPage();
+    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
+    await act(async () => edit.click());
+    const editName = container.querySelector('.resume-version-card-editing input[name="name"]');
+    await act(async () => {
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+      setValue.call(editName, "Unsaved Resume Name");
+      editName.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const disclosure = container.querySelector("details");
+    await act(async () => disclosure.querySelector("summary").click());
+
+    expect(confirm).toHaveBeenCalledWith(RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE);
+    expect(container.querySelector('.resume-version-card-editing input[name="name"]').value).toBe("Unsaved Resume Name");
+    expect(disclosure.open).toBe(false);
+    confirm.mockRestore();
+  });
+
+  it("clears a confirmed dirty edit and opens New resume version", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    await renderPage();
+    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
+    await act(async () => edit.click());
+    const editName = container.querySelector('.resume-version-card-editing input[name="name"]');
+    await act(async () => {
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+      setValue.call(editName, "Unsaved Resume Name");
+      editName.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const disclosure = container.querySelector("details");
+    const createName = container.querySelector('.resume-version-create-panel input[name="name"]');
+    await act(async () => disclosure.querySelector("summary").click());
+
+    expect(confirm).toHaveBeenCalledWith(RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE);
+    expect(container.querySelector(".resume-version-card-editing")).toBeNull();
+    expect(disclosure.open).toBe(true);
+    expect(document.activeElement).toBe(createName);
+    confirm.mockRestore();
+  });
+
+  it("prepares a duplicate draft without creating a record and focuses its editable name", async () => {
+    const onCreateResumeVersion = vi.fn().mockResolvedValue({ name: "Engineering Resume copy 2" });
+    await renderPage([resume, { ...resume, id: 2, name: "Engineering Resume copy" }], { onCreateResumeVersion });
+    const duplicate = [...container.querySelectorAll("button")].find((button) => button.textContent === "Duplicate");
+    await act(async () => duplicate.click());
+    const disclosure = container.querySelector("details");
+    const name = container.querySelector('.resume-version-create-panel input[name="name"]');
+    expect(onCreateResumeVersion).not.toHaveBeenCalled();
+    expect(disclosure.open).toBe(true);
+    expect(name.value).toBe("Engineering Resume copy 2");
+    expect(container.querySelector('input[name="target_role"]').value).toBe(resume.target_role);
+    expect(container.querySelector('textarea[name="description"]').value).toBe(resume.description);
+    expect(document.activeElement).toBe(name);
+    expect(resume.name).toBe("Engineering Resume");
+    await act(async () => disclosure.querySelector("summary").click());
+    await act(async () => disclosure.querySelector("summary").click());
+    expect(name.value).toBe("Engineering Resume copy 2");
+    await act(async () => container.querySelector("form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
+    expect(onCreateResumeVersion).toHaveBeenCalledWith({
+      description: resume.description,
+      name: "Engineering Resume copy 2",
+      target_role: resume.target_role,
+    });
+    expect(disclosure.open).toBe(false);
+  });
+
+  it("does not replace an unfinished new-resume draft when duplication is declined", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    await renderPage();
+    const disclosure = container.querySelector("details");
+    await act(async () => disclosure.querySelector("summary").click());
+    const name = container.querySelector('.resume-version-create-panel input[name="name"]');
+    await act(async () => {
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+      setValue.call(name, "Unfinished draft");
+      name.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const duplicate = [...container.querySelectorAll("button")].find((button) => button.textContent === "Duplicate");
+    await act(async () => duplicate.click());
+    expect(confirm).toHaveBeenCalledWith(RESUME_DUPLICATE_REPLACE_CREATE_CONFIRM_MESSAGE);
+    expect(name.value).toBe("Unfinished draft");
+    expect(disclosure.open).toBe(true);
+    confirm.mockRestore();
+  });
+
+  it("protects a duplicate-populated draft before opening an edit", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    await renderPage();
+    const duplicate = [...container.querySelectorAll("button")].find((button) => button.textContent === "Duplicate");
+    await act(async () => duplicate.click());
+    const createName = container.querySelector('.resume-version-create-panel input[name="name"]');
+    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
+    await act(async () => edit.click());
+
+    expect(confirm).toHaveBeenCalledWith(RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE);
+    expect(createName.value).toBe("Engineering Resume copy");
+    expect(container.querySelector(".resume-version-card-editing")).toBeNull();
+    expect(container.querySelector("details").open).toBe(true);
+    confirm.mockRestore();
+  });
+
+  it("uses the secondary action treatment for Edit, Duplicate, and Deactivate", async () => {
+    await renderPage();
+    for (const label of ["Edit", "Duplicate", "Deactivate"]) {
+      const button = [...container.querySelectorAll("button")].find((item) => item.textContent === label);
+      expect(button.className).toBe("secondary-button");
+    }
+  });
+
+  it("shows ID-based usage context for active and inactive resume cards", async () => {
+    const inactiveResume = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    await renderPage([resume, inactiveResume], {
+      applications: [
+        { resume_version_id: 1, status: "Rejected" },
+        { resume_version_id: "1", status: "Withdrawn" },
+        { resume_version_id: 2 },
+        { resume_version_id: null },
+      ],
+    });
+    expect(container.textContent).toContain("Used by 2 applications");
+    const includeInactive = container.querySelector('input[type="checkbox"]');
+    await act(async () => includeInactive.click());
+    expect(container.textContent).toContain("Used by 1 application");
+  });
+
+  it("discards an accepted unfinished create draft before opening an edit", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     await renderPage();
     const disclosure = container.querySelector("details");
     await act(async () => disclosure.querySelector("summary").click());
@@ -136,7 +284,9 @@ describe("ResumeVersionsPage library experience", () => {
     await act(async () => edit.click());
     expect(disclosure.open).toBe(false);
     await act(async () => disclosure.querySelector("summary").click());
-    expect(container.querySelector('.resume-version-create-panel input[name="name"]').value).toBe("Saved Draft");
+    expect(container.querySelector('.resume-version-create-panel input[name="name"]').value).toBe("");
+    expect(confirm).toHaveBeenCalledWith(RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE);
+    confirm.mockRestore();
   });
 
   it("renders the active edit form before the remaining cards and restores its position after saving", async () => {

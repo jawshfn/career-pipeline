@@ -12,6 +12,9 @@ const initialCreateForm = {
 
 export const RESUME_EDIT_SWITCH_CONFIRM_MESSAGE = "You have unsaved changes. Switch resumes without saving?";
 export const RESUME_EDIT_CANCEL_CONFIRM_MESSAGE = "You have unsaved changes. Cancel editing without saving?";
+export const RESUME_DUPLICATE_REPLACE_CREATE_CONFIRM_MESSAGE = "You have an unfinished new resume version. Replace it with this duplicate draft?";
+export const RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE = "You have an unfinished new resume version. Discard it and edit this resume?";
+export const RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE = "You have unsaved resume changes. Discard them and start a new resume version?";
 
 function normalizeFormValue(value) {
   return String(value ?? "");
@@ -53,6 +56,34 @@ export function isResumeEditDirty(editingId, editForm, editFormBaseline) {
   return Boolean(editingId && isResumeFormDirty(editForm, editFormBaseline));
 }
 
+export function getDuplicateResumeName(sourceName, resumeVersions) {
+  const existingNames = new Set(resumeVersions.map((resumeVersion) => normalizeFormValue(resumeVersion.name).trim().toLocaleLowerCase()));
+  const copyName = `${sourceName} copy`;
+  if (!existingNames.has(copyName.toLocaleLowerCase())) return copyName;
+
+  let copyNumber = 2;
+  while (existingNames.has(`${copyName} ${copyNumber}`.toLocaleLowerCase())) {
+    copyNumber += 1;
+  }
+  return `${copyName} ${copyNumber}`;
+}
+
+export function getResumeUsageCounts(applications = []) {
+  return applications.reduce((usageCounts, application) => {
+    if (application.resume_version_id === null || application.resume_version_id === undefined || application.resume_version_id === "") {
+      return usageCounts;
+    }
+    const resumeVersionId = String(application.resume_version_id);
+    usageCounts.set(resumeVersionId, (usageCounts.get(resumeVersionId) || 0) + 1);
+    return usageCounts;
+  }, new Map());
+}
+
+export function formatResumeUsage(count) {
+  if (!count) return "Not used by any applications";
+  return `Used by ${count} application${count === 1 ? "" : "s"}`;
+}
+
 export function resolveResumeEditSwitch(currentState, nextResumeVersion, confirmLeave) {
   const nextResumeId = nextResumeVersion.id;
   const isSwitchingResume = currentState.editingId && currentState.editingId !== nextResumeId;
@@ -65,11 +96,23 @@ export function resolveResumeEditSwitch(currentState, nextResumeVersion, confirm
     return currentState;
   }
 
+  const hasDirtyCreateForm = isResumeFormDirty(currentState.createForm || initialCreateForm, initialCreateForm);
+  if (hasDirtyCreateForm && !confirmLeave(RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE)) {
+    return currentState;
+  }
+
   return {
     ...currentState,
     ...getEditStateForResume(nextResumeVersion),
     actionError: "",
     actionMessage: "",
+    ...(hasDirtyCreateForm
+      ? {
+          createError: "",
+          createForm: initialCreateForm,
+        }
+      : {}),
+    isCreateOpen: false,
   };
 }
 
@@ -84,6 +127,48 @@ export function resolveResumeEditCancel(currentState, confirmLeave) {
   return {
     ...currentState,
     ...getCleanEditState(),
+  };
+}
+
+export function resolveResumeCreateStart(currentState, confirmLeave) {
+  if (
+    isResumeEditDirty(currentState.editingId, currentState.editForm, currentState.editFormBaseline) &&
+    !confirmLeave(RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE)
+  ) {
+    return currentState;
+  }
+
+  return {
+    ...currentState,
+    ...getCleanEditState(),
+    isCreateOpen: true,
+  };
+}
+
+export function resolveResumeDuplicate(currentState, sourceResumeVersion, resumeVersions, confirmLeave) {
+  if (
+    isResumeEditDirty(currentState.editingId, currentState.editForm, currentState.editFormBaseline) &&
+    !confirmLeave(RESUME_EDIT_CANCEL_CONFIRM_MESSAGE)
+  ) {
+    return currentState;
+  }
+
+  if (isResumeFormDirty(currentState.createForm, initialCreateForm) && !confirmLeave(RESUME_DUPLICATE_REPLACE_CREATE_CONFIRM_MESSAGE)) {
+    return currentState;
+  }
+
+  return {
+    ...currentState,
+    ...getCleanEditState(),
+    actionError: "",
+    actionMessage: "",
+    createError: "",
+    createForm: {
+      name: getDuplicateResumeName(sourceResumeVersion.name, resumeVersions),
+      target_role: sourceResumeVersion.target_role || "",
+      description: sourceResumeVersion.description || "",
+    },
+    isCreateOpen: true,
   };
 }
 
@@ -131,6 +216,7 @@ export function formatResumeUpdatedTimestamp(value) {
 }
 
 export default function ResumeVersionsPage({
+  applications = [],
   error,
   isLoading,
   onCreateResumeVersion,
@@ -138,6 +224,7 @@ export default function ResumeVersionsPage({
   onUnsavedChangesChange,
   onUpdateResumeVersion,
   resumeVersions,
+  allResumeVersions = resumeVersions,
 }) {
   const [createForm, setCreateForm] = useState(initialCreateForm);
   const [editingId, setEditingId] = useState(null);
@@ -151,6 +238,8 @@ export default function ResumeVersionsPage({
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(resumeVersions.length === 0);
   const createDisclosureInitialized = useRef(false);
+  const createNameRef = useRef(null);
+  const shouldFocusCreateNameRef = useRef(false);
   const editSurfaceRef = useRef(null);
 
   useEffect(() => {
@@ -167,6 +256,13 @@ export default function ResumeVersionsPage({
   useEffect(() => {
     if (editingId) editSurfaceRef.current?.focus();
   }, [editingId]);
+
+  useEffect(() => {
+    if (isCreateOpen && shouldFocusCreateNameRef.current) {
+      createNameRef.current?.focus();
+      shouldFocusCreateNameRef.current = false;
+    }
+  }, [createForm, isCreateOpen]);
 
   const hasCreateFormChanges = isResumeFormDirty(createForm, initialCreateForm);
   const hasEditFormChanges = editingId ? isResumeFormDirty(editForm, editFormBaseline) : false;
@@ -216,26 +312,31 @@ export default function ResumeVersionsPage({
   }
 
   function startEditing(resumeVersion) {
+    const currentState = {
+      actionError,
+      actionMessage,
+      createError,
+      createForm,
+      editingId,
+      editForm,
+      editFormBaseline,
+      isCreateOpen,
+    };
     const nextState = resolveResumeEditSwitch(
-      {
-        actionError,
-        actionMessage,
-        editingId,
-        editForm,
-        editFormBaseline,
-      },
+      currentState,
       resumeVersion,
       window.confirm,
     );
+    if (nextState === currentState) return;
 
     setEditingId(nextState.editingId);
     setEditForm(nextState.editForm);
     setEditFormBaseline(nextState.editFormBaseline);
     setActionError(nextState.actionError);
     setActionMessage(nextState.actionMessage);
-    if (nextState.editingId === resumeVersion.id) {
-      setIsCreateOpen(false);
-    }
+    setCreateError(nextState.createError);
+    setCreateForm(nextState.createForm);
+    setIsCreateOpen(nextState.isCreateOpen);
   }
 
   function cancelEditing() {
@@ -251,6 +352,52 @@ export default function ResumeVersionsPage({
     setEditingId(nextState.editingId);
     setEditForm(nextState.editForm);
     setEditFormBaseline(nextState.editFormBaseline);
+  }
+
+  function handleCreateDisclosureClick(event) {
+    if (isCreateOpen || !editingId) return;
+
+    event.preventDefault();
+    const currentState = {
+      createForm,
+      editForm,
+      editFormBaseline,
+      editingId,
+      isCreateOpen,
+    };
+    const nextState = resolveResumeCreateStart(currentState, window.confirm);
+    if (nextState === currentState) return;
+
+    shouldFocusCreateNameRef.current = true;
+    setEditingId(nextState.editingId);
+    setEditForm(nextState.editForm);
+    setEditFormBaseline(nextState.editFormBaseline);
+    setIsCreateOpen(nextState.isCreateOpen);
+  }
+
+  function startDuplicating(resumeVersion) {
+    const currentState = {
+      actionError,
+      actionMessage,
+      createError,
+      createForm,
+      editForm,
+      editFormBaseline,
+      editingId,
+      isCreateOpen,
+    };
+    const nextState = resolveResumeDuplicate(currentState, resumeVersion, allResumeVersions, window.confirm);
+    if (nextState === currentState) return;
+
+    shouldFocusCreateNameRef.current = true;
+    setActionError(nextState.actionError);
+    setActionMessage(nextState.actionMessage);
+    setCreateError(nextState.createError);
+    setCreateForm(nextState.createForm);
+    setEditingId(nextState.editingId);
+    setEditForm(nextState.editForm);
+    setEditFormBaseline(nextState.editFormBaseline);
+    setIsCreateOpen(nextState.isCreateOpen);
   }
 
   async function handleSaveEdit(resumeVersionId) {
@@ -293,6 +440,7 @@ export default function ResumeVersionsPage({
     : resumeVersions.filter((resumeVersion) => resumeVersion.is_active);
   const editingResumeVersion = resumeVersions.find((resumeVersion) => resumeVersion.id === editingId);
   const remainingVisibleResumeVersions = visibleResumeVersions.filter((resumeVersion) => resumeVersion.id !== editingId);
+  const resumeUsageCounts = getResumeUsageCounts(applications);
 
   return (
     <div className="resume-versions-page">
@@ -306,7 +454,7 @@ export default function ResumeVersionsPage({
 
       <section className="panel resume-version-create-panel" aria-labelledby="create-resume-version-title">
         <details className="resume-version-disclosure" onToggle={(event) => setIsCreateOpen(event.currentTarget.open)} open={isCreateOpen}>
-          <summary id="create-resume-version-title" className="resume-version-disclosure-summary">
+          <summary id="create-resume-version-title" className="resume-version-disclosure-summary" onClick={handleCreateDisclosureClick}>
             <span>
               <strong className="resume-version-disclosure-cue resume-version-workflow-cue">New resume version</strong>
               <small>Add a reusable resume variant without changing application records.</small>
@@ -320,6 +468,7 @@ export default function ResumeVersionsPage({
           <label>
             Name
             <input
+              ref={createNameRef}
               name="name"
               value={createForm.name}
               onChange={updateCreateField}
@@ -481,14 +630,21 @@ export default function ResumeVersionsPage({
                             </time>
                           </dd>
                         </div>
+                        <div>
+                          <dt>Usage</dt>
+                          <dd>{formatResumeUsage(resumeUsageCounts.get(String(resumeVersion.id)))}</dd>
+                        </div>
                       </dl>
 
                       <div className="resume-version-actions">
                         <button className="secondary-button" type="button" onClick={() => startEditing(resumeVersion)}>
                           Edit
                         </button>
+                        <button className="secondary-button" type="button" onClick={() => startDuplicating(resumeVersion)}>
+                          Duplicate
+                        </button>
                         <button
-                          className={`secondary-button ${resumeVersion.is_active ? "quiet-danger-button" : ""}`}
+                          className="secondary-button"
                           type="button"
                           disabled={isSaving}
                           onClick={() => handleActiveToggle(resumeVersion)}

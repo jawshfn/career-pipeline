@@ -294,6 +294,8 @@ export default function App() {
         />
       ) : activePage === "resume-versions" ? (
         <ResumeVersionsPage
+          allResumeVersions={allResumeVersions}
+          applications={applications}
           error={loadError}
           isLoading={isLoading}
           onCreateResumeVersion={handleCreateResumeVersion}
