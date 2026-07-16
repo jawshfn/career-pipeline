@@ -7,7 +7,7 @@ from app.seed_demo_data import DemoDataError, seed_demo_data
 
 
 def test_seed_demo_data_creates_representative_records(client, db_session):
-    seed_today = date(2026, 7, 8)
+    seed_today = date.today()
 
     counts = seed_demo_data(db_session, today=seed_today)
 
