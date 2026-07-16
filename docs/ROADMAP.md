@@ -224,7 +224,6 @@ Status: in progress
 
 - Public demo deployment improvements
 - Import/export workflows
-- Contact or recruiter organization if the core workflow needs it
 - Email or calendar reminders
 - Resume file upload and preview
 - Authentication and multi-device sync
