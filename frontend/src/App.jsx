@@ -314,7 +314,7 @@ export default function App() {
           onUpdateApplication={handleUpdateApplication}
         />
       ) : activePage === "support" ? (
-        <SupportPage />
+        <SupportPage isDemoMode={isDemoMode()} onNavigate={navigateToPage} />
       ) : (
         <ApplicationsPage
           applications={activeApplications}

@@ -1,4 +1,8 @@
+// @vitest-environment jsdom
+
 import React from "react";
+import { act } from "react";
+import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -30,7 +34,7 @@ describe("SupportPage", () => {
 
     expect(markup).toContain("Help &amp; Feedback");
     expect(markup).toContain("PursuitHQ");
-    expect(markup).toContain("Fastest way to add a supported job");
+    expect(markup).toContain("Add a job in four steps");
     expect(markup).toContain("app-nav-item-active");
     expect(markup).toContain('aria-current="page"');
     expect(navigationItems.map((item) => item.label)).toEqual([
@@ -44,19 +48,60 @@ describe("SupportPage", () => {
     ]);
   });
 
-  it("prioritizes Browser Capture before feedback and presents the four capture methods", () => {
-    const markup = renderToStaticMarkup(<SupportPage />);
+  it("renders local runtime guidance, in-page navigation, and the four capture methods", () => {
+    const markup = renderToStaticMarkup(<SupportPage isDemoMode={false} />);
 
-    expect(markup.indexOf("Fastest way to add a supported job")).toBeLessThan(markup.indexOf("Report a capture issue"));
-    expect(markup).toContain("Recommended");
-    expect(markup).toContain("Greenhouse, Indeed, or LinkedIn");
+    expect(markup.indexOf("Add a job in four steps")).toBeLessThan(markup.indexOf("Report an issue"));
+    expect(markup).toContain("Full local workflow available");
+    expect(markup).toContain("Browser Capture is available");
+    expect(markup).toContain("Run PursuitHQ Capture.");
+    expect(markup).toContain('aria-label="Help sections"');
+    ["help-start", "help-common-tasks", "help-capture", "help-troubleshooting", "help-feedback"].forEach((target) => {
+      expect(markup).toContain(`id="${target}"`);
+      expect(markup).toContain(`href="#${target}"`);
+    });
     expect(markup).toContain("Browser Capture");
     expect(markup).toContain("Paste Job Link");
     expect(markup).toContain("Paste Job Text");
     expect(markup).toContain("Manual Entry");
     expect(markup).toContain("GitHub Pages demo");
-    expect(markup).toContain("Explicitly save the opportunity.");
     expect(markup).toContain("no application is submitted or saved automatically");
+  });
+
+  it("renders demo guidance without local Browser Capture recommendations", () => {
+    const markup = renderToStaticMarkup(<SupportPage isDemoMode />);
+
+    expect(markup).toContain("Explore PursuitHQ with fictional data");
+    expect(markup).toContain("Browser Capture is unavailable in the GitHub Pages demo");
+    expect(markup).toContain("Choose Paste Job Text or Manual Entry.");
+    expect(markup).not.toContain("Full local workflow available");
+    expect(markup).not.toContain("Run PursuitHQ Capture.");
+  });
+
+  it("renders common tasks with their normal page destinations", () => {
+    const markup = renderToStaticMarkup(<SupportPage />);
+
+    ["Add a job", "Review applications", "Update application status", "Set and review follow-ups", "Manage resume versions", "Record application activity"].forEach((task) => expect(markup).toContain(task));
+    expect(markup).toContain('aria-label="Open Applications: Record application activity"');
+    expect(markup).toContain('id="help-top"');
+  });
+
+  it("routes common-task and Start here actions through the provided navigation callback", async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    const onNavigate = vi.fn();
+    document.body.appendChild(container);
+
+    await act(async () => root.render(<SupportPage onNavigate={onNavigate} />));
+    const buttons = [...container.querySelectorAll("button")];
+    await act(async () => buttons.find((button) => button.textContent === "Open Add Job").click());
+    await act(async () => buttons.find((button) => button.getAttribute("aria-label") === "Open Applications: Record application activity").click());
+
+    expect(onNavigate).toHaveBeenNthCalledWith(1, "quick-add");
+    expect(onNavigate).toHaveBeenNthCalledWith(2, "applications");
+    await act(async () => root.unmount());
+    container.remove();
   });
 
   it("shows browser capture troubleshooting and review boundaries", () => {
@@ -69,7 +114,7 @@ describe("SupportPage", () => {
     expect(markup).toContain("no persistent browsing monitor");
   });
 
-  it("shows the support email and capture-neutral mailto action", () => {
+  it("shows the support email and generalized mailto action", () => {
     const markup = renderToStaticMarkup(<SupportPage />);
     const mailtoHref = getSupportMailtoHref();
 
@@ -82,17 +127,24 @@ describe("SupportPage", () => {
     expect(decodeURIComponent(mailtoHref)).toContain(SUPPORT_EMAIL);
   });
 
-  it("prefills the capture-neutral report template", () => {
+  it("prefills a generalized issue report template", () => {
     const decodedHref = decodeURIComponent(getSupportMailtoHref());
 
-    expect(SUPPORT_MAILTO_SUBJECT).toBe("PursuitHQ Capture Issue");
-    expect(SUPPORT_MAILTO_BODY).toContain("Capture method");
-    expect(SUPPORT_MAILTO_BODY).toContain("Job board or source");
-    expect(SUPPORT_MAILTO_BODY).toContain("Job link or page type");
-    expect(SUPPORT_MAILTO_BODY).toContain("What PursuitHQ captured");
+    expect(SUPPORT_MAILTO_SUBJECT).toBe("PursuitHQ Issue Report");
+    expect(SUPPORT_MAILTO_BODY).toContain("Issue area:");
+    expect(SUPPORT_MAILTO_BODY).toContain("Job link or example URL:");
+    expect(SUPPORT_MAILTO_BODY).toContain("exact public job link whenever possible");
+    expect(SUPPORT_MAILTO_BODY).toContain("What happened:");
     expect(SUPPORT_MAILTO_BODY).toContain("What I expected");
-    expect(SUPPORT_MAILTO_BODY).toContain("Optional sanitized screenshot or copied posting text");
-    expect(decodedHref).toContain("Capture method");
+    expect(SUPPORT_MAILTO_BODY).toContain("Steps to reproduce:");
+    expect(SUPPORT_MAILTO_BODY).toContain("Capture or input method, if relevant:");
+    expect(SUPPORT_MAILTO_BODY).toContain("What PursuitHQ captured or displayed, if relevant:");
+    expect(SUPPORT_MAILTO_BODY).toContain("Browser and operating system:");
+    expect(SUPPORT_MAILTO_BODY).toContain("Optional sanitized screenshot or copied text:");
+    expect(SUPPORT_MAILTO_BODY.indexOf("Job link or example URL:")).toBeLessThan(
+      SUPPORT_MAILTO_BODY.indexOf("Steps to reproduce:"),
+    );
+    expect(decodedHref).toContain("Issue area:");
   });
 
   it("builds a complete copyable report template", () => {
@@ -100,8 +152,8 @@ describe("SupportPage", () => {
 
     expect(reportTemplate).toContain(`To: ${SUPPORT_EMAIL}`);
     expect(reportTemplate).toContain(`Subject: ${SUPPORT_MAILTO_SUBJECT}`);
-    expect(reportTemplate).toContain("Job board or source");
-    expect(reportTemplate).toContain("What PursuitHQ captured");
+    expect(reportTemplate).toContain("Job link or example URL");
+    expect(reportTemplate).toContain("What PursuitHQ captured or displayed, if relevant");
   });
 
   it("copies the support email with accessible success feedback", async () => {
@@ -117,7 +169,7 @@ describe("SupportPage", () => {
     vi.stubGlobal("navigator", { clipboard: { writeText } });
     const reportTemplate = getSupportReportTemplate();
 
-    await expect(copyTextToClipboard(reportTemplate, "Report template copied")).resolves.toBe("Report template copied");
+    await expect(copyTextToClipboard(reportTemplate, "Issue template copied")).resolves.toBe("Issue template copied");
     expect(writeText).toHaveBeenCalledWith(reportTemplate);
   });
 
@@ -135,6 +187,13 @@ describe("SupportPage", () => {
 
     expect(markup).toContain("Email app did not open?");
     expect(markup).toContain("support-template-preview");
+    expect(markup).toContain("Report an issue");
+    expect(markup).toContain("Reporting a capture or import issue?");
+    expect(markup).toContain("Include the exact public job link so the page can be tested directly.");
+    expect(markup).toContain("Preview issue template");
+    expect(markup).toContain("<details");
+    expect(markup).not.toContain("<details open");
+    expect(markup).toContain("Copy issue template");
     expect(markup).toContain("aria-live=\"polite\"");
     expect(markup).toContain("Remove personal information");
     expect(markup).toContain("private recruiter messages");

@@ -1,19 +1,31 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export const SUPPORT_EMAIL = "nunezjf2001@gmail.com";
-export const SUPPORT_MAILTO_SUBJECT = "PursuitHQ Capture Issue";
+export const SUPPORT_MAILTO_SUBJECT = "PursuitHQ Issue Report";
 export const SUPPORT_MAILTO_BODY = [
-  "Capture method:",
+  "Issue area:",
+  "Examples: Add Job, Applications, Status Board, Resumes, Browser Capture, Demo",
   "",
-  "Job board or source:",
+  "Job link or example URL:",
+  "For capture or import issues, include the exact public job link whenever possible.",
   "",
-  "Job link or page type:",
-  "",
-  "What PursuitHQ captured:",
+  "What happened:",
   "",
   "What I expected:",
   "",
-  "Optional sanitized screenshot or copied posting text:",
+  "Steps to reproduce:",
+  "1.",
+  "2.",
+  "3.",
+  "",
+  "Capture or input method, if relevant:",
+  "Browser Capture, Paste Job Link, Paste Job Text, or Manual Entry",
+  "",
+  "What PursuitHQ captured or displayed, if relevant:",
+  "",
+  "Browser and operating system:",
+  "",
+  "Optional sanitized screenshot or copied text:",
 ].join("\n");
 
 export function getSupportMailtoHref(email = SUPPORT_EMAIL) {
@@ -58,51 +70,85 @@ const captureMethods = [
   },
 ];
 
-export default function SupportPage() {
+const commonTasks = [
+  { title: "Add a job", description: "Capture or enter a new opportunity, review the details, and save it to your pipeline.", action: "Open Add Job", page: "quick-add" },
+  { title: "Review applications", description: "Search your saved opportunities and open Application Detail for notes, dates, preparation, and history.", action: "Open Applications", page: "applications" },
+  { title: "Update application status", description: "Move opportunities through Saved, Applied, Interview, Offer, and other workflow stages.", action: "Open Status Board", page: "pipeline" },
+  { title: "Set and review follow-ups", description: "See overdue and upcoming follow-ups and decide what needs attention next.", action: "Open Reminders", page: "command-center" },
+  { title: "Manage resume versions", description: "Create, duplicate, update, deactivate, or remove the resume variants used across applications.", action: "Open Resumes", page: "resume-versions" },
+  { title: "Record application activity", description: "Open an application, select Activity, and add dated notes for calls, assessments, interviews, and other updates.", action: "Open Applications", page: "applications" },
+];
+
+export default function SupportPage({ isDemoMode = false, onNavigate = () => {} }) {
   const [copyStatus, setCopyStatus] = useState("");
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const topRegionRef = useRef(null);
   const reportTemplate = getSupportReportTemplate();
+
+  useEffect(() => {
+    const topRegion = topRegionRef.current;
+    if (!topRegion || !globalThis.IntersectionObserver) return undefined;
+
+    const observer = new IntersectionObserver(([entry]) => setShowBackToTop(!entry.isIntersecting));
+    observer.observe(topRegion);
+    return () => observer.disconnect();
+  }, []);
 
   async function handleCopyEmail() {
     setCopyStatus(await copyTextToClipboard(SUPPORT_EMAIL, "Email copied"));
   }
 
   async function handleCopyReportTemplate() {
-    setCopyStatus(await copyTextToClipboard(reportTemplate, "Report template copied"));
+    setCopyStatus(await copyTextToClipboard(reportTemplate, "Issue template copied"));
   }
 
   return (
-    <div className="support-page">
-      <header className="page-header">
+    <div className="support-page" id="help-top">
+      <header className="page-header" ref={topRegionRef}>
         <div>
           <p className="eyebrow">Guides &amp; troubleshooting</p>
           <h2>Help &amp; Feedback</h2>
-          <p>Learn the fastest way to capture a job, choose the right fallback, and report capture problems.</p>
+          <p>Find the fastest way to add jobs, manage applications, track follow-ups, and troubleshoot capture problems.</p>
         </div>
       </header>
 
-      <section className="panel support-panel support-browser-capture-panel" aria-labelledby="browser-capture-heading">
+      <section className="panel support-panel support-runtime-notice" aria-labelledby="runtime-notice-heading">
+        <p className="support-recommended-label">{isDemoMode ? "Demo mode" : "Local app"}</p>
+        <div>
+          <h2 id="runtime-notice-heading">{isDemoMode ? "Explore PursuitHQ with fictional data" : "Full local workflow available"}</h2>
+          <p>{isDemoMode ? "Browser Capture is unavailable in the GitHub Pages demo. Use Paste Job Text or Manual Entry instead." : "Browser Capture is available, and saved opportunities remain in your local PursuitHQ database."}</p>
+        </div>
+      </section>
+
+      <nav className="support-section-nav" aria-label="Help sections">
+        <span className="support-section-nav-label">Jump to:</span>
+        <a href="#help-start">Start here</a>
+        <a href="#help-common-tasks">Common tasks</a>
+        <a href="#help-capture">Capture help</a>
+        <a href="#help-troubleshooting">Troubleshooting</a>
+        <a href="#help-feedback">Feedback</a>
+      </nav>
+
+      <section className="panel support-panel support-browser-capture-panel" id="help-start" aria-labelledby="start-here-heading">
         <div className="support-panel-heading">
           <div>
-            <p className="support-recommended-label">Recommended</p>
-            <h2 id="browser-capture-heading">Fastest way to add a supported job</h2>
-            <p>
-              Browser Capture is the recommended local workflow while you are already viewing a supported Greenhouse,
-              Indeed, or LinkedIn job page.
-            </p>
+            <p className="support-recommended-label">{isDemoMode ? "Recommended in demo" : "Recommended local workflow"}</p>
+            <h2 id="start-here-heading">Add a job in four steps</h2>
+            <p>{isDemoMode ? "Use a flexible entry method to add fictional demo opportunities." : "Browser Capture is fastest when you are already viewing a supported job posting."}</p>
           </div>
         </div>
         <ol className="support-workflow-list">
-          <li>Start the local PursuitHQ backend and frontend.</li>
-          <li>Open one supported job posting.</li>
-          <li>Click PursuitHQ Capture.</li>
-          <li>Confirm the detected job in the popup.</li>
-          <li>Select Open in PursuitHQ.</li>
-          <li>Review the populated fields.</li>
-          <li>Explicitly save the opportunity.</li>
+          {(isDemoMode ? ["Open Add Job.", "Choose Paste Job Text or Manual Entry.", "Review and adjust the opportunity details.", "Save the opportunity."] : ["Open a supported job posting.", "Run PursuitHQ Capture.", "Review the populated opportunity details.", "Save the opportunity."]).map((step) => <li key={step}>{step}</li>)}
         </ol>
+        <div className="support-start-actions"><button className="support-action-control support-primary-action" type="button" onClick={() => onNavigate("quick-add")}>Open Add Job</button><p>Add Job is available whenever Browser Capture is not the right fit.</p></div>
       </section>
 
-      <section className="panel support-panel" aria-labelledby="capture-methods-heading">
+      <section className="panel support-panel" id="help-common-tasks" aria-labelledby="common-tasks-heading">
+        <div className="section-heading"><h2 id="common-tasks-heading">Common tasks</h2><p>Jump to the part of PursuitHQ that matches what you need to do.</p></div>
+        <div className="support-task-grid">{commonTasks.map((task) => <section className="support-task-card" key={task.title} aria-labelledby={`task-${task.page}-${task.title.replaceAll(" ", "-")}`}><h3 id={`task-${task.page}-${task.title.replaceAll(" ", "-")}`}>{task.title}</h3><p>{task.description}</p><button className="support-action-control secondary-button" type="button" aria-label={`${task.action}: ${task.title}`} onClick={() => onNavigate(task.page)}>{task.action}</button></section>)}</div>
+      </section>
+
+      <section className="panel support-panel" id="help-capture" aria-labelledby="capture-methods-heading">
         <div className="section-heading">
           <h2 id="capture-methods-heading">Choose a capture method</h2>
         </div>
@@ -116,7 +162,7 @@ export default function SupportPage() {
         </div>
       </section>
 
-      <div className="support-content-grid">
+      <div className="support-content-grid" id="help-troubleshooting">
         <section className="panel support-panel" aria-labelledby="troubleshooting-heading">
           <div className="section-heading">
             <h2 id="troubleshooting-heading">Browser Capture troubleshooting</h2>
@@ -146,22 +192,30 @@ export default function SupportPage() {
         </section>
       </div>
 
-      <section className="panel support-panel support-report-panel" aria-labelledby="support-report-heading">
+      <section className="panel support-panel support-report-panel" id="help-feedback" aria-labelledby="support-report-heading">
         <div className="section-heading">
-          <h2 id="support-report-heading">Report a capture issue</h2>
-          <p>Copy the report template, fill in what happened, and send it through your usual email service.</p>
+          <h2 id="support-report-heading">Report an issue</h2>
+          <p>
+            Share a problem with PursuitHQ so it can be reproduced and fixed.
+            For capture or import problems, include the exact job link whenever possible.
+          </p>
         </div>
 
         <div className="support-report-grid">
+          <aside className="support-job-link-reminder" aria-labelledby="support-job-link-reminder-heading">
+            <strong id="support-job-link-reminder-heading">Reporting a capture or import issue?</strong>
+            <p>Include the exact public job link so the page can be tested directly.</p>
+          </aside>
+
           <div className="support-contact-area">
             <div className="support-email-display">
               <span>Support email</span>
               <strong>{SUPPORT_EMAIL}</strong>
             </div>
 
-            <div className="support-action-controls" aria-label="Capture issue actions">
+            <div className="support-action-controls" aria-label="Issue report actions">
               <button className="support-action-control support-primary-action" type="button" onClick={handleCopyReportTemplate}>
-                Copy report template
+                Copy issue template
               </button>
               <button className="support-action-control secondary-button" type="button" onClick={handleCopyEmail}>
                 Copy email address
@@ -172,7 +226,7 @@ export default function SupportPage() {
             </div>
 
             <p className="support-fallback-guidance">
-              Email app did not open? Copy the email address and report template, then send the message through your usual email service.
+              Email app did not open? Copy the email address and issue template, then send the message through your usual email service.
             </p>
 
             <div className="support-copy-status" aria-live="polite" role="status">
@@ -181,8 +235,10 @@ export default function SupportPage() {
           </div>
 
           <div className="support-template-area">
-            <h3>Report template</h3>
-            <pre className="support-template-preview">{reportTemplate}</pre>
+            <details className="support-template-disclosure">
+              <summary>Preview issue template</summary>
+              <pre className="support-template-preview">{reportTemplate}</pre>
+            </details>
             <p className="support-privacy-reminder">
               Remove personal information, application answers, private recruiter messages, passwords or login details,
               cookies, tokens, account details, and other nonpublic information. Do not send full authenticated HTML,
@@ -191,6 +247,7 @@ export default function SupportPage() {
           </div>
         </div>
       </section>
+      {showBackToTop ? <a className="support-back-to-top" href="#help-top">↑ Back to top</a> : null}
     </div>
   );
 }
