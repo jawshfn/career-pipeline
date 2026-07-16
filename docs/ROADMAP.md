@@ -183,15 +183,6 @@ Status: complete through Phase 17.2
 - Phase 17.1 - Add and stabilize bounded LinkedIn capture for search-results current-job panels and standalone job pages.
 - Phase 17.2 - Reposition Browser Capture as the preferred local workflow and transform Support into a broader Help & Feedback experience.
 
-## Near-Term Future Work
-
-- Browser Capture installation walkthrough or screenshots
-- Additional supported page layouts/providers
-- Final recruiter-facing screenshot audit
-- Final responsive browser QA
-- Production distribution research only if the product reaches that stage
-- Optional lightweight frontend smoke tests if the UI stabilizes enough to justify them
-
 ## Phase 18 — Job Posting Snapshot
 
 Status: complete through Phase 18.0
