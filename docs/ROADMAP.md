@@ -185,7 +185,7 @@ Status: complete through Phase 17.2
 
 ## Phase 18 — Job Posting Snapshot
 
-Status: complete through Phase 18.0
+Status: complete through Phase 18.1
 
 - Phase 18.0 — Separate captured posting content from Personal Notes with a dedicated editable Job Posting tab and end-to-end capture integration.
 - Phase 18.1 — Simplify application compensation tracking to one flexible compensation field and retire redundant numeric salary minimum/maximum fields.
@@ -198,12 +198,11 @@ Status: complete through Phase 19.0
 
 ## Phase 20 — Product Identity
 
-Status: in progress
+Status: complete through Phase 20.9b
 
 - Phase 20.0 — Adopt PursuitHQ across public-facing product surfaces while preserving current repository and deployment paths.
 - Phase 20.1 — Establish the PursuitHQ visual system across shared colors, surfaces, navigation, controls, and typography.
 - Phase 20.2 — Polish the Add Job experience across Manual Entry, Paste Job Link, and Paste Job Text, and prevent discarded browser captures from reappearing after mode changes.
-
 - Phase 20.3 — Refine the Reminders page with independently sized follow-up sections, clearer urgency hierarchy, and polished reminder actions.
 - Phase 20.4 — Refine Dashboard metric layouts, workflow guidance, breakdown panels, and source/resume results across desktop and mobile.
 - Phase 20.5 — Refine the Applications list, filters, table hierarchy, and responsive application cards.
@@ -212,7 +211,6 @@ Status: in progress
 - Phase 20.6c — Refine Job Details grouping and compact auto-growing Personal Notes.
 - Phase 20.6d — Replace the inline Job Posting editor with a compact preview and draft-based modal workflow.
 - Phase 20.6e — Refine Resume & Prep with compact auto-growing preparation notes.
-
 - Phase 20.6f — Refine the Red Flags checklist layout, selected states, and compact auto-growing notes.
 - Phase 20.6g — Refine the Activity composer responsiveness, auto-growing note, and timeline date presentation.
 - Phase 20.6h — Complete Application Detail consistency with an auto-growing Next Action field and unified tab-panel surfaces.
@@ -223,6 +221,9 @@ Status: in progress
 - Phase 20.8c — Add safe permanent resume deletion, assignment-impact protection, and recency-based Resume Library ordering.
 - Phase 20.9a — Establish a runtime-aware Help Center with common-task navigation, in-page guidance, back-to-top access, and generalized issue reporting.
 - Phase 20.9b — Refine runtime-aware capture guidance, troubleshooting disclosures, privacy presentation, and responsive capture-method layouts.
+
+## Phase 21 — Browser Capture Reliability and Coverage
+- Phase 21.1a — Refresh Browser Capture with PursuitHQ identity, clearer captured-job hierarchy, consistent popup states, and source-neutral fallback guidance.
 
 ## Later Optional Enhancements
 

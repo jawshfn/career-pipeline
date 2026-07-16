@@ -28,9 +28,9 @@ test("popup references only local extension assets", async () => {
 
   assert.match(popupHtml, /href="popup\.css"/);
   assert.match(popupHtml, /src="popup\.mjs"/);
-  assert.match(popupHtml, /PursuitHQ Capture/);
-  assert.match(popupHtml, /Open in PursuitHQ/);
+  assert.match(popupHtml, />PursuitHQ</u);
+  assert.match(popupHtml, /<h1>Browser Capture<\/h1>/u);
   assert.doesNotMatch(popupHtml, /https?:\/\//i);
-  assert.match(popupModule, /PursuitHQ must be running locally at http:\/\/localhost:5173\./);
+  assert.match(popupModule, /Requires the local PursuitHQ app/u);
   assert.match(popupModule, /Open in PursuitHQ/);
 });

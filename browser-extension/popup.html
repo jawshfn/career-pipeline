@@ -3,17 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PursuitHQ Capture</title>
+    <title>PursuitHQ Browser Capture</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <main class="popup-shell">
-      <p class="eyebrow">Experimental local helper</p>
-      <h1>PursuitHQ Capture</h1>
+      <header class="popup-header">
+        <div class="brand-row">
+          <p class="brand-name">PursuitHQ</p>
+          <span class="local-badge">Local</span>
+        </div>
+        <h1>Browser Capture</h1>
+      </header>
       <section id="result" class="result-panel" aria-live="polite">
         <p class="status-title">Checking this page...</p>
       </section>
-      <p class="privacy-note">Runs once on this tab. After you choose Open in PursuitHQ, supported job text is sent only to your local backend for a one-time transfer.</p>
+      <section id="transfer-note" class="transfer-note" hidden aria-label="Transfer information"></section>
     </main>
     <script type="module" src="popup.mjs"></script>
   </body>
