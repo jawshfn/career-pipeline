@@ -1,5 +1,7 @@
 import {
   createDemoResumeVersion,
+  deleteDemoResumeVersion,
+  getDemoResumeVersionDeleteImpact,
   getDemoResumeVersions,
   updateDemoResumeVersion,
 } from "./demoStore.js";
@@ -18,4 +20,12 @@ export function createResumeVersion(payload) {
 
 export function updateResumeVersion(resumeVersionId, payload) {
   return asAsync(updateDemoResumeVersion(resumeVersionId, payload));
+}
+
+export function getResumeVersionDeleteImpact(resumeVersionId) {
+  return asAsync(getDemoResumeVersionDeleteImpact(resumeVersionId));
+}
+
+export function deleteResumeVersion(resumeVersionId, expectedAssignmentCount) {
+  return asAsync(deleteDemoResumeVersion(resumeVersionId, expectedAssignmentCount));
 }

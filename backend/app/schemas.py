@@ -351,3 +351,16 @@ class ResumeVersionRead(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+class ResumeVersionDeleteImpactRead(BaseModel):
+    resume_version_id: int
+    name: str
+    is_active: bool
+    assignment_count: int
+
+
+class ResumeVersionDeleteRead(BaseModel):
+    resume_version_id: int
+    name: str
+    unassigned_application_count: int

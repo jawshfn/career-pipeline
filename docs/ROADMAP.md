@@ -218,8 +218,9 @@ Status: in progress
 - Phase 20.6h — Complete Application Detail consistency with an auto-growing Next Action field and unified tab-panel surfaces.
 - Phase 20.7a — Status Board card actions and visual consistency
 - Phase 20.7b — Status Board workflow filters
-- Phase 20.7c — Refine the Resume Library layout, creation and editing workflows, and friendly update dates.
-- Phase 20.7d — Add resume duplication, assignment usage context, and protected resume-workflow switching.
+- Phase 20.8a — Refine the Resume Library layout, creation and editing workflows, and friendly update dates.
+- Phase 20.8b — Add resume duplication, assignment usage context, and protected resume-workflow switching.
+- Phase 20.8c — Add safe permanent resume deletion, assignment-impact protection, and recency-based Resume Library ordering.
 
 ## Later Optional Enhancements
 

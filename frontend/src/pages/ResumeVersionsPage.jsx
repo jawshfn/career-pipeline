@@ -16,6 +16,19 @@ export const RESUME_DUPLICATE_REPLACE_CREATE_CONFIRM_MESSAGE = "You have an unfi
 export const RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE = "You have an unfinished new resume version. Discard it and edit this resume?";
 export const RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE = "You have unsaved resume changes. Discard them and start a new resume version?";
 
+export function getResumeDeleteConfirmationMessage({ assignment_count: assignmentCount, name }) {
+  if (assignmentCount === 0) return `Permanently delete "${name}"? This cannot be undone.`;
+  if (assignmentCount === 1) {
+    return `"${name}" is currently used by 1 application. Permanently deleting it will remove the resume assignment from that application and erase this resume's historical tracking. This cannot be undone.`;
+  }
+  return `"${name}" is currently used by ${assignmentCount} applications. Permanently deleting it will remove the resume assignment from all ${assignmentCount} applications and erase this resume's historical tracking. This cannot be undone.`;
+}
+
+export function getResumeDeleteSuccessMessage({ name, unassigned_application_count: assignmentCount }) {
+  if (assignmentCount === 0) return `"${name}" permanently deleted.`;
+  return `"${name}" permanently deleted and removed from ${assignmentCount} application${assignmentCount === 1 ? "" : "s"}.`;
+}
+
 function normalizeFormValue(value) {
   return String(value ?? "");
 }
@@ -220,7 +233,8 @@ export default function ResumeVersionsPage({
   error,
   isLoading,
   onCreateResumeVersion,
-  onLoadResumeVersions,
+  onDeleteResumeVersion,
+  onGetResumeVersionDeleteImpact,
   onUnsavedChangesChange,
   onUpdateResumeVersion,
   resumeVersions,
@@ -235,16 +249,14 @@ export default function ResumeVersionsPage({
   const [createError, setCreateError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [savingId, setSavingId] = useState(null);
+  const [checkingDeleteId, setCheckingDeleteId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(resumeVersions.length === 0);
   const createDisclosureInitialized = useRef(false);
   const createNameRef = useRef(null);
   const shouldFocusCreateNameRef = useRef(false);
   const editSurfaceRef = useRef(null);
-
-  useEffect(() => {
-    onLoadResumeVersions({ includeInactive });
-  }, [includeInactive, onLoadResumeVersions]);
 
   useEffect(() => {
     if (!isLoading && !createDisclosureInitialized.current) {
@@ -435,10 +447,32 @@ export default function ResumeVersionsPage({
     }
   }
 
-  const visibleResumeVersions = includeInactive
-    ? resumeVersions
-    : resumeVersions.filter((resumeVersion) => resumeVersion.is_active);
-  const editingResumeVersion = resumeVersions.find((resumeVersion) => resumeVersion.id === editingId);
+  async function handleDeleteResumeVersion(resumeVersion) {
+    setActionError("");
+    setCheckingDeleteId(resumeVersion.id);
+    try {
+      const impact = await onGetResumeVersionDeleteImpact(resumeVersion.id);
+      if (impact.is_active) {
+        setActionError("Deactivate this resume version before deleting it.");
+        return;
+      }
+      if (!window.confirm(getResumeDeleteConfirmationMessage(impact))) return;
+
+      setCheckingDeleteId(null);
+      setDeletingId(resumeVersion.id);
+      const deleted = await onDeleteResumeVersion(resumeVersion.id, impact.assignment_count);
+      setActionMessage(getResumeDeleteSuccessMessage(deleted));
+    } catch (deleteError) {
+      setActionError(deleteError.message || "Could not delete resume version.");
+    } finally {
+      setCheckingDeleteId(null);
+      setDeletingId(null);
+    }
+  }
+
+  const libraryResumeVersions = includeInactive ? allResumeVersions : resumeVersions;
+  const visibleResumeVersions = libraryResumeVersions;
+  const editingResumeVersion = libraryResumeVersions.find((resumeVersion) => resumeVersion.id === editingId);
   const remainingVisibleResumeVersions = visibleResumeVersions.filter((resumeVersion) => resumeVersion.id !== editingId);
   const resumeUsageCounts = getResumeUsageCounts(applications);
 
@@ -528,7 +562,7 @@ export default function ResumeVersionsPage({
         </div>
 
         {actionMessage ? <div className="message message-success resume-version-list-feedback" role="status">{actionMessage}</div> : null}
-        {!isLoading && !editingId && actionError ? <ErrorMessage message={actionError} /> : null}
+        {!isLoading && actionError ? <ErrorMessage message={actionError} /> : null}
 
         {isLoading ? <LoadingState message="Loading resume versions..." /> : null}
         {!isLoading && error ? <ErrorMessage message={error} /> : null}
@@ -596,6 +630,10 @@ export default function ResumeVersionsPage({
           <div className="resume-version-list">
             {remainingVisibleResumeVersions.map((resumeVersion) => {
               const isSaving = savingId === resumeVersion.id;
+              const isCheckingDelete = checkingDeleteId === resumeVersion.id;
+              const isDeleting = deletingId === resumeVersion.id;
+              const isDeleteInProgress = isCheckingDelete || isDeleting;
+              const usageCount = resumeUsageCounts.get(String(resumeVersion.id)) || 0;
 
               return (
                 <article
@@ -632,21 +670,21 @@ export default function ResumeVersionsPage({
                         </div>
                         <div>
                           <dt>Usage</dt>
-                          <dd>{formatResumeUsage(resumeUsageCounts.get(String(resumeVersion.id)))}</dd>
+                          <dd>{formatResumeUsage(usageCount)}</dd>
                         </div>
                       </dl>
 
                       <div className="resume-version-actions">
-                        <button className="secondary-button" type="button" onClick={() => startEditing(resumeVersion)}>
+                        <button className="secondary-button" type="button" disabled={isDeleteInProgress} onClick={() => startEditing(resumeVersion)}>
                           Edit
                         </button>
-                        <button className="secondary-button" type="button" onClick={() => startDuplicating(resumeVersion)}>
+                        <button className="secondary-button" type="button" disabled={isDeleteInProgress} onClick={() => startDuplicating(resumeVersion)}>
                           Duplicate
                         </button>
                         <button
                           className="secondary-button"
                           type="button"
-                          disabled={isSaving}
+                          disabled={isSaving || isDeleteInProgress}
                           onClick={() => handleActiveToggle(resumeVersion)}
                         >
                           {isSaving
@@ -655,6 +693,18 @@ export default function ResumeVersionsPage({
                               ? "Deactivate"
                               : "Reactivate"}
                         </button>
+                        {!resumeVersion.is_active ? (
+                          <>
+                            <button
+                              className="quiet-danger-button"
+                              type="button"
+                              disabled={isDeleteInProgress}
+                              onClick={() => handleDeleteResumeVersion(resumeVersion)}
+                            >
+                              {isCheckingDelete ? "Checking..." : isDeleting ? "Deleting..." : "Delete permanently"}
+                            </button>
+                          </>
+                        ) : null}
                       </div>
                   </>
                 </article>

@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   getBrowserCaptureStartupState,
+  clearDeletedResumeAssignments,
+  removeResumeVersionById,
+  updateActiveResumeVersions,
+  upsertResumeVersionToFront,
   UNSAVED_PAGE_CONFIRM_MESSAGE,
   resolvePageNavigation,
   shouldConfirmPageNavigation,
@@ -60,6 +64,89 @@ describe("unsaved page navigation guard", () => {
       shouldNavigate: true,
       targetPage: "dashboard",
     });
+  });
+});
+
+describe("resume version collection state", () => {
+  it("moves an updated resume to the front without duplicating it or reordering other resumes", () => {
+    const resumes = [{ id: 3 }, { id: 2, is_active: true }, { id: 1 }];
+
+    expect(upsertResumeVersionToFront(resumes, { id: 2, is_active: false, name: "Updated" })).toEqual([
+      { id: 2, is_active: false, name: "Updated" },
+      { id: 3 },
+      { id: 1 },
+    ]);
+  });
+
+  it("adds a reactivated resume to the front of an active collection", () => {
+    expect(upsertResumeVersionToFront([{ id: 3 }, { id: 1 }], { id: 2, is_active: true })).toEqual([
+      { id: 2, is_active: true },
+      { id: 3 },
+      { id: 1 },
+    ]);
+  });
+
+  it("keeps an edited inactive resume out of the active collection while moving it to the front of the complete collection", () => {
+    const activeResumeVersions = [{ id: 3, is_active: true }, { id: 1, is_active: true }];
+    const allResumeVersions = [{ id: 3, is_active: true }, { id: 2, is_active: false }, { id: 1, is_active: true }];
+    const updatedInactiveResume = { id: 2, is_active: false, name: "Updated inactive resume" };
+
+    expect(updateActiveResumeVersions(activeResumeVersions, updatedInactiveResume)).toEqual(activeResumeVersions);
+    expect(upsertResumeVersionToFront(allResumeVersions, updatedInactiveResume)).toEqual([
+      updatedInactiveResume,
+      { id: 3, is_active: true },
+      { id: 1, is_active: true },
+    ]);
+  });
+
+  it("removes a deactivated resume from the active collection while retaining it at the front of the complete collection", () => {
+    const activeResumeVersions = [{ id: 3, is_active: true }, { id: 2, is_active: true }, { id: 1, is_active: true }];
+    const allResumeVersions = [...activeResumeVersions, { id: 4, is_active: false }];
+    const deactivatedResume = { id: 2, is_active: false, name: "Deactivated resume" };
+
+    expect(updateActiveResumeVersions(activeResumeVersions, deactivatedResume)).toEqual([
+      { id: 3, is_active: true },
+      { id: 1, is_active: true },
+    ]);
+    expect(upsertResumeVersionToFront(allResumeVersions, deactivatedResume)).toEqual([
+      deactivatedResume,
+      { id: 3, is_active: true },
+      { id: 1, is_active: true },
+      { id: 4, is_active: false },
+    ]);
+  });
+
+  it("moves a reactivated resume to the front of both collections", () => {
+    const reactivatedResume = { id: 2, is_active: true, name: "Reactivated resume" };
+
+    expect(updateActiveResumeVersions([{ id: 3, is_active: true }, { id: 1, is_active: true }], reactivatedResume)).toEqual([
+      reactivatedResume,
+      { id: 3, is_active: true },
+      { id: 1, is_active: true },
+    ]);
+    expect(upsertResumeVersionToFront([{ id: 3, is_active: true }, { id: 2, is_active: false }, { id: 1, is_active: true }], reactivatedResume)).toEqual([
+      reactivatedResume,
+      { id: 3, is_active: true },
+      { id: 1, is_active: true },
+    ]);
+  });
+
+  it("removes only the requested resume while preserving remaining order", () => {
+    const resumes = [{ id: 3 }, { id: 2 }, { id: 1 }];
+    expect(removeResumeVersionById(resumes, "2")).toEqual([{ id: 3 }, { id: 1 }]);
+  });
+
+  it("clears only matching resume assignments without reordering applications", () => {
+    const applications = [
+      { id: 3, is_archived: true, resume_version_id: 4, status: "Rejected" },
+      { id: 2, is_archived: false, resume_version_id: 1, status: "Applied" },
+      { id: 1, is_archived: false, resume_version_id: 4, status: "Interview" },
+    ];
+    expect(clearDeletedResumeAssignments(applications, 4)).toEqual([
+      { id: 3, is_archived: true, resume_version_id: null, status: "Rejected" },
+      { id: 2, is_archived: false, resume_version_id: 1, status: "Applied" },
+      { id: 1, is_archived: false, resume_version_id: null, status: "Interview" },
+    ]);
   });
 });
 

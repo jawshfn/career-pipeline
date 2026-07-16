@@ -95,6 +95,13 @@ function sortByUpdatedAt(applications) {
   );
 }
 
+function sortResumeVersionsByUpdatedAt(resumeVersions) {
+  return [...resumeVersions].sort(
+    (first, second) =>
+      String(second.updated_at || "").localeCompare(String(first.updated_at || "")) || Number(second.id) - Number(first.id),
+  );
+}
+
 export function getDemoApplications(options = {}) {
   const applications = options.includeArchived ? demoState.applications : getActiveApplications();
   return clone(sortByUpdatedAt(applications));
@@ -246,7 +253,7 @@ export function getDemoResumeVersions({ includeInactive = false } = {}) {
   const resumeVersions = includeInactive
     ? demoState.resumeVersions
     : demoState.resumeVersions.filter((resumeVersion) => resumeVersion.is_active);
-  return clone([...resumeVersions].sort((first, second) => first.name.localeCompare(second.name)));
+  return clone(sortResumeVersionsByUpdatedAt(resumeVersions));
 }
 
 export function createDemoResumeVersion(payload) {
@@ -295,6 +302,53 @@ export function updateDemoResumeVersion(resumeVersionId, payload) {
   }
 
   return clone(updatedResumeVersion);
+}
+
+export function getDemoResumeVersionDeleteImpact(resumeVersionId) {
+  const resumeVersion = demoState.resumeVersions.find(
+    (candidate) => String(candidate.id) === String(resumeVersionId),
+  );
+
+  if (!resumeVersion) {
+    throw new Error("Resume version not found.");
+  }
+  const assignmentCount = demoState.applications.filter(
+    (application) => String(application.resume_version_id) === String(resumeVersionId),
+  ).length;
+  return clone({
+    resume_version_id: resumeVersion.id,
+    name: resumeVersion.name,
+    is_active: resumeVersion.is_active,
+    assignment_count: assignmentCount,
+  });
+}
+
+export function deleteDemoResumeVersion(resumeVersionId, expectedAssignmentCount) {
+  const impact = getDemoResumeVersionDeleteImpact(resumeVersionId);
+  if (impact.is_active) {
+    throw new Error("Deactivate this resume version before deleting it.");
+  }
+  if (!Number.isInteger(expectedAssignmentCount) || expectedAssignmentCount < 0) {
+    throw new Error("Expected application assignment count must be a nonnegative integer.");
+  }
+  if (impact.assignment_count !== expectedAssignmentCount) {
+    throw new Error("This resume version's application usage changed. Review the deletion warning and try again.");
+  }
+
+  demoState = {
+    ...demoState,
+    applications: demoState.applications.map((application) =>
+      String(application.resume_version_id) === String(resumeVersionId)
+        ? { ...application, resume_version_id: null, updated_at: nowIso() }
+        : application,
+    ),
+    resumeVersions: demoState.resumeVersions.filter((candidate) => String(candidate.id) !== String(resumeVersionId)),
+  };
+  return clone({
+    resume_version_id: impact.resume_version_id,
+    name: impact.name,
+    unassigned_application_count: impact.assignment_count,
+  });
 }
 
 export function getDemoActivities(applicationId) {

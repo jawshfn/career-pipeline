@@ -6,6 +6,8 @@ const resumesApi = isDemoMode() ? demoResumesApi : realResumeVersionsApi;
 
 export const {
   createResumeVersion,
+  deleteResumeVersion,
+  getResumeVersionDeleteImpact,
   getResumeVersions,
   updateResumeVersion,
 } = resumesApi;

@@ -9,6 +9,8 @@ import ResumeVersionsPage, {
   RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE,
   RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE,
   RESUME_DUPLICATE_REPLACE_CREATE_CONFIRM_MESSAGE,
+  getResumeDeleteConfirmationMessage,
+  getResumeDeleteSuccessMessage,
 } from "./ResumeVersionsPage.jsx";
 
 const resume = {
@@ -43,7 +45,8 @@ describe("ResumeVersionsPage library experience", () => {
           error=""
           isLoading={false}
           onCreateResumeVersion={vi.fn()}
-          onLoadResumeVersions={vi.fn()}
+          onDeleteResumeVersion={vi.fn().mockResolvedValue({ name: "Inactive Resume", unassigned_application_count: 0 })}
+          onGetResumeVersionDeleteImpact={vi.fn().mockResolvedValue({ assignment_count: 0, is_active: false, name: "Inactive Resume" })}
           onUnsavedChangesChange={vi.fn()}
           onUpdateResumeVersion={vi.fn()}
           resumeVersions={resumeVersions}
@@ -75,6 +78,143 @@ describe("ResumeVersionsPage library experience", () => {
     expect(container.querySelector("details").open).toBe(true);
     expect(container.textContent).toContain("No resume versions yet");
     expect(container.textContent).toContain("Create resume versions to track which resume is tied to each opportunity.");
+  });
+
+  it("uses the complete collection immediately when inactive versions are included", async () => {
+    const inactive = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    await renderPage([resume], { allResumeVersions: [resume, inactive] });
+
+    expect([...container.querySelectorAll(".resume-version-card h3")].map((heading) => heading.textContent)).toEqual([resume.name]);
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+    expect([...container.querySelectorAll(".resume-version-card h3")].map((heading) => heading.textContent)).toEqual([
+      resume.name,
+      inactive.name,
+    ]);
+  });
+
+  it("immediately reflects complete-collection updates while inactive versions are included", async () => {
+    const inactive = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    const updatedInactive = { ...inactive, name: "Updated Inactive Resume" };
+    await renderPage([resume], { allResumeVersions: [resume, inactive] });
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+
+    await renderPage([resume], { allResumeVersions: [updatedInactive, resume] });
+    expect([...container.querySelectorAll(".resume-version-card h3")].map((heading) => heading.textContent)).toEqual([
+      updatedInactive.name,
+      resume.name,
+    ]);
+  });
+
+  it("keeps an inactive resume's edit form at the top after its complete-collection update", async () => {
+    const inactive = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    const updatedInactive = { ...inactive, name: "Updated Inactive Resume" };
+    await renderPage([resume], { allResumeVersions: [inactive, resume] });
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+    const inactiveCard = [...container.querySelectorAll(".resume-version-card")].find((card) => card.textContent.includes(inactive.name));
+    await act(async () => [...inactiveCard.querySelectorAll("button")].find((button) => button.textContent === "Edit").click());
+
+    await renderPage([resume], { allResumeVersions: [updatedInactive, resume] });
+    expect(container.querySelector(".resume-version-card-editing")).toBeTruthy();
+    expect([...container.querySelectorAll(".resume-version-card h3")].map((heading) => heading.textContent)).toEqual([resume.name]);
+  });
+
+  it("keeps a just-deactivated resume visible only while inactive versions are included", async () => {
+    const deactivated = { ...resume, is_active: false, name: "Deactivated Resume" };
+    await renderPage([resume], { allResumeVersions: [resume] });
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+
+    await renderPage([], { allResumeVersions: [deactivated] });
+    expect(container.textContent).toContain(deactivated.name);
+    expect(container.textContent).toContain("Inactive");
+
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+    expect(container.textContent).toContain("No resume versions yet");
+    expect(container.textContent).not.toContain(deactivated.name);
+  });
+
+  it("offers enabled permanent deletion for inactive assigned resumes", async () => {
+    const inactive = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    await renderPage([resume, inactive], { applications: [{ resume_version_id: 2 }] });
+    const includeInactive = container.querySelector('input[type="checkbox"]');
+    await act(async () => includeInactive.click());
+
+    const deleteButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Delete permanently");
+    expect(deleteButton).toBeTruthy();
+    expect(deleteButton.disabled).toBe(false);
+    expect(deleteButton.getAttribute("aria-describedby")).toBeNull();
+    expect(container.querySelectorAll(".quiet-danger-button")).toHaveLength(1);
+  });
+
+  it("enables permanent deletion for an inactive unassigned resume", async () => {
+    const inactive = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    await renderPage([inactive]);
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+
+    expect(container.querySelector("button.quiet-danger-button").disabled).toBe(false);
+  });
+
+  it("shows deletion progress and disables only that card's actions", async () => {
+    const inactive = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    let resolveImpact;
+    let resolveDelete;
+    const onGetResumeVersionDeleteImpact = vi.fn().mockImplementation(() => new Promise((resolve) => { resolveImpact = resolve; }));
+    const onDeleteResumeVersion = vi.fn().mockImplementation(() => new Promise((resolve) => { resolveDelete = resolve; }));
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    await renderPage([resume, inactive], { onDeleteResumeVersion, onGetResumeVersionDeleteImpact });
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+    await act(async () => container.querySelector("button.quiet-danger-button").click());
+
+    const inactiveCard = [...container.querySelectorAll(".resume-version-card")].find((card) => card.textContent.includes("Inactive Resume"));
+    const activeCard = [...container.querySelectorAll(".resume-version-card")].find((card) => card.textContent.includes("Engineering Resume"));
+    expect(inactiveCard.textContent).toContain("Checking...");
+    expect([...inactiveCard.querySelectorAll("button")].every((button) => button.disabled)).toBe(true);
+    expect([...activeCard.querySelectorAll("button")].every((button) => !button.disabled)).toBe(true);
+
+    await act(async () => resolveImpact({ assignment_count: 0, is_active: false, name: "Inactive Resume" }));
+    expect(inactiveCard.textContent).toContain("Deleting...");
+    expect(onDeleteResumeVersion).toHaveBeenCalledWith(2, 0);
+
+    await act(async () => resolveDelete({ name: "Inactive Resume", unassigned_application_count: 0 }));
+    confirm.mockRestore();
+  });
+
+  it("confirms deletion and leaves the card in place when deletion fails", async () => {
+    const inactive = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    const onDeleteResumeVersion = vi.fn().mockRejectedValue(new Error("Still assigned"));
+    const onGetResumeVersionDeleteImpact = vi.fn().mockResolvedValue({ assignment_count: 1, is_active: false, name: "Authoritative Resume" });
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    await renderPage([inactive], { onDeleteResumeVersion, onGetResumeVersionDeleteImpact });
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+    await act(async () => container.querySelector("button.quiet-danger-button").click());
+
+    expect(confirm).toHaveBeenCalledWith(getResumeDeleteConfirmationMessage({ assignment_count: 1, is_active: false, name: "Authoritative Resume" }));
+    expect(onDeleteResumeVersion).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain("Still assigned");
+    expect(container.textContent).toContain("Inactive Resume");
+    confirm.mockRestore();
+  });
+
+  it("does not call deletion when confirmation is declined", async () => {
+    const inactive = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    const onDeleteResumeVersion = vi.fn();
+    const onGetResumeVersionDeleteImpact = vi.fn().mockResolvedValue({ assignment_count: 0, is_active: false, name: "Inactive Resume" });
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    await renderPage([inactive], { onDeleteResumeVersion, onGetResumeVersionDeleteImpact });
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+    await act(async () => container.querySelector("button.quiet-danger-button").click());
+
+    expect(onDeleteResumeVersion).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("Inactive Resume");
+    confirm.mockRestore();
+  });
+
+  it("uses count-aware deletion confirmation and success messages", () => {
+    expect(getResumeDeleteConfirmationMessage({ assignment_count: 0, name: "Resume" })).toBe('Permanently delete "Resume"? This cannot be undone.');
+    expect(getResumeDeleteConfirmationMessage({ assignment_count: 1, name: "Resume" })).toBe('"Resume" is currently used by 1 application. Permanently deleting it will remove the resume assignment from that application and erase this resume\'s historical tracking. This cannot be undone.');
+    expect(getResumeDeleteConfirmationMessage({ assignment_count: 2, name: "Resume" })).toBe('"Resume" is currently used by 2 applications. Permanently deleting it will remove the resume assignment from all 2 applications and erase this resume\'s historical tracking. This cannot be undone.');
+    expect(getResumeDeleteSuccessMessage({ name: "Resume", unassigned_application_count: 0 })).toBe('"Resume" permanently deleted.');
+    expect(getResumeDeleteSuccessMessage({ name: "Resume", unassigned_application_count: 1 })).toBe('"Resume" permanently deleted and removed from 1 application.');
+    expect(getResumeDeleteSuccessMessage({ name: "Resume", unassigned_application_count: 2 })).toBe('"Resume" permanently deleted and removed from 2 applications.');
   });
 
   it("clears and collapses the form after creating a version", async () => {

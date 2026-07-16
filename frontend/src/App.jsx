@@ -3,6 +3,8 @@ import React, { useCallback, useEffect, useState } from "react";
 import { createApplication, getApplications, updateApplication } from "./services/applicationsService.js";
 import {
   createResumeVersion,
+  deleteResumeVersion,
+  getResumeVersionDeleteImpact,
   getResumeVersions,
   updateResumeVersion,
 } from "./services/resumesService.js";
@@ -20,6 +22,28 @@ import ResumeVersionsPage from "./pages/ResumeVersionsPage.jsx";
 import SupportPage from "./pages/SupportPage.jsx";
 
 export const UNSAVED_PAGE_CONFIRM_MESSAGE = "You have unsaved changes on this page. Leave without saving?";
+
+export function removeResumeVersionById(resumeVersions, resumeVersionId) {
+  return resumeVersions.filter((resumeVersion) => String(resumeVersion.id) !== String(resumeVersionId));
+}
+
+export function upsertResumeVersionToFront(resumeVersions, resumeVersion) {
+  return [resumeVersion, ...removeResumeVersionById(resumeVersions, resumeVersion.id)];
+}
+
+export function updateActiveResumeVersions(resumeVersions, resumeVersion) {
+  return resumeVersion.is_active
+    ? upsertResumeVersionToFront(resumeVersions, resumeVersion)
+    : removeResumeVersionById(resumeVersions, resumeVersion.id);
+}
+
+export function clearDeletedResumeAssignments(applications, resumeVersionId) {
+  return applications.map((application) =>
+    String(application.resume_version_id) === String(resumeVersionId)
+      ? { ...application, resume_version_id: null }
+      : application,
+  );
+}
 
 export function shouldConfirmPageNavigation(currentPage, requestedPage, hasUnsavedChanges) {
   return Boolean(hasUnsavedChanges && requestedPage !== currentPage);
@@ -101,31 +125,13 @@ export default function App() {
     };
   }, [browserCaptureStartup.incomingBrowserTextCaptureToken]);
 
-  const loadResumeVersions = useCallback(async (options = {}) => {
-    setIsLoading(true);
-    setLoadError("");
-
-    try {
-      const resumeVersionsData = await getResumeVersions(options);
-      setResumeVersions(resumeVersionsData);
-
-      if (options.includeInactive) {
-        setAllResumeVersions(resumeVersionsData);
-      }
-    } catch (error) {
-      setLoadError(error.message || "Could not load resume versions.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   const loadWorkspaceData = useCallback(async () => {
     setIsLoading(true);
     setLoadError("");
 
     try {
       const [applicationsData, activeResumeVersionsData, allResumeVersionsData] = await Promise.all([
-        getApplications(),
+        getApplications({ includeArchived: true }),
         getResumeVersions(),
         getResumeVersions({ includeInactive: true }),
       ]);
@@ -227,40 +233,34 @@ export default function App() {
 
   async function handleCreateResumeVersion(payload) {
     const createdResumeVersion = await createResumeVersion(payload);
-    setResumeVersions((currentResumeVersions) => [createdResumeVersion, ...currentResumeVersions]);
-    setAllResumeVersions((currentResumeVersions) => [createdResumeVersion, ...currentResumeVersions]);
+    setResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, createdResumeVersion));
+    setAllResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, createdResumeVersion));
     return createdResumeVersion;
   }
 
   async function handleUpdateResumeVersion(resumeVersionId, payload) {
     const updatedResumeVersion = await updateResumeVersion(resumeVersionId, payload);
-    setResumeVersions((currentResumeVersions) => {
-      const hasResumeVersion = currentResumeVersions.some(
-        (resumeVersion) => resumeVersion.id === updatedResumeVersion.id,
-      );
-
-      if (!hasResumeVersion) {
-        return [updatedResumeVersion, ...currentResumeVersions];
-      }
-
-      return currentResumeVersions.map((resumeVersion) =>
-        resumeVersion.id === updatedResumeVersion.id ? updatedResumeVersion : resumeVersion,
-      );
-    });
-    setAllResumeVersions((currentResumeVersions) => {
-      const hasResumeVersion = currentResumeVersions.some(
-        (resumeVersion) => resumeVersion.id === updatedResumeVersion.id,
-      );
-
-      if (!hasResumeVersion) {
-        return [updatedResumeVersion, ...currentResumeVersions];
-      }
-
-      return currentResumeVersions.map((resumeVersion) =>
-        resumeVersion.id === updatedResumeVersion.id ? updatedResumeVersion : resumeVersion,
-      );
-    });
+    setResumeVersions((currentResumeVersions) =>
+      updateActiveResumeVersions(currentResumeVersions, updatedResumeVersion),
+    );
+    setAllResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, updatedResumeVersion));
     return updatedResumeVersion;
+  }
+
+  async function handleDeleteResumeVersion(resumeVersionId, expectedAssignmentCount) {
+    const deleted = await deleteResumeVersion(resumeVersionId, expectedAssignmentCount);
+    const localAssignmentCount = applications.filter(
+      (application) => String(application.resume_version_id) === String(resumeVersionId),
+    ).length;
+    if (localAssignmentCount !== deleted.unassigned_application_count) {
+      const refreshedApplications = await getApplications({ includeArchived: true });
+      setApplications(refreshedApplications);
+    } else {
+      setApplications((currentApplications) => clearDeletedResumeAssignments(currentApplications, resumeVersionId));
+    }
+    setResumeVersions((currentResumeVersions) => removeResumeVersionById(currentResumeVersions, resumeVersionId));
+    setAllResumeVersions((currentResumeVersions) => removeResumeVersionById(currentResumeVersions, resumeVersionId));
+    return deleted;
   }
 
   const activeApplications = applications.filter((application) => !application.is_archived);
@@ -299,7 +299,8 @@ export default function App() {
           error={loadError}
           isLoading={isLoading}
           onCreateResumeVersion={handleCreateResumeVersion}
-          onLoadResumeVersions={loadResumeVersions}
+          onDeleteResumeVersion={handleDeleteResumeVersion}
+          onGetResumeVersionDeleteImpact={getResumeVersionDeleteImpact}
           onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onUpdateResumeVersion={handleUpdateResumeVersion}
           resumeVersions={resumeVersions}
