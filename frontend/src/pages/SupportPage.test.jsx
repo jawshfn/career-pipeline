@@ -87,6 +87,37 @@ describe("SupportPage", () => {
     expect(markup).not.toContain("Run PursuitHQ Capture.");
   });
 
+  it("uses stable whitespace-free heading IDs for capture-method cards in both runtimes", async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    document.body.appendChild(container);
+
+    async function getCaptureHeadingIds(isDemoMode) {
+      await act(async () => root.render(<SupportPage isDemoMode={isDemoMode} />));
+      const cards = [...container.querySelectorAll(".support-method-card")];
+      const headingIds = cards.map((card) => {
+        const headingId = card.getAttribute("aria-labelledby");
+
+        expect(headingId).toBeTruthy();
+        expect(headingId).not.toMatch(/\s/u);
+        expect(container.querySelector(`h3[id="${headingId}"]`)).not.toBeNull();
+        return headingId;
+      });
+
+      expect(cards).toHaveLength(4);
+      expect(new Set(headingIds).size).toBe(4);
+      return headingIds;
+    }
+
+    const localIds = await getCaptureHeadingIds(false);
+    const demoIds = await getCaptureHeadingIds(true);
+
+    expect(demoIds).toEqual(localIds);
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
   it("renders common tasks with their normal page destinations", () => {
     const markup = renderToStaticMarkup(<SupportPage />);
 

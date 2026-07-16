@@ -51,6 +51,16 @@ export async function copyTextToClipboard(text, successMessage) {
   }
 }
 
+function getCaptureMethodHeadingId(title) {
+  const slug = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/gu, "-")
+    .replace(/^-|-$/gu, "");
+
+  return `capture-method-${slug}`;
+}
+
 function getCaptureMethods(isDemoMode) {
   return [
     {
@@ -230,9 +240,9 @@ export default function SupportPage({ isDemoMode = false, onNavigate = () => {} 
         </div>
         <div className="support-method-grid">
           {captureMethods.map((method) => (
-            <section className={"support-method-card support-method-card-" + method.state} key={method.title} aria-labelledby={method.title + "-heading"}>
+            <section className={"support-method-card support-method-card-" + method.state} key={method.title} aria-labelledby={getCaptureMethodHeadingId(method.title)}>
               <p className="support-method-label">{method.label}</p>
-              <h3 id={`${method.title}-heading`}>{method.title}</h3>
+              <h3 id={getCaptureMethodHeadingId(method.title)}>{method.title}</h3>
               <p>{method.description}</p>
             </section>
           ))}
