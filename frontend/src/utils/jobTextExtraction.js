@@ -838,6 +838,36 @@ function isLinkedInRoleCandidateLine(line) {
   );
 }
 
+function isLinkedInPositionedRoleCandidateLine(line) {
+  if (isLinkedInRoleCandidateLine(line)) {
+    return true;
+  }
+
+  return (
+    Boolean(detectCityStateLocation([line])) &&
+    Boolean(line) &&
+    !isNoisyLine(line) &&
+    !isLinkedInLogoLine(line) &&
+    !isGoogleJobsSummaryLine(line) &&
+    !getCompensationFromLine(line) &&
+    !getEmploymentTypeFromLine(line) &&
+    !isLinkedInSocialMetadataLine(line) &&
+    !/^location:\s*/iu.test(line) &&
+    !getLinkedInWorkArrangementFromLine(line)
+  );
+}
+
+function isLinkedInHeaderMetadataLine(line) {
+  return (
+    Boolean(getLinkedInLabeledLocationFromLine(line)) ||
+    Boolean(getLinkedInWorkArrangementFromLine(line)) ||
+    Boolean(getEmploymentTypeFromLine(line)) ||
+    Boolean(getCompensationFromLine(line)) ||
+    isLinkedInSocialMetadataLine(line) ||
+    isNoisyLine(line)
+  );
+}
+
 function detectLinkedInWorkArrangement(headerLines) {
   return headerLines.map(getLinkedInWorkArrangementFromLine).find(Boolean) || "";
 }
@@ -987,11 +1017,21 @@ function extractLinkedInFields(rawText) {
     (line) => isCompanyCandidateLine(line) && normalizeComparisonValue(line) === normalizedCompany,
   );
   const searchStartIndex = companyLineIndex >= 0 ? companyLineIndex + 1 : 0;
-  const roleTitle =
-    headerLines
-      .slice(searchStartIndex)
-      .find((line) => isLinkedInRoleCandidateLine(line) && normalizeComparisonValue(line) !== normalizedCompany) ||
-    "";
+  let roleTitle = "";
+
+  for (const line of headerLines.slice(searchStartIndex)) {
+    if (isLinkedInHeaderMetadataLine(line)) {
+      break;
+    }
+
+    if (
+      isLinkedInPositionedRoleCandidateLine(line) &&
+      normalizeComparisonValue(line) !== normalizedCompany
+    ) {
+      roleTitle = line;
+      break;
+    }
+  }
 
   return {
     ...baseFields,

@@ -139,6 +139,49 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.employment_type).toBe("Full-time");
   });
 
+  it("preserves a positioned LinkedIn title that resembles a city and state", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Company logo for, BME Strategies.",
+        "BME Strategies",
+        "Junior Engineer, AI",
+        "Location: United States",
+        "Remote",
+        "About the job",
+        "Description",
+        "Build and support fictional engineering systems.",
+      ].join("\n"),
+      jobLink: "https://www.linkedin.com/jobs/search-results/?currentJobId=4411616801",
+      source: "LinkedIn",
+    });
+
+    expect(reviewData.parser_format).toBe("linkedin");
+    expect(reviewData.company_name).toBe("BME Strategies");
+    expect(reviewData.role_title).toBe("Junior Engineer, AI");
+    expect(reviewData.location).toBe("United States - Remote");
+    expect(reviewData.source).toBe("LinkedIn");
+  });
+
+  it("does not promote LinkedIn city-state social metadata into the role field", () => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [
+        "Company logo for, Fictional Company.",
+        "Fictional Company",
+        "Richmond, VA · 1 week ago · 18 applicants",
+        "Remote",
+        "Full-time",
+        "About the job",
+        "Build fictional systems.",
+      ].join("\n"),
+      jobLink: "https://www.linkedin.com/jobs/view/123456",
+      source: "LinkedIn",
+    });
+
+    expect(reviewData.role_title).toBe("");
+    expect(reviewData.location).toBe("Richmond, VA - Remote");
+    expect(reviewData.employment_type).toBe("Full-time");
+  });
+
   it("does not promote labeled LinkedIn location or Remote metadata into a missing role", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: [
