@@ -238,6 +238,8 @@ def update_application(
 
     if next_status == ARCHIVED_APPLICATION_STATUS:
         updates["is_archived"] = True
+    elif updates.get("is_archived") is True:
+        updates["status"] = "Archived"
 
     if (
         should_default_date_applied(next_status)
