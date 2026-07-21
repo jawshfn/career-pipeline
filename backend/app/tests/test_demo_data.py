@@ -15,6 +15,8 @@ def test_seed_demo_data_creates_representative_records(client, db_session):
     assert db_session.query(ResumeVersion).count() == 4
     assert db_session.query(Application).count() == 12
     assert db_session.query(ApplicationActivity).count() == 6
+    assert all(application.contact_name is None for application in db_session.query(Application).all())
+    assert all(application.contact_info is None for application in db_session.query(Application).all())
 
     statuses = {application.status for application in db_session.query(Application).all()}
     assert {
