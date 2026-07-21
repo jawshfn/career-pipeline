@@ -2107,41 +2107,12 @@ a {
   background: #fff5f5;
 }
 
-.delete-application-dialog-backdrop {
-  position: fixed;
-  z-index: 30;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgba(18, 24, 43, 0.5);
-}
-
-.delete-application-dialog {
-  width: min(520px, 100%);
-  padding: 24px;
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-lg);
-  color: var(--color-text);
-  background: var(--color-surface);
-  box-shadow: 0 24px 60px rgba(18, 24, 43, 0.28);
-}
-
-.delete-application-dialog h3,
-.delete-application-dialog p {
-  margin: 0;
-}
-
-.delete-application-dialog p + p {
-  margin-top: 12px;
-}
-
-.delete-application-dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 22px;
-}
+.confirmation-dialog-backdrop { position: fixed; z-index: 40; inset: 0; display: grid; place-items: center; padding: 24px; background: rgba(18, 24, 43, 0.46); }
+.confirmation-dialog { width: min(520px, 100%); padding: 24px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: 0 24px 60px rgba(18, 24, 43, 0.28); }
+.confirmation-dialog h3, .confirmation-dialog p { margin: 0; }
+.confirmation-dialog p + p { margin-top: 12px; }
+.confirmation-dialog-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px; }
+.confirmation-dialog button:focus-visible { outline: 3px solid var(--color-focus, #3b82f6); outline-offset: 2px; }
 
 .delete-application-confirm-button {
   border: 1px solid #a52d39;
@@ -2155,17 +2126,16 @@ a {
 }
 
 .delete-application-trigger:focus-visible,
-.delete-application-confirm-button:focus-visible,
-.delete-application-dialog button:focus-visible {
+.delete-application-confirm-button:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
 }
 
 @media (max-width: 520px) {
-  .delete-application-dialog-backdrop { padding: 12px; }
-  .delete-application-dialog { padding: 18px; }
-  .delete-application-dialog-actions { align-items: stretch; flex-direction: column; }
-  .delete-application-dialog-actions button { width: 100%; }
+  .confirmation-dialog-backdrop { padding: 12px; }
+  .confirmation-dialog { padding: 18px; }
+  .confirmation-dialog-actions { align-items: stretch; flex-direction: column; }
+  .confirmation-dialog-actions button { width: 100%; }
 }
 
 .resume-version-form,

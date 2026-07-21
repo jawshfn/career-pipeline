@@ -13,6 +13,7 @@ import { consumeBrowserCaptureFromWindow } from "./capture/browserCapturePayload
 import { consumeBrowserTextCaptureFromWindow } from "./capture/browserTextCapturePayload.js";
 import { consumeBrowserTextCaptureOnce } from "./services/browserTextCapturesService.js";
 import AppLayout from "./components/layout/AppLayout.jsx";
+import ConfirmationDialog from "./components/ui/ConfirmationDialog.jsx";
 import ApplicationsPage from "./pages/ApplicationsPage.jsx";
 import CommandCenterPage from "./pages/CommandCenterPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
@@ -90,6 +91,7 @@ export default function App() {
     browserCaptureStartup.shouldOpenQuickAdd ? "quick-add" : "command-center",
   );
   const [activePageHasUnsavedChanges, setActivePageHasUnsavedChanges] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
   const [requestedApplicationId, setRequestedApplicationId] = useState(null);
   const [applications, setApplications] = useState([]);
   const [resumeVersions, setResumeVersions] = useState([]);
@@ -175,48 +177,31 @@ export default function App() {
     setActivePageHasUnsavedChanges(Boolean(hasUnsavedChanges));
   }, []);
 
-  const handleOpenApplicationDetails = useCallback((applicationId) => {
-    const navigationResult = resolvePageNavigation(
-      activePage,
-      "applications",
-      activePageHasUnsavedChanges,
-      window.confirm,
-    );
+  const completeNavigation = useCallback((targetPage, applicationId = null) => {
+    setActivePageHasUnsavedChanges(false);
+    if (applicationId) setRequestedApplicationId(applicationId);
+    setActivePage(targetPage);
+  }, []);
 
-    if (!navigationResult.shouldNavigate) {
+  const handleOpenApplicationDetails = useCallback((applicationId) => {
+    if (shouldConfirmPageNavigation(activePage, "applications", activePageHasUnsavedChanges)) {
+      if (!pendingNavigation) setPendingNavigation({ targetPage: "applications", applicationId });
       return false;
     }
-
-    if (navigationResult.shouldClearDirtyState) {
-      setActivePageHasUnsavedChanges(false);
-    }
-
-    setRequestedApplicationId(applicationId);
-    setActivePage("applications");
+    completeNavigation("applications", applicationId);
     return true;
-  }, [activePage, activePageHasUnsavedChanges]);
+  }, [activePage, activePageHasUnsavedChanges, completeNavigation, pendingNavigation]);
 
   const navigateToPage = useCallback(
     (requestedPage) => {
-      const navigationResult = resolvePageNavigation(
-        activePage,
-        requestedPage,
-        activePageHasUnsavedChanges,
-        window.confirm,
-      );
-
-      if (!navigationResult.shouldNavigate) {
+      if (shouldConfirmPageNavigation(activePage, requestedPage, activePageHasUnsavedChanges)) {
+        if (!pendingNavigation) setPendingNavigation({ targetPage: requestedPage });
         return false;
       }
-
-      if (navigationResult.shouldClearDirtyState) {
-        setActivePageHasUnsavedChanges(false);
-      }
-
-      setActivePage(navigationResult.targetPage);
+      completeNavigation(requestedPage);
       return true;
     },
-    [activePage, activePageHasUnsavedChanges],
+    [activePage, activePageHasUnsavedChanges, completeNavigation, pendingNavigation],
   );
 
   async function handleCreateApplication(applicationData) {
@@ -337,6 +322,20 @@ export default function App() {
           resumeVersions={allResumeVersions}
         />
       )}
+      <ConfirmationDialog
+        cancelLabel="Stay here"
+        confirmLabel="Leave page"
+        confirmTone="warning"
+        description="You have unsaved changes. Leaving now will discard them."
+        isOpen={Boolean(pendingNavigation)}
+        title="Leave this page?"
+        onCancel={() => setPendingNavigation(null)}
+        onConfirm={() => {
+          const navigation = pendingNavigation;
+          setPendingNavigation(null);
+          completeNavigation(navigation.targetPage, navigation.applicationId);
+        }}
+      />
     </AppLayout>
   );
 }

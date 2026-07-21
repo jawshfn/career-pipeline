@@ -28,6 +28,7 @@ import JobPostingTab from "./JobPostingTab.jsx";
 import RedFlagsTab from "./RedFlagsTab.jsx";
 import StatusFollowUpTab from "./StatusFollowUpTab.jsx";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
+import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
 
 const initialFormState = {
@@ -202,88 +203,10 @@ function getUnsavedWarningTitle(hasUnsavedApplicationChanges, hasUnsavedActivity
   return "Unsaved changes";
 }
 
-function getCloseConfirmationMessage(hasUnsavedApplicationChanges, hasUnsavedActivityDraft) {
-  if (hasUnsavedApplicationChanges && hasUnsavedActivityDraft) {
-    return "You have unsaved changes and an unsaved activity draft. Close without saving or adding them?";
-  }
-
-  if (hasUnsavedActivityDraft) {
-    return "You have an unsaved activity draft. Close without adding it?";
-  }
-
-  return "You have unsaved changes. Close without saving?";
-}
-
-function DeleteApplicationDialog({
-  companyName,
-  errorMessage,
-  hasUnsavedChanges,
-  isDeleting,
-  onCancel,
-  onConfirm,
-  roleTitle,
-}) {
-  const cancelButtonRef = useRef(null);
-  const dialogRef = useRef(null);
-
-  useEffect(() => {
-    cancelButtonRef.current?.focus();
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape" && !isDeleting) {
-        event.preventDefault();
-        onCancel();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isDeleting, onCancel]);
-
-  function trapFocus(event) {
-    if (event.key !== "Tab") return;
-    const focusableElements = [...dialogRef.current.querySelectorAll("button:not([disabled])")];
-    if (focusableElements.length === 0) {
-      event.preventDefault();
-      return;
-    }
-    const first = focusableElements[0];
-    const last = focusableElements.at(-1);
-    if (event.shiftKey && document.activeElement === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && document.activeElement === last) {
-      event.preventDefault();
-      first.focus();
-    }
-  }
-
-  return (
-    <div className="delete-application-dialog-backdrop" role="presentation">
-      <section
-        aria-describedby="delete-application-dialog-description"
-        aria-labelledby="delete-application-dialog-title"
-        aria-modal="true"
-        className="delete-application-dialog"
-        onKeyDown={trapFocus}
-        ref={dialogRef}
-        role="dialog"
-      >
-        <h3 id="delete-application-dialog-title">Permanently delete {roleTitle} at {companyName}?</h3>
-        <div id="delete-application-dialog-description">
-          <p>This will delete the application, notes, job posting, preparation details, red flags, and activity history. This action cannot be undone.</p>
-          {hasUnsavedChanges ? <p>Any unsaved changes or activity draft will also be discarded.</p> : null}
-        </div>
-        {errorMessage ? <ErrorMessage message={errorMessage} /> : null}
-        <div className="delete-application-dialog-actions">
-          <button className="secondary-button" disabled={isDeleting} ref={cancelButtonRef} type="button" onClick={onCancel}>Cancel</button>
-          <button className="delete-application-confirm-button" disabled={isDeleting} type="button" onClick={onConfirm}>
-            {isDeleting ? "Deleting..." : "Delete permanently"}
-          </button>
-        </div>
-      </section>
-    </div>
-  );
+function getCloseConfirmation(hasUnsavedApplicationChanges, hasUnsavedActivityDraft) {
+  if (hasUnsavedApplicationChanges && hasUnsavedActivityDraft) return { title: "Close without saving?", description: "You have unsaved application changes and an unsaved activity draft. Closing will discard both.", confirmLabel: "Discard and close" };
+  if (hasUnsavedActivityDraft) return { title: "Discard activity draft?", description: "You have an unsaved activity draft. Closing will discard it.", confirmLabel: "Discard and close" };
+  return { title: "Close without saving?", description: "You have unsaved application changes. Closing will discard them.", confirmLabel: "Close without saving" };
 }
 
 export function shouldRefreshActivitiesAfterApplicationSave(previousStatus, nextStatus) {
@@ -316,6 +239,7 @@ export default function ApplicationDetailPanel({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
   const deleteTriggerRef = useRef(null);
 
   function resetActivityDraft() {
@@ -418,13 +342,7 @@ export default function ApplicationDetailPanel({
 
   function handleClose() {
     if (isDeleting) return;
-    if (
-      hasUnsavedChanges &&
-      !window.confirm(getCloseConfirmationMessage(hasUnsavedApplicationChanges, hasUnsavedActivityDraft))
-    ) {
-      return;
-    }
-
+    if (hasUnsavedChanges) return setIsCloseDialogOpen(true);
     onClose();
   }
 
@@ -682,16 +600,9 @@ export default function ApplicationDetailPanel({
         </form>
       ) : null}
       {isDeleteDialogOpen ? (
-        <DeleteApplicationDialog
-          companyName={companyName}
-          errorMessage={deleteError}
-          hasUnsavedChanges={hasUnsavedChanges}
-          isDeleting={isDeleting}
-          onCancel={closeDeleteDialog}
-          onConfirm={confirmDeleteApplication}
-          roleTitle={roleTitle}
-        />
+        <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Delete permanently" confirmTone="danger" description={<><p>This will delete the application, notes, job posting, preparation details, red flags, and activity history. This action cannot be undone.</p>{hasUnsavedChanges ? <p>Any unsaved changes or activity draft will also be discarded.</p> : null}</>} errorMessage={deleteError} isOpen={isDeleteDialogOpen} isProcessing={isDeleting} processingLabel="Deleting..." title={`Permanently delete ${roleTitle} at ${companyName}?`} onCancel={closeDeleteDialog} onConfirm={confirmDeleteApplication} />
       ) : null}
+      {isCloseDialogOpen ? <ConfirmationDialog cancelLabel="Keep editing" confirmTone="warning" isOpen={isCloseDialogOpen} {...getCloseConfirmation(hasUnsavedApplicationChanges, hasUnsavedActivityDraft)} onCancel={() => setIsCloseDialogOpen(false)} onConfirm={onClose} /> : null}
     </section>
   );
 }

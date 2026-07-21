@@ -237,6 +237,7 @@ Status: complete through Phase 21.2b
 Status: complete through Phase 22.1
 
 - Phase 22.1 — Add protected permanent application deletion with activity-history cleanup, accessible confirmation, real/demo parity, and responsive Application Detail placement.
+- Phase 22.2a — Add a shared accessible confirmation-dialog system for unsaved navigation, capture-method switching, application switching, Application Detail closing, Job Posting draft dismissal, and permanent application deletion.
 
 ## Later Optional Enhancements
 

@@ -4,6 +4,7 @@ import ApplicationDetailPanel from "../components/applications/ApplicationDetail
 import ApplicationsTable from "../components/applications/ApplicationsTable.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
+import ConfirmationDialog from "../components/ui/ConfirmationDialog.jsx";
 import {
   ACTIVE_APPLICATION_STATUSES,
   CLOSED_APPLICATION_STATUSES,
@@ -222,6 +223,7 @@ export default function ApplicationsPage({
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
   const [selectedDetailTab, setSelectedDetailTab] = useState("overview");
   const [hasDetailUnsavedChanges, setHasDetailUnsavedChanges] = useState(false);
+  const [pendingDetail, setPendingDetail] = useState(null);
   const [applicationView, setApplicationView] = useState("active");
   const [filters, setFilters] = useState(initialFilters);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -301,6 +303,13 @@ export default function ApplicationsPage({
     setSuccessMessage("Application permanently deleted.");
   }
 
+  function completeOpenDetails(applicationId, initialTab = "overview") {
+    shouldScrollToDetailRef.current = true;
+    setHasDetailUnsavedChanges(false);
+    setSelectedDetailTab(initialTab);
+    setSelectedApplicationId(applicationId);
+  }
+
   function openDetails(applicationId, initialTab = "overview") {
     if (selectedApplicationId === applicationId) {
       setSelectedDetailTab(initialTab);
@@ -308,19 +317,11 @@ export default function ApplicationsPage({
       return;
     }
 
-    if (
-      selectedApplicationId &&
-      hasDetailUnsavedChanges &&
-      !window.confirm("You have unsaved changes. Switch applications without saving?")
-    ) {
+    if (selectedApplicationId && hasDetailUnsavedChanges) {
+      if (!pendingDetail) setPendingDetail({ applicationId, initialTab });
       return;
     }
-
-    shouldScrollToDetailRef.current = true;
-    setHasDetailUnsavedChanges(false);
-    setSelectedDetailTab(initialTab);
-
-    setSelectedApplicationId(applicationId);
+    completeOpenDetails(applicationId, initialTab);
   }
 
   useEffect(() => {
@@ -485,6 +486,7 @@ export default function ApplicationsPage({
           />
         ) : null}
       </section>
+      <ConfirmationDialog cancelLabel="Keep editing" confirmLabel="Switch application" confirmTone="warning" description="You have unsaved changes in the current application. Switching will discard them." isOpen={Boolean(pendingDetail)} title="Switch applications?" onCancel={() => setPendingDetail(null)} onConfirm={() => { const detail = pendingDetail; setPendingDetail(null); completeOpenDetails(detail.applicationId, detail.initialTab); }} />
     </div>
   );
 }

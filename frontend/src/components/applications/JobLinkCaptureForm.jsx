@@ -13,6 +13,7 @@ import {
   importLeverCaptureResult,
 } from "../../services/jobImportsService.js";
 import CaptureReviewForm, { getCapturedReviewFields } from "./CaptureReviewForm.jsx";
+import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 
 export const initialJobLinkCaptureState = {
   jobLink: "",
@@ -104,6 +105,7 @@ export default function JobLinkCaptureForm({
   const [captureState, setCaptureState] = useState(JOB_LINK_CAPTURE_STATES.IDLE);
   const [routeResult, setRouteResult] = useState(null);
   const [message, setMessage] = useState("");
+  const [isStartOverDialogOpen, setIsStartOverDialogOpen] = useState(false);
   const hasConsumedBrowserCapture = useRef(false);
   const demoGreenhouseLink = getDemoGreenhouseLink();
   const demoLeverLink = getDemoLeverLink();
@@ -266,13 +268,7 @@ export default function JobLinkCaptureForm({
   }
 
   function handleStartOver() {
-    if (
-      isJobLinkCaptureDirty(captureData, reviewData, captureState) &&
-      !window.confirm("You have unsaved changes. Start over without saving?")
-    ) {
-      return;
-    }
-
+    if (isJobLinkCaptureDirty(captureData, reviewData, captureState)) return setIsStartOverDialogOpen(true);
     resetCaptureState();
   }
 
@@ -394,6 +390,7 @@ export default function JobLinkCaptureForm({
           ) : null}
         </>
       )}
+      <ConfirmationDialog cancelLabel="Keep editing" confirmLabel="Start over" confirmTone="warning" description="You have unsaved changes. Starting over will discard them." isOpen={isStartOverDialogOpen} title="Start over?" onCancel={() => setIsStartOverDialogOpen(false)} onConfirm={() => { setIsStartOverDialogOpen(false); resetCaptureState(); }} />
     </section>
   );
 }

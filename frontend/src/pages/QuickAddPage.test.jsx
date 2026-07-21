@@ -85,8 +85,10 @@ describe("QuickAddPage browser capture transfer", () => {
     expect(mocks.importDetectedGreenhouseCaptureResult).toHaveBeenCalledTimes(1);
     expect(container.textContent).toContain("Review before saving");
 
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    vi.stubGlobal("confirm", vi.fn());
     await act(async () => clickButton(container, "Manual Entry"));
+    expect(window.confirm).not.toHaveBeenCalled();
+    await act(async () => clickButton(container, "Switch method"));
     await act(async () => clickButton(container, "Paste Job Link"));
 
     expect(mocks.importDetectedGreenhouseCaptureResult).toHaveBeenCalledTimes(1);
@@ -99,10 +101,11 @@ describe("QuickAddPage browser capture transfer", () => {
   it("keeps the imported review when the discard confirmation is canceled", async () => {
     await renderCapture();
 
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+    vi.stubGlobal("confirm", vi.fn());
     await act(async () => clickButton(container, "Manual Entry"));
 
     expect(container.textContent).toContain("Review before saving");
+    expect(window.confirm).not.toHaveBeenCalled();
     expect(mocks.importDetectedGreenhouseCaptureResult).toHaveBeenCalledTimes(1);
   });
 });

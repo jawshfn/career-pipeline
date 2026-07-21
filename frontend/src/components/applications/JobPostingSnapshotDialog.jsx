@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
+import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
+
 export default function JobPostingSnapshotDialog({
   description = "Captured employer content",
   isOpen,
@@ -11,6 +13,7 @@ export default function JobPostingSnapshotDialog({
   const textareaRef = useRef(null);
   const openedValueRef = useRef("");
   const [draft, setDraft] = useState(value || "");
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const draftRef = useRef(value || "");
 
   useEffect(() => {
@@ -35,9 +38,7 @@ export default function JobPostingSnapshotDialog({
   if (!isOpen) return null;
 
   function requestClose() {
-    if (draftRef.current !== openedValueRef.current && !window.confirm("Discard changes to the job posting?")) {
-      return;
-    }
+    if (draftRef.current !== openedValueRef.current) return setIsDiscardDialogOpen(true);
     onClose();
   }
 
@@ -103,6 +104,16 @@ export default function JobPostingSnapshotDialog({
           </button>
         </div>
       </section>
+      <ConfirmationDialog
+        cancelLabel="Keep editing"
+        confirmLabel="Discard changes"
+        confirmTone="warning"
+        description="Changes made in the Job Posting Snapshot editor have not been applied."
+        isOpen={isDiscardDialogOpen}
+        title="Discard job posting changes?"
+        onCancel={() => { setIsDiscardDialogOpen(false); requestAnimationFrame(() => textareaRef.current?.focus()); }}
+        onConfirm={() => { setIsDiscardDialogOpen(false); onClose(); }}
+      />
     </div>
   );
 }

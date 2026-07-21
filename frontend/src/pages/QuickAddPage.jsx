@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import JobLinkCaptureForm from "../components/applications/JobLinkCaptureForm.jsx";
 import QuickAddApplicationForm from "../components/applications/QuickAddApplicationForm.jsx";
 import SmartCaptureForm from "../components/applications/SmartCaptureForm.jsx";
+import ConfirmationDialog from "../components/ui/ConfirmationDialog.jsx";
 import { DEFAULT_APPLICATION_SOURCE } from "../constants/applicationConstants.js";
 
 export default function QuickAddPage({
@@ -23,6 +24,7 @@ export default function QuickAddPage({
   const [createdApplication, setCreatedApplication] = useState(null);
   const [activeMode, setActiveMode] = useState("manual");
   const [activeModeHasUnsavedChanges, setActiveModeHasUnsavedChanges] = useState(false);
+  const [pendingMode, setPendingMode] = useState(null);
   const [browserCaptureTransfer, setBrowserCaptureTransfer] = useState(null);
   const [smartCaptureTransfer, setSmartCaptureTransfer] = useState(null);
   const hasHandledIncomingBrowserCapture = useRef(false);
@@ -98,26 +100,23 @@ export default function QuickAddPage({
     onBrowserCaptureConsumed?.();
   }
 
+  function changeMode(nextMode) {
+    setActiveModeHasUnsavedChanges(false);
+    if (activeMode === "smart-capture") setSmartCaptureTransfer(null);
+    if (activeMode === "job-link") setBrowserCaptureTransfer(null);
+    setActiveMode(nextMode);
+  }
+
   function handleModeChange(nextMode) {
     if (nextMode === activeMode) {
       return;
     }
 
-    if (
-      activeModeHasUnsavedChanges &&
-      !window.confirm("You have unsaved changes. Switch modes without saving?")
-    ) {
+    if (activeModeHasUnsavedChanges) {
+      if (!pendingMode) setPendingMode(nextMode);
       return;
     }
-
-    setActiveModeHasUnsavedChanges(false);
-    if (activeMode === "smart-capture") {
-      setSmartCaptureTransfer(null);
-    }
-    if (activeMode === "job-link") {
-      setBrowserCaptureTransfer(null);
-    }
-    setActiveMode(nextMode);
+    changeMode(nextMode);
   }
 
   function handleSwitchToTextCapture({ jobLink = "", source = DEFAULT_APPLICATION_SOURCE } = {}) {
@@ -221,6 +220,7 @@ export default function QuickAddPage({
           onUnsavedChangesChange={setActiveModeHasUnsavedChanges}
         />
       )}
+      <ConfirmationDialog cancelLabel="Keep editing" confirmLabel="Switch method" confirmTone="warning" description="You have unsaved changes in this capture method. Switching will discard them." isOpen={pendingMode !== null} title="Switch capture methods?" onCancel={() => setPendingMode(null)} onConfirm={() => { const nextMode = pendingMode; setPendingMode(null); changeMode(nextMode); }} />
     </div>
   );
 }

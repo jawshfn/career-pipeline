@@ -75,7 +75,7 @@ describe("JobPostingSnapshotDialog", () => {
 
   it("keeps dirty drafts open when discard is canceled and discards only after confirmation", async () => {
     const onClose = vi.fn();
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+    vi.stubGlobal("confirm", vi.fn());
     await renderDialog({ onClose });
 
     const textarea = container.querySelector("textarea");
@@ -88,20 +88,20 @@ describe("JobPostingSnapshotDialog", () => {
       [...container.querySelectorAll("button")].find((button) => button.textContent === "Cancel").click();
     });
 
-    expect(window.confirm).toHaveBeenCalledWith("Discard changes to the job posting?");
+    expect(window.confirm).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("Discard job posting changes?");
     expect(onClose).not.toHaveBeenCalled();
     expect(container.querySelector("textarea").value).toBe("Unapplied draft");
 
-    window.confirm.mockReturnValue(true);
     await act(async () => {
-      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      [...container.querySelectorAll("button")].find((button) => button.textContent === "Discard changes").click();
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("uses the same dirty-draft confirmation for the header Close action", async () => {
     const onClose = vi.fn();
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(true));
+    vi.stubGlobal("confirm", vi.fn());
     await renderDialog({ onClose });
 
     const textarea = container.querySelector("textarea");
@@ -114,13 +114,17 @@ describe("JobPostingSnapshotDialog", () => {
       container.querySelector('[aria-label="Close job posting editor"]').click();
     });
 
-    expect(window.confirm).toHaveBeenCalledWith("Discard changes to the job posting?");
+    expect(window.confirm).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => {
+      [...container.querySelectorAll("button")].find((button) => button.textContent === "Discard changes").click();
+    });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
   it("uses the same dirty-draft confirmation for backdrop close", async () => {
     const onClose = vi.fn();
-    vi.stubGlobal("confirm", vi.fn().mockReturnValue(false));
+    vi.stubGlobal("confirm", vi.fn());
     await renderDialog({ onClose });
 
     const textarea = container.querySelector("textarea");
@@ -133,7 +137,8 @@ describe("JobPostingSnapshotDialog", () => {
       container.querySelector(".job-posting-dialog-backdrop").dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
     });
 
-    expect(window.confirm).toHaveBeenCalledWith("Discard changes to the job posting?");
+    expect(window.confirm).not.toHaveBeenCalled();
+    expect(container.textContent).toContain("Discard job posting changes?");
     expect(onClose).not.toHaveBeenCalled();
   });
 });
