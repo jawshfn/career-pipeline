@@ -66,7 +66,7 @@ describe("SupportPage", () => {
     expect(markup).toContain("Manual Entry");
     expect(markup).toContain("Best for supported job pages");
     expect(markup).toContain("standalone authenticated Handshake job pages");
-    expect(markup).toContain("Handshake side-panel and search-result layouts are unsupported");
+    expect(markup).toContain("confidently selected authenticated Handshake search-result side panel");
     expect(markup).toContain("Best fallback");
     expect(markup).toContain("support-method-card-recommended");
     expect(markup).not.toContain("Recommended in demo");

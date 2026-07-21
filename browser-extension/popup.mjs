@@ -150,7 +150,7 @@ export function isHandshakeJobUrl(rawUrl) {
     const url = new URL(rawUrl);
     return (url.protocol === "http:" || url.protocol === "https:") && !url.username && !url.password &&
       (url.port === "" || url.port === "80" || url.port === "443") &&
-      url.hostname.toLowerCase() === "app.joinhandshake.com" && /^\/jobs\/[1-9]\d*\/?$/u.test(url.pathname);
+      url.hostname.toLowerCase() === "app.joinhandshake.com" && /^\/(?:jobs|job-search)\/[1-9]\d*\/?$/u.test(url.pathname);
   } catch { return false; }
 }
 
@@ -295,7 +295,12 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
     });
     const detectionResult = unwrapInjectionResult(injectionResults);
     if (detectionResult.status === "detected") {
-      return { ...detectionResult, original_job_link: activeTab.url };
+      return {
+        ...detectionResult,
+        original_job_link: provider === "handshake" && typeof detectionResult.canonical_job_link === "string"
+          ? detectionResult.canonical_job_link
+          : activeTab.url,
+      };
     }
     return provider === "handshake" || provider === "linkedin" || provider === "indeed" || provider === "ziprecruiter" ? { ...detectionResult, provider } : detectionResult;
   } catch (error) {

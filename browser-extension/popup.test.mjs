@@ -145,6 +145,18 @@ test("routes only a standalone Handshake job page to the focused detector", asyn
   for (const invalid of ["https://app.joinhandshake.com/jobs", "https://app.joinhandshake.com/jobs/0", "https://app.joinhandshake.com/emp/jobs/112", "https://app.joinhandshake.com/jobs/112/extra", "https://app.joinhandshake.com.evil.test/jobs/112"]) assert.equal(isHandshakeJobUrl(invalid), false);
 });
 
+test("routes a selected Handshake side panel and hands off its validated canonical job link", async () => {
+  const url = "https://app.joinhandshake.com/job-search/11204180?searchId=example";
+  const canonical = "https://app.joinhandshake.com/jobs/11204180?source=search";
+  const result = await inspectActivePage({
+    tabs: { query: async () => [{ id: 19, url }] },
+    scripting: { executeScript: async (details) => { assert.equal(details.func.name, "detectHandshakeJobPage"); return [{ result: { status: "detected", version: 1, provider: "handshake", canonical_job_link: canonical } }]; } },
+  });
+  assert.equal(result.original_job_link, canonical);
+  assert.equal(isHandshakeJobUrl(url), true);
+  for (const invalid of ["https://app.joinhandshake.com/job-search", "https://app.joinhandshake.com/job-search/0", "https://app.joinhandshake.com/job-search/112/extra"]) assert.equal(isHandshakeJobUrl(invalid), false);
+});
+
 test("marks an actual Indeed injection failure without exposing page data", async () => {
   const result = await inspectActivePage({
     tabs: { query: async () => [{ id: 14, url: "https://www.indeed.com/viewjob?jk=fake" }] },

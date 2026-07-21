@@ -224,12 +224,13 @@ Status: complete through Phase 20.9b
 
 ## Phase 21 — Browser Capture Reliability and Coverage
 
-Status: complete through Phase 21.2a
+Status: complete through Phase 21.2b
 
 - Phase 21.1a — Refresh Browser Capture with PursuitHQ identity, clearer captured-job hierarchy, consistent popup states, and source-neutral fallback guidance.
 - Phase 21.1b — Preserve LinkedIn role titles that resemble location values by using source-specific header context.
 - Phase 21.1c — Support selected ZipRecruiter jobs across paginated search-result URLs.
 - Phase 21.2a — Add bounded standalone Handshake job capture with deterministic metadata extraction and safe expansion of truncated descriptions.
+- Phase 21.2b — Support the currently selected Handshake search-result side panel with matched job identity and direct-link preservation.
 
 ## Later Optional Enhancements
 

@@ -16,7 +16,7 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 
 ## Product Highlights
 
-- **Browser Capture:** recommended local workflow for verified Greenhouse identifiers; bounded Indeed, LinkedIn, and standalone Handshake text capture; and signed-in ZipRecruiter selected-job capture; opens an editable review without manually copying the posting.
+- **Browser Capture:** recommended local workflow for verified Greenhouse identifiers; bounded Indeed, LinkedIn, and authenticated Handshake text capture; and signed-in ZipRecruiter selected-job capture; opens an editable review without manually copying the posting.
 - **Add Job:** choose Manual Entry, Paste Job Link, or deterministic Paste Job Text review.
 - **Applications:** search, filter, sort, and open detailed records across Active, Closed, and All views.
 - **Status Board:** scan opportunities by stage and update statuses quickly.
@@ -27,7 +27,7 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 
 ## Browser Capture - Recommended Local Workflow
 
-The experimental, locally loaded PursuitHQ Capture companion is the fastest local workflow when you are already viewing a supported job. It supports verified Greenhouse identifiers, bounded Indeed capture, supported LinkedIn standalone and current-job panel layouts, signed-in ZipRecruiter selected-job capture across supported paginated search URLs, and standalone authenticated Handshake `/jobs/<positive numeric ID>` pages. Handshake search-result side panels are not yet supported. After you confirm a detection, it opens an editable review; nothing is saved automatically.
+The experimental, locally loaded PursuitHQ Capture companion is the fastest local workflow when you are already viewing a supported job. It supports verified Greenhouse identifiers, bounded Indeed capture, supported LinkedIn standalone and current-job panel layouts, signed-in ZipRecruiter selected-job capture across supported paginated search URLs, and authenticated Handshake standalone `/jobs/<positive numeric ID>` pages or the currently selected `/job-search/<positive numeric ID>` side-panel job. Handshake side-panel capture validates the selected job and preserves its direct standalone job link. After you confirm a detection, it opens an editable review; nothing is saved automatically.
 
 Browser Capture requires the local frontend and FastAPI backend. It is not Chrome Web Store distributed, and the GitHub Pages demo does not support the helper. The helper reads only the active page after you click it, then transfers only the approved bounded job data to the local app.
 
@@ -125,7 +125,7 @@ npm run build
 
 PursuitHQ is a working local-first prototype, not a production SaaS app. The GitHub Pages site is a static portfolio demo with reset-on-refresh sample data.
 
-Implemented: Greenhouse and Lever structured link imports, best-effort custom Greenhouse discovery, experimental locally loaded Greenhouse browser identifier capture, bounded Indeed capture, supported LinkedIn standalone and current-job panel capture, signed-in ZipRecruiter selected-job capture across supported paginated search URLs, standalone authenticated Handshake capture, one-time local transfer, and editable review with no autosave.
+Implemented: Greenhouse and Lever structured link imports, best-effort custom Greenhouse discovery, experimental locally loaded Greenhouse browser identifier capture, bounded Indeed capture, supported LinkedIn standalone and current-job panel capture, signed-in ZipRecruiter selected-job capture across supported paginated search URLs, authenticated Handshake standalone and selected side-panel capture, one-time local transfer, and editable review with no autosave.
 
 Not implemented: Chrome Web Store distribution, production backend/SaaS deployment, generic job-board scraping, authentication, multi-user synchronization, AI extraction, import/export, or email/calendar integrations.
 
