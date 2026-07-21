@@ -86,10 +86,20 @@ describe("ApplicationDetailPanel permanent deletion", () => {
     const deleteButton = [...container.querySelectorAll('[role="dialog"] button')].find((button) => button.textContent === "Delete permanently");
 
     await act(async () => deleteButton.click());
-    expect(onDeleteApplication).toHaveBeenCalledWith(7);
-    expect(container.querySelector('[role="dialog"]')).not.toBeNull();
-    expect(container.textContent).toContain("Server unavailable.");
+    expect(onDeleteApplication).toHaveBeenCalledTimes(1);
+    expect(onDeleteApplication).toHaveBeenLastCalledWith(7);
+
+    const dialogAfterFailure = container.querySelector('[role="dialog"]');
+    const dialogError = dialogAfterFailure?.querySelector('[role="alert"]');
+
+    expect(dialogAfterFailure).not.toBeNull();
+    expect(dialogError?.textContent).toContain("Server unavailable.");
+    expect(container.querySelector(".application-danger-zone [role='alert']")).toBeNull();
     expect(deleteButton.disabled).toBe(false);
+    expect(container.querySelector(".message-success")).toBeNull();
+
+    await act(async () => deleteButton.click());
+    expect(onDeleteApplication).toHaveBeenCalledTimes(2);
   });
 
   it("warns about unsaved changes and lets Escape cancel without a browser confirmation", async () => {

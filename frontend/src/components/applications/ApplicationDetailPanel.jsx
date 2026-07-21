@@ -214,7 +214,15 @@ function getCloseConfirmationMessage(hasUnsavedApplicationChanges, hasUnsavedAct
   return "You have unsaved changes. Close without saving?";
 }
 
-function DeleteApplicationDialog({ companyName, hasUnsavedChanges, isDeleting, onCancel, onConfirm, roleTitle }) {
+function DeleteApplicationDialog({
+  companyName,
+  errorMessage,
+  hasUnsavedChanges,
+  isDeleting,
+  onCancel,
+  onConfirm,
+  roleTitle,
+}) {
   const cancelButtonRef = useRef(null);
   const dialogRef = useRef(null);
 
@@ -266,6 +274,7 @@ function DeleteApplicationDialog({ companyName, hasUnsavedChanges, isDeleting, o
           <p>This will delete the application, notes, job posting, preparation details, red flags, and activity history. This action cannot be undone.</p>
           {hasUnsavedChanges ? <p>Any unsaved changes or activity draft will also be discarded.</p> : null}
         </div>
+        {errorMessage ? <ErrorMessage message={errorMessage} /> : null}
         <div className="delete-application-dialog-actions">
           <button className="secondary-button" disabled={isDeleting} ref={cancelButtonRef} type="button" onClick={onCancel}>Cancel</button>
           <button className="delete-application-confirm-button" disabled={isDeleting} type="button" onClick={onConfirm}>
@@ -666,7 +675,6 @@ export default function ApplicationDetailPanel({
           </div>
           <div className="application-danger-zone">
             <p>Permanently delete this application and all associated activity history. This action cannot be undone.</p>
-            {deleteError ? <ErrorMessage message={deleteError} /> : null}
             <button className="delete-application-trigger" disabled={isDeleting} ref={deleteTriggerRef} type="button" onClick={openDeleteDialog}>
               Delete application
             </button>
@@ -676,6 +684,7 @@ export default function ApplicationDetailPanel({
       {isDeleteDialogOpen ? (
         <DeleteApplicationDialog
           companyName={companyName}
+          errorMessage={deleteError}
           hasUnsavedChanges={hasUnsavedChanges}
           isDeleting={isDeleting}
           onCancel={closeDeleteDialog}
