@@ -368,7 +368,7 @@ export default function ApplicationsPage({
             {viewedApplications.length === 1 ? "" : "s"}.
           </p>
         </div>
-        {successMessage ? <div className="message message-success" role="status">{successMessage}</div> : null}
+        {successMessage ? <div className="message message-success applications-list-feedback" role="status">{successMessage}</div> : null}
 
         <div className="application-view-tabs" aria-label="Application view">
           {applicationViewOptions.map((option) => (

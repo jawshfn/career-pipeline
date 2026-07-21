@@ -18,6 +18,7 @@ import ApplicationActivityTimeline, {
   formatActivityDate,
   formatLoggedTime,
   shouldShowActivityLoadingState,
+  getActivityNotePreview,
 } from "./ApplicationActivityTimeline.jsx";
 import {
   getDemoActivities,
@@ -192,6 +193,28 @@ describe("ApplicationActivityTimeline", () => {
     expect(container.querySelector(".activity-empty-state p").textContent).toBe(
       "Add updates as this opportunity moves forward.",
     );
+  });
+
+  it("uses a custom danger dialog for deletion and keeps the selected activity context", async () => {
+    const nativeConfirm = vi.spyOn(window, "confirm");
+    await renderTimeline({ activities: [{ id: 1, activity_date: "2026-07-15", activity_type: "Note", note: "  Recruiter replied and scheduled a screening call.  " }] });
+    const deleteButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Delete");
+    deleteButton.focus();
+    await act(async () => deleteButton.click());
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(nativeConfirm).not.toHaveBeenCalled();
+    expect(dialog.textContent).toContain("Delete Note activity?");
+    expect(dialog.textContent).toContain(formatActivityDate("2026-07-15"));
+    expect(dialog.textContent).toContain("Recruiter replied and scheduled a screening call.");
+    await act(async () => dialog.querySelector("button").click());
+    expect(document.activeElement).toBe(deleteButton);
+    nativeConfirm.mockRestore();
+  });
+
+  it("bounds long activity note previews", () => {
+    const preview = getActivityNotePreview("word ".repeat(40));
+    expect(preview.length).toBeLessThanOrEqual(121);
+    expect(preview.endsWith("…")).toBe(true);
   });
 });
 

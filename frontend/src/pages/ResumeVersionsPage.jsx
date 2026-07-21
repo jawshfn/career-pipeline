@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
+import ConfirmationDialog from "../components/ui/ConfirmationDialog.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 import AutoGrowingTextarea from "../components/ui/AutoGrowingTextarea.jsx";
 
@@ -10,18 +11,12 @@ const initialCreateForm = {
   description: "",
 };
 
-export const RESUME_EDIT_SWITCH_CONFIRM_MESSAGE = "You have unsaved changes. Switch resumes without saving?";
-export const RESUME_EDIT_CANCEL_CONFIRM_MESSAGE = "You have unsaved changes. Cancel editing without saving?";
-export const RESUME_DUPLICATE_REPLACE_CREATE_CONFIRM_MESSAGE = "You have an unfinished new resume version. Replace it with this duplicate draft?";
-export const RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE = "You have an unfinished new resume version. Discard it and edit this resume?";
-export const RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE = "You have unsaved resume changes. Discard them and start a new resume version?";
-
-export function getResumeDeleteConfirmationMessage({ assignment_count: assignmentCount, name }) {
-  if (assignmentCount === 0) return `Permanently delete "${name}"? This cannot be undone.`;
+export function getResumeDeleteConfirmationDescription({ assignment_count: assignmentCount }) {
+  if (assignmentCount === 0) return "This resume version and its historical tracking will be permanently deleted. This action cannot be undone.";
   if (assignmentCount === 1) {
-    return `"${name}" is currently used by 1 application. Permanently deleting it will remove the resume assignment from that application and erase this resume's historical tracking. This cannot be undone.`;
+    return "This resume version is currently used by 1 application. Deleting it will remove the resume assignment from that application and erase this resume’s historical tracking. This action cannot be undone.";
   }
-  return `"${name}" is currently used by ${assignmentCount} applications. Permanently deleting it will remove the resume assignment from all ${assignmentCount} applications and erase this resume's historical tracking. This cannot be undone.`;
+  return `This resume version is currently used by ${assignmentCount} applications. Deleting it will remove the resume assignment from all ${assignmentCount} applications and erase this resume’s historical tracking. This action cannot be undone.`;
 }
 
 export function getResumeDeleteSuccessMessage({ name, unassigned_application_count: assignmentCount }) {
@@ -97,23 +92,8 @@ export function formatResumeUsage(count) {
   return `Used by ${count} application${count === 1 ? "" : "s"}`;
 }
 
-export function resolveResumeEditSwitch(currentState, nextResumeVersion, confirmLeave) {
-  const nextResumeId = nextResumeVersion.id;
-  const isSwitchingResume = currentState.editingId && currentState.editingId !== nextResumeId;
-
-  if (
-    isSwitchingResume &&
-    isResumeEditDirty(currentState.editingId, currentState.editForm, currentState.editFormBaseline) &&
-    !confirmLeave(RESUME_EDIT_SWITCH_CONFIRM_MESSAGE)
-  ) {
-    return currentState;
-  }
-
+export function resolveResumeEditSwitch(currentState, nextResumeVersion) {
   const hasDirtyCreateForm = isResumeFormDirty(currentState.createForm || initialCreateForm, initialCreateForm);
-  if (hasDirtyCreateForm && !confirmLeave(RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE)) {
-    return currentState;
-  }
-
   return {
     ...currentState,
     ...getEditStateForResume(nextResumeVersion),
@@ -129,28 +109,14 @@ export function resolveResumeEditSwitch(currentState, nextResumeVersion, confirm
   };
 }
 
-export function resolveResumeEditCancel(currentState, confirmLeave) {
-  if (
-    isResumeEditDirty(currentState.editingId, currentState.editForm, currentState.editFormBaseline) &&
-    !confirmLeave(RESUME_EDIT_CANCEL_CONFIRM_MESSAGE)
-  ) {
-    return currentState;
-  }
-
+export function resolveResumeEditCancel(currentState) {
   return {
     ...currentState,
     ...getCleanEditState(),
   };
 }
 
-export function resolveResumeCreateStart(currentState, confirmLeave) {
-  if (
-    isResumeEditDirty(currentState.editingId, currentState.editForm, currentState.editFormBaseline) &&
-    !confirmLeave(RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE)
-  ) {
-    return currentState;
-  }
-
+export function resolveResumeCreateStart(currentState) {
   return {
     ...currentState,
     ...getCleanEditState(),
@@ -158,18 +124,7 @@ export function resolveResumeCreateStart(currentState, confirmLeave) {
   };
 }
 
-export function resolveResumeDuplicate(currentState, sourceResumeVersion, resumeVersions, confirmLeave) {
-  if (
-    isResumeEditDirty(currentState.editingId, currentState.editForm, currentState.editFormBaseline) &&
-    !confirmLeave(RESUME_EDIT_CANCEL_CONFIRM_MESSAGE)
-  ) {
-    return currentState;
-  }
-
-  if (isResumeFormDirty(currentState.createForm, initialCreateForm) && !confirmLeave(RESUME_DUPLICATE_REPLACE_CREATE_CONFIRM_MESSAGE)) {
-    return currentState;
-  }
-
+export function resolveResumeDuplicate(currentState, sourceResumeVersion, resumeVersions) {
   return {
     ...currentState,
     ...getCleanEditState(),
@@ -183,6 +138,30 @@ export function resolveResumeDuplicate(currentState, sourceResumeVersion, resume
     },
     isCreateOpen: true,
   };
+}
+
+export function getResumeConfirmationDescriptor(action, currentState) {
+  const dirtyEdit = isResumeEditDirty(currentState.editingId, currentState.editForm, currentState.editFormBaseline);
+  const dirtyCreate = isResumeFormDirty(currentState.createForm || initialCreateForm, initialCreateForm);
+  const editingResume = action.currentResumeVersion;
+  if (action.type === "switch-edit" && (dirtyEdit || dirtyCreate)) {
+    const currentName = editingResume?.name || "this resume";
+    const description = dirtyEdit && dirtyCreate
+      ? `You have unsaved changes to "${currentName}" and an unfinished new resume version. Switching to "${action.targetResumeVersion.name}" will discard both.`
+      : dirtyEdit
+        ? `You have unsaved changes to "${currentName}". Switching to "${action.targetResumeVersion.name}" will discard them.`
+        : `You have an unfinished new resume version. Editing "${action.targetResumeVersion.name}" will discard that draft.`;
+    return { title: "Switch resume versions?", description, cancelLabel: dirtyCreate && !dirtyEdit ? "Keep draft" : "Keep editing", confirmLabel: dirtyCreate && !dirtyEdit ? "Discard and edit" : "Switch resume" };
+  }
+  if (action.type === "cancel-edit" && dirtyEdit) return { title: "Discard resume changes?", description: `Changes to "${editingResume?.name || "this resume"}" have not been saved.`, cancelLabel: "Keep editing", confirmLabel: "Discard changes" };
+  if (action.type === "start-create" && dirtyEdit) return { title: "Start a new resume version?", description: `You have unsaved changes to "${editingResume?.name || "this resume"}". Starting a new resume version will discard them.`, cancelLabel: "Keep editing", confirmLabel: "Discard and continue" };
+  if (action.type === "duplicate" && (dirtyEdit || dirtyCreate)) {
+    const sourceName = action.sourceResumeVersion.name;
+    if (dirtyEdit && dirtyCreate) return { title: "Replace current resume work?", description: `You have unsaved resume changes and an unfinished new resume draft. Creating a duplicate of "${sourceName}" will discard both.`, cancelLabel: "Keep editing", confirmLabel: "Discard and duplicate" };
+    if (dirtyEdit) return { title: "Discard resume changes?", description: `You have unsaved resume changes. Creating a duplicate of "${sourceName}" will discard them.`, cancelLabel: "Keep editing", confirmLabel: "Discard and duplicate" };
+    return { title: "Replace new resume draft?", description: `You have an unfinished new resume version. Creating a duplicate of "${sourceName}" will replace that draft.`, cancelLabel: "Keep draft", confirmLabel: "Replace with duplicate" };
+  }
+  return null;
 }
 
 function toPayload(formData) {
@@ -251,6 +230,9 @@ export default function ResumeVersionsPage({
   const [savingId, setSavingId] = useState(null);
   const [checkingDeleteId, setCheckingDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const [pendingResumeAction, setPendingResumeAction] = useState(null);
+  const [pendingResumeDeletion, setPendingResumeDeletion] = useState(null);
+  const [deleteDialogError, setDeleteDialogError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(resumeVersions.length === 0);
   const createDisclosureInitialized = useRef(false);
@@ -334,36 +316,12 @@ export default function ResumeVersionsPage({
       editFormBaseline,
       isCreateOpen,
     };
-    const nextState = resolveResumeEditSwitch(
-      currentState,
-      resumeVersion,
-      window.confirm,
-    );
-    if (nextState === currentState) return;
-
-    setEditingId(nextState.editingId);
-    setEditForm(nextState.editForm);
-    setEditFormBaseline(nextState.editFormBaseline);
-    setActionError(nextState.actionError);
-    setActionMessage(nextState.actionMessage);
-    setCreateError(nextState.createError);
-    setCreateForm(nextState.createForm);
-    setIsCreateOpen(nextState.isCreateOpen);
+    const action = { type: "switch-edit", targetResumeVersion: resumeVersion, currentResumeVersion: allResumeVersions.find((version) => version.id === editingId) };
+    requestResumeAction(action, currentState);
   }
 
   function cancelEditing() {
-    const nextState = resolveResumeEditCancel(
-      {
-        editingId,
-        editForm,
-        editFormBaseline,
-      },
-      window.confirm,
-    );
-
-    setEditingId(nextState.editingId);
-    setEditForm(nextState.editForm);
-    setEditFormBaseline(nextState.editFormBaseline);
+    requestResumeAction({ type: "cancel-edit", currentResumeVersion: allResumeVersions.find((version) => version.id === editingId) }, { editingId, editForm, editFormBaseline, createForm });
   }
 
   function handleCreateDisclosureClick(event) {
@@ -377,14 +335,7 @@ export default function ResumeVersionsPage({
       editingId,
       isCreateOpen,
     };
-    const nextState = resolveResumeCreateStart(currentState, window.confirm);
-    if (nextState === currentState) return;
-
-    shouldFocusCreateNameRef.current = true;
-    setEditingId(nextState.editingId);
-    setEditForm(nextState.editForm);
-    setEditFormBaseline(nextState.editFormBaseline);
-    setIsCreateOpen(nextState.isCreateOpen);
+    requestResumeAction({ type: "start-create", currentResumeVersion: allResumeVersions.find((version) => version.id === editingId) }, currentState);
   }
 
   function startDuplicating(resumeVersion) {
@@ -398,10 +349,18 @@ export default function ResumeVersionsPage({
       editingId,
       isCreateOpen,
     };
-    const nextState = resolveResumeDuplicate(currentState, resumeVersion, allResumeVersions, window.confirm);
-    if (nextState === currentState) return;
+    requestResumeAction({ type: "duplicate", sourceResumeVersion: resumeVersion, currentResumeVersion: allResumeVersions.find((version) => version.id === editingId) }, currentState);
+  }
 
-    shouldFocusCreateNameRef.current = true;
+  function applyResumeAction(action, currentState) {
+    const nextState = action.type === "switch-edit"
+      ? resolveResumeEditSwitch(currentState, action.targetResumeVersion)
+      : action.type === "cancel-edit"
+        ? resolveResumeEditCancel(currentState)
+        : action.type === "start-create"
+          ? resolveResumeCreateStart(currentState)
+          : resolveResumeDuplicate(currentState, action.sourceResumeVersion, allResumeVersions);
+    if (action.type === "start-create" || action.type === "duplicate") shouldFocusCreateNameRef.current = true;
     setActionError(nextState.actionError);
     setActionMessage(nextState.actionMessage);
     setCreateError(nextState.createError);
@@ -410,6 +369,24 @@ export default function ResumeVersionsPage({
     setEditForm(nextState.editForm);
     setEditFormBaseline(nextState.editFormBaseline);
     setIsCreateOpen(nextState.isCreateOpen);
+  }
+
+  function requestResumeAction(action, currentState) {
+    if (pendingResumeAction) return;
+    const descriptor = getResumeConfirmationDescriptor(action, currentState);
+    if (descriptor) {
+      setPendingResumeAction({ action, descriptor });
+      return;
+    }
+    applyResumeAction(action, currentState);
+  }
+
+  function confirmResumeAction() {
+    if (!pendingResumeAction) return;
+    const currentState = { actionError, actionMessage, createError, createForm, editingId, editForm, editFormBaseline, isCreateOpen };
+    const { action } = pendingResumeAction;
+    setPendingResumeAction(null);
+    applyResumeAction(action, currentState);
   }
 
   async function handleSaveEdit(resumeVersionId) {
@@ -456,16 +433,41 @@ export default function ResumeVersionsPage({
         setActionError("Deactivate this resume version before deleting it.");
         return;
       }
-      if (!window.confirm(getResumeDeleteConfirmationMessage(impact))) return;
-
-      setCheckingDeleteId(null);
-      setDeletingId(resumeVersion.id);
-      const deleted = await onDeleteResumeVersion(resumeVersion.id, impact.assignment_count);
-      setActionMessage(getResumeDeleteSuccessMessage(deleted));
+      setPendingResumeDeletion({ resumeVersion, impact });
+      setDeleteDialogError("");
     } catch (deleteError) {
       setActionError(deleteError.message || "Could not delete resume version.");
     } finally {
       setCheckingDeleteId(null);
+    }
+  }
+
+  async function confirmResumeDeletion() {
+    const pending = pendingResumeDeletion;
+    if (!pending || deletingId) return;
+    setDeletingId(pending.resumeVersion.id);
+    setDeleteDialogError("");
+    try {
+      const deleted = await onDeleteResumeVersion(pending.resumeVersion.id, pending.impact.assignment_count);
+      setActionMessage(getResumeDeleteSuccessMessage(deleted));
+      setPendingResumeDeletion(null);
+    } catch (deleteError) {
+      const message = deleteError.message || "Could not delete resume version.";
+      if (message === "This resume version's application usage changed. Review the deletion warning and try again.") {
+        try {
+          const impact = await onGetResumeVersionDeleteImpact(pending.resumeVersion.id);
+          if (impact.is_active) {
+            setPendingResumeDeletion(null);
+            setActionError("Deactivate this resume version before deleting it.");
+          } else {
+            setPendingResumeDeletion({ ...pending, impact });
+            setDeleteDialogError(message);
+          }
+        } catch (impactError) {
+          setDeleteDialogError(impactError.message || "Could not delete resume version.");
+        }
+      } else setDeleteDialogError(message);
+    } finally {
       setDeletingId(null);
     }
   }
@@ -713,6 +715,33 @@ export default function ResumeVersionsPage({
           </div>
         ) : null}
       </section>
+      <ConfirmationDialog
+        cancelLabel={pendingResumeAction?.descriptor.cancelLabel}
+        confirmLabel={pendingResumeAction?.descriptor.confirmLabel}
+        description={pendingResumeAction?.descriptor.description || ""}
+        isOpen={Boolean(pendingResumeAction)}
+        onCancel={() => setPendingResumeAction(null)}
+        onConfirm={confirmResumeAction}
+        title={pendingResumeAction?.descriptor.title || "Confirm action"}
+      />
+      <ConfirmationDialog
+        cancelLabel="Cancel"
+        confirmLabel="Delete permanently"
+        confirmTone="danger"
+        description={pendingResumeDeletion ? getResumeDeleteConfirmationDescription(pendingResumeDeletion.impact) : ""}
+        errorMessage={deleteDialogError}
+        isOpen={Boolean(pendingResumeDeletion)}
+        isProcessing={Boolean(deletingId)}
+        onCancel={() => {
+          if (!deletingId) {
+            setDeleteDialogError("");
+            setPendingResumeDeletion(null);
+          }
+        }}
+        onConfirm={confirmResumeDeletion}
+        processingLabel="Deleting..."
+        title={pendingResumeDeletion ? `Permanently delete "${pendingResumeDeletion.resumeVersion.name}"?` : "Permanently delete resume?"}
+      />
     </div>
   );
 }

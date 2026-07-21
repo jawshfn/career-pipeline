@@ -6,10 +6,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ResumeVersionsPage, {
-  RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE,
-  RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE,
-  RESUME_DUPLICATE_REPLACE_CREATE_CONFIRM_MESSAGE,
-  getResumeDeleteConfirmationMessage,
+  getResumeDeleteConfirmationDescription,
   getResumeDeleteSuccessMessage,
 } from "./ResumeVersionsPage.jsx";
 
@@ -159,7 +156,6 @@ describe("ResumeVersionsPage library experience", () => {
     let resolveDelete;
     const onGetResumeVersionDeleteImpact = vi.fn().mockImplementation(() => new Promise((resolve) => { resolveImpact = resolve; }));
     const onDeleteResumeVersion = vi.fn().mockImplementation(() => new Promise((resolve) => { resolveDelete = resolve; }));
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     await renderPage([resume, inactive], { onDeleteResumeVersion, onGetResumeVersionDeleteImpact });
     await act(async () => container.querySelector('input[type="checkbox"]').click());
     await act(async () => container.querySelector("button.quiet-danger-button").click());
@@ -171,47 +167,45 @@ describe("ResumeVersionsPage library experience", () => {
     expect([...activeCard.querySelectorAll("button")].every((button) => !button.disabled)).toBe(true);
 
     await act(async () => resolveImpact({ assignment_count: 0, is_active: false, name: "Inactive Resume" }));
+    expect(container.querySelector('[role="dialog"]')).toBeTruthy();
+    await act(async () => [...container.querySelector('[role="dialog"]').querySelectorAll("button")].at(-1).click());
     expect(inactiveCard.textContent).toContain("Deleting...");
     expect(onDeleteResumeVersion).toHaveBeenCalledWith(2, 0);
 
     await act(async () => resolveDelete({ name: "Inactive Resume", unassigned_application_count: 0 }));
-    confirm.mockRestore();
   });
 
   it("confirms deletion and leaves the card in place when deletion fails", async () => {
     const inactive = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
     const onDeleteResumeVersion = vi.fn().mockRejectedValue(new Error("Still assigned"));
     const onGetResumeVersionDeleteImpact = vi.fn().mockResolvedValue({ assignment_count: 1, is_active: false, name: "Authoritative Resume" });
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     await renderPage([inactive], { onDeleteResumeVersion, onGetResumeVersionDeleteImpact });
     await act(async () => container.querySelector('input[type="checkbox"]').click());
     await act(async () => container.querySelector("button.quiet-danger-button").click());
 
-    expect(confirm).toHaveBeenCalledWith(getResumeDeleteConfirmationMessage({ assignment_count: 1, is_active: false, name: "Authoritative Resume" }));
+    expect(container.querySelector('[role="dialog"]').textContent).toContain(getResumeDeleteConfirmationDescription({ assignment_count: 1 }));
+    await act(async () => [...container.querySelector('[role="dialog"]').querySelectorAll("button")].at(-1).click());
     expect(onDeleteResumeVersion).toHaveBeenCalledTimes(1);
-    expect(container.textContent).toContain("Still assigned");
+    expect(container.querySelector('[role="dialog"]').textContent).toContain("Still assigned");
     expect(container.textContent).toContain("Inactive Resume");
-    confirm.mockRestore();
   });
 
   it("does not call deletion when confirmation is declined", async () => {
     const inactive = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
     const onDeleteResumeVersion = vi.fn();
     const onGetResumeVersionDeleteImpact = vi.fn().mockResolvedValue({ assignment_count: 0, is_active: false, name: "Inactive Resume" });
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     await renderPage([inactive], { onDeleteResumeVersion, onGetResumeVersionDeleteImpact });
     await act(async () => container.querySelector('input[type="checkbox"]').click());
     await act(async () => container.querySelector("button.quiet-danger-button").click());
-
+    await act(async () => container.querySelector('[role="dialog"]').querySelector("button").click());
     expect(onDeleteResumeVersion).not.toHaveBeenCalled();
     expect(container.textContent).toContain("Inactive Resume");
-    confirm.mockRestore();
   });
 
   it("uses count-aware deletion confirmation and success messages", () => {
-    expect(getResumeDeleteConfirmationMessage({ assignment_count: 0, name: "Resume" })).toBe('Permanently delete "Resume"? This cannot be undone.');
-    expect(getResumeDeleteConfirmationMessage({ assignment_count: 1, name: "Resume" })).toBe('"Resume" is currently used by 1 application. Permanently deleting it will remove the resume assignment from that application and erase this resume\'s historical tracking. This cannot be undone.');
-    expect(getResumeDeleteConfirmationMessage({ assignment_count: 2, name: "Resume" })).toBe('"Resume" is currently used by 2 applications. Permanently deleting it will remove the resume assignment from all 2 applications and erase this resume\'s historical tracking. This cannot be undone.');
+    expect(getResumeDeleteConfirmationDescription({ assignment_count: 0 })).toContain("historical tracking");
+    expect(getResumeDeleteConfirmationDescription({ assignment_count: 1 })).toContain("1 application");
+    expect(getResumeDeleteConfirmationDescription({ assignment_count: 2 })).toContain("all 2 applications");
     expect(getResumeDeleteSuccessMessage({ name: "Resume", unassigned_application_count: 0 })).toBe('"Resume" permanently deleted.');
     expect(getResumeDeleteSuccessMessage({ name: "Resume", unassigned_application_count: 1 })).toBe('"Resume" permanently deleted and removed from 1 application.');
     expect(getResumeDeleteSuccessMessage({ name: "Resume", unassigned_application_count: 2 })).toBe('"Resume" permanently deleted and removed from 2 applications.');
@@ -267,7 +261,6 @@ describe("ResumeVersionsPage library experience", () => {
   });
 
   it("closes a clean edit and opens New resume version without confirmation", async () => {
-    const confirm = vi.spyOn(window, "confirm");
     await renderPage();
     const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
     await act(async () => edit.click());
@@ -275,15 +268,12 @@ describe("ResumeVersionsPage library experience", () => {
     const createName = container.querySelector('.resume-version-create-panel input[name="name"]');
     await act(async () => disclosure.querySelector("summary").click());
 
-    expect(confirm).not.toHaveBeenCalled();
     expect(container.querySelector(".resume-version-card-editing")).toBeNull();
     expect(disclosure.open).toBe(true);
     expect(document.activeElement).toBe(createName);
-    confirm.mockRestore();
   });
 
   it("keeps a dirty edit open when opening New resume version is declined", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     await renderPage();
     const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
     await act(async () => edit.click());
@@ -296,14 +286,13 @@ describe("ResumeVersionsPage library experience", () => {
     const disclosure = container.querySelector("details");
     await act(async () => disclosure.querySelector("summary").click());
 
-    expect(confirm).toHaveBeenCalledWith(RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE);
+    expect(container.querySelector('[role="dialog"]').textContent).toContain("Start a new resume version?");
+    await act(async () => container.querySelector('[role="dialog"]').querySelector("button").click());
     expect(container.querySelector('.resume-version-card-editing input[name="name"]').value).toBe("Unsaved Resume Name");
     expect(disclosure.open).toBe(false);
-    confirm.mockRestore();
   });
 
   it("clears a confirmed dirty edit and opens New resume version", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     await renderPage();
     const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
     await act(async () => edit.click());
@@ -317,11 +306,10 @@ describe("ResumeVersionsPage library experience", () => {
     const createName = container.querySelector('.resume-version-create-panel input[name="name"]');
     await act(async () => disclosure.querySelector("summary").click());
 
-    expect(confirm).toHaveBeenCalledWith(RESUME_CREATE_DISCARD_EDIT_CONFIRM_MESSAGE);
+    await act(async () => [...container.querySelector('[role="dialog"]').querySelectorAll("button")].at(-1).click());
     expect(container.querySelector(".resume-version-card-editing")).toBeNull();
     expect(disclosure.open).toBe(true);
     expect(document.activeElement).toBe(createName);
-    confirm.mockRestore();
   });
 
   it("prepares a duplicate draft without creating a record and focuses its editable name", async () => {
@@ -351,7 +339,6 @@ describe("ResumeVersionsPage library experience", () => {
   });
 
   it("does not replace an unfinished new-resume draft when duplication is declined", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     await renderPage();
     const disclosure = container.querySelector("details");
     await act(async () => disclosure.querySelector("summary").click());
@@ -363,14 +350,13 @@ describe("ResumeVersionsPage library experience", () => {
     });
     const duplicate = [...container.querySelectorAll("button")].find((button) => button.textContent === "Duplicate");
     await act(async () => duplicate.click());
-    expect(confirm).toHaveBeenCalledWith(RESUME_DUPLICATE_REPLACE_CREATE_CONFIRM_MESSAGE);
+    expect(container.querySelector('[role="dialog"]').textContent).toContain("Replace new resume draft?");
+    await act(async () => container.querySelector('[role="dialog"]').querySelector("button").click());
     expect(name.value).toBe("Unfinished draft");
     expect(disclosure.open).toBe(true);
-    confirm.mockRestore();
   });
 
   it("protects a duplicate-populated draft before opening an edit", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     await renderPage();
     const duplicate = [...container.querySelectorAll("button")].find((button) => button.textContent === "Duplicate");
     await act(async () => duplicate.click());
@@ -378,11 +364,10 @@ describe("ResumeVersionsPage library experience", () => {
     const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
     await act(async () => edit.click());
 
-    expect(confirm).toHaveBeenCalledWith(RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE);
+    await act(async () => container.querySelector('[role="dialog"]').querySelector("button").click());
     expect(createName.value).toBe("Engineering Resume copy");
     expect(container.querySelector(".resume-version-card-editing")).toBeNull();
     expect(container.querySelector("details").open).toBe(true);
-    confirm.mockRestore();
   });
 
   it("uses the secondary action treatment for Edit, Duplicate, and Deactivate", async () => {
@@ -410,7 +395,6 @@ describe("ResumeVersionsPage library experience", () => {
   });
 
   it("discards an accepted unfinished create draft before opening an edit", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     await renderPage();
     const disclosure = container.querySelector("details");
     await act(async () => disclosure.querySelector("summary").click());
@@ -422,11 +406,10 @@ describe("ResumeVersionsPage library experience", () => {
     });
     const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
     await act(async () => edit.click());
+    await act(async () => [...container.querySelector('[role="dialog"]').querySelectorAll("button")].at(-1).click());
     expect(disclosure.open).toBe(false);
     await act(async () => disclosure.querySelector("summary").click());
     expect(container.querySelector('.resume-version-create-panel input[name="name"]').value).toBe("");
-    expect(confirm).toHaveBeenCalledWith(RESUME_EDIT_DISCARD_CREATE_CONFIRM_MESSAGE);
-    confirm.mockRestore();
   });
 
   it("renders the active edit form before the remaining cards and restores its position after saving", async () => {

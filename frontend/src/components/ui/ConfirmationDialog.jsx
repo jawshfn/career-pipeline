@@ -20,24 +20,30 @@ export default function ConfirmationDialog({
   const returnFocusRef = useRef(null);
   const titleId = useId();
   const descriptionId = useId();
+  const onCancelRef = useRef(onCancel);
+
+  onCancelRef.current = onCancel;
 
   useEffect(() => {
     if (!isOpen) return undefined;
     returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     cancelButtonRef.current?.focus();
+    return () => {
+      returnFocusRef.current?.focus?.();
+    };
+  }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return undefined;
     function handleKeyDown(event) {
       if (event.key === "Escape" && !isProcessing) {
         event.preventDefault();
-        onCancel();
+        onCancelRef.current?.();
       }
     }
     window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      returnFocusRef.current?.focus?.();
-    };
-  }, [isOpen, isProcessing, onCancel]);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isProcessing]);
 
   if (!isOpen) return null;
 

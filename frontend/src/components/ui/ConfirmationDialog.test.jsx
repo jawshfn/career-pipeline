@@ -32,4 +32,21 @@ describe("ConfirmationDialog", () => {
     expect(container.querySelector('[role="alert"]')).not.toBeNull();
     expect([...container.querySelectorAll("button")].every((button) => button.disabled)).toBe(true);
   });
+
+  it("does not restore trigger focus while processing or error state changes", async () => {
+    const trigger = document.createElement("button");
+    trigger.textContent = "Open";
+    document.body.appendChild(trigger);
+    trigger.focus();
+    const onCancel = vi.fn();
+    await render({ onCancel });
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(document.activeElement).toBe(dialog.querySelector("button"));
+    await render({ onCancel, isProcessing: true, errorMessage: "Could not delete." });
+    expect(document.activeElement).not.toBe(trigger);
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    await render({ isOpen: false, onCancel });
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
 });

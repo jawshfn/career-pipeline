@@ -1163,6 +1163,10 @@ a {
   container: applications-list / inline-size;
 }
 
+.applications-list-feedback {
+  margin-bottom: 12px;
+}
+
 .application-filters-primary,
 .application-advanced-filters {
   display: grid;

@@ -6,6 +6,7 @@ import {
   getApplicationActivities,
 } from "../../services/applicationActivitiesService.js";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
+import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
 import AutoGrowingTextarea from "../ui/AutoGrowingTextarea.jsx";
 
@@ -75,6 +76,11 @@ export function formatLoggedTime(value) {
   }).format(date);
 }
 
+export function getActivityNotePreview(note, limit = 120) {
+  const normalized = String(note || "").trim().replace(/\s+/g, " ");
+  return normalized.length > limit ? `${normalized.slice(0, limit).trimEnd()}…` : normalized;
+}
+
 export function shouldShowActivityLoadingState({
   applicationChanged,
   currentIsLoading = false,
@@ -95,6 +101,8 @@ export default function ApplicationActivityTimeline({
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingActivityId, setDeletingActivityId] = useState(null);
+  const [pendingActivityDeletion, setPendingActivityDeletion] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const previousApplicationIdRef = useRef(applicationId);
@@ -182,23 +190,35 @@ export default function ApplicationActivityTimeline({
     }
   }
 
-  async function handleDeleteActivity(activityId) {
-    if (!window.confirm("Delete this activity entry?")) {
-      return;
-    }
+  function requestDeleteActivity(activity) {
+    if (pendingActivityDeletion) return;
+    setDeleteError("");
+    setPendingActivityDeletion(activity);
+  }
 
-    setDeletingActivityId(activityId);
-    setError("");
+  function cancelDeleteActivity() {
+    if (deletingActivityId) return;
+    setDeleteError("");
+    setPendingActivityDeletion(null);
+  }
+
+  async function handleDeleteActivity() {
+    const activity = pendingActivityDeletion;
+    if (!activity || deletingActivityId) return;
+
+    setDeletingActivityId(activity.id);
+    setDeleteError("");
     setMessage("");
 
     try {
-      await deleteApplicationActivity(applicationId, activityId);
+      await deleteApplicationActivity(applicationId, activity.id);
       setActivities((currentActivities) =>
-        currentActivities.filter((activity) => activity.id !== activityId),
+        currentActivities.filter((currentActivity) => currentActivity.id !== activity.id),
       );
       setMessage("Activity deleted.");
+      setPendingActivityDeletion(null);
     } catch (deleteError) {
-      setError(deleteError.message || "Could not delete activity.");
+      setDeleteError(deleteError.message || "Could not delete activity.");
     } finally {
       setDeletingActivityId(null);
     }
@@ -284,7 +304,7 @@ export default function ApplicationActivityTimeline({
                       className="quiet-danger-button"
                       type="button"
                       disabled={deletingActivityId === activity.id}
-                      onClick={() => handleDeleteActivity(activity.id)}
+                      onClick={() => requestDeleteActivity(activity)}
                     >
                       Delete
                     </button>
@@ -296,6 +316,24 @@ export default function ApplicationActivityTimeline({
           ) : null}
         </>
       ) : null}
+      <ConfirmationDialog
+        cancelLabel="Cancel"
+        confirmLabel="Delete activity"
+        confirmTone="danger"
+        description={pendingActivityDeletion ? (
+          <>
+            <p>This activity from {formatActivityDate(pendingActivityDeletion.activity_date)} will be permanently deleted. This action cannot be undone.</p>
+            {getActivityNotePreview(pendingActivityDeletion.note) ? <p>“{getActivityNotePreview(pendingActivityDeletion.note)}”</p> : null}
+          </>
+        ) : ""}
+        errorMessage={deleteError}
+        isOpen={Boolean(pendingActivityDeletion)}
+        isProcessing={Boolean(deletingActivityId)}
+        onCancel={cancelDeleteActivity}
+        onConfirm={handleDeleteActivity}
+        processingLabel="Deleting..."
+        title={pendingActivityDeletion ? `Delete ${pendingActivityDeletion.activity_type} activity?` : "Delete activity?"}
+      />
     </section>
   );
 }
