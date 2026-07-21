@@ -4,7 +4,7 @@ export const TEXT_CAPTURE_HASH_KEY = "career-pipeline-text-capture";
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{32,128}$/;
 
 export async function createBrowserTextCapture(detectionResult, fetchImpl = fetch) {
-  const supportedSources = { indeed: "Indeed", linkedin: "LinkedIn", ziprecruiter: "ZipRecruiter" };
+  const supportedSources = { indeed: "Indeed", linkedin: "LinkedIn", ziprecruiter: "ZipRecruiter", handshake: "Handshake" };
   const expectedSource = supportedSources[detectionResult?.provider];
   if (detectionResult?.status !== "detected" || !expectedSource || detectionResult.source !== expectedSource) {
     throw new Error("A supported detected job is required.");

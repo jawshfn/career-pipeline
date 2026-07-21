@@ -1246,6 +1246,41 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.notes).toBe("");
   });
 
+  it.each([
+    [
+      "Ocean Network Express",
+      "Analyst",
+      "Onsite, based in Richmond, VA",
+      "$50–60/hr",
+      "Full-time",
+      "SUMMARY\n\nWe are looking for graduates with a background in analytics.\n\nResponsibilities:\nBuild reliable reports.",
+    ],
+    [
+      "BeaconFire",
+      "Java Software Engineer",
+      "Remote or onsite, based in New York City, NY, San Francisco, CA, +6",
+      "$65–80K/yr",
+      "Full-time",
+      "BeaconFire is based in Central NJ and builds dependable software for clients.\n\nCore Required Skills and Competencies:\nJava and SQL.",
+    ],
+  ])("uses generic labeled parsing for Handshake raw text", (company, role, location, compensation, employmentType, description) => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: [`Company: ${company}`, `Role: ${role}`, `Location: ${location}`, `Compensation: ${compensation}`, `Employment type: ${employmentType}`, "Job description", description].join("\n"),
+      jobLink: "https://app.joinhandshake.com/jobs/11206968?searchId=example",
+      source: "Handshake",
+    });
+
+    expect(reviewData.parser_format).toBe("generic");
+    expect(reviewData.company_name).toBe(company);
+    expect(reviewData.role_title).toBe(role);
+    expect(reviewData.location).toBe(location);
+    expect(reviewData.compensation).toBe(compensation);
+    expect(reviewData.employment_type).toBe(employmentType);
+    expect(reviewData.source).toBe("Handshake");
+    expect(reviewData.job_description).toBe(description);
+    expect(reviewData.notes).toBe("");
+  });
+
   it("keeps long sentence-like generic company and role names eligible", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: [

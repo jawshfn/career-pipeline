@@ -44,6 +44,18 @@ def ziprecruiter_capture_payload(**overrides):
     return payload
 
 
+def handshake_capture_payload(**overrides):
+    payload = {
+        "version": 1,
+        "provider": "handshake",
+        "source": "Handshake",
+        "original_job_link": "https://app.joinhandshake.com/jobs/11206968?searchId=example",
+        "raw_text": "Company: Ocean Network Express\nRole: Analyst\nJob description\n" + "Helpful work. " * 10,
+    }
+    payload.update(overrides)
+    return payload
+
+
 def test_browser_text_capture_store_is_one_time_and_expires():
     store = BrowserTextCaptureStore()
     now = datetime(2026, 1, 1, tzinfo=UTC)
@@ -137,6 +149,42 @@ def test_ziprecruiter_browser_capture_is_validated_one_time_and_does_not_persist
     assert client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": token}).status_code == 404
 
 
+def test_handshake_browser_capture_is_validated_one_time_and_does_not_persist(client, db_session, monkeypatch):
+    store = BrowserTextCaptureStore()
+    monkeypatch.setattr("app.routers.browser_captures.browser_text_capture_store", store)
+    created = client.post("/api/browser-text-captures", json=handshake_capture_payload())
+    assert created.status_code == 200
+    token = created.json()["capture_token"]
+    consumed = client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": token})
+    assert consumed.status_code == 200
+    assert consumed.json() == {
+        "version": 1,
+        "provider": "handshake",
+        "source": "Handshake",
+        "original_job_link": handshake_capture_payload()["original_job_link"],
+        "raw_text": handshake_capture_payload()["raw_text"],
+    }
+    assert db_session.query(Application).count() == 0
+    assert client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": token}).status_code == 404
+
+
+def test_handshake_browser_capture_accepts_only_standalone_positive_numeric_job_urls(client):
+    for original_job_link in [
+        "https://app.joinhandshake.com/jobs/11206968",
+        "https://app.joinhandshake.com/jobs/11206968/",
+        "https://app.joinhandshake.com/jobs/11206968?searchId=example",
+    ]:
+        assert client.post("/api/browser-text-captures", json=handshake_capture_payload(original_job_link=original_job_link)).status_code == 200
+
+    for original_job_link in [
+        "https://app.joinhandshake.com/jobs", "https://app.joinhandshake.com/jobs/", "https://app.joinhandshake.com/jobs/0",
+        "https://app.joinhandshake.com/jobs/00", "https://app.joinhandshake.com/jobs/example", "https://app.joinhandshake.com/jobs/11206968/extra",
+        "https://app.joinhandshake.com/emp/jobs/11206968", "https://joinhandshake.com/jobs/11206968", "https://app.joinhandshake.com.evil.test/jobs/11206968",
+        "https://user:pass@app.joinhandshake.com/jobs/11206968", "https://app.joinhandshake.com:8443/jobs/11206968", "ftp://app.joinhandshake.com/jobs/11206968",
+    ]:
+        assert client.post("/api/browser-text-captures", json=handshake_capture_payload(original_job_link=original_job_link)).status_code == 422
+
+
 def test_ziprecruiter_browser_capture_accepts_page_one_and_paginated_selected_job_urls(client):
     for original_job_link in [
         "https://www.ziprecruiter.com/jobs-search?lk=pageOneKey",
@@ -174,6 +222,7 @@ def test_browser_capture_endpoint_rejects_untrusted_input(client):
         ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search/2?lk="),
         ziprecruiter_capture_payload(original_job_link="https://ziprecruiter.com.evil.test/jobs-search?lk=fake"),
         ziprecruiter_capture_payload(original_job_link="https://user:pass@www.ziprecruiter.com/jobs-search?lk=fake"),
+        handshake_capture_payload(source="Indeed"),
     ]
     for payload in invalid_payloads:
         assert client.post("/api/browser-text-captures", json=payload).status_code == 422

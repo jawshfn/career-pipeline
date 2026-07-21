@@ -8,6 +8,7 @@ import {
   isIndeedHostname,
   isLinkedInHostname,
   isZipRecruiterJobUrl,
+  isHandshakeJobUrl,
   openBrowserTextCareerPipeline,
   openIndeedCareerPipeline,
   openCareerPipeline,
@@ -133,6 +134,17 @@ test("routes only a selected ZipRecruiter search detail to the focused detector"
   assert.equal(isZipRecruiterJobUrl("https://ziprecruiter.com.evil.test/jobs-search?lk=selected-key"), false);
 });
 
+test("routes only a standalone Handshake job page to the focused detector", async () => {
+  const url = "https://app.joinhandshake.com/jobs/11206968?searchId=example";
+  const result = await inspectActivePage({
+    tabs: { query: async () => [{ id: 17, url }] },
+    scripting: { executeScript: async (details) => { assert.equal(details.func.name, "detectHandshakeJobPage"); return [{ result: { status: "no-current-job", version: 1 } }]; } },
+  });
+  assert.equal(result.provider, "handshake");
+  assert.equal(isHandshakeJobUrl(url), true);
+  for (const invalid of ["https://app.joinhandshake.com/jobs", "https://app.joinhandshake.com/jobs/0", "https://app.joinhandshake.com/emp/jobs/112", "https://app.joinhandshake.com/jobs/112/extra", "https://app.joinhandshake.com.evil.test/jobs/112"]) assert.equal(isHandshakeJobUrl(invalid), false);
+});
+
 test("marks an actual Indeed injection failure without exposing page data", async () => {
   const result = await inspectActivePage({
     tabs: { query: async () => [{ id: 14, url: "https://www.indeed.com/viewjob?jk=fake" }] },
@@ -147,6 +159,14 @@ test("marks an actual LinkedIn injection failure without exposing page data", as
     scripting: { executeScript: async () => { throw new Error("Injected function failed"); } },
   });
   assert.deepEqual(result, { status: "extension-error", error_code: "linkedin-injection-failed" });
+});
+
+test("marks an actual Handshake injection failure without exposing page data", async () => {
+  const result = await inspectActivePage({
+    tabs: { query: async () => [{ id: 18, url: "https://app.joinhandshake.com/jobs/112" }] },
+    scripting: { executeScript: async () => { throw new Error("Injected function failed"); } },
+  });
+  assert.deepEqual(result, { status: "extension-error", error_code: "handshake-injection-failed" });
 });
 
 test("posts an Indeed capture only to the local backend before opening a token URL", async () => {
@@ -202,4 +222,18 @@ test("posts a ZipRecruiter capture only after the open action with a token-only 
   assert.equal(JSON.parse(fetchCalls[0].options.body).source, "ZipRecruiter");
   assert.match(calls[0].url, /^http:\/\/localhost:5173\/#career-pipeline-text-capture=/);
   assert.doesNotMatch(calls[0].url, /Fictional Analyst/u);
+});
+
+test("posts a Handshake capture only after the open action with a token-only URL", async () => {
+  const calls = [];
+  const fetchCalls = [];
+  await openBrowserTextCareerPipeline(
+    { status: "detected", provider: "handshake", source: "Handshake", original_job_link: "https://app.joinhandshake.com/jobs/112?searchId=example", raw_text: "Company: Fictional\nRole: Analyst\nJob description\n" + "Helpful text ".repeat(10) },
+    { tabs: { create: async (details) => calls.push(details) } },
+    async (_url, options) => { fetchCalls.push(options); return { ok: true, json: async () => ({ version: 1, capture_token: "d".repeat(43) }) }; },
+  );
+  assert.equal(JSON.parse(fetchCalls[0].body).provider, "handshake");
+  assert.equal(JSON.parse(fetchCalls[0].body).source, "Handshake");
+  assert.match(calls[0].url, /^http:\/\/localhost:5173\/#career-pipeline-text-capture=/u);
+  assert.doesNotMatch(calls[0].url, /Fictional/u);
 });

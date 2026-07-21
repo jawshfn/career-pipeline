@@ -223,6 +223,7 @@ MAX_BROWSER_CAPTURE_TEXT_LENGTH = 100_000
 MAX_BROWSER_CAPTURE_URL_LENGTH = 2_048
 BROWSER_CAPTURE_TOKEN_PATTERN = r"^[A-Za-z0-9_-]{32,128}$"
 ZIPRECRUITER_SEARCH_PATH_PATTERN = re.compile(r"^/jobs-search(?:/[1-9]\d*)?/?$")
+HANDSHAKE_JOB_PATH_PATTERN = re.compile(r"^/jobs/[1-9]\d*/?$")
 
 
 def validate_browser_capture_url(value: str, provider: str) -> str:
@@ -239,10 +240,12 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
         (provider == "indeed" and (hostname == "indeed.com" or hostname.endswith(".indeed.com")))
         or (provider == "linkedin" and (hostname == "linkedin.com" or hostname.endswith(".linkedin.com")))
         or (provider == "ziprecruiter" and (hostname == "ziprecruiter.com" or hostname.endswith(".ziprecruiter.com")))
+        or (provider == "handshake" and hostname == "app.joinhandshake.com")
     )
     is_supported_path = (
         (provider != "linkedin" or parsed.path.startswith("/jobs/"))
         and (provider != "ziprecruiter" or ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path))
+        and (provider != "handshake" or HANDSHAKE_JOB_PATH_PATTERN.fullmatch(parsed.path))
     )
     selected_job_keys = parse_qs(parsed.query, keep_blank_values=True).get("lk", [])
     if (
@@ -260,8 +263,8 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
 
 class BrowserTextCaptureCreateRequest(BaseModel):
     version: Literal[1]
-    provider: Literal["indeed", "linkedin", "ziprecruiter"]
-    source: Literal["Indeed", "LinkedIn", "ZipRecruiter"]
+    provider: Literal["indeed", "linkedin", "ziprecruiter", "handshake"]
+    source: Literal["Indeed", "LinkedIn", "ZipRecruiter", "Handshake"]
     original_job_link: StrictStr
     raw_text: StrictStr = Field(min_length=1, max_length=MAX_BROWSER_CAPTURE_TEXT_LENGTH)
 
@@ -273,7 +276,7 @@ class BrowserTextCaptureCreateRequest(BaseModel):
     @field_validator("source")
     @classmethod
     def validate_provider_source_pair(cls, value: str, info) -> str:
-        pairs = {"indeed": "Indeed", "linkedin": "LinkedIn", "ziprecruiter": "ZipRecruiter"}
+        pairs = {"indeed": "Indeed", "linkedin": "LinkedIn", "ziprecruiter": "ZipRecruiter", "handshake": "Handshake"}
         if pairs.get(info.data.get("provider")) != value:
             raise ValueError("provider and source must be a supported matching pair")
         return value
@@ -298,8 +301,8 @@ class BrowserTextCaptureConsumeRequest(BaseModel):
 
 class BrowserTextCaptureConsumeResponse(BaseModel):
     version: Literal[1]
-    provider: Literal["indeed", "linkedin", "ziprecruiter"]
-    source: Literal["Indeed", "LinkedIn", "ZipRecruiter"]
+    provider: Literal["indeed", "linkedin", "ziprecruiter", "handshake"]
+    source: Literal["Indeed", "LinkedIn", "ZipRecruiter", "Handshake"]
     original_job_link: str
     raw_text: str
 

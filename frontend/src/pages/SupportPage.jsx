@@ -68,7 +68,7 @@ function getCaptureMethods(isDemoMode) {
       label: isDemoMode ? "Local app only" : "Best for supported job pages",
       description: isDemoMode
         ? "Browser Capture is unavailable in the GitHub Pages demo."
-        : "Use while viewing a supported Greenhouse, Indeed, or LinkedIn job page in your browser.",
+        : "Use for supported Greenhouse, Indeed, LinkedIn, ZipRecruiter, or standalone authenticated Handshake job pages. Handshake side-panel and search-result layouts are unsupported.",
       state: isDemoMode ? "unavailable" : "recommended",
     },
     {
@@ -104,6 +104,7 @@ const troubleshootingItems = [
     content: (
       <ul>
         <li>Wait for the current job page to finish loading and confirm the intended job posting is visible.</li>
+        <li>Standalone authenticated Handshake job pages are supported locally; Handshake side-panel and search-result layouts are not.</li>
         <li>Use Paste Job Text when the helper cannot confidently identify the current job.</li>
       </ul>
     ),

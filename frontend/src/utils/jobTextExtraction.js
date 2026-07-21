@@ -133,6 +133,11 @@ function detectParserFormat(rawText) {
   const normalizedLines = getCleanLines(rawText).map(normalizeBulletSeparators);
   const lowerText = normalizedText.toLowerCase();
   const lowerLines = normalizedLines.map((line) => line.toLowerCase());
+  const hasLabeledCaptureHeader = normalizedLines.some((line) => /^company\s*:\s*\S/iu.test(line))
+    && normalizedLines.some((line) => /^role\s*:\s*\S/iu.test(line));
+
+  if (hasLabeledCaptureHeader) return "generic";
+
   const linkedInClues = [
     lowerText.includes("company logo for,"),
     lowerText.includes("responses managed off linkedin"),

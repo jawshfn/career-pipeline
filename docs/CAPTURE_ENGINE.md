@@ -42,7 +42,7 @@ Transport:
 
 The experimental locally loaded Greenhouse detector is a transport bridge rather than a separate capture method. It can hand a successful browser detection to a new local app tab at `http://localhost:5173/`, where the normal `greenhouse-api` capture method runs. The bridge uses a short versioned fragment payload with only the provider, verified board token, verified job ID, and original employer job URL. The frontend clears the fragment immediately, validates it again, preserves the original employer URL as Job Link, defaults Source to Company Website, and opens the normal editable review. The extension itself makes no network request, does not search existing tabs, and does not require broad tab or host permissions. No application is saved automatically. Static demo mode does not perform browser-assisted imports.
 
-The same local helper can capture a confidently detected Indeed, LinkedIn, or experimental ZipRecruiter selected-job description after the user clicks it. The extension formats a bounded text package, then transfers it only to the local FastAPI backend through a random one-time token. The token is consumed into the existing deterministic Paste Job Text review with the matching Source and original Job Link preserved. LinkedIn supports search-results current-job panels and standalone job pages. ZipRecruiter currently targets signed-in `/jobs-search` pages with one `lk` selection key and remains pending live QA. The text remains in process memory for at most two minutes, is never put in the URL or SQLite before save, and no PursuitHQ request is made to any job board.
+The same local helper can capture a confidently detected Indeed, LinkedIn, ZipRecruiter selected-job, or standalone Handshake description after the user clicks it. The detector constructs labeled generic raw text, and the existing `generic` deterministic parser format feeds the same `deterministic-text` editable review; no Handshake-specific parser format is required. The one-time token preserves the matching Source and original Job Link, so Handshake arrives with Source `Handshake` and its original job link. LinkedIn supports search-results current-job panels and standalone job pages. ZipRecruiter targets signed-in `/jobs-search` pages with one `lk` selection key. Handshake supports authenticated standalone `/jobs/<positive numeric ID>` pages only; its side-panel/search-result layouts are unsupported. On a collapsed Handshake description, a user-initiated capture may activate the narrowly scoped job-description expansion control so the unmounted text can be included. The text remains in process memory for at most two minutes, is never put in the URL or SQLite before save, no PursuitHQ request is made to any job board, and nothing is saved automatically.
 
 Multiple transports feed the same editable review contract:
 
@@ -50,6 +50,8 @@ Multiple transports feed the same editable review contract:
 - Browser-assisted Greenhouse handoff, which feeds `greenhouse-api`
 - Browser-assisted Indeed text capture, which feeds `deterministic-text`
 - Browser-assisted LinkedIn text capture, which feeds `deterministic-text`
+- Browser-assisted ZipRecruiter text capture, which feeds `deterministic-text`
+- Browser-assisted Handshake text capture, which feeds `deterministic-text`
 - Deterministic pasted-text fallback
 - Link-only review
 

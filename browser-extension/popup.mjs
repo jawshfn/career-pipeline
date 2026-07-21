@@ -3,6 +3,7 @@ import { buildCareerPipelineCaptureUrl } from "./capturePayload.mjs";
 import { detectIndeedJobPage } from "./indeedDetector.mjs";
 import { detectLinkedInJobPage } from "./linkedinDetector.mjs";
 import { detectZipRecruiterJobPage } from "./zipRecruiterDetector.mjs";
+import { detectHandshakeJobPage } from "./handshakeDetector.mjs";
 import { buildBrowserTextCaptureUrl, createBrowserTextCapture } from "./textCaptureApi.mjs";
 
 const resultPanel = typeof document === "undefined" ? null : document.querySelector("#result");
@@ -144,6 +145,15 @@ export function isZipRecruiterJobUrl(rawUrl) {
   } catch { return false; }
 }
 
+export function isHandshakeJobUrl(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    return (url.protocol === "http:" || url.protocol === "https:") && !url.username && !url.password &&
+      (url.port === "" || url.port === "80" || url.port === "443") &&
+      url.hostname.toLowerCase() === "app.joinhandshake.com" && /^\/jobs\/[1-9]\d*\/?$/u.test(url.pathname);
+  } catch { return false; }
+}
+
 export async function openIndeedCareerPipeline(detectionResult, chromeApi = globalThis.chrome, fetchImpl = fetch) {
   return openBrowserTextCareerPipeline(detectionResult, chromeApi, fetchImpl);
 }
@@ -160,8 +170,8 @@ function renderResult(result) {
   resultPanel.replaceChildren();
   resetPresentation();
 
-  if (result?.status === "detected" && (result.provider === "indeed" || result.provider === "linkedin" || result.provider === "ziprecruiter")) {
-    const providerLabel = result.provider === "linkedin" ? "LinkedIn" : result.provider === "ziprecruiter" ? "ZipRecruiter" : "Indeed";
+  if (result?.status === "detected" && (result.provider === "indeed" || result.provider === "linkedin" || result.provider === "ziprecruiter" || result.provider === "handshake")) {
+    const providerLabel = result.provider === "linkedin" ? "LinkedIn" : result.provider === "ziprecruiter" ? "ZipRecruiter" : result.provider === "handshake" ? "Handshake" : "Indeed";
     resetPresentation("ready");
     appendCaptureIdentity(providerLabel, "Ready to review");
     appendElement("h2", "opportunity-title", result.role_title);
@@ -208,6 +218,7 @@ function renderResult(result) {
     "not-indeed": "This page is not a supported Indeed job page.",
     "not-linkedin": "This page is not a supported LinkedIn job page.",
     "not-ziprecruiter": "This page is not a supported ZipRecruiter selected job.",
+    "not-handshake": "This page is not a supported Handshake job page.",
     "no-current-job": "PursuitHQ could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
     "ambiguous-job": "PursuitHQ could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
     "capture-too-large": "This Indeed job is too large to capture. Copy the job posting and use Paste Job Text.",
@@ -220,6 +231,8 @@ function renderResult(result) {
       ? "PursuitHQ could not inspect this LinkedIn page. Reload the extension and try again."
       : result?.error_code === "ziprecruiter-injection-failed"
       ? "PursuitHQ could not inspect this ZipRecruiter page. Reload the extension and try again."
+      : result?.error_code === "handshake-injection-failed"
+      ? "PursuitHQ could not inspect this Handshake page. Reload the extension and try again."
       : "The detector encountered an unexpected error. Check the extension error details.",
   };
   if (result?.status === "no-supported-job-id") {
@@ -229,8 +242,13 @@ function renderResult(result) {
     appendText("state-detail", "Open the full job description and try again, or use Paste Job Text or Manual Entry in PursuitHQ.");
     return;
   }
-  const providerLabel = result?.provider === "linkedin" ? "LinkedIn" : result?.provider === "indeed" ? "Indeed" : result?.provider === "ziprecruiter" ? "ZipRecruiter" : "";
-  if (["no-current-job", "ambiguous-job", "capture-too-large", "not-linkedin", "not-indeed", "not-ziprecruiter"].includes(result?.status) && providerLabel) {
+  const providerLabel = result?.provider === "linkedin" ? "LinkedIn" : result?.provider === "indeed" ? "Indeed" : result?.provider === "ziprecruiter" ? "ZipRecruiter" : result?.provider === "handshake" ? "Handshake" : "";
+  if (result?.status === "description-expand-failed" && providerLabel === "Handshake") {
+    resetPresentation("neutral");
+    appendText("status-title", "Handshake could not fully expand this job description. Open the description and try again, or use Paste Job Text.");
+    return;
+  }
+  if (["no-current-job", "ambiguous-job", "capture-too-large", "not-linkedin", "not-indeed", "not-ziprecruiter", "not-handshake"].includes(result?.status) && providerLabel) {
     resetPresentation(result.status === "ambiguous-job" ? "warning" : "neutral");
     const action = result.status === "capture-too-large" ? "is too large to capture" : "could not confidently identify the current job";
     appendText("status-title", `${providerLabel} ${action}. Copy the job posting and use Paste Job Text.`);
@@ -270,16 +288,16 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
       return { status: "unsupported-page" };
     }
 
-    const provider = isLinkedInHostname(activeTab.url) ? "linkedin" : isIndeedHostname(activeTab.url) ? "indeed" : isZipRecruiterJobUrl(activeTab.url) ? "ziprecruiter" : "greenhouse";
+    const provider = isHandshakeJobUrl(activeTab.url) ? "handshake" : isLinkedInHostname(activeTab.url) ? "linkedin" : isIndeedHostname(activeTab.url) ? "indeed" : isZipRecruiterJobUrl(activeTab.url) ? "ziprecruiter" : "greenhouse";
     const injectionResults = await chromeApi.scripting.executeScript({
       target: { tabId: activeTab.id },
-      func: provider === "linkedin" ? detectLinkedInJobPage : provider === "indeed" ? detectIndeedJobPage : provider === "ziprecruiter" ? detectZipRecruiterJobPage : detectGreenhousePage,
+      func: provider === "handshake" ? detectHandshakeJobPage : provider === "linkedin" ? detectLinkedInJobPage : provider === "indeed" ? detectIndeedJobPage : provider === "ziprecruiter" ? detectZipRecruiterJobPage : detectGreenhousePage,
     });
     const detectionResult = unwrapInjectionResult(injectionResults);
     if (detectionResult.status === "detected") {
       return { ...detectionResult, original_job_link: activeTab.url };
     }
-    return provider === "linkedin" || provider === "indeed" || provider === "ziprecruiter" ? { ...detectionResult, provider } : detectionResult;
+    return provider === "handshake" || provider === "linkedin" || provider === "indeed" || provider === "ziprecruiter" ? { ...detectionResult, provider } : detectionResult;
   } catch (error) {
     console.error("PursuitHQ Greenhouse Detector inspection error", error);
     const classification = classifyInspectionError(error);
@@ -290,6 +308,7 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
 }
 
 function providerForUrl(url) {
+  if (isHandshakeJobUrl(url)) return "handshake";
   if (isLinkedInHostname(url)) return "linkedin";
   if (isIndeedHostname(url)) return "indeed";
   if (isZipRecruiterJobUrl(url)) return "ziprecruiter";
