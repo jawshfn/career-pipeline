@@ -20,6 +20,14 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+export function getDemoExportSnapshot() {
+  return clone({
+    resume_versions: demoState.resumeVersions,
+    applications: demoState.applications,
+    application_activities: demoState.activities,
+  });
+}
+
 function nowIso() {
   return new Date().toISOString();
 }

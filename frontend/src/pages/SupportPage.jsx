@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { downloadApplicationsCsv, downloadWorkspaceBackup } from "../services/exportsService.js";
 
 export const SUPPORT_EMAIL = "nunezjf2001@gmail.com";
 export const SUPPORT_MAILTO_SUBJECT = "PursuitHQ Issue Report";
@@ -164,10 +165,20 @@ const commonTasks = [
   { title: "Record application activity", description: "Open an application, select Activity, and add dated notes for calls, assessments, interviews, and other updates.", action: "Open Applications", page: "applications" },
 ];
 
-export default function SupportPage({ isDemoMode = false, onNavigate = () => {} }) {
+export default function SupportPage({
+  isDemoMode = false,
+  onDownloadApplicationsCsv = downloadApplicationsCsv,
+  onDownloadWorkspaceBackup = downloadWorkspaceBackup,
+  onNavigate = () => {},
+}) {
   const [copyStatus, setCopyStatus] = useState("");
+  const [activeExport, setActiveExport] = useState(null);
+  const [exportError, setExportError] = useState("");
+  const [exportStatus, setExportStatus] = useState("");
   const [showBackToTop, setShowBackToTop] = useState(false);
   const topRegionRef = useRef(null);
+  const exportErrorRef = useRef(null);
+  const exportInFlightRef = useRef(false);
   const reportTemplate = getSupportReportTemplate();
   const captureMethods = getCaptureMethods(isDemoMode);
 
@@ -180,12 +191,38 @@ export default function SupportPage({ isDemoMode = false, onNavigate = () => {} 
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (exportError) exportErrorRef.current?.focus();
+  }, [exportError]);
+
   async function handleCopyEmail() {
     setCopyStatus(await copyTextToClipboard(SUPPORT_EMAIL, "Email copied"));
   }
 
   async function handleCopyReportTemplate() {
     setCopyStatus(await copyTextToClipboard(reportTemplate, "Issue template copied"));
+  }
+
+  async function handleExport(kind) {
+    if (exportInFlightRef.current) return;
+    exportInFlightRef.current = true;
+    setActiveExport(kind);
+    setExportError("");
+    setExportStatus("");
+    try {
+      if (kind === "workspace") {
+        await onDownloadWorkspaceBackup();
+        setExportStatus("Workspace backup downloaded.");
+      } else {
+        await onDownloadApplicationsCsv();
+        setExportStatus("Applications CSV downloaded.");
+      }
+    } catch {
+      setExportError(kind === "workspace" ? "Could not download the workspace backup." : "Could not download the applications CSV.");
+    } finally {
+      exportInFlightRef.current = false;
+      setActiveExport(null);
+    }
   }
 
   return (
@@ -210,6 +247,7 @@ export default function SupportPage({ isDemoMode = false, onNavigate = () => {} 
         <span className="support-section-nav-label">Jump to:</span>
         <a href="#help-start">Start here</a>
         <a href="#help-common-tasks">Common tasks</a>
+        <a href="#help-data-backup">Data &amp; backup</a>
         <a href="#help-capture">Capture help</a>
         <a href="#help-troubleshooting">Troubleshooting</a>
         <a href="#help-feedback">Feedback</a>
@@ -232,6 +270,30 @@ export default function SupportPage({ isDemoMode = false, onNavigate = () => {} 
       <section className="panel support-panel" id="help-common-tasks" aria-labelledby="common-tasks-heading">
         <div className="section-heading"><h2 id="common-tasks-heading">Common tasks</h2><p>Jump to the part of PursuitHQ that matches what you need to do.</p></div>
         <div className="support-task-grid">{commonTasks.map((task) => <section className="support-task-card" key={task.title} aria-labelledby={`task-${task.page}-${task.title.replaceAll(" ", "-")}`}><h3 id={`task-${task.page}-${task.title.replaceAll(" ", "-")}`}>{task.title}</h3><p>{task.description}</p><button className="support-action-control secondary-button" type="button" aria-label={`${task.action}: ${task.title}`} onClick={() => onNavigate(task.page)}>{task.action}</button></section>)}</div>
+      </section>
+
+      <section className="panel support-panel support-data-backup-panel" id="help-data-backup" aria-labelledby="data-backup-heading">
+        <div className="section-heading">
+          <h2 id="data-backup-heading">Data &amp; backup</h2>
+          <p>Exports download directly to your device. PursuitHQ does not upload your workspace to a cloud service.</p>
+        </div>
+        {isDemoMode ? <p className="support-demo-export-note">Fictional demo data: exports contain the current demo session. Demo data still resets when the page reloads.</p> : null}
+        <div className="support-export-grid">
+          <section className="support-export-card" aria-labelledby="workspace-backup-heading">
+            <h3 id="workspace-backup-heading">Workspace backup</h3>
+            <p>Download a complete PursuitHQ backup containing applications, activity history, resume versions, and their relationships.</p>
+            <p className="support-export-supporting-text">Use this JSON file for safekeeping and future restore support.</p>
+            <button className="support-action-control support-primary-action" type="button" disabled={activeExport !== null} onClick={() => handleExport("workspace")}>{activeExport === "workspace" ? "Preparing backup..." : "Download workspace backup"}</button>
+          </section>
+          <section className="support-export-card" aria-labelledby="applications-spreadsheet-heading">
+            <h3 id="applications-spreadsheet-heading">Applications spreadsheet</h3>
+            <p>Download one CSV row per application for review in Excel, Google Sheets, or another spreadsheet tool.</p>
+            <p className="support-export-supporting-text">Activity history remains in the full workspace backup and is not expanded into CSV rows. Long-form job descriptions and complete notes remain available in the workspace backup.</p>
+            <button className="support-action-control secondary-button" type="button" disabled={activeExport !== null} onClick={() => handleExport("csv")}>{activeExport === "csv" ? "Preparing CSV..." : "Download applications CSV"}</button>
+          </section>
+        </div>
+        {exportStatus ? <p className="support-export-status" role="status">{exportStatus}</p> : null}
+        {exportError ? <p className="support-export-error" ref={exportErrorRef} role="alert" tabIndex={-1}>{exportError}</p> : null}
       </section>
 
       <section className="panel support-panel" id="help-capture" aria-labelledby="capture-methods-heading">

@@ -148,6 +148,46 @@ describe("SupportPage", () => {
     container.remove();
   });
 
+  it("renders data exports and manages loading, success, and failure feedback", async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    document.body.appendChild(container);
+    let resolveWorkspace;
+    const onDownloadWorkspaceBackup = vi.fn(() => new Promise((resolve) => { resolveWorkspace = resolve; }));
+    let rejectCsv;
+    const onDownloadApplicationsCsv = vi.fn(() => new Promise((_, reject) => { rejectCsv = reject; }));
+
+    await act(async () => root.render(
+      <SupportPage
+        isDemoMode
+        onDownloadApplicationsCsv={onDownloadApplicationsCsv}
+        onDownloadWorkspaceBackup={onDownloadWorkspaceBackup}
+      />,
+    ));
+    expect(container.querySelector('a[href="#help-data-backup"]')).not.toBeNull();
+    expect(container.textContent).toContain("Fictional demo data");
+    expect(container.textContent).toContain("Long-form job descriptions and complete notes remain available in the workspace backup.");
+    const workspaceButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Download workspace backup");
+    const csvButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Download applications CSV");
+    await act(async () => workspaceButton.click());
+    expect(workspaceButton.textContent).toBe("Preparing backup...");
+    expect(csvButton.disabled).toBe(true);
+    await act(async () => resolveWorkspace());
+    expect(container.querySelector('[role="status"]').textContent).toBe("Workspace backup downloaded.");
+
+    await act(async () => csvButton.click());
+    expect(csvButton.textContent).toBe("Preparing CSV...");
+    await act(async () => rejectCsv(new Error("offline")));
+    const error = container.querySelector('[role="alert"]');
+    expect(error.textContent).toBe("Could not download the applications CSV.");
+    expect(document.activeElement).toBe(error);
+    expect(onDownloadWorkspaceBackup).toHaveBeenCalledOnce();
+    expect(onDownloadApplicationsCsv).toHaveBeenCalledOnce();
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
   it("uses collapsed native disclosures for troubleshooting and privacy details", () => {
     const markup = renderToStaticMarkup(<SupportPage />);
 

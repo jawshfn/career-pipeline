@@ -21,6 +21,7 @@ import PipelinePage from "./pages/PipelinePage.jsx";
 import QuickAddPage from "./pages/QuickAddPage.jsx";
 import ResumeVersionsPage from "./pages/ResumeVersionsPage.jsx";
 import SupportPage from "./pages/SupportPage.jsx";
+import { downloadApplicationsCsv, downloadWorkspaceBackup } from "./services/exportsService.js";
 
 export const UNSAVED_PAGE_CONFIRM_MESSAGE = "You have unsaved changes on this page. Leave without saving?";
 
@@ -308,7 +309,12 @@ export default function App() {
           onUpdateApplication={handleUpdateApplication}
         />
       ) : activePage === "support" ? (
-        <SupportPage isDemoMode={isDemoMode()} onNavigate={navigateToPage} />
+        <SupportPage
+          isDemoMode={isDemoMode()}
+          onDownloadApplicationsCsv={downloadApplicationsCsv}
+          onDownloadWorkspaceBackup={downloadWorkspaceBackup}
+          onNavigate={navigateToPage}
+        />
       ) : (
         <ApplicationsPage
           applications={activeApplications}

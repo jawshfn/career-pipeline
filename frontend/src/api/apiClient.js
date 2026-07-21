@@ -14,6 +14,16 @@ async function parseResponse(response, fallbackErrorMessage) {
   return response.json();
 }
 
+async function parseDownloadResponse(response, fallbackErrorMessage) {
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    const message = errorBody?.detail || fallbackErrorMessage;
+    throw new Error(Array.isArray(message) ? fallbackErrorMessage : message);
+  }
+
+  return response.blob();
+}
+
 async function apiRequest(path, { body, fallbackErrorMessage = "Request failed.", method = "GET" } = {}) {
   const requestOptions = { method };
 
@@ -42,4 +52,9 @@ export function apiPatch(path, payload, fallbackErrorMessage) {
 
 export function apiDelete(path, fallbackErrorMessage) {
   return apiRequest(path, { fallbackErrorMessage, method: "DELETE" });
+}
+
+export async function apiDownload(path, fallbackErrorMessage) {
+  const response = await fetch(`${API_BASE_URL}${path}`, { method: "GET" });
+  return parseDownloadResponse(response, fallbackErrorMessage);
 }
