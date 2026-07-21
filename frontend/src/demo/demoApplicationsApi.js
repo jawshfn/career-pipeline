@@ -1,5 +1,6 @@
 import {
   createDemoApplication,
+  deleteDemoApplication,
   getDemoActionItems,
   getDemoApplication,
   getDemoApplications,
@@ -24,6 +25,10 @@ export function createApplication(applicationData) {
 
 export function updateApplication(applicationId, applicationData) {
   return asAsync(updateDemoApplication(applicationId, applicationData));
+}
+
+export function deleteApplication(applicationId) {
+  return asAsync(deleteDemoApplication(applicationId));
 }
 
 export function getApplicationActionItems() {

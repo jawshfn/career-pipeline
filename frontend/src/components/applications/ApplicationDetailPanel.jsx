@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { getApplication } from "../../services/applicationsService.js";
 import {
@@ -214,6 +214,69 @@ function getCloseConfirmationMessage(hasUnsavedApplicationChanges, hasUnsavedAct
   return "You have unsaved changes. Close without saving?";
 }
 
+function DeleteApplicationDialog({ companyName, hasUnsavedChanges, isDeleting, onCancel, onConfirm, roleTitle }) {
+  const cancelButtonRef = useRef(null);
+  const dialogRef = useRef(null);
+
+  useEffect(() => {
+    cancelButtonRef.current?.focus();
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape" && !isDeleting) {
+        event.preventDefault();
+        onCancel();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isDeleting, onCancel]);
+
+  function trapFocus(event) {
+    if (event.key !== "Tab") return;
+    const focusableElements = [...dialogRef.current.querySelectorAll("button:not([disabled])")];
+    if (focusableElements.length === 0) {
+      event.preventDefault();
+      return;
+    }
+    const first = focusableElements[0];
+    const last = focusableElements.at(-1);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  return (
+    <div className="delete-application-dialog-backdrop" role="presentation">
+      <section
+        aria-describedby="delete-application-dialog-description"
+        aria-labelledby="delete-application-dialog-title"
+        aria-modal="true"
+        className="delete-application-dialog"
+        onKeyDown={trapFocus}
+        ref={dialogRef}
+        role="dialog"
+      >
+        <h3 id="delete-application-dialog-title">Permanently delete {roleTitle} at {companyName}?</h3>
+        <div id="delete-application-dialog-description">
+          <p>This will delete the application, notes, job posting, preparation details, red flags, and activity history. This action cannot be undone.</p>
+          {hasUnsavedChanges ? <p>Any unsaved changes or activity draft will also be discarded.</p> : null}
+        </div>
+        <div className="delete-application-dialog-actions">
+          <button className="secondary-button" disabled={isDeleting} ref={cancelButtonRef} type="button" onClick={onCancel}>Cancel</button>
+          <button className="delete-application-confirm-button" disabled={isDeleting} type="button" onClick={onConfirm}>
+            {isDeleting ? "Deleting..." : "Delete permanently"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export function shouldRefreshActivitiesAfterApplicationSave(previousStatus, nextStatus) {
   return Boolean(previousStatus && nextStatus && previousStatus !== nextStatus);
 }
@@ -223,6 +286,7 @@ export default function ApplicationDetailPanel({
   initialApplication,
   initialTab,
   onClose,
+  onDeleteApplication,
   onLoadApplication,
   onSaveApplication,
   onUnsavedChangesChange,
@@ -240,6 +304,10 @@ export default function ApplicationDetailPanel({
   const [activityRefreshVersion, setActivityRefreshVersion] = useState(0);
   const [isLoading, setIsLoading] = useState(!initialApplication);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const deleteTriggerRef = useRef(null);
 
   function resetActivityDraft() {
     const nextActivityDraft = getInitialActivityForm();
@@ -340,6 +408,7 @@ export default function ApplicationDetailPanel({
   }
 
   function handleClose() {
+    if (isDeleting) return;
     if (
       hasUnsavedChanges &&
       !window.confirm(getCloseConfirmationMessage(hasUnsavedApplicationChanges, hasUnsavedActivityDraft))
@@ -352,6 +421,7 @@ export default function ApplicationDetailPanel({
 
   async function handleSubmit(event) {
     event.preventDefault();
+    if (isDeleting) return;
     setIsSaving(true);
     setSaveError("");
     setSaveMessage("");
@@ -402,6 +472,29 @@ export default function ApplicationDetailPanel({
     }
   }
 
+  function openDeleteDialog() {
+    setDeleteError("");
+    setIsDeleteDialogOpen(true);
+  }
+
+  function closeDeleteDialog() {
+    if (isDeleting) return;
+    setIsDeleteDialogOpen(false);
+    deleteTriggerRef.current?.focus();
+  }
+
+  async function confirmDeleteApplication() {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    setDeleteError("");
+    try {
+      await onDeleteApplication(applicationId);
+    } catch (error) {
+      setDeleteError(error.message || "Could not permanently delete this application.");
+      setIsDeleting(false);
+    }
+  }
+
   const roleTitle = getDisplayValue(formData.role_title, "Untitled role");
   const companyName = getDisplayValue(formData.company_name, "Unknown company");
   const appliedSummary = formData.date_applied ? formatDisplayDate(formData.date_applied, "") : "Not applied";
@@ -445,7 +538,7 @@ export default function ApplicationDetailPanel({
           <p className="detail-company-name">at {companyName}</p>
           <p>Track status, follow-ups, notes, and prep for this opportunity.</p>
         </div>
-        <button className="secondary-button" type="button" onClick={handleClose}>
+        <button className="secondary-button" disabled={isDeleting} type="button" onClick={handleClose}>
           Close
         </button>
       </div>
@@ -564,14 +657,31 @@ export default function ApplicationDetailPanel({
           </div>
 
           <div className="detail-actions">
-            <button className="secondary-button" type="button" onClick={handleClose}>
+            <button className="secondary-button" disabled={isDeleting} type="button" onClick={handleClose}>
               Close
             </button>
-            <button type="submit" disabled={isSaving}>
+            <button type="submit" disabled={isSaving || isDeleting}>
               {isSaving ? "Saving..." : "Save changes"}
             </button>
           </div>
+          <div className="application-danger-zone">
+            <p>Permanently delete this application and all associated activity history. This action cannot be undone.</p>
+            {deleteError ? <ErrorMessage message={deleteError} /> : null}
+            <button className="delete-application-trigger" disabled={isDeleting} ref={deleteTriggerRef} type="button" onClick={openDeleteDialog}>
+              Delete application
+            </button>
+          </div>
         </form>
+      ) : null}
+      {isDeleteDialogOpen ? (
+        <DeleteApplicationDialog
+          companyName={companyName}
+          hasUnsavedChanges={hasUnsavedChanges}
+          isDeleting={isDeleting}
+          onCancel={closeDeleteDialog}
+          onConfirm={confirmDeleteApplication}
+          roleTitle={roleTitle}
+        />
       ) : null}
     </section>
   );

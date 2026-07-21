@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createDemoResumeVersion,
+  deleteDemoApplication,
+  getDemoActivities,
   deleteDemoResumeVersion,
   getDemoApplications,
   getDemoResumeVersionDeleteImpact,
@@ -43,6 +45,24 @@ describe("demo resume deletion", () => {
     expect(() => deleteDemoResumeVersion(4, 0)).toThrow("application usage changed");
     expect(getDemoApplications({ includeArchived: true })).toEqual(before);
     expect(getDemoResumeVersions({ includeInactive: true }).some((resume) => resume.id === 4)).toBe(true);
+  });
+});
+
+describe("demo application deletion", () => {
+  beforeEach(() => resetDemoState());
+
+  it("permanently removes the application and only its activity history", () => {
+    const applications = getDemoApplications({ includeArchived: true });
+    const deletedApplication = applications[0];
+    const retainedApplication = applications.find((application) => application.id !== deletedApplication.id);
+    const retainedActivities = getDemoActivities(retainedApplication.id);
+
+    expect(deleteDemoApplication(deletedApplication.id)).toBeNull();
+    expect(getDemoApplications({ includeArchived: true }).some((application) => application.id === deletedApplication.id)).toBe(false);
+    expect(() => getDemoActivities(deletedApplication.id)).not.toThrow();
+    expect(getDemoActivities(deletedApplication.id)).toEqual([]);
+    expect(getDemoActivities(retainedApplication.id)).toEqual(retainedActivities);
+    expect(() => deleteDemoApplication(deletedApplication.id)).toThrow("Application not found.");
   });
 });
 

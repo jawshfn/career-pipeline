@@ -59,7 +59,7 @@ The current prototype includes:
 - Internal Smart Capture parser-format detection for common LinkedIn, Indeed, ZipRecruiter, and generic pasted text while preserving the user's selected Source
 - Smart Capture review guardrails that summarize best-match parser, captured fields, and what remains user-controlled before save
 - Advisory duplicate and similar-opportunity warnings in Manual Entry and Smart Capture review
-- Application create, list, update, detail editing, and archive behavior
+- Application create, list, update, detail editing, and protected permanent deletion
 - Applications page with Active, Closed, and All views plus search, filters, sorting, opportunity-focused table rows, Notes shortcut, and detail access
 - Application Detail tabs for Overview, Follow-up, Job Details, Job Posting, Resume & Prep, Red Flags, and Activity
 - Read-only Application Detail Overview command snapshot with contextual helpful next-step shortcuts into focused editing tabs
@@ -76,7 +76,8 @@ The current prototype includes:
 - Red-flag checklist and notes in Application Detail, with compact indicators in Applications and Status Board
 - Backend-derived Dashboard summary cards plus expandable Application Status, Sources, Red Flags, Source Results, and Resume Results sections
 - Sticky responsive app shell with page content centered inside the main content area and no intended page-level horizontal overflow
-- Archive behavior that stores `Archived` status while hiding archived records from normal active workflow views
+- Protected permanent deletion from Application Detail for accidental, duplicate, test, or incorrect records, including associated activity-history cleanup
+- Legacy archived records remain hidden for compatibility, but no new user-facing Archive workflow is exposed
 
 ## Non-Goals for Current Prototype
 
@@ -142,6 +143,8 @@ Current controls include:
 
 The table avoids showing raw pasted notes as long previews. Applications with notes show a compact Notes badge that opens the Job Details tab, while full notes remain readable and editable in Application Detail.
 
+The Applications table does not show a routine row-level delete action. Permanent deletion is available only from Application Detail.
+
 ### Edit Application Detail
 
 Application Detail is a tabbed panel opened from Applications.
@@ -161,6 +164,8 @@ Overview is a read-only command snapshot with compact opportunity context, read-
 Editable areas include company name, role title, job link, source, status, resume version, applied date, follow-up date, next action, prep notes, location, compensation, employment type, Job Posting Snapshot, Personal Notes, red flags, and red-flag notes.
 
 Status appears in the compact summary strip on focused edit tabs. Applied date, follow-up date, and next action live in Follow-up. Saved date is read-only Added to tracker metadata in Overview. Company, role, source, job link, location, compensation, employment type, and Personal Notes live in Job Details. Job Posting is a reading-first editable snapshot that remains optional and may be added later. Resume version and prep notes live in Resume & Prep. Existing notes are not automatically migrated into Job Posting Snapshot.
+
+Protected permanent deletion appears beneath the normal Close and Save changes controls. It requires a custom confirmation dialog that identifies the company and role, cannot be undone, and removes associated activity history.
 
 `date_saved` means the date the job was added to PursuitHQ. `date_applied` means the date the user actually submitted the application. Changing status to Applied or later can default an empty Applied Date, but existing Applied Date values are not automatically overwritten or cleared.
 
@@ -184,7 +189,7 @@ Stored statuses:
 - Withdrawn
 - Archived
 
-Archived is stored for archived records but is not an active status-board stage. Active Status Board views show non-archived applications and preserve Rejected and Withdrawn as closed outcomes.
+Rejected and Withdrawn are the normal historical closed outcomes. `Archived` is a legacy stored compatibility value, not a user-selectable workflow or active Status Board stage. Active Status Board views show non-archived applications.
 
 Follow-up due is not a status-board status. It is a computed action state based on `follow_up_date`, such as overdue, upcoming, or not scheduled.
 

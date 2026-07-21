@@ -124,6 +124,8 @@ describe("SupportPage", () => {
     const markup = renderToStaticMarkup(<SupportPage />);
 
     ["Add a job", "Review applications", "Update application status", "Set and review follow-ups", "Manage resume versions", "Record application activity"].forEach((task) => expect(markup).toContain(task));
+    expect(markup).toContain("Incorrect, duplicate, or test records can be permanently deleted");
+    expect(markup).toContain("Use Rejected or Withdrawn for normal historical outcomes.");
     expect(markup).toContain('aria-label="Open Applications: Record application activity"');
     expect(markup).toContain('id="help-top"');
   });

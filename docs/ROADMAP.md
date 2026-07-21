@@ -19,7 +19,7 @@ Status: complete
 
 Status: complete
 
-- Phase 2.0 — Implement application create, read, update, list, and archive behavior.
+- Phase 2.0 — Create the FastAPI application create, read, update, list, and initial removal foundation.
 - Phase 2.1 — Build lightweight application capture and the initial Applications table.
 
 ## Phase 3 — Status Workflow
@@ -231,6 +231,12 @@ Status: complete through Phase 21.2b
 - Phase 21.1c — Support selected ZipRecruiter jobs across paginated search-result URLs.
 - Phase 21.2a — Add bounded standalone Handshake job capture with deterministic metadata extraction and safe expansion of truncated descriptions.
 - Phase 21.2b — Support the currently selected Handshake search-result side panel with matched job identity and direct-link preservation.
+
+## Phase 22 — Application Record Management
+
+Status: complete through Phase 22.1
+
+- Phase 22.1 — Add protected permanent application deletion with activity-history cleanup, accessible confirmation, real/demo parity, and responsive Application Detail placement.
 
 ## Later Optional Enhancements
 

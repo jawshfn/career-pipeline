@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { createApplication, getApplications, updateApplication } from "./services/applicationsService.js";
+import { createApplication, deleteApplication, getApplications, updateApplication } from "./services/applicationsService.js";
 import {
   createResumeVersion,
   deleteResumeVersion,
@@ -43,6 +43,10 @@ export function clearDeletedResumeAssignments(applications, resumeVersionId) {
       ? { ...application, resume_version_id: null }
       : application,
   );
+}
+
+export function removeApplicationById(applications, applicationId) {
+  return applications.filter((application) => String(application.id) !== String(applicationId));
 }
 
 export function shouldConfirmPageNavigation(currentPage, requestedPage, hasUnsavedChanges) {
@@ -238,6 +242,11 @@ export default function App() {
     return createdResumeVersion;
   }
 
+  async function handleDeleteApplication(applicationId) {
+    await deleteApplication(applicationId);
+    setApplications((currentApplications) => removeApplicationById(currentApplications, applicationId));
+  }
+
   async function handleUpdateResumeVersion(resumeVersionId, payload) {
     const updatedResumeVersion = await updateResumeVersion(resumeVersionId, payload);
     setResumeVersions((currentResumeVersions) =>
@@ -322,6 +331,7 @@ export default function App() {
           isLoading={isLoading}
           onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onRequestedApplicationHandled={() => setRequestedApplicationId(null)}
+          onDeleteApplication={handleDeleteApplication}
           onUpdateApplication={handleUpdateApplication}
           requestedApplicationId={requestedApplicationId}
           resumeVersions={allResumeVersions}

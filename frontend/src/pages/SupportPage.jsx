@@ -157,7 +157,7 @@ const privacyPrinciples = [
 
 const commonTasks = [
   { title: "Add a job", description: "Capture or enter a new opportunity, review the details, and save it to your pipeline.", action: "Open Add Job", page: "quick-add" },
-  { title: "Review applications", description: "Search your saved opportunities and open Application Detail for notes, dates, preparation, and history.", action: "Open Applications", page: "applications" },
+  { title: "Review applications", description: "Search your saved opportunities and open Application Detail for notes, dates, preparation, and history. Incorrect, duplicate, or test records can be permanently deleted from the bottom of Application Detail; this also removes activity history and cannot be undone. Use Rejected or Withdrawn for normal historical outcomes.", action: "Open Applications", page: "applications" },
   { title: "Update application status", description: "Move opportunities through Saved, Applied, Interview, Offer, and other workflow stages.", action: "Open Status Board", page: "pipeline" },
   { title: "Set and review follow-ups", description: "See overdue and upcoming follow-ups and decide what needs attention next.", action: "Open Reminders", page: "command-center" },
   { title: "Manage resume versions", description: "Create, duplicate, update, deactivate, or remove the resume variants used across applications.", action: "Open Resumes", page: "resume-versions" },

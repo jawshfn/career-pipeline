@@ -25,7 +25,7 @@ Status: implemented
 
 ### GET /api/applications
 
-Purpose: list applications. Active views use the default behavior, which excludes archived records.
+Purpose: list applications. Active views use the default behavior, which excludes legacy archived records.
 
 Query parameters:
 
@@ -135,10 +135,11 @@ Example request:
 }
 ```
 
-Archive behavior:
+Legacy archive compatibility:
 
-- Updating status to `Archived` also sets `is_archived` to `true`.
-- Restoring archived records through this generic endpoint is rejected for now.
+- `Archived` and `is_archived` remain for compatibility with records created by earlier versions.
+- PursuitHQ does not expose a user-facing Archive or Restore workflow.
+- Legacy archived records remain excluded from normal workflow views.
 
 Activity behavior:
 
@@ -149,14 +150,21 @@ Status: implemented
 
 ### DELETE /api/applications/{application_id}
 
-Purpose: archive an application rather than hard-delete it.
+Purpose: permanently delete one application.
 
 Behavior:
 
-- sets `status` to `Archived`
-- sets `is_archived` to `true`
+- returns `204 No Content` on success
+- returns `404 Not Found` when the application does not exist
+- removes associated Application Activity records in the same operation
+- does not set status to `Archived` or create a status-change activity
+- does not alter an assigned resume-version record
 
 Status: implemented
+
+### Legacy Archive Compatibility
+
+`include_archived`, `is_archived`, and the stored `Archived` value remain for compatibility with records created by earlier versions. PursuitHQ does not currently expose a user-facing Archive or Restore workflow. New application deletion is permanent, and legacy archived records remain excluded from normal workflow views.
 
 ## Browser Text Captures
 

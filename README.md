@@ -23,7 +23,7 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 - **Reminders:** review overdue follow-ups, upcoming follow-ups, and Needs check-in items.
 - **Dashboard:** see summary metrics, source results, resume results, and red-flag snapshots.
 - **Resumes:** manage reusable resume variants and connect them to applications.
-- **Application Detail:** edit follow-up, job details, a dedicated Job Posting Snapshot, resume/prep notes, red flags, and activity timeline entries.
+- **Application Detail:** edit follow-up, job details, Job Posting Snapshot, resume/prep notes, red flags, activity history, and safely remove incorrect or duplicate records.
 
 ## Browser Capture - Recommended Local Workflow
 

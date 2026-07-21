@@ -2061,6 +2061,113 @@ a {
   opacity: 0.65;
 }
 
+.application-danger-zone {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 18px;
+  row-gap: 9px;
+  margin-top: 18px;
+  padding-top: 22px;
+  border-top: 1px solid var(--color-border);
+}
+
+.application-danger-zone p {
+  margin: 0;
+}
+
+.application-danger-zone p {
+  max-width: 680px;
+  color: var(--color-muted);
+}
+
+.application-danger-zone > .message {
+  grid-column: 1 / -1;
+}
+
+.delete-application-trigger,
+.delete-application-confirm-button {
+  min-height: 40px;
+  border-radius: 6px;
+  padding: 9px 15px;
+  font-weight: 800;
+}
+
+.delete-application-trigger {
+  grid-column: 2;
+  align-self: center;
+  justify-self: end;
+  border: 1px solid #b84a55;
+  color: #a53541;
+  background: var(--color-surface);
+}
+
+.delete-application-trigger:hover {
+  border-color: #9a2d38;
+  background: #fff5f5;
+}
+
+.delete-application-dialog-backdrop {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(18, 24, 43, 0.5);
+}
+
+.delete-application-dialog {
+  width: min(520px, 100%);
+  padding: 24px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  color: var(--color-text);
+  background: var(--color-surface);
+  box-shadow: 0 24px 60px rgba(18, 24, 43, 0.28);
+}
+
+.delete-application-dialog h3,
+.delete-application-dialog p {
+  margin: 0;
+}
+
+.delete-application-dialog p + p {
+  margin-top: 12px;
+}
+
+.delete-application-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.delete-application-confirm-button {
+  border: 1px solid #a52d39;
+  color: #ffffff;
+  background: #a52d39;
+}
+
+.delete-application-confirm-button:hover {
+  border-color: #87242e;
+  background: #87242e;
+}
+
+.delete-application-trigger:focus-visible,
+.delete-application-confirm-button:focus-visible,
+.delete-application-dialog button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+@media (max-width: 520px) {
+  .delete-application-dialog-backdrop { padding: 12px; }
+  .delete-application-dialog { padding: 18px; }
+  .delete-application-dialog-actions { align-items: stretch; flex-direction: column; }
+  .delete-application-dialog-actions button { width: 100%; }
+}
+
 .resume-version-form,
 .resume-version-edit-form {
   display: grid;
@@ -4643,6 +4750,15 @@ textarea:focus-visible {
 
   .application-detail-form {
     grid-template-columns: 1fr;
+  }
+
+  .application-danger-zone {
+    grid-template-columns: 1fr;
+  }
+
+  .delete-application-trigger {
+    grid-column: 1;
+    justify-self: start;
   }
 
   .detail-field-group-status {

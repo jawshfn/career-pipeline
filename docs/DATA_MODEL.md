@@ -1,6 +1,6 @@
 # Data Model
 
-The implemented backend uses SQLite with SQLAlchemy. The model supports quick capture, application tracking, resume-version assignment, follow-up action items, next actions, application-scoped contact/prep details, red-flag fields, activity timeline entries, and archive behavior.
+The implemented backend uses SQLite with SQLAlchemy. The model supports quick capture, application tracking, activity history, protected permanent deletion, resume-version assignment, follow-up action items, next actions, application-scoped contact/prep details, red-flag fields, and legacy archive compatibility.
 
 Browser-assisted capture fragments are temporary transport data only. No board token, capture metadata, or browser-import history is stored in a separate table; only the application fields the user reviews and saves persist through the existing application model.
 
@@ -40,7 +40,7 @@ Stores the main record for each job opportunity or application.
 - company_mismatch: boolean red-flag field
 - too_good_to_be_true: boolean red-flag field
 - red_flags_notes: optional notes about user-managed red flags
-- is_archived: boolean for hiding inactive records from active workflow views
+- is_archived: legacy compatibility field for hiding older archived records from active workflow views; it is not the current deletion mechanism
 - created_at: creation timestamp
 - updated_at: last update timestamp
 
@@ -60,7 +60,7 @@ Allowed stored statuses:
 - Withdrawn
 - Archived
 
-`Archived` is stored for archived records, but it is not an active Status Board stage. Active Applications and Status Board views filter out records where `is_archived` is true.
+`Archived` is a legacy stored value for older archived records. It is not user-selectable, is not an active Status Board stage, and has no current user-facing Archive or Restore workflow. Active Applications and Status Board views filter out records where `is_archived` is true.
 
 `Follow-up due` is not stored as a status. Follow-up action states are computed from `follow_up_date`.
 
@@ -72,9 +72,10 @@ Allowed stored statuses:
 
 - Creating an application without status defaults to `Saved`.
 - Creating a normal application with `Archived` status is rejected.
-- Archiving through DELETE sets `status` to `Archived` and `is_archived` to true.
+- DELETE permanently removes the application and its associated activity rows in the same operation.
+- Deleting an application does not delete its assigned resume version.
+- Legacy archived records remain hidden for compatibility.
 - Updating status to `Archived` also sets `is_archived` to true.
-- Restoring archived records is intentionally not implemented yet.
 - Red flags are stored directly on the application record for the current prototype.
 
 ## resume_versions
@@ -117,6 +118,7 @@ Stores dated Activity Timeline entries for an application.
 
 - application_activities.application_id references applications.id
 - Activities are scoped to one application and do not appear on other applications.
+- Deleting the parent application also deletes its activity history.
 
 ### Implementation Notes
 

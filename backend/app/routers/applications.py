@@ -257,12 +257,12 @@ def update_application(
     return application
 
 
-@router.delete("/{application_id}", response_model=ApplicationRead)
-def archive_application(application_id: int, db: Session = Depends(get_db)) -> Application:
+@router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_application(application_id: int, db: Session = Depends(get_db)) -> None:
     application = get_existing_application(application_id, db)
 
-    application.is_archived = True
-    application.status = ARCHIVED_APPLICATION_STATUS
+    db.query(ApplicationActivity).filter(ApplicationActivity.application_id == application.id).delete(
+        synchronize_session=False
+    )
+    db.delete(application)
     db.commit()
-    db.refresh(application)
-    return application

@@ -215,6 +215,7 @@ export default function ApplicationsPage({
   onUnsavedChangesChange,
   requestedApplicationId,
   onRequestedApplicationHandled,
+  onDeleteApplication,
   onUpdateApplication,
   resumeVersions,
 }) {
@@ -225,6 +226,7 @@ export default function ApplicationsPage({
   const [filters, setFilters] = useState(initialFilters);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [applicationDetailCache, setApplicationDetailCache] = useState(() => new Map());
+  const [successMessage, setSuccessMessage] = useState("");
   const detailPanelRef = useRef(null);
   const shouldScrollToDetailRef = useRef(false);
   const viewedApplications = getApplicationsForView(applications, applicationView);
@@ -287,6 +289,18 @@ export default function ApplicationsPage({
     setHasDetailUnsavedChanges(false);
   }
 
+  async function handleDeleteApplication(applicationId) {
+    setSuccessMessage("");
+    await onDeleteApplication(applicationId);
+    setApplicationDetailCache((currentCache) => {
+      const nextCache = new Map(currentCache);
+      nextCache.delete(applicationId);
+      return nextCache;
+    });
+    closeDetails();
+    setSuccessMessage("Application permanently deleted.");
+  }
+
   function openDetails(applicationId, initialTab = "overview") {
     if (selectedApplicationId === applicationId) {
       setSelectedDetailTab(initialTab);
@@ -336,6 +350,7 @@ export default function ApplicationsPage({
             initialTab={selectedDetailTab}
             key={selectedApplicationId}
             onClose={closeDetails}
+            onDeleteApplication={handleDeleteApplication}
             onLoadApplication={cacheApplicationDetail}
             onSaveApplication={onUpdateApplication}
             onUnsavedChangesChange={setHasDetailUnsavedChanges}
@@ -352,6 +367,7 @@ export default function ApplicationsPage({
             {viewedApplications.length === 1 ? "" : "s"}.
           </p>
         </div>
+        {successMessage ? <div className="message message-success" role="status">{successMessage}</div> : null}
 
         <div className="application-view-tabs" aria-label="Application view">
           {applicationViewOptions.map((option) => (

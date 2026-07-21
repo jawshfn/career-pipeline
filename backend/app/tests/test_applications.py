@@ -472,21 +472,32 @@ def test_update_application_red_flags(client):
     assert get_response.json()["red_flags_notes"] == "Recruiter email domain does not match the company."
 
 
-def test_archive_application_instead_of_hard_delete(client):
-    created = create_application(client).json()
+def test_delete_application_permanently_removes_its_activities_only(client):
+    resume = client.post(
+        "/api/resume-versions",
+        json={"name": "Deletion Resume", "target_role": "Engineering"},
+    ).json()
+    deleted_application = create_application(client, resume_version_id=resume["id"]).json()
+    other_application = create_application(client, company_name="Other application").json()
+    client.post(
+        f"/api/applications/{deleted_application['id']}/activities",
+        json={"activity_date": "2026-07-01", "activity_type": "Note", "note": "Delete this activity too."},
+    )
+    client.patch(f"/api/applications/{deleted_application['id']}", json={"status": "Applied"})
+    client.post(
+        f"/api/applications/{other_application['id']}/activities",
+        json={"activity_date": "2026-07-01", "activity_type": "Note", "note": "Keep this activity."},
+    )
 
-    delete_response = client.delete(f"/api/applications/{created['id']}")
-    assert delete_response.status_code == 200
-    archived = delete_response.json()
-    assert archived["is_archived"] is True
-    assert archived["status"] == "Archived"
+    delete_response = client.delete(f"/api/applications/{deleted_application['id']}")
 
-    list_response = client.get("/api/applications")
-    assert list_response.status_code == 200
-    assert list_response.json() == []
-
-    archived_list_response = client.get("/api/applications?include_archived=true")
-    assert len(archived_list_response.json()) == 1
+    assert delete_response.status_code == 204
+    assert client.get(f"/api/applications/{deleted_application['id']}").status_code == 404
+    assert client.delete(f"/api/applications/{deleted_application['id']}").status_code == 404
+    assert get_activities(client, other_application["id"])[0]["note"] == "Keep this activity."
+    assert client.get("/api/applications").json() == [other_application]
+    assert client.get("/api/applications?include_archived=true").json() == [other_application]
+    assert client.get(f"/api/resume-versions/{resume['id']}").json()["id"] == resume["id"]
 
 
 def test_patching_status_to_archived_sets_archive_flag(client):

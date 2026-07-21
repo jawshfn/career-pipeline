@@ -212,6 +212,22 @@ export function updateDemoApplication(applicationId, payload) {
   return clone(updatedApplication);
 }
 
+export function deleteDemoApplication(applicationId) {
+  const application = demoState.applications.find((item) => String(item.id) === String(applicationId));
+
+  if (!application) {
+    throw new Error("Application not found.");
+  }
+
+  demoState = {
+    ...demoState,
+    applications: demoState.applications.filter((item) => String(item.id) !== String(applicationId)),
+    activities: demoState.activities.filter((activity) => String(activity.application_id) !== String(applicationId)),
+  };
+
+  return null;
+}
+
 export function getDemoActionItems() {
   const today = getTodayValue();
   const upcomingCutoff = formatLocalDate(addDays(new Date(`${today}T12:00:00`), 3));

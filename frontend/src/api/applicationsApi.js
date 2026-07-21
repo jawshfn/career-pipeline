@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost } from "./apiClient.js";
+import { apiDelete, apiGet, apiPatch, apiPost } from "./apiClient.js";
 
 const APPLICATION_ERROR = "Application request failed.";
 
@@ -23,6 +23,13 @@ export function createApplication(applicationData) {
 
 export function updateApplication(applicationId, applicationData) {
   return apiPatch(`/api/applications/${applicationId}`, applicationData, APPLICATION_ERROR);
+}
+
+export function deleteApplication(applicationId) {
+  return apiDelete(
+    `/api/applications/${applicationId}`,
+    "Could not permanently delete this application.",
+  );
 }
 
 export function getApplicationActionItems() {

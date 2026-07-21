@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   getBrowserCaptureStartupState,
   clearDeletedResumeAssignments,
+  removeApplicationById,
   removeResumeVersionById,
   updateActiveResumeVersions,
   upsertResumeVersionToFront,
@@ -147,6 +148,12 @@ describe("resume version collection state", () => {
       { id: 2, is_archived: false, resume_version_id: 1, status: "Applied" },
       { id: 1, is_archived: false, resume_version_id: null, status: "Interview" },
     ]);
+  });
+});
+
+describe("application collection state", () => {
+  it("removes a permanently deleted application without affecting other records", () => {
+    expect(removeApplicationById([{ id: 1 }, { id: "2" }, { id: 3 }], 2)).toEqual([{ id: 1 }, { id: 3 }]);
   });
 });
 

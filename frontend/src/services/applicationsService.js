@@ -6,6 +6,7 @@ const applicationsApi = isDemoMode() ? demoApplicationsApi : realApplicationsApi
 
 export const {
   createApplication,
+  deleteApplication,
   getApplication,
   getApplicationActionItems,
   getApplications,
