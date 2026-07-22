@@ -367,9 +367,65 @@ Purpose: update resume version metadata.
 
 Status: implemented
 
+## Exports
+
+### GET /api/exports/workspace
+
+Purpose: download a complete versioned JSON workspace backup.
+
+Behavior:
+
+- returns a JSON attachment with format identifier `pursuithq-workspace-backup` and version `1`
+- includes resume versions, applications, application activities, stored IDs and relationships, and active, inactive, closed, and legacy archived stored records
+- uses stable ID ordering and does not change stored data
+- uses a timestamped filename: `pursuithq-workspace-backup-YYYY-MM-DD-HHmmssZ.json`
+
+Example top-level shape:
+
+```json
+{
+  "format": "pursuithq-workspace-backup",
+  "version": 1,
+  "exported_at": "...",
+  "counts": {
+    "resume_versions": 0,
+    "applications": 0,
+    "application_activities": 0
+  },
+  "data": {
+    "resume_versions": [],
+    "applications": [],
+    "application_activities": []
+  }
+}
+```
+
+Status: implemented
+
+### GET /api/exports/applications.csv
+
+Purpose: download a concise applications CSV for human review.
+
+Behavior:
+
+- returns a CSV attachment with one row per non-archived active or closed application; legacy archived applications are excluded
+- uses the 19-column review contract without an internal Application ID, concise note previews, a numeric red-flag count, and an indication of whether a job description is saved
+- includes a UTF-8 BOM and spreadsheet formula-injection protection
+- orders rows by Date Saved descending, then internal Application ID descending
+- uses a timestamped filename: `pursuithq-applications-YYYY-MM-DD-HHmmssZ.csv`
+- is read-only and does not change stored data
+
+Status: implemented
+
+The formatted `.xlsx` workbook is generated in the frontend with current application and resume data. It works in both local and fictional demo modes, uses the same 19-column human-review contract as CSV, and is not a restore format. There is no `/api/exports/applications.xlsx` endpoint.
+
 ## Planned Future API
 
 These endpoints are planned or possible future work and are not implemented yet.
+
+### Workspace Import And Restore
+
+A reviewed import/restore API is planned for Phase 23.2. The endpoint shape, validation response, conflict model, and transaction behavior are intentionally not finalized yet.
 
 ### Follow-Up Completion and Rescheduling
 

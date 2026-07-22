@@ -37,6 +37,7 @@ PursuitHQ centralizes that activity into a simple workflow that supports fast ca
 - Summary-focused Dashboard: metrics should explain activity and progress without becoming heavy analytics.
 - Local-first early prototype: the backend should work well as a local development app with SQLite.
 - Transparent status tracking: application states should be clear and easy to update.
+- User-controlled portability: exports should be explicit, local, readable, and separate complete backup data from human-review formats.
 - Public-repo appropriate: documentation should focus on product, architecture, and development, not private strategy or personal examples.
 
 ## Current Implemented Scope
@@ -78,6 +79,12 @@ The current prototype includes:
 - Sticky responsive app shell with page content centered inside the main content area and no intended page-level horizontal overflow
 - Protected permanent deletion from Application Detail for accidental, duplicate, test, or incorrect records, including associated activity-history cleanup
 - Legacy archived records remain hidden for compatibility, but no new user-facing Archive workflow is exposed
+- Runtime-aware Data & backup section in Help
+- Complete versioned JSON workspace backup containing stored resume versions, applications, activity history, IDs, and relationships
+- Concise applications CSV and formatted XLSX review exports for non-archived applications
+- Formatted XLSX workbook with filters, readable dates, clickable links, and static status, red-flag, and overdue-follow-up highlights
+- Runtime-aware export support for both the local workspace and the current fictional demo session
+- CSV and XLSX review exports exclude archived rows and long-form backup-only content
 
 ## Non-Goals for Current Prototype
 
@@ -91,7 +98,7 @@ The current prototype includes:
 - Cloud-hosted production deployment
 - AI-generated resumes, scoring, or recommendations
 - Full contact-management CRM
-- Import/export workflows
+- Workspace import or restore until a reviewed validation and confirmation workflow is implemented
 - Private business strategy, monetization plans, or competitor analysis
 
 ## Core Workflows
@@ -144,6 +151,12 @@ Current controls include:
 The table avoids showing raw pasted notes as long previews. Applications with notes show a compact Notes badge that opens the Job Details tab, while full notes remain readable and editable in Application Detail.
 
 The Applications table does not show a routine row-level delete action. Permanent deletion is available only from Application Detail.
+
+### Export and Back Up Workspace Data
+
+Exports are initiated from Help → Data & backup. JSON is the complete workspace backup, while XLSX is the recommended review format for Excel and Google Sheets and CSV is the portable fallback. XLSX and CSV intentionally contain concise review fields rather than all stored content; full notes, full job descriptions, activity history, internal identifiers, and relationships remain in JSON.
+
+Import/restore is not currently available. Demo exports contain the current fictional in-memory session and do not change its reset-on-refresh behavior.
 
 ### Edit Application Detail
 

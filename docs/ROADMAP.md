@@ -234,15 +234,23 @@ Status: complete through Phase 21.2b
 
 ## Phase 22 — Application Record Management
 
-Status: complete through Phase 22.1
+Status: complete through Phase 22.2b
 
 - Phase 22.1 — Add protected permanent application deletion with activity-history cleanup, accessible confirmation, real/demo parity, and responsive Application Detail placement.
 - Phase 22.2a — Add a shared accessible confirmation-dialog system for unsaved navigation, capture-method switching, application switching, Application Detail closing, Job Posting draft dismissal, and permanent application deletion.
+- Phase 22.2b — Complete confirmation-dialog consistency for Activity deletion and Resume Library switching, cancellation, duplication, and permanent deletion workflows.
+
+## Phase 23 — Data Portability And Backup
+
+Status: complete through Phase 23.1b
+
+- Phase 23.1 — Add complete JSON workspace backups and concise applications CSV exports with local/demo parity.
+- Phase 23.1b — Add a formatted XLSX applications workbook for Excel and Google Sheets with shared review-row formatting, readable dates, links, and static highlights. JSON is the complete backup; CSV and XLSX are 19-column human-review formats without Application ID, with JSON and CSV served by backend endpoints and XLSX generated in the frontend for local and demo parity.
+- Phase 23.2 — Add reviewed workspace import and restore with validation, preview, conflict handling, and explicit confirmation.
 
 ## Later Optional Enhancements
 
 - Public demo deployment improvements
-- Import/export workflows
 - Email or calendar reminders
 - Resume file upload and preview
 - Authentication and multi-device sync

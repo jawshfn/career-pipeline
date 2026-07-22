@@ -24,6 +24,7 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 - **Dashboard:** see summary metrics, source results, resume results, and red-flag snapshots.
 - **Resumes:** manage reusable resume variants and connect them to applications.
 - **Application Detail:** edit follow-up, job details, Job Posting Snapshot, resume/prep notes, red flags, activity history, and safely remove incorrect or duplicate records.
+- **Data & backup:** download a complete JSON workspace backup, a formatted Excel workbook for review, or a portable applications CSV.
 
 ## Browser Capture - Recommended Local Workflow
 
@@ -45,9 +46,25 @@ Paste Job Text remains the broad deterministic fallback for unsupported sites or
 
 Read the [Paste Job Text Guide](docs/SMART_CAPTURE_GUIDE.md) for copy-and-review tips.
 
+## Data & Backup
+
+Export actions are user initiated from Help → Data & backup and download directly to the device.
+
+### Workspace backup — JSON
+
+The JSON export is a complete, lossless backup of stored workspace data. It includes resume versions, applications, activity history, IDs, and relationships, including active, closed, inactive, and legacy archived stored records. It is intended for safekeeping and future restore support; restore/import is not implemented yet.
+
+### Formatted applications workbook — XLSX
+
+The XLSX workbook is a human-review format for Excel and Google Sheets. It contains concise non-archived application rows with filters, readable dates, clickable job links, status highlighting, red-flag highlighting, and overdue-follow-up highlighting. It omits full job descriptions, complete notes, activity rows, and internal IDs. The workbook is generated in the frontend for both local and demo modes.
+
+### Applications CSV
+
+The CSV is a portable human-review fallback using the same 19-column review contract as XLSX. It includes active and historical closed applications, excludes legacy archived applications, and contains concise previews rather than full long-form content.
+
 ## Tech Stack
 
-- Frontend: React, Vite, JavaScript, CSS
+- Frontend: React, Vite, JavaScript, CSS, ExcelJS
 - Backend: FastAPI, Python, SQLAlchemy
 - Database: SQLite
 - Testing: pytest, Vitest
@@ -125,9 +142,9 @@ npm run build
 
 PursuitHQ is a working local-first prototype, not a production SaaS app. The GitHub Pages site is a static portfolio demo with reset-on-refresh sample data.
 
-Implemented: Greenhouse and Lever structured link imports, best-effort custom Greenhouse discovery, experimental locally loaded Greenhouse browser identifier capture, bounded Indeed capture, supported LinkedIn standalone and current-job panel capture, signed-in ZipRecruiter selected-job capture across supported paginated search URLs, authenticated Handshake standalone and selected side-panel capture, one-time local transfer, and editable review with no autosave.
+Implemented: Greenhouse and Lever structured link imports, best-effort custom Greenhouse discovery, experimental locally loaded Greenhouse browser identifier capture, bounded Indeed capture, supported LinkedIn standalone and current-job panel capture, signed-in ZipRecruiter selected-job capture across supported paginated search URLs, authenticated Handshake standalone and selected side-panel capture, one-time local transfer, editable review with no autosave, and JSON, CSV, and XLSX workspace exports.
 
-Not implemented: Chrome Web Store distribution, production backend/SaaS deployment, generic job-board scraping, authentication, multi-user synchronization, AI extraction, import/export, or email/calendar integrations.
+Not implemented: Chrome Web Store distribution, production backend/SaaS deployment, generic job-board scraping, authentication, multi-user synchronization, AI extraction, workspace import/restore, or email/calendar integrations.
 
 ## Documentation
 
