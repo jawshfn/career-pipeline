@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildJobBriefAiOptions, buildJobBriefMessages, jobBriefSystemInstruction } from "../src/jobBrief.js";
-import { validateJobBrief } from "../src/jobBriefSchema.js";
+import { validateJobBrief, validateJobBriefDetailed } from "../src/jobBriefSchema.js";
 
 const request = {
   company_name: "Fictional Systems",
@@ -57,5 +57,17 @@ describe("runtime brief validation", () => {
     expect(validateJobBrief(brief({ role_summary: "<p>HTML</p>" }))).toBeNull();
     expect(validateJobBrief(brief({ schema_version: "2" }))).toBeNull();
     expect(validateJobBrief(brief({ research_tasks: Array(11).fill("research") }))).toBeNull();
+  });
+  it.each([
+    [brief({ role_summary: 1 }), "$.role_summary", "wrong_type"],
+    [(() => { const value = brief(); delete value.limitations; return value; })(), "$.limitations", "missing_key"],
+    [brief({ unexpected_field: "ignored" }), "$", "unexpected_key"],
+    [brief({ role_summary: "" }), "$.role_summary", "blank_string"],
+    [brief({ role_summary: "x".repeat(1001) }), "$.role_summary", "too_long"],
+    [brief({ role_summary: "<p>HTML</p>" }), "$.role_summary", "html_detected"],
+    [brief({ responsibilities: Array(13).fill({ statement: "s", evidence: "e" }) }), "$.responsibilities", "too_many_items"],
+    [brief({ schema_version: "2" }), "$.schema_version", "unsupported_schema_version"],
+  ])("returns a safe detailed issue for invalid output", (value, path, code) => {
+    expect(validateJobBriefDetailed(value)).toEqual({ brief: null, issue: { path, code } });
   });
 });

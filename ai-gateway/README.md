@@ -46,3 +46,7 @@ Set `AI_ENABLED` to `false` in server configuration to disable generation: healt
 The `AI_RATE_LIMITER` binding permits five valid generation attempts per 60 seconds per bounded client key (a valid `phq_` client ID, otherwise Cloudflare's connecting IP, otherwise `anonymous`). It is best-effort soft abuse protection, not authentication and not a precise global daily quota.
 
 The prompt treats job postings as untrusted evidence and explicitly refuses instructions contained in them. The Worker rejects arbitrary prompts, provider parameters, unknown fields, oversized requests, and malformed model results. It validates structured output again at runtime and returns controlled JSON errors without provider internals.
+
+## Privacy-safe diagnostics
+
+Malformed model responses produce one structured Worker warning for operational diagnosis. It contains only a Worker-generated request ID, the configured model, elapsed milliseconds, response-shape metadata, expected-key presence/counts, schema-version state, and a schema-only validation path/code. Provider failures produce one structured error with the same request ID, model, duration, and a sanitized error class. These logs never include job posting text, prompt messages, generated brief text, raw provider responses, provider usage values, exception messages, stacks, causes, credentials, or request headers. Successful responses are not logged.

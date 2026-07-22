@@ -126,9 +126,51 @@ describe("provider and response handling", () => {
     ["unexpected keys", () => { const s = environment(); s.ai.run.mockResolvedValue(validBrief({ raw_text: "do not leak" })); return s; }],
     ["invalid nested items", () => { const s = environment(); s.ai.run.mockResolvedValue(validBrief({ responsibilities: ["bad"] })); return s; }],
   ])("returns a controlled 502 for %s", async (_name, makeSetup) => {
-    const setup = makeSetup(); const result = await call("/v1/job-brief", jsonPost(validRequest), setup);
-    expect(result.response.status).toBe(502); expect(["generation_failed", "invalid_ai_response"]).toContain(result.body.error.code);
-    expect(JSON.stringify(result.body)).not.toContain("provider private detail"); expect(JSON.stringify(result.body)).not.toContain("raw_text");
-    expect(result.response.headers.get("X-Content-Type-Options")).toBe("nosniff"); expect(result.response.headers.get("Cache-Control")).toBe("no-store");
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const failure = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const setup = makeSetup(); const result = await call("/v1/job-brief", jsonPost(validRequest), setup);
+      expect(result.response.status).toBe(502); expect(["generation_failed", "invalid_ai_response"]).toContain(result.body.error.code);
+      expect(JSON.stringify(result.body)).not.toContain("provider private detail"); expect(JSON.stringify(result.body)).not.toContain("raw_text");
+      expect(result.response.headers.get("X-Content-Type-Options")).toBe("nosniff"); expect(result.response.headers.get("Cache-Control")).toBe("no-store");
+    } finally { warning.mockRestore(); failure.mockRestore(); }
+  });
+
+  it("logs only safe diagnostics for an invalid provider response", async () => {
+    const privateSentinel = "DO_NOT_LOG_PRIVATE_SENTINEL_92741";
+    const setup = environment();
+    setup.ai.run.mockResolvedValue({ response: `\`\`\`json\n${privateSentinel}\n\`\`\`` });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const result = await call("/v1/job-brief", jsonPost({ ...validRequest, job_posting_text: `${posting} ${privateSentinel}` }), setup);
+      expect(result.response.status).toBe(502);
+      expect(result.body).toEqual({ error: { code: "invalid_ai_response", message: "AI generation returned an invalid response." } });
+      expect(warning).toHaveBeenCalledTimes(1);
+      const entry = warning.mock.calls[0][0];
+      expect(entry).toMatchObject({ event: "invalid_ai_response", model: "@cf/openai/gpt-oss-20b", extraction_path: "response_invalid_json", response_starts_with_fence: true, response_ends_with_fence: true, validation_issue: { path: "$", code: "wrong_type" } });
+      expect(entry.request_id).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(entry.duration_ms).toBeTypeOf("number");
+      expect(JSON.stringify(warning.mock.calls)).not.toContain(privateSentinel);
+      expect(JSON.stringify(warning.mock.calls)).not.toContain(posting);
+    } finally { warning.mockRestore(); }
+  });
+
+  it("logs a sanitized provider failure without private exception details", async () => {
+    const privateSentinel = "DO_NOT_LOG_PRIVATE_SENTINEL_92741";
+    const setup = environment();
+    const providerError = new Error(privateSentinel);
+    providerError.stack = privateSentinel;
+    providerError.cause = privateSentinel;
+    setup.ai.run.mockRejectedValue(providerError);
+    const failure = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const result = await call("/v1/job-brief", jsonPost({ ...validRequest, job_posting_text: `${posting} ${privateSentinel}` }), setup);
+      expect(result.response.status).toBe(502);
+      expect(result.body).toEqual({ error: { code: "generation_failed", message: "AI generation is temporarily unavailable." } });
+      expect(failure).toHaveBeenCalledTimes(1);
+      expect(failure.mock.calls[0][0]).toMatchObject({ event: "ai_generation_failed", model: "@cf/openai/gpt-oss-20b", error_name: "Error" });
+      expect(JSON.stringify(failure.mock.calls)).not.toContain(privateSentinel);
+      expect(JSON.stringify(failure.mock.calls)).not.toContain(posting);
+    } finally { failure.mockRestore(); }
   });
 });

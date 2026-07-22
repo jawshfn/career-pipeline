@@ -1,10 +1,12 @@
-import { BRIEF_SCHEMA_VERSION, validateJobBrief } from "./jobBriefSchema.js";
+import { BRIEF_SCHEMA_VERSION, validateJobBriefDetailed } from "./jobBriefSchema.js";
 import { buildJobBriefAiOptions } from "./jobBrief.js";
+import { inspectAiResult } from "./aiDiagnostics.js";
 
 const MAX_BODY_BYTES = 32 * 1024;
 const REQUEST_FIELDS = new Set(["company_name", "role_title", "job_posting_text", "location", "compensation", "employment_type"]);
 const REQUIRED_LIMITS = { company_name: [1, 200], role_title: [1, 200], job_posting_text: [200, 20000] };
 const OPTIONAL_LIMITS = { location: 200, compensation: 200, employment_type: 100 };
+const SAFE_ERROR_NAMES = new Set(["Error", "TypeError", "RangeError", "SyntaxError", "AbortError"]);
 
 function allowedOrigins(env) {
   return new Set(String(env.ALLOWED_ORIGINS || "").split(",").map((origin) => origin.trim()).filter(Boolean));
@@ -96,19 +98,18 @@ function rateLimitKey(request) {
   return ip ? `ip_${ip.slice(0, 120)}` : "anonymous";
 }
 
-function extractAiValue(result) {
-  if (!result || typeof result.getReader === "function") return null;
-  let value = result;
-  if (typeof result === "object" && !Array.isArray(result) && Object.hasOwn(result, "response")) value = result.response;
-  if (value && typeof value.getReader === "function") return null;
-  if (typeof value === "string") {
-    try { value = JSON.parse(value); } catch { return null; }
-  }
-  return value && typeof value === "object" && !Array.isArray(value) ? value : null;
-}
-
 function requestId() {
   return crypto.randomUUID();
+}
+
+function durationSince(startedAt) {
+  return Math.max(0, Date.now() - startedAt);
+}
+
+function safeErrorName(error) {
+  try {
+    return SAFE_ERROR_NAMES.has(error?.name) ? error.name : "Error";
+  } catch { return "Error"; }
 }
 
 export async function handleRequest(request, env) {
@@ -143,17 +144,26 @@ export async function handleRequest(request, env) {
   } catch {
     // A limiter outage must not turn a soft abuse control into a hard availability outage.
   }
+  const internalRequestId = requestId();
+  const generationStartedAt = Date.now();
   let result;
   try { result = await env.AI.run(env.AI_MODEL, buildJobBriefAiOptions(valid.value)); }
-  catch { return error("generation_failed", "AI generation is temporarily unavailable.", 502, origin); }
-  const brief = validateJobBrief(extractAiValue(result));
-  if (!brief) return error("invalid_ai_response", "AI generation returned an invalid response.", 502, origin);
-  return json({ brief, meta: {
+  catch (caught) {
+    console.error({ event: "ai_generation_failed", request_id: internalRequestId, model: env.AI_MODEL, duration_ms: durationSince(generationStartedAt), error_name: safeErrorName(caught) });
+    return error("generation_failed", "AI generation is temporarily unavailable.", 502, origin);
+  }
+  const inspected = inspectAiResult(result);
+  const validated = validateJobBriefDetailed(inspected.value);
+  if (!validated.brief) {
+    console.warn({ event: "invalid_ai_response", request_id: internalRequestId, model: env.AI_MODEL, duration_ms: durationSince(generationStartedAt), ...inspected.diagnostic, validation_issue: validated.issue });
+    return error("invalid_ai_response", "AI generation returned an invalid response.", 502, origin);
+  }
+  return json({ brief: validated.brief, meta: {
     schema_version: BRIEF_SCHEMA_VERSION,
     prompt_version: env.PROMPT_VERSION,
     model: env.AI_MODEL,
     generated_at: new Date().toISOString(),
-    request_id: requestId(),
+    request_id: internalRequestId,
   } }, 200, origin);
 }
 
