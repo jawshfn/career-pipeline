@@ -80,11 +80,13 @@ describe("CommandCenterPage", () => {
     return onApplyFollowUpAction;
   }
 
-  it("shows the reminders heading and only renders populated reminder sections with accessible counts", async () => {
+  it("shows the daily header and only renders populated reminder sections with accessible counts", async () => {
     await renderPage(actionItems({ overdue: [overdueApplication], stale: [staleApplication] }));
 
     expect(container.textContent).toContain("Reminders");
-    expect(container.textContent).toContain("Follow up on opportunities that need attention soon.");
+    expect(container.querySelector(".command-center-greeting h2").textContent).not.toBe("");
+    expect(container.textContent).toContain("Here’s what needs your attention today.");
+    expect(container.textContent).toContain("Local time");
     expect(container.textContent).toContain("Overdue Follow-ups");
     expect(container.textContent).toContain("Needs check-in");
     expect(container.textContent).not.toContain("Upcoming Follow-ups");
@@ -114,6 +116,7 @@ describe("CommandCenterPage", () => {
     expect(container.textContent).toContain("Add follow-up dates and next actions to keep your search moving.");
     expect(container.querySelector(".command-center-all-clear")).not.toBeNull();
     expect(container.querySelector(".command-center-section")).toBeNull();
+    expect(container.querySelector(".command-center-daily-header")).not.toBeNull();
   });
 
   it("keeps load errors visible without rendering reminder panels", async () => {
@@ -127,6 +130,18 @@ describe("CommandCenterPage", () => {
     expect(container.textContent).toContain("Could not load reminder action items.");
     expect(container.querySelector(".command-center-section")).toBeNull();
     expect(container.querySelector(".command-center-all-clear")).toBeNull();
+    expect(container.querySelector(".command-center-daily-header")).not.toBeNull();
+  });
+
+  it("keeps the daily header visible while action items load", async () => {
+    mocks.getApplicationActionItems.mockImplementation(() => new Promise(() => {}));
+    await act(async () => {
+      root.render(<CommandCenterPage onApplyFollowUpAction={vi.fn()} />);
+      await Promise.resolve();
+    });
+
+    expect(container.textContent).toContain("Loading action items...");
+    expect(container.querySelector(".command-center-daily-header")).not.toBeNull();
   });
 
   it("keeps reminder actions in a native secondary disclosure and disables them while updating", async () => {

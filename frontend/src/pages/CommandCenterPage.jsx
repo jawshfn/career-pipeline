@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { getApplicationActionItems } from "../services/applicationsService.js";
 import CommandCenterSection from "../components/command-center/CommandCenterSection.jsx";
+import DailyRemindersHeader from "../components/command-center/DailyRemindersHeader.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
@@ -157,13 +158,7 @@ export default function CommandCenterPage({ onApplyFollowUpAction }) {
     actionItems.stale_applications.length > 0;
   return (
     <div className="command-center-page">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">Daily reminders</p>
-          <h2>Reminders</h2>
-          <p>Follow up on opportunities that need attention soon.</p>
-        </div>
-      </header>
+      <DailyRemindersHeader />
 
       {isActionItemsLoading ? <LoadingState message="Loading action items..." /> : null}
       {!isActionItemsLoading && actionItemsError ? <ErrorMessage message={actionItemsError} /> : null}
