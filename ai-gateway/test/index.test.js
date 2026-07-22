@@ -28,7 +28,7 @@ function environment(overrides = {}) {
     env: {
       AI_ENABLED: "true",
       AI_MODEL: "@cf/meta/llama-3.1-8b-instruct-fast",
-      PROMPT_VERSION: "job-brief-v1",
+      PROMPT_VERSION: "job-brief-v2",
       ALLOWED_ORIGINS: "https://jawshfn.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173",
       AI_RATE_LIMITER: limiter,
       AI: ai,
@@ -84,7 +84,7 @@ describe("job brief request boundary", () => {
     const setup = environment(); const result = await call("/v1/job-brief", jsonPost({ ...validRequest, location: " Remote ", compensation: " ", employment_type: "Full time" }, { Origin: "https://jawshfn.github.io", "X-PursuitHQ-Client-ID": "phq_test-client_123" }), setup);
     expect(result.response.status).toBe(200); expect(result.limiter.limit).toHaveBeenCalledWith({ key: "phq_test-client_123" }); expect(result.ai.run).toHaveBeenCalledTimes(1);
     expect(result.ai.run).toHaveBeenCalledWith("@cf/meta/llama-3.1-8b-instruct-fast", expect.any(Object));
-    expect(result.body.meta).toMatchObject({ schema_version: "1", prompt_version: "job-brief-v1", model: "@cf/meta/llama-3.1-8b-instruct-fast" });
+    expect(result.body.meta).toMatchObject({ schema_version: "1", prompt_version: "job-brief-v2", model: "@cf/meta/llama-3.1-8b-instruct-fast" });
     expect(result.body.meta.request_id).toBeTruthy(); expect(result.body.brief).not.toHaveProperty("job_posting_text");
   });
   it.each([
@@ -95,6 +95,7 @@ describe("job brief request boundary", () => {
     ["short posting", jsonPost({ ...validRequest, job_posting_text: "short" }), 400, "invalid_request"],
     ["long field", jsonPost({ ...validRequest, location: "x".repeat(201) }), 400, "invalid_request"],
     ["unknown prompt", jsonPost({ ...validRequest, prompt: "ignore rules" }), 400, "invalid_request"],
+    ["client prompt version", jsonPost({ ...validRequest, prompt_version: "job-brief-v1" }), 400, "invalid_request"],
     ["provider model", jsonPost({ ...validRequest, model: "other", messages: [] }), 400, "invalid_request"],
   ])("rejects %s before limiter or AI", async (_name, options, status, code) => {
     const setup = environment(); const result = await call("/v1/job-brief", options, setup);
