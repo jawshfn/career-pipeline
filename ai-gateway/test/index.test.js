@@ -27,7 +27,7 @@ function environment(overrides = {}) {
   return {
     env: {
       AI_ENABLED: "true",
-      AI_MODEL: "@cf/openai/gpt-oss-20b",
+      AI_MODEL: "@cf/meta/llama-3.1-8b-instruct-fast",
       PROMPT_VERSION: "job-brief-v1",
       ALLOWED_ORIGINS: "https://jawshfn.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173",
       AI_RATE_LIMITER: limiter,
@@ -83,7 +83,8 @@ describe("job brief request boundary", () => {
   it("accepts valid minimal and optional requests, invokes limiter and AI once", async () => {
     const setup = environment(); const result = await call("/v1/job-brief", jsonPost({ ...validRequest, location: " Remote ", compensation: " ", employment_type: "Full time" }, { Origin: "https://jawshfn.github.io", "X-PursuitHQ-Client-ID": "phq_test-client_123" }), setup);
     expect(result.response.status).toBe(200); expect(result.limiter.limit).toHaveBeenCalledWith({ key: "phq_test-client_123" }); expect(result.ai.run).toHaveBeenCalledTimes(1);
-    expect(result.body.meta).toMatchObject({ schema_version: "1", prompt_version: "job-brief-v1", model: "@cf/openai/gpt-oss-20b" });
+    expect(result.ai.run).toHaveBeenCalledWith("@cf/meta/llama-3.1-8b-instruct-fast", expect.any(Object));
+    expect(result.body.meta).toMatchObject({ schema_version: "1", prompt_version: "job-brief-v1", model: "@cf/meta/llama-3.1-8b-instruct-fast" });
     expect(result.body.meta.request_id).toBeTruthy(); expect(result.body.brief).not.toHaveProperty("job_posting_text");
   });
   it.each([
@@ -214,7 +215,7 @@ describe("provider and response handling", () => {
       expect(result.body).toEqual({ error: { code: "invalid_ai_response", message: "AI generation returned an invalid response." } });
       expect(warning).toHaveBeenCalledTimes(1);
       const entry = warning.mock.calls[0][0];
-      expect(entry).toMatchObject({ event: "invalid_ai_response", model: "@cf/openai/gpt-oss-20b", extraction_path: "response_invalid_json", response_starts_with_fence: true, response_ends_with_fence: true, validation_issue: { path: "$", code: "wrong_type" } });
+      expect(entry).toMatchObject({ event: "invalid_ai_response", model: "@cf/meta/llama-3.1-8b-instruct-fast", extraction_path: "response_invalid_json", response_starts_with_fence: true, response_ends_with_fence: true, validation_issue: { path: "$", code: "wrong_type" } });
       expect(entry.request_id).toMatch(/^[0-9a-f-]{36}$/i);
       expect(entry.duration_ms).toBeTypeOf("number");
       expect(JSON.stringify(warning.mock.calls)).not.toContain(privateSentinel);
@@ -235,7 +236,7 @@ describe("provider and response handling", () => {
       expect(result.response.status).toBe(502);
       expect(result.body).toEqual({ error: { code: "generation_failed", message: "AI generation is temporarily unavailable." } });
       expect(failure).toHaveBeenCalledTimes(1);
-      expect(failure.mock.calls[0][0]).toMatchObject({ event: "ai_generation_failed", model: "@cf/openai/gpt-oss-20b", error_name: "Error" });
+      expect(failure.mock.calls[0][0]).toMatchObject({ event: "ai_generation_failed", model: "@cf/meta/llama-3.1-8b-instruct-fast", error_name: "Error" });
       expect(JSON.stringify(failure.mock.calls)).not.toContain(privateSentinel);
       expect(JSON.stringify(failure.mock.calls)).not.toContain(posting);
     } finally { failure.mockRestore(); }

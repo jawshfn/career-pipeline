@@ -47,7 +47,7 @@ The `AI_RATE_LIMITER` binding permits five valid generation attempts per 60 seco
 
 The prompt treats job postings as untrusted evidence and explicitly refuses instructions contained in them. The Worker rejects arbitrary prompts, provider parameters, unknown fields, oversized requests, and malformed model results. It validates structured output again at runtime and returns controlled JSON errors without provider internals.
 
-GPT-OSS requests using messages may return a Chat Completions envelope. The gateway accepts a validated brief only from `choices[0].message.parsed`, or from `choices[0].message.content` when the complete content string is valid JSON. It does not search prose, strip code fences, or repair malformed output. Provider metadata and usage are neither exposed to clients nor written to diagnostics, and strict runtime validation still applies after extraction.
+The current feasibility model is `@cf/meta/llama-3.1-8b-instruct-fast`; it is controlled through the Worker's `AI_MODEL` configuration. Workers AI responses may use a Chat Completions envelope or a response field. The gateway accepts a validated brief only from `choices[0].message.parsed`, from `choices[0].message.content` when the complete content string is valid JSON, or from its documented response-object formats. It does not search prose, strip code fences, or repair malformed output. Provider metadata and usage are neither exposed to clients nor written to diagnostics, and strict runtime validation still applies after extraction.
 
 ## Privacy-safe diagnostics
 
