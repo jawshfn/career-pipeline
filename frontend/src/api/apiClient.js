@@ -46,6 +46,15 @@ export function apiPost(path, payload, fallbackErrorMessage) {
   return apiRequest(path, { body: payload, fallbackErrorMessage, method: "POST" });
 }
 
+export async function apiPostRawJson(path, jsonText, fallbackErrorMessage) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: jsonText,
+  });
+  return parseResponse(response, fallbackErrorMessage);
+}
+
 export function apiPatch(path, payload, fallbackErrorMessage) {
   return apiRequest(path, { body: payload, fallbackErrorMessage, method: "PATCH" });
 }

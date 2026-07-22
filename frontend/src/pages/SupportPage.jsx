@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { downloadApplicationsCsv, downloadApplicationsWorkbook, downloadWorkspaceBackup } from "../services/exportsService.js";
+import WorkspaceBackupReview from "../components/support/WorkspaceBackupReview.jsx";
+import { validateWorkspaceBackup } from "../services/workspaceImportsService.js";
 
 export const SUPPORT_EMAIL = "nunezjf2001@gmail.com";
 export const SUPPORT_MAILTO_SUBJECT = "PursuitHQ Issue Report";
@@ -170,6 +172,7 @@ export default function SupportPage({
   onDownloadApplicationsCsv = downloadApplicationsCsv,
   onDownloadApplicationsWorkbook = downloadApplicationsWorkbook,
   onDownloadWorkspaceBackup = downloadWorkspaceBackup,
+  onValidateWorkspaceBackup = validateWorkspaceBackup,
   onNavigate = () => {},
 }) {
   const [copyStatus, setCopyStatus] = useState("");
@@ -307,6 +310,7 @@ export default function SupportPage({
         </div>
         {exportStatus ? <p className="support-export-status" role="status">{exportStatus}</p> : null}
         {exportError ? <p className="support-export-error" ref={exportErrorRef} role="alert" tabIndex={-1}>{exportError}</p> : null}
+        <WorkspaceBackupReview isDemoMode={isDemoMode} onValidateWorkspaceBackup={onValidateWorkspaceBackup} />
       </section>
 
       <section className="panel support-panel" id="help-capture" aria-labelledby="capture-methods-heading">

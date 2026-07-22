@@ -9,14 +9,13 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from ..database import get_db
+from ..backup_format import BACKUP_FORMAT, BACKUP_VERSION
 from ..models import Application, ApplicationActivity, ResumeVersion
 from ..schemas import ApplicationActivityRead, ApplicationRead, ResumeVersionRead
 
 
 router = APIRouter(prefix="/api/exports", tags=["exports"])
 
-BACKUP_FORMAT = "pursuithq-workspace-backup"
-BACKUP_VERSION = 1
 CSV_HEADERS = [
     "Company", "Role", "Status", "Source", "Location", "Compensation",
     "Employment Type", "Date Saved", "Date Applied", "Follow-up Date", "Next Action",

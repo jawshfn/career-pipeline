@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import create_db_and_tables
-from .routers import applications, browser_captures, dashboard, exports, job_imports, resume_versions
+from .routers import applications, browser_captures, dashboard, exports, job_imports, resume_versions, workspace_imports
 
 
 @asynccontextmanager
@@ -35,6 +35,7 @@ app.include_router(dashboard.router)
 app.include_router(exports.router)
 app.include_router(job_imports.router)
 app.include_router(resume_versions.router)
+app.include_router(workspace_imports.router)
 
 
 @app.get("/api/health")
