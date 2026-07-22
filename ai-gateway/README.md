@@ -47,6 +47,8 @@ The `AI_RATE_LIMITER` binding permits five valid generation attempts per 60 seco
 
 The prompt treats job postings as untrusted evidence and explicitly refuses instructions contained in them. The Worker rejects arbitrary prompts, provider parameters, unknown fields, oversized requests, and malformed model results. It validates structured output again at runtime and returns controlled JSON errors without provider internals.
 
+GPT-OSS requests using messages may return a Chat Completions envelope. The gateway accepts a validated brief only from `choices[0].message.parsed`, or from `choices[0].message.content` when the complete content string is valid JSON. It does not search prose, strip code fences, or repair malformed output. Provider metadata and usage are neither exposed to clients nor written to diagnostics, and strict runtime validation still applies after extraction.
+
 ## Privacy-safe diagnostics
 
 Malformed model responses produce one structured Worker warning for operational diagnosis. It contains only a Worker-generated request ID, the configured model, elapsed milliseconds, response-shape metadata, expected-key presence/counts, schema-version state, and a schema-only validation path/code. Provider failures produce one structured error with the same request ID, model, duration, and a sanitized error class. These logs never include job posting text, prompt messages, generated brief text, raw provider responses, provider usage values, exception messages, stacks, causes, credentials, or request headers. Successful responses are not logged.

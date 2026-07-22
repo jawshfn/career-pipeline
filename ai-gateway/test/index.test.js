@@ -114,6 +114,73 @@ describe("job brief request boundary", () => {
 });
 
 describe("provider and response handling", () => {
+  it("accepts structured Chat Completions parsed output without exposing provider metadata", async () => {
+    const setup = environment();
+    setup.ai.run.mockResolvedValue({ id: "provider-id-not-returned", model: "provider-model-not-returned", choices: [{ index: 0, message: { role: "assistant", parsed: validBrief(), content: null }, finish_reason: "stop" }], usage: { prompt_tokens: 100, completion_tokens: 200 } });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const result = await call("/v1/job-brief", jsonPost(validRequest), setup);
+      expect(result.response.status).toBe(200);
+      expect(JSON.stringify(result.body)).not.toContain("provider-id-not-returned");
+      expect(JSON.stringify(result.body)).not.toContain("provider-model-not-returned");
+      expect(JSON.stringify(result.body)).not.toContain("prompt_tokens");
+      expect(warning).not.toHaveBeenCalled();
+    } finally { warning.mockRestore(); }
+  });
+
+  it("accepts whole JSON Chat Completions content without logging raw content", async () => {
+    const privateSentinel = "DO_NOT_LOG_PRIVATE_SENTINEL_92741";
+    const setup = environment();
+    setup.ai.run.mockResolvedValue({ choices: [{ message: { content: JSON.stringify(validBrief({ limitations: [privateSentinel] })) }, finish_reason: "stop" }], usage: { private: privateSentinel } });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const result = await call("/v1/job-brief", jsonPost({ ...validRequest, job_posting_text: `${posting} ${privateSentinel}` }), setup);
+      expect(result.response.status).toBe(200);
+      expect(result.body.brief.limitations).toEqual([privateSentinel]);
+      expect(warning).not.toHaveBeenCalled();
+    } finally { warning.mockRestore(); }
+  });
+
+  it("logs safe diagnostics for invalid Chat Completions output", async () => {
+    const privateSentinel = "DO_NOT_LOG_PRIVATE_SENTINEL_92741";
+    const setup = environment();
+    setup.ai.run.mockResolvedValue({ id: privateSentinel, model: privateSentinel, [privateSentinel]: privateSentinel, choices: [{ message: { parsed: { [privateSentinel]: privateSentinel }, content: privateSentinel }, finish_reason: privateSentinel }], usage: { [privateSentinel]: privateSentinel } });
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const failure = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const result = await call("/v1/job-brief", jsonPost({ ...validRequest, job_posting_text: `${posting} ${privateSentinel}` }), setup);
+      expect(result.response.status).toBe(502);
+      expect(warning).toHaveBeenCalledTimes(1);
+      expect(JSON.stringify(warning.mock.calls)).not.toContain(privateSentinel);
+      expect(JSON.stringify(failure.mock.calls)).not.toContain(privateSentinel);
+      expect(JSON.stringify(warning.mock.calls)).not.toContain("message.content");
+      expect(JSON.stringify(warning.mock.calls)).not.toContain("message.parsed");
+      expect(JSON.stringify(warning.mock.calls)).not.toContain("usage");
+    } finally { warning.mockRestore(); failure.mockRestore(); }
+  });
+
+  it.each([
+    ["choices not array", { choices: "not-an-array" }],
+    ["empty choices", { choices: [] }],
+    ["first choice array", { choices: [[]] }],
+    ["missing message", { choices: [{}] }],
+    ["message string", { choices: [{ message: "text" }] }],
+    ["parsed array", { choices: [{ message: { parsed: [] } }] }],
+    ["fenced content", { choices: [{ message: { content: "```json\n{}\n```" } }] }],
+    ["prose before JSON", { choices: [{ message: { content: "Here {}" } }] }],
+    ["JSON followed by prose", { choices: [{ message: { content: "{} trailing" } }] }],
+    ["later valid choice", { choices: [{ message: { content: null } }, { message: { parsed: validBrief() } }] }],
+  ])("returns controlled invalid response for rejected Chat Completions %s", async (_name, providerResult) => {
+    const setup = environment(); setup.ai.run.mockResolvedValue(providerResult);
+    const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const result = await call("/v1/job-brief", jsonPost(validRequest), setup);
+      expect(result.response.status).toBe(502);
+      expect(result.body).toEqual({ error: { code: "invalid_ai_response", message: "AI generation returned an invalid response." } });
+      expect(warning).toHaveBeenCalledTimes(1);
+    } finally { warning.mockRestore(); }
+  });
+
   it("accepts documented structured object and JSON response-field forms", async () => {
     const direct = await call("/v1/job-brief", jsonPost(validRequest)); expect(direct.response.status).toBe(200);
     const setup = environment(); setup.ai.run.mockResolvedValue({ response: JSON.stringify(validBrief()) });
