@@ -87,6 +87,19 @@ describe("SupportPage", () => {
     expect(markup).toContain("support-method-card-unavailable");
     expect(markup).not.toContain("Full local workflow available");
     expect(markup).not.toContain("Run PursuitHQ Capture.");
+    expect(markup).toContain("Workspace restore preview");
+    expect(markup).toContain("LOCAL APP ONLY");
+    expect(markup).not.toContain('type="file"');
+  });
+
+  it("places local backup review after the unchanged export cards", () => {
+    const markup = renderToStaticMarkup(<SupportPage isDemoMode={false} onValidateWorkspaceBackup={vi.fn()} />);
+
+    const review = markup.indexOf("Review a workspace backup");
+    expect(review).toBeGreaterThan(markup.indexOf("Download workspace backup"));
+    expect(review).toBeGreaterThan(markup.indexOf("Download Excel workbook"));
+    expect(review).toBeGreaterThan(markup.indexOf("Download applications CSV"));
+    expect(markup).toContain("PursuitHQ JSON backup");
   });
 
   it("uses stable whitespace-free heading IDs for capture-method cards in both runtimes", async () => {

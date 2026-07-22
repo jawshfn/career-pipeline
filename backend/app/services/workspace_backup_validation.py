@@ -263,6 +263,11 @@ def _record_limits(payload: Any) -> list[dict[str, str | None]]:
 def validate_workspace_backup(payload: Any, db: Session, now: datetime | None = None) -> dict[str, Any]:
     current_summary = current_workspace_summary(db)
     issues = _record_limits(payload)
+    if issues:
+        # Collection limits are a safety boundary.  Do not ask Pydantic to walk
+        # every record in an oversized parsed payload.
+        return {"is_valid": False, "eligible_for_restore": False, "backup_summary": None,
+                "current_workspace_summary": current_summary, "warnings": [], "errors": issues}
     document: WorkspaceBackupDocument | None = None
     try:
         document = WorkspaceBackupDocument.model_validate(payload)
