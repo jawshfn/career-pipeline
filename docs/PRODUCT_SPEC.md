@@ -33,7 +33,7 @@ PursuitHQ centralizes that activity into a simple workflow that supports fast ca
 
 - Quick-capture first: the main workflow should not start as a giant manual form.
 - Capture now, enrich later: users should be able to save partial information and improve it later.
-- Action-focused Reminders: daily attention items should be visible and quick to act on.
+- Action-focused Reminders: daily attention items should be visible with enough application context for reviewed actions and direct follow-through.
 - Summary-focused Dashboard: metrics should explain activity and progress without becoming heavy analytics.
 - Local-first early prototype: the backend should work well as a local development app with SQLite.
 - Transparent status tracking: application states should be clear and easy to update.
@@ -68,11 +68,10 @@ The current prototype includes:
 - Optional Next Action field shown in Application Detail and Reminders cards
 - Applied-date behavior that distinguishes saved date from the date the user actually applied
 - Responsive grouped Status Board with status filtering, company/role search, and persisted status updates
-- Reminders with overdue follow-ups, upcoming follow-ups due within 3 days, secondary Needs check-in items, and follow-up quick actions
+- Reminders with a browser-local daily header, overdue follow-ups, upcoming follow-ups due within 3 days, secondary Needs check-in items, reviewed follow-up actions, and direct Application Detail navigation
 - Backend-derived Reminders action-item rules from `/api/applications/action-items`
-- Follow-up quick actions for Snooze 3 days, Snooze 1 week, and Clear follow-up
-- Activity Timeline entries for manual activity, follow-up quick-action outcomes, and backend-logged status changes
-- No-op snooze prevention when a snooze action would not move the follow-up date later
+- Atomic backend follow-up actions for complete, complete and schedule, reschedule, and clear follow-up
+- Activity Timeline entries for manual activity, atomic follow-up outcomes, and backend-logged status changes
 - Resumes page for creating, editing, deactivating, reactivating, and assigning reusable resume variants
 - Application-scoped contact and prep notes in Application Detail
 - Red-flag checklist and notes in Application Detail, with compact indicators in Applications and Status Board
@@ -181,7 +180,7 @@ Preview does not change data. Restore is replace-only, not a merge, and failure 
 
 ### Edit Application Detail
 
-Application Detail is a tabbed panel opened from Applications.
+Application Detail is a tabbed panel opened from Applications, Status Board, or Reminders. Each entry point opens the Overview tab by default.
 
 Current tabs:
 
@@ -229,7 +228,7 @@ Follow-up due is not a status-board status. It is a computed action state based 
 
 ### Review Reminders
 
-Reminders answers "what needs my attention today?"
+Reminders answers "what needs my attention today?" A browser-local daily header provides the current date and daily context without claiming alerts or notifications.
 
 It shows:
 
@@ -241,15 +240,11 @@ These action-item sections come from the backend `/api/applications/action-items
 
 Rejected, Withdrawn, and legacy Archived applications are excluded from actionable overdue and upcoming follow-ups; existing historical follow-up dates are retained. Offer remains eligible when its date qualifies.
 
-Cards show enough context to act quickly, including company, role, status, follow-up date, and Next Action when present.
+Cards show company, role, status, follow-up date, and Next Action when present; the Next Action line is omitted when the value is absent. Selecting a card opens that application in Application Detail Overview, while controls within the card retain their own reviewed workflow.
 
-Follow-up quick actions:
+Each follow-up action opens a review dialog before mutation: Complete, Complete and schedule, Reschedule, or Clear follow-up. Complete clears the date; Complete and schedule records completion and requires a new future date; Reschedule requires a changed future date; Clear removes the date without marking completion. The dialog can retain, replace, or explicitly clear Next Action: an omitted value preserves it, a non-empty string replaces it, and an explicit null clears it.
 
-- Snooze 3 days
-- Snooze 1 week
-- Clear follow-up
-
-Snooze actions only appear or run when they would move the follow-up date later than the current follow-up date. Valid quick actions update the application and log an Activity Timeline entry. Clear follow-up remains available whenever a follow-up date exists.
+The backend performs the application change and exactly one backend-owned `Follow-up` Activity entry in one transaction. It rejects stale expected dates, closed or archived records, and invalid date/action combinations without a partial change; the client refreshes its reminder data after a successful action or reports the controlled conflict. The same workflow and direct navigation are available in the local app and reset-on-refresh demo.
 
 ### Manage Resumes
 
@@ -306,7 +301,7 @@ Dashboard overdue and upcoming follow-up cards use the same actionable eligibili
 - A user can track at least 25 applications without losing important context.
 - A user can distinguish active opportunities from closed outcomes.
 - A user can identify overdue follow-ups and upcoming follow-ups due within 3 days.
-- A user can snooze or clear follow-ups directly from Reminders without creating no-op activity logs.
+- A user can review and complete, schedule, reschedule, or clear a follow-up from Reminders with one atomic Activity entry and no partial update.
 - A user can record next actions and activity timeline entries.
 - A user can assign resume versions and review usage/effectiveness patterns.
 - A user can flag suspicious or concerning postings without automated scoring.

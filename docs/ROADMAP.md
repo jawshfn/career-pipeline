@@ -59,13 +59,13 @@ Status: complete
 
 - Phase 7.1 — Add Dashboard metric cards and breakdowns.
 - Phase 7.2 — Add Applications search, filters, sorting, Active/Closed/All views, and table polish.
-- Phase 7.3 — Add Reminders follow-up quick actions.
+- Phase 7.3 — Add initial Reminders follow-up controls.
 - Phase 7.4 — Add manual Application Activity Timeline.
 - Phase 7.5 — Refresh documentation for the current workflow.
 - Phase 7.6 — Organize Application Detail into focused tabs.
 - Phase 7.7 — Add optional Next Action support.
-- Phase 7.8 — Log follow-up quick-action outcomes to Activity Timeline.
-- Phase 7.9 — Prevent no-op follow-up snoozes.
+- Phase 7.8 — Log reminder-action outcomes to Activity Timeline.
+- Phase 7.9 — Prevent no-op reminder-date changes.
 
 ## Phase 8 — Backend Source Of Truth And Visual Polish
 
@@ -250,6 +250,15 @@ Status: complete through Phase 23.2b2
 - Phase 23.2a.1 — Harden oversized-record short-circuiting and expand validation, transport, read-only, and frontend preview coverage.
 - Phase 23.2b1 — Add short-lived exact-file and current-workspace-bound authorization plus transactional replace restore with ID preservation and full rollback.
 - Phase 23.2b2 — Add the local reviewed restore UI with typed confirmation, count comparison, centralized workspace refresh, accessible responsive dialogs, and no demo restore controls.
+
+## Phase 24 — Reminder Workflow And Navigation
+
+Status: complete through Phase 24.3
+
+- Phase 24.1 — Add a browser-local Reminders daily header and clearer overdue, upcoming, and Needs check-in section hierarchy.
+- Phase 24.2a — Replace legacy reminder controls with reviewed Complete, Complete and schedule, Reschedule, and Clear follow-up actions backed by one atomic application-and-activity transaction, validation, and controlled stale/closed conflicts.
+- Phase 24.2b — Deliver local-app and reset-on-refresh demo parity for reviewed reminder actions, Next Action updates, and refreshed reminder state.
+- Phase 24.3 — Add direct navigation from Reminders to the related Application Detail Overview, alongside Applications and Status Board entry points.
 
 ## Later Optional Enhancements
 

@@ -20,10 +20,10 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 - **Add Job:** choose Manual Entry, Paste Job Link, or deterministic Paste Job Text review.
 - **Applications:** search, filter, sort, and open detailed records across Active, Closed, and All views.
 - **Status Board:** scan opportunities by stage and update statuses quickly.
-- **Reminders:** review overdue follow-ups, upcoming follow-ups, and Needs check-in items.
+- **Reminders:** start with a browser-local daily header, review overdue and upcoming follow-ups plus Needs check-in items, take reviewed atomic follow-up actions, and open the related Application Detail directly.
 - **Dashboard:** see summary metrics, source results, resume results, and red-flag snapshots.
 - **Resumes:** manage reusable resume variants and connect them to applications.
-- **Application Detail:** edit follow-up, job details, Job Posting Snapshot, resume/prep notes, red flags, activity history, and safely remove incorrect or duplicate records.
+- **Application Detail:** open from Applications, Status Board, or Reminders; edit follow-up, job details, Job Posting Snapshot, resume/prep notes, red flags, activity history, and safely remove incorrect or duplicate records.
 - **Data & backup:** download a complete JSON backup, use reviewed local replace restore, or export XLSX and CSV files for human review.
 
 ## Browser Capture - Recommended Local Workflow
@@ -142,7 +142,7 @@ npm run build
 
 PursuitHQ is a working local-first prototype, not a production SaaS app. The GitHub Pages site is a static portfolio demo with reset-on-refresh sample data.
 
-Implemented: Greenhouse and Lever structured link imports, best-effort custom Greenhouse discovery, experimental locally loaded Greenhouse browser identifier capture, bounded Indeed capture, supported LinkedIn standalone and current-job panel capture, signed-in ZipRecruiter selected-job capture across supported paginated search URLs, authenticated Handshake standalone and selected side-panel capture, one-time local transfer, editable review with no autosave, JSON validation preview, authorized transactional JSON replace restore in the local app, and JSON, CSV, and XLSX workspace exports.
+Implemented: Greenhouse and Lever structured link imports, best-effort custom Greenhouse discovery, experimental locally loaded Greenhouse browser identifier capture, bounded Indeed capture, supported LinkedIn standalone and current-job panel capture, signed-in ZipRecruiter selected-job capture across supported paginated search URLs, authenticated Handshake standalone and selected side-panel capture, one-time local transfer, editable review with no autosave, browser-local Reminders daily context, reviewed atomic follow-up actions, direct Reminder-to-Application Detail navigation, JSON validation preview, authorized transactional JSON replace restore in the local app, and JSON, CSV, and XLSX workspace exports.
 
 Not implemented: Chrome Web Store distribution, production backend/SaaS deployment, generic job-board scraping, authentication, multi-user synchronization, AI extraction, merge-style workspace import or conflict resolution, arbitrary third-party import formats, or email/calendar integrations.
 

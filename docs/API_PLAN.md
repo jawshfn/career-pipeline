@@ -149,6 +149,47 @@ Activity behavior:
 
 Status: implemented
 
+### PATCH /api/applications/{application_id}/follow-up
+
+Purpose: apply one reviewed follow-up action atomically. This is the mutation companion to the read-only action-items endpoint; action-item visibility does not itself change an application.
+
+Request fields:
+
+- `action`: one of `complete`, `complete_and_schedule`, `reschedule`, or `clear`
+- `expected_follow_up_date`: the date shown when the user began the review; required for concurrency protection
+- `follow_up_date`: required for `complete_and_schedule` and `reschedule`; omitted or `null` for `complete` and `clear`
+- `next_action`: optional; omitted preserves the current value, a non-empty string replaces it, and `null` clears it
+- `activity_note`: optional non-empty API note appended to the backend activity wording; the reviewed dialog does not expose this field
+
+Examples:
+
+```json
+{
+  "action": "complete_and_schedule",
+  "expected_follow_up_date": "2026-07-03",
+  "follow_up_date": "2026-07-10",
+  "next_action": "Prepare questions for the recruiter."
+}
+```
+
+```json
+{
+  "action": "clear",
+  "expected_follow_up_date": "2026-07-03",
+  "next_action": null
+}
+```
+
+Behavior and response:
+
+- `complete` clears the follow-up date; `complete_and_schedule` requires a future date; `reschedule` requires a changed date that is today or later; `clear` clears the date without marking completion.
+- On success, returns `200` with the updated application and the one created `Follow-up` activity.
+- The activity wording is backend-owned: `Completed follow-up.`, `Completed follow-up and scheduled the next follow-up for YYYY-MM-DD.`, `Rescheduled follow-up from YYYY-MM-DD to YYYY-MM-DD.`, or `Cleared follow-up without marking it complete.` Optional `activity_note` and Next Action changes are appended when supplied.
+- The application update and exactly one Activity insert occur in one transaction. A failed write rolls back both.
+- Returns `404` when the application does not exist; `409` when the expected date is stale or the record is closed/archived; and `422` for invalid action, required/misplaced dates, invalid date ranges, blank text, or other request validation failures. Controlled error responses leave the application and activities unchanged.
+
+Status: implemented
+
 ### DELETE /api/applications/{application_id}
 
 Purpose: permanently delete one application.
@@ -280,7 +321,7 @@ Status: implemented
 
 Purpose: list dated activity timeline entries for one application, newest first.
 
-Entries may be created manually through the activity endpoints or by backend-owned workflows such as status-change logging.
+Entries may be created manually through the activity endpoints or by backend-owned atomic follow-up actions and status-change logging.
 
 Status: implemented
 
@@ -484,13 +525,3 @@ These endpoints are planned or possible future work and are not implemented yet.
 ### Merge-Style Workspace Import and Conflict Resolution
 
 This possibility is not implemented and has no finalized contract.
-
-### Follow-Up Completion and Rescheduling
-
-Possible endpoints:
-
-- PATCH /api/applications/{application_id}/follow-up
-
-Purpose: mark follow-ups complete, reschedule them, or clear follow_up_date in a dedicated workflow.
-
-Current follow-up quick actions are implemented in the frontend using the existing application update API and activity timeline API.
