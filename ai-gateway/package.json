@@ -1,0 +1,21 @@
+{
+  "name": "pursuithq-ai-gateway",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dry-run": "wrangler deploy --dry-run",
+    "check": "npm test && npm run deploy:dry-run"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.7",
+    "wrangler": "^4.36.0"
+  }
+}
