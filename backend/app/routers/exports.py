@@ -9,9 +9,8 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..backup_format import BACKUP_FORMAT, BACKUP_VERSION
 from ..models import Application, ApplicationActivity, ResumeVersion
-from ..schemas import ApplicationActivityRead, ApplicationRead, ResumeVersionRead
+from ..services.workspace_backup_data import as_json_record, workspace_content_payload
 
 
 router = APIRouter(prefix="/api/exports", tags=["exports"])
@@ -30,10 +29,6 @@ def export_timestamp(now: datetime | None = None) -> datetime:
 
 def export_filename(prefix: str, extension: str, now: datetime | None = None) -> str:
     return f"{prefix}-{export_timestamp(now).strftime('%Y-%m-%d-%H%M%SZ')}.{extension}"
-
-
-def as_json_record(model, schema):
-    return schema.model_validate(model).model_dump(mode="json")
 
 
 def spreadsheet_text(value: object | None) -> str:
@@ -71,27 +66,13 @@ def red_flag_count(application: Application) -> int:
 
 
 def workspace_backup_payload(db: Session, now: datetime | None = None) -> dict:
-    resumes = db.query(ResumeVersion).order_by(ResumeVersion.id.asc()).all()
-    applications = db.query(Application).order_by(Application.id.asc()).all()
-    activities = db.query(ApplicationActivity).order_by(ApplicationActivity.id.asc()).all()
-    resume_records = [as_json_record(resume, ResumeVersionRead) for resume in resumes]
-    application_records = [as_json_record(application, ApplicationRead) for application in applications]
-    activity_records = [as_json_record(activity, ApplicationActivityRead) for activity in activities]
-
+    content = workspace_content_payload(db)
     return {
-        "format": BACKUP_FORMAT,
-        "version": BACKUP_VERSION,
+        "format": content["format"],
+        "version": content["version"],
         "exported_at": export_timestamp(now).isoformat().replace("+00:00", "Z"),
-        "counts": {
-            "resume_versions": len(resume_records),
-            "applications": len(application_records),
-            "application_activities": len(activity_records),
-        },
-        "data": {
-            "resume_versions": resume_records,
-            "applications": application_records,
-            "application_activities": activity_records,
-        },
+        "counts": content["counts"],
+        "data": content["data"],
     }
 
 

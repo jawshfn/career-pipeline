@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from ..backup_format import BACKUP_FORMAT, BACKUP_VERSION
 from ..domain import ACTIVE_APPLICATION_STATUSES, ARCHIVED_APPLICATION_STATUS, CLOSED_APPLICATION_STATUSES
-from ..models import Application, ApplicationActivity, ResumeVersion
+from .workspace_backup_data import workspace_content_payload
 
 MAX_RESUME_VERSIONS = 5_000
 MAX_APPLICATIONS = 25_000
@@ -19,13 +19,13 @@ _DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _DATETIME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})?$")
 
 
-def _parse_date(value: str) -> None:
+def parse_backup_date(value: str) -> date:
     if not _DATE_PATTERN.fullmatch(value):
         raise ValueError("must be an ISO calendar date")
-    date.fromisoformat(value)
+    return date.fromisoformat(value)
 
 
-def _parse_datetime(value: str) -> datetime:
+def parse_backup_datetime(value: str) -> datetime:
     if not _DATETIME_PATTERN.fullmatch(value):
         raise ValueError("must be an ISO timestamp")
     normalized = value[:-1] + "+00:00" if value.endswith("Z") else value
@@ -76,7 +76,7 @@ class ResumeBackupRecord(_StrictBackupModel):
     @field_validator("created_at", "updated_at")
     @classmethod
     def valid_timestamp(cls, value: str) -> str:
-        _parse_datetime(value)
+        parse_backup_datetime(value)
         return value
 
 
@@ -137,13 +137,13 @@ class ApplicationBackupRecord(_StrictBackupModel):
     @classmethod
     def valid_date(cls, value: str | None) -> str | None:
         if value is not None:
-            _parse_date(value)
+            parse_backup_date(value)
         return value
 
     @field_validator("created_at", "updated_at")
     @classmethod
     def valid_timestamp(cls, value: str) -> str:
-        _parse_datetime(value)
+        parse_backup_datetime(value)
         return value
 
 
@@ -173,13 +173,13 @@ class ActivityBackupRecord(_StrictBackupModel):
     @field_validator("activity_date")
     @classmethod
     def valid_date(cls, value: str) -> str:
-        _parse_date(value)
+        parse_backup_date(value)
         return value
 
     @field_validator("created_at", "updated_at")
     @classmethod
     def valid_timestamp(cls, value: str) -> str:
-        _parse_datetime(value)
+        parse_backup_datetime(value)
         return value
 
 
@@ -199,7 +199,7 @@ class WorkspaceBackupDocument(_StrictBackupModel):
     @field_validator("exported_at")
     @classmethod
     def valid_timestamp(cls, value: str) -> str:
-        _parse_datetime(value)
+        parse_backup_datetime(value)
         return value
 
 
@@ -242,13 +242,17 @@ def application_summary(applications: list[Any]) -> dict[str, int]:
             "legacy_archived_applications": legacy_archived}
 
 
-def current_workspace_summary(db: Session) -> dict[str, int]:
-    applications = db.query(Application).all()
+def workspace_content_summary(content: dict[str, Any]) -> dict[str, int]:
+    applications = content["data"]["applications"]
     return {
-        "resume_versions": db.query(ResumeVersion).count(),
+        "resume_versions": content["counts"]["resume_versions"],
         **application_summary(applications),
-        "application_activities": db.query(ApplicationActivity).count(),
+        "application_activities": content["counts"]["application_activities"],
     }
+
+
+def current_workspace_summary(db: Session) -> dict[str, int]:
+    return workspace_content_summary(workspace_content_payload(db))
 
 
 def _record_limits(payload: Any) -> list[dict[str, str | None]]:
@@ -260,14 +264,11 @@ def _record_limits(payload: Any) -> list[dict[str, str | None]]:
             for name, maximum in limits if isinstance(payload["data"].get(name), list) and len(payload["data"][name]) > maximum]
 
 
-def validate_workspace_backup(payload: Any, db: Session, now: datetime | None = None) -> dict[str, Any]:
-    current_summary = current_workspace_summary(db)
+def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDocument | None, list[dict[str, str | None]]]:
+    """Apply the single strict version-1 validation rule set without database reads."""
     issues = _record_limits(payload)
     if issues:
-        # Collection limits are a safety boundary.  Do not ask Pydantic to walk
-        # every record in an oversized parsed payload.
-        return {"is_valid": False, "eligible_for_restore": False, "backup_summary": None,
-                "current_workspace_summary": current_summary, "warnings": [], "errors": issues}
+        return None, issues
     document: WorkspaceBackupDocument | None = None
     try:
         document = WorkspaceBackupDocument.model_validate(payload)
@@ -304,21 +305,41 @@ def validate_workspace_backup(payload: Any, db: Session, now: datetime | None = 
                 if record.application_id not in application_ids:
                     issues.append(_issue("missing_application_reference", f"data.application_activities[{index}].application_id", "Activity references an application that is not included."))
 
+    return document if not issues else None, issues
+
+
+def workspace_backup_summary(document: WorkspaceBackupDocument, now: datetime | None = None) -> tuple[dict[str, Any], list[str]]:
+    warnings: list[str] = []
+    data = document.data
+    applications = [record.model_dump() for record in data.applications]
+    breakdown = application_summary(applications)
+    summary = {"format": document.format, "version": document.version, "exported_at": document.exported_at,
+               "resume_versions": len(data.resume_versions), "application_activities": len(data.application_activities), **breakdown}
+    if not data.resume_versions and not data.applications and not data.application_activities:
+        warnings.append("This backup contains no workspace records.")
+    if parse_backup_datetime(document.exported_at).astimezone(timezone.utc) > (now or datetime.now(timezone.utc)).astimezone(timezone.utc) + timedelta(minutes=5):
+        warnings.append("The backup export time is in the future.")
+    mismatches = sum((record.status == ARCHIVED_APPLICATION_STATUS) != record.is_archived for record in data.applications)
+    if mismatches:
+        warnings.append(f"{mismatches} application archived status marker(s) disagree.")
+    return summary, warnings
+
+
+def validate_workspace_backup(
+    payload: Any,
+    db: Session,
+    now: datetime | None = None,
+    current_summary: dict[str, int] | None = None,
+) -> dict[str, Any]:
+    current_summary = current_summary if current_summary is not None else current_workspace_summary(db)
+    document, issues = validate_workspace_backup_document(payload)
     warnings: list[str] = []
     summary: dict[str, Any] | None = None
-    if document is not None and not issues:
+    if document is not None:
+        summary, warnings = workspace_backup_summary(document, now)
         data = document.data
-        applications = [record.model_dump() for record in data.applications]
-        breakdown = application_summary(applications)
-        summary = {"format": document.format, "version": document.version, "exported_at": document.exported_at,
-                   "resume_versions": len(data.resume_versions), "application_activities": len(data.application_activities), **breakdown}
         if not data.resume_versions and not data.applications and not data.application_activities:
-            warnings.append("This backup contains no workspace records." + (" A future replace restore would result in an empty workspace." if any(current_summary.values()) else ""))
-        if _parse_datetime(document.exported_at).astimezone(timezone.utc) > (now or datetime.now(timezone.utc)).astimezone(timezone.utc) + timedelta(minutes=5):
-            warnings.append("The backup export time is in the future.")
-        mismatches = sum((record.status == ARCHIVED_APPLICATION_STATUS) != record.is_archived for record in data.applications)
-        if mismatches:
-            warnings.append(f"{mismatches} application archived status marker(s) disagree.")
+            warnings[0] += " A future replace restore would result in an empty workspace." if any(current_summary.values()) else ""
 
     issues = _cap_issues(issues)
     valid = not issues
