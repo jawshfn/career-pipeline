@@ -138,7 +138,8 @@ Example request:
 Legacy archive compatibility:
 
 - `Archived` and `is_archived` remain for compatibility with records created by earlier versions.
-- PursuitHQ does not expose a user-facing Archive or Restore workflow.
+- The normal application PATCH endpoint cannot restore an individual legacy archived application, and PursuitHQ does not expose a user-facing Archive/Unarchive workflow.
+- Complete workspace replacement is separately available through the workspace import endpoints.
 - Legacy archived records remain excluded from normal workflow views.
 
 Activity behavior:
@@ -164,7 +165,7 @@ Status: implemented
 
 ### Legacy Archive Compatibility
 
-`include_archived`, `is_archived`, and the stored `Archived` value remain for compatibility with records created by earlier versions. PursuitHQ does not currently expose a user-facing Archive or Restore workflow. New application deletion is permanent, and legacy archived records remain excluded from normal workflow views.
+`include_archived`, `is_archived`, and the stored `Archived` value remain for compatibility with records created by earlier versions. The normal application PATCH endpoint cannot restore an individual archived application, and PursuitHQ does not expose a user-facing Archive/Unarchive workflow. Complete workspace replacement is separately available through the workspace import endpoints, and a workspace backup can preserve legacy archived records exactly. New application deletion is permanent, and legacy archived records remain excluded from normal workflow views.
 
 ## Browser Text Captures
 
@@ -251,6 +252,8 @@ Rules:
 - upcoming_followups: follow_up_date exists and is today through the next 3 days
 - stale_applications: backend response field for Needs check-in items: no follow_up_date, active status, and updated_at older than 14 days
 
+Overdue and upcoming follow-ups exclude Rejected, Withdrawn, Archived, and records where `is_archived = true`.
+
 Stale applications exclude:
 
 - Offer
@@ -324,6 +327,8 @@ The response includes:
 - red_flag_snapshot
 - source_effectiveness
 - resume_version_effectiveness
+
+The overdue and upcoming follow-up cards follow the same actionable status exclusions as Reminders. Closed and archived records still participate in unrelated dashboard metrics according to the existing dashboard rules, and metric calculation does not alter historical follow-up dates.
 
 Status: implemented
 
@@ -419,13 +424,66 @@ Status: implemented
 
 The formatted `.xlsx` workbook is generated in the frontend with current application and resume data. It works in both local and fictional demo modes, uses the same 19-column human-review contract as CSV, and is not a restore format. There is no `/api/exports/applications.xlsx` endpoint.
 
+## Workspace Import and Restore
+
+### POST /api/imports/workspace/validate
+
+Purpose: validate and preview one complete PursuitHQ version-1 workspace backup without changing the database.
+
+Request:
+
+- `Content-Type: application/json`
+- Original raw JSON body, up to 25 MiB streamed
+- UTF-8, with an optional BOM
+
+Validation checks the format and version, strict schema and required fields, record limits, declared counts, unique IDs, resume and activity relationships, dates and timestamps, and supported statuses.
+
+Parsed JSON returns HTTP 200 whether the backup is valid or invalid. The read-only response includes `is_valid`, `eligible_for_restore`, `backup_summary`, `current_workspace_summary`, `warnings`, `errors`, and `restore_authorization`. Invalid backups receive `restore_authorization: null`.
+
+Representative response shape:
+
+```json
+{
+  "is_valid": true,
+  "eligible_for_restore": true,
+  "backup_summary": { "applications": 0 },
+  "current_workspace_summary": { "applications": 0 },
+  "warnings": [],
+  "errors": [],
+  "restore_authorization": { "token": "...", "expires_at": "...", "mode": "replace" }
+}
+```
+
+Transport errors: `400` for an empty body, invalid UTF-8, or malformed JSON; `413` for oversized input; and `415` for an unsupported content type.
+
+Status: implemented
+
+### POST /api/imports/workspace/restore
+
+Purpose: replace the complete current local workspace with the exact backup that was successfully reviewed.
+
+Request:
+
+- Original raw JSON body with `Content-Type: application/json`
+- `X-PursuitHQ-Restore-Token` header
+
+Restore is replace-only. Its authorization expires after five minutes, is single use, is bound to the exact raw backup content and reviewed current-workspace snapshot, and is not persisted to SQLite. A new preview is required after expiration, failure, use, backend restart, file change, or workspace change.
+
+The operation acquires a SQLite write reservation, rechecks the current workspace, revalidates the backup, and replaces resume versions, applications, and activities in one transaction. It preserves IDs, relationships, dates, timestamps, inactive resumes, null assignments, and legacy archived records; it supports an empty valid backup and rolls back fully on failure.
+
+A successful response includes `restored`, `mode`, `backup_exported_at`, `restored_at`, `previous_workspace_summary`, and `restored_workspace_summary`.
+
+Controlled errors: `400` when review authorization is missing; `409` when authorization is invalid or the current workspace changed; and `500` when restore fails and no data was changed.
+
+Status: implemented
+
 ## Planned Future API
 
 These endpoints are planned or possible future work and are not implemented yet.
 
-### Workspace Import And Restore
+### Merge-Style Workspace Import and Conflict Resolution
 
-A reviewed import/restore API is planned for Phase 23.2. The endpoint shape, validation response, conflict model, and transaction behavior are intentionally not finalized yet.
+This possibility is not implemented and has no finalized contract.
 
 ### Follow-Up Completion and Rescheduling
 

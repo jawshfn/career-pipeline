@@ -242,11 +242,14 @@ Status: complete through Phase 22.2b
 
 ## Phase 23 — Data Portability And Backup
 
-Status: complete through Phase 23.1b
+Status: complete through Phase 23.2b2
 
 - Phase 23.1 — Add complete JSON workspace backups and concise applications CSV exports with local/demo parity.
 - Phase 23.1b — Add a formatted XLSX applications workbook for Excel and Google Sheets with shared review-row formatting, readable dates, links, and static highlights. JSON is the complete backup; CSV and XLSX are 19-column human-review formats without Application ID, with JSON and CSV served by backend endpoints and XLSX generated in the frontend for local and demo parity.
-- Phase 23.2 — Add reviewed workspace import and restore with validation, preview, conflict handling, and explicit confirmation.
+- Phase 23.2a — Add strict version-1 JSON backup validation, read-only preview, integrity checks, record limits, warnings, and current-workspace comparison.
+- Phase 23.2a.1 — Harden oversized-record short-circuiting and expand validation, transport, read-only, and frontend preview coverage.
+- Phase 23.2b1 — Add short-lived exact-file and current-workspace-bound authorization plus transactional replace restore with ID preservation and full rollback.
+- Phase 23.2b2 — Add the local reviewed restore UI with typed confirmation, count comparison, centralized workspace refresh, accessible responsive dialogs, and no demo restore controls.
 
 ## Later Optional Enhancements
 
@@ -258,3 +261,4 @@ Status: complete through Phase 23.1b
 - Other documented ATS integrations
 - Production distribution of the browser companion only if the product reaches that stage
 - Configurable browser-helper target after a hosted backend exists
+- Merge-style workspace import and conflict resolution

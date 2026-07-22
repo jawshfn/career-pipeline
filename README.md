@@ -24,7 +24,7 @@ The hosted demo uses fictional in-memory sample data. It is useful for reviewing
 - **Dashboard:** see summary metrics, source results, resume results, and red-flag snapshots.
 - **Resumes:** manage reusable resume variants and connect them to applications.
 - **Application Detail:** edit follow-up, job details, Job Posting Snapshot, resume/prep notes, red flags, activity history, and safely remove incorrect or duplicate records.
-- **Data & backup:** download a complete JSON workspace backup, a formatted Excel workbook for review, or a portable applications CSV.
+- **Data & backup:** download a complete JSON backup, use reviewed local replace restore, or export XLSX and CSV files for human review.
 
 ## Browser Capture - Recommended Local Workflow
 
@@ -52,7 +52,7 @@ Export actions are user initiated from Help → Data & backup and download direc
 
 ### Workspace backup — JSON
 
-The JSON export is a complete, lossless backup of stored workspace data. It includes resume versions, applications, activity history, IDs, and relationships, including active, closed, inactive, and legacy archived stored records. It is intended for safekeeping and future restore support; restore/import is not implemented yet.
+The JSON export is the complete, lossless backup and restore format. It includes stored workspace data, resume versions, applications, activity history, IDs, and relationships, including active, closed, inactive, and legacy archived records. In the local app, choose a version-1 backup from Help, review its validation results and comparison with the current workspace, then explicitly type `RESTORE` to replace the complete workspace. Restore is replace-only, not a merge; download a fresh current backup first if you may need the current workspace later. The public GitHub Pages demo does not expose restore controls.
 
 ### Formatted applications workbook — XLSX
 
@@ -142,9 +142,9 @@ npm run build
 
 PursuitHQ is a working local-first prototype, not a production SaaS app. The GitHub Pages site is a static portfolio demo with reset-on-refresh sample data.
 
-Implemented: Greenhouse and Lever structured link imports, best-effort custom Greenhouse discovery, experimental locally loaded Greenhouse browser identifier capture, bounded Indeed capture, supported LinkedIn standalone and current-job panel capture, signed-in ZipRecruiter selected-job capture across supported paginated search URLs, authenticated Handshake standalone and selected side-panel capture, one-time local transfer, editable review with no autosave, and JSON, CSV, and XLSX workspace exports.
+Implemented: Greenhouse and Lever structured link imports, best-effort custom Greenhouse discovery, experimental locally loaded Greenhouse browser identifier capture, bounded Indeed capture, supported LinkedIn standalone and current-job panel capture, signed-in ZipRecruiter selected-job capture across supported paginated search URLs, authenticated Handshake standalone and selected side-panel capture, one-time local transfer, editable review with no autosave, JSON validation preview, authorized transactional JSON replace restore in the local app, and JSON, CSV, and XLSX workspace exports.
 
-Not implemented: Chrome Web Store distribution, production backend/SaaS deployment, generic job-board scraping, authentication, multi-user synchronization, AI extraction, workspace import/restore, or email/calendar integrations.
+Not implemented: Chrome Web Store distribution, production backend/SaaS deployment, generic job-board scraping, authentication, multi-user synchronization, AI extraction, merge-style workspace import or conflict resolution, arbitrary third-party import formats, or email/calendar integrations.
 
 ## Documentation
 

@@ -38,6 +38,7 @@ PursuitHQ centralizes that activity into a simple workflow that supports fast ca
 - Local-first early prototype: the backend should work well as a local development app with SQLite.
 - Transparent status tracking: application states should be clear and easy to update.
 - User-controlled portability: exports should be explicit, local, readable, and separate complete backup data from human-review formats.
+- Reviewed replacement: complete workspace changes require a read-only review, explicit local confirmation, and an all-or-nothing replace operation.
 - Public-repo appropriate: documentation should focus on product, architecture, and development, not private strategy or personal examples.
 
 ## Current Implemented Scope
@@ -81,10 +82,15 @@ The current prototype includes:
 - Legacy archived records remain hidden for compatibility, but no new user-facing Archive workflow is exposed
 - Runtime-aware Data & backup section in Help
 - Complete versioned JSON workspace backup containing stored resume versions, applications, activity history, IDs, and relationships
+- Strict version-1 JSON validation and read-only backup preview with current-workspace comparison
+- Temporary exact-file and current-workspace-bound authorization for local replace restore
+- Typed `RESTORE` confirmation and transactional replacement with rollback on failure
+- Local-only reviewed restore UI; the public demo supports exports but does not expose validation or restore
 - Concise applications CSV and formatted XLSX review exports for non-archived applications
 - Formatted XLSX workbook with filters, readable dates, clickable links, and static status, red-flag, and overdue-follow-up highlights
 - Runtime-aware export support for both the local workspace and the current fictional demo session
 - CSV and XLSX review exports exclude archived rows and long-form backup-only content
+- Dashboard overdue and upcoming follow-up cards use actionable reminder eligibility: Rejected, Withdrawn, and legacy Archived outcomes are excluded while historical follow-up dates remain stored
 
 ## Non-Goals for Current Prototype
 
@@ -98,7 +104,10 @@ The current prototype includes:
 - Cloud-hosted production deployment
 - AI-generated resumes, scoring, or recommendations
 - Full contact-management CRM
-- Workspace import or restore until a reviewed validation and confirmation workflow is implemented
+- Merge-style workspace restore
+- Conflict resolution between two workspaces
+- Import of arbitrary spreadsheet or third-party formats
+- Cloud-hosted or multi-device restore
 - Private business strategy, monetization plans, or competitor analysis
 
 ## Core Workflows
@@ -152,11 +161,23 @@ The table avoids showing raw pasted notes as long previews. Applications with no
 
 The Applications table does not show a routine row-level delete action. Permanent deletion is available only from Application Detail.
 
-### Export and Back Up Workspace Data
+### Export, Back Up, and Restore Workspace Data
 
 Exports are initiated from Help → Data & backup. JSON is the complete workspace backup, while XLSX is the recommended review format for Excel and Google Sheets and CSV is the portable fallback. XLSX and CSV intentionally contain concise review fields rather than all stored content; full notes, full job descriptions, activity history, internal identifiers, and relationships remain in JSON.
 
-Import/restore is not currently available. Demo exports contain the current fictional in-memory session and do not change its reset-on-refresh behavior.
+In the local app, the reviewed JSON restore workflow is:
+
+1. Download a complete JSON backup.
+2. Choose a JSON backup in Help.
+3. Review its format, version, export date, warnings, and counts.
+4. Compare its contents with the current workspace.
+5. Download a fresh current backup when needed.
+6. Open the replace confirmation.
+7. Type `RESTORE`.
+8. Replace the workspace transactionally.
+9. Refresh application and resume state after success.
+
+Preview does not change data. Restore is replace-only, not a merge, and failure does not leave a partial workspace. A workspace changed after preview requires another review. The public demo exports its current fictional in-memory session but does not support validation or restore.
 
 ### Edit Application Detail
 
@@ -218,6 +239,8 @@ It shows:
 
 These action-item sections come from the backend `/api/applications/action-items` endpoint so follow-up and Needs check-in rules stay consistent across the app.
 
+Rejected, Withdrawn, and legacy Archived applications are excluded from actionable overdue and upcoming follow-ups; existing historical follow-up dates are retained. Offer remains eligible when its date qualifies.
+
 Cards show enough context to act quickly, including company, role, status, follow-up date, and Next Action when present.
 
 Follow-up quick actions:
@@ -272,6 +295,8 @@ Current sections include:
 - Resume Results, showing applications, active count, interviews, offers, closed count, and assignment coverage by resume version
 
 Archived applications are excluded from normal dashboard metrics.
+
+Dashboard overdue and upcoming follow-up cards use the same actionable eligibility rule as Reminders: Rejected, Withdrawn, and Archived applications do not count, while Offer may count. This calculation does not alter stored follow-up dates; closed applications continue to participate in unrelated Dashboard metrics according to their existing rules.
 
 ## Success Criteria for Current Prototype
 
