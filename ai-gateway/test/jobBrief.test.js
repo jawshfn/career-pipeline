@@ -38,7 +38,7 @@ describe("job brief prompt boundary", () => {
 
   it("owns model behavior and structured output server-side", () => {
     const options = buildJobBriefAiOptions(request);
-    expect(options).toMatchObject({ temperature: 0.2, max_tokens: 1400 });
+    expect(options).toMatchObject({ temperature: 0.2, max_tokens: 4096 });
     expect(options.response_format.type).toBe("json_schema");
     expect(options.response_format.json_schema.required).toContain("role_summary");
     expect(options.messages[0].content).not.toContain(request.job_posting_text);
