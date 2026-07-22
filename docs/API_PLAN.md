@@ -165,10 +165,25 @@ Examples:
 
 ```json
 {
+  "action": "complete",
+  "expected_follow_up_date": "2026-07-03"
+}
+```
+
+```json
+{
   "action": "complete_and_schedule",
   "expected_follow_up_date": "2026-07-03",
   "follow_up_date": "2026-07-10",
   "next_action": "Prepare questions for the recruiter."
+}
+```
+
+```json
+{
+  "action": "reschedule",
+  "expected_follow_up_date": "2026-07-03",
+  "follow_up_date": "2026-07-06"
 }
 ```
 

@@ -255,10 +255,10 @@ Status: complete through Phase 23.2b2
 
 Status: complete through Phase 24.3
 
-- Phase 24.1 — Add a browser-local Reminders daily header and clearer overdue, upcoming, and Needs check-in section hierarchy.
-- Phase 24.2a — Replace legacy reminder controls with reviewed Complete, Complete and schedule, Reschedule, and Clear follow-up actions backed by one atomic application-and-activity transaction, validation, and controlled stale/closed conflicts.
-- Phase 24.2b — Deliver local-app and reset-on-refresh demo parity for reviewed reminder actions, Next Action updates, and refreshed reminder state.
-- Phase 24.3 — Add direct navigation from Reminders to the related Application Detail Overview, alongside Applications and Status Board entry points.
+- Phase 24.1 — Add an atomic follow-up action endpoint with complete, complete-and-schedule, reschedule, and clear actions; expected-date conflict protection; transactional Activity logging; and local/demo parity.
+- Phase 24.2a — Add a browser-local greeting, minute-updating clock, full date, and responsive Daily Reminders Header.
+- Phase 24.2b — Add compact cards and a reviewed Manage Reminder dialog with quick/custom dates, Next Action Keep/Update/Clear, accessibility, and conflict handling.
+- Phase 24.3 — Add direct Reminder-to-Application Detail navigation using the existing integrated Overview workflow.
 
 ## Later Optional Enhancements
 

@@ -240,9 +240,9 @@ These action-item sections come from the backend `/api/applications/action-items
 
 Rejected, Withdrawn, and legacy Archived applications are excluded from actionable overdue and upcoming follow-ups; existing historical follow-up dates are retained. Offer remains eligible when its date qualifies.
 
-Cards show company, role, status, follow-up date, and Next Action when present; the Next Action line is omitted when the value is absent. Selecting a card opens that application in Application Detail Overview, while controls within the card retain their own reviewed workflow.
+Cards show company, role, status, follow-up date, and Next Action when present; the Next Action line is omitted when the value is absent. The company-and-role control opens that application in Application Detail Overview, while Manage Reminder remains a separate reviewed-action control.
 
-Each follow-up action opens a review dialog before mutation: Complete, Complete and schedule, Reschedule, or Clear follow-up. Complete clears the date; Complete and schedule records completion and requires a new future date; Reschedule requires a changed future date; Clear removes the date without marking completion. The dialog can retain, replace, or explicitly clear Next Action: an omitted value preserves it, a non-empty string replaces it, and an explicit null clears it.
+Each follow-up action opens a review dialog before mutation: Complete, Complete and schedule next, Reschedule, or Clear follow-up. Complete clears the date; Complete and schedule next records completion and requires a date later than today; Reschedule requires a changed date that is today or later; Clear removes the date without marking completion. The dialog can retain, replace, or explicitly clear Next Action: an omitted value preserves it, a non-empty string replaces it, and an explicit null clears it.
 
 The backend performs the application change and exactly one backend-owned `Follow-up` Activity entry in one transaction. It rejects stale expected dates, closed or archived records, and invalid date/action combinations without a partial change; the client refreshes its reminder data after a successful action or reports the controlled conflict. The same workflow and direct navigation are available in the local app and reset-on-refresh demo.
 
