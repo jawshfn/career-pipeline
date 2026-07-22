@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import or_
+from sqlalchemy import or_, update
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -19,6 +19,8 @@ from ..schemas import (
     ApplicationActivityRead,
     ApplicationActivityUpdate,
     ApplicationCreate,
+    ApplicationFollowUpActionRead,
+    ApplicationFollowUpActionRequest,
     ApplicationRead,
     ApplicationUpdate,
 )
@@ -51,6 +53,28 @@ def create_status_change_activity(
             note=f"Status changed from {previous_status} to {next_status}.",
         )
     )
+
+
+FOLLOW_UP_CONFLICT_DETAIL = "This follow-up changed after it was loaded. Refresh Reminders and try again."
+FOLLOW_UP_CLOSED_DETAIL = "This application is closed or archived and its follow-up cannot be changed."
+
+
+def build_follow_up_activity_note(payload: ApplicationFollowUpActionRequest) -> str:
+    expected = payload.expected_follow_up_date.isoformat()
+    if payload.action == "complete":
+        note = "Completed follow-up."
+    elif payload.action == "complete_and_schedule":
+        note = f"Completed follow-up and scheduled the next follow-up for {payload.follow_up_date.isoformat()}."
+    elif payload.action == "reschedule":
+        note = f"Rescheduled follow-up from {expected} to {payload.follow_up_date.isoformat()}."
+    else:
+        note = "Cleared follow-up without marking it complete."
+
+    if payload.activity_note is not None:
+        note += f" Note: {payload.activity_note}"
+    if "next_action" in payload.model_fields_set:
+        note += " Next action cleared." if payload.next_action is None else f" Next action: {payload.next_action}"
+    return note
 
 
 @router.get("", response_model=list[ApplicationRead])
@@ -214,6 +238,57 @@ def delete_application_activity(
 @router.get("/{application_id}", response_model=ApplicationRead)
 def get_application(application_id: int, db: Session = Depends(get_db)) -> Application:
     return get_existing_application(application_id, db)
+
+
+@router.patch("/{application_id}/follow-up", response_model=ApplicationFollowUpActionRead)
+def apply_follow_up_action(
+    application_id: int,
+    payload: ApplicationFollowUpActionRequest,
+    db: Session = Depends(get_db),
+) -> dict[str, Application | ApplicationActivity]:
+    # This preliminary lookup gives a stable 404. The conditional UPDATE below is
+    # still the authority for eligibility and stale-state protection.
+    application = get_existing_application(application_id, db)
+    target_date = payload.follow_up_date if payload.action in {"reschedule", "complete_and_schedule"} else None
+    values: dict[str, object] = {"follow_up_date": target_date, "updated_at": utc_now()}
+    if "next_action" in payload.model_fields_set:
+        values["next_action"] = payload.next_action
+
+    try:
+        result = db.execute(
+            update(Application)
+            .where(
+                Application.id == application_id,
+                Application.follow_up_date == payload.expected_follow_up_date,
+                Application.follow_up_date.is_not(None),
+                Application.is_archived.is_(False),
+                Application.status.notin_(FOLLOW_UP_EXCLUDED_STATUSES),
+            )
+            .values(**values)
+        )
+        if result.rowcount != 1:
+            db.rollback()
+            # The conditional statement deliberately makes every changed or
+            # ineligible state non-mutating. Keep the client message controlled.
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=FOLLOW_UP_CONFLICT_DETAIL)
+
+        activity = ApplicationActivity(
+            application_id=application_id,
+            activity_date=date.today(),
+            activity_type="Follow-up",
+            note=build_follow_up_activity_note(payload),
+        )
+        db.add(activity)
+        db.flush()
+        db.commit()
+        db.refresh(application)
+        db.refresh(activity)
+        return {"application": application, "activity": activity}
+    except HTTPException:
+        raise
+    except Exception:
+        db.rollback()
+        raise
 
 
 @router.patch("/{application_id}", response_model=ApplicationRead)

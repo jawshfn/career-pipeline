@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { createApplicationActivity } from "../services/applicationActivitiesService.js";
 import { getApplicationActionItems } from "../services/applicationsService.js";
 import CommandCenterSection from "../components/command-center/CommandCenterSection.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
@@ -44,12 +43,7 @@ function getAvailableFollowUpActions(application) {
   };
 }
 
-function getFollowUpActivityNote(baseNote, application) {
-  const nextAction = String(application.next_action || "").trim();
-  return nextAction ? `${baseNote} Next action: ${nextAction}.` : baseNote;
-}
-
-export default function CommandCenterPage({ onUpdateApplication }) {
+export default function CommandCenterPage({ onApplyFollowUpAction }) {
   const [actionItems, setActionItems] = useState(emptyActionItems);
   const [actionItemsError, setActionItemsError] = useState("");
   const [isActionItemsLoading, setIsActionItemsLoading] = useState(true);
@@ -85,15 +79,7 @@ export default function CommandCenterPage({ onUpdateApplication }) {
     loadActionItems();
   }, [loadActionItems]);
 
-  async function logFollowUpActivity(application, note) {
-    await createApplicationActivity(application.id, {
-      activity_date: formatLocalDate(new Date()),
-      activity_type: "Follow-up",
-      note: getFollowUpActivityNote(note, application),
-    });
-  }
-
-  async function updateFollowUp(application, nextFollowUpDate, message, activityNote) {
+  async function updateFollowUp(application, payload, message) {
     if (actionInFlightRef.current.has(application.id)) {
       return;
     }
@@ -103,22 +89,17 @@ export default function CommandCenterPage({ onUpdateApplication }) {
     setActionMessage("");
     setUpdatingApplicationId(application.id);
 
-    let didUpdate = false;
+    let shouldReload = false;
 
     try {
-      await onUpdateApplication(application.id, { follow_up_date: nextFollowUpDate });
-      didUpdate = true;
+      await onApplyFollowUpAction(application.id, payload);
+      shouldReload = true;
       setActionMessage(message);
-
-      try {
-        await logFollowUpActivity(application, activityNote);
-      } catch (activityError) {
-        setActionError(activityError.message || "Follow-up updated, but activity could not be logged.");
-      }
     } catch (updateError) {
       setActionError(updateError.message || "Could not update follow-up date.");
+      shouldReload = /changed after it was loaded/i.test(updateError.message || "");
     } finally {
-      if (didUpdate) {
+      if (shouldReload) {
         await loadActionItems({ showLoading: false });
       }
       actionInFlightRef.current.delete(application.id);
@@ -137,9 +118,12 @@ export default function CommandCenterPage({ onUpdateApplication }) {
 
       updateFollowUp(
         application,
-        formatLocalDate(addDays(today, 3)),
+        {
+          action: "reschedule",
+          expected_follow_up_date: application.follow_up_date,
+          follow_up_date: formatLocalDate(addDays(today, 3)),
+        },
         "Follow-up snoozed for 3 days.",
-        "Snoozed follow-up 3 days.",
       );
       return;
     }
@@ -151,14 +135,20 @@ export default function CommandCenterPage({ onUpdateApplication }) {
 
       updateFollowUp(
         application,
-        formatLocalDate(addDays(today, 7)),
+        {
+          action: "reschedule",
+          expected_follow_up_date: application.follow_up_date,
+          follow_up_date: formatLocalDate(addDays(today, 7)),
+        },
         "Follow-up snoozed for 1 week.",
-        "Snoozed follow-up 1 week.",
       );
       return;
     }
 
-    updateFollowUp(application, null, "Follow-up cleared.", "Cleared follow-up date.");
+    updateFollowUp(application, {
+      action: "clear",
+      expected_follow_up_date: application.follow_up_date,
+    }, "Follow-up cleared.");
   }
 
   const hasActionItems =

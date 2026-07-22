@@ -3,7 +3,7 @@ from datetime import date, datetime
 from urllib.parse import parse_qs, urlparse
 from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
 
 from .domain import (
     ALLOWED_APPLICATION_STATUSES,
@@ -114,6 +114,50 @@ class ApplicationActionItemsRead(BaseModel):
     overdue_followups: list[ApplicationRead]
     upcoming_followups: list[ApplicationRead]
     stale_applications: list[ApplicationRead]
+
+
+class ApplicationFollowUpActionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    action: Literal["complete", "complete_and_schedule", "reschedule", "clear"]
+    expected_follow_up_date: date
+    follow_up_date: date | None = None
+    next_action: str | None = Field(default=None, max_length=10_000)
+    activity_note: str | None = Field(default=None, max_length=10_000)
+
+    @field_validator("next_action", "activity_note")
+    @classmethod
+    def validate_optional_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+    @model_validator(mode="after")
+    def validate_action_dates(self) -> "ApplicationFollowUpActionRequest":
+        today = date.today()
+        if self.action in {"complete", "clear"} and self.follow_up_date is not None:
+            raise ValueError(f"follow_up_date must be omitted or null for {self.action}")
+        if self.action == "reschedule":
+            if self.follow_up_date is None:
+                raise ValueError("follow_up_date is required for reschedule")
+            if self.follow_up_date < today:
+                raise ValueError("follow_up_date must be today or later for reschedule")
+            if self.follow_up_date == self.expected_follow_up_date:
+                raise ValueError("follow_up_date must differ from expected_follow_up_date for reschedule")
+        if self.action == "complete_and_schedule":
+            if self.follow_up_date is None:
+                raise ValueError("follow_up_date is required for complete_and_schedule")
+            if self.follow_up_date <= today:
+                raise ValueError("follow_up_date must be later than today for complete_and_schedule")
+        return self
+
+
+class ApplicationFollowUpActionRead(BaseModel):
+    application: ApplicationRead
+    activity: "ApplicationActivityRead"
 
 
 class DashboardSummaryCardRead(BaseModel):

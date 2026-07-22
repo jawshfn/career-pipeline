@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { createApplication, deleteApplication, getApplications, updateApplication } from "./services/applicationsService.js";
+import { applyApplicationFollowUpAction, createApplication, deleteApplication, getApplications, updateApplication } from "./services/applicationsService.js";
 import {
   createResumeVersion,
   deleteResumeVersion,
@@ -237,6 +237,16 @@ export default function App() {
     return createdResumeVersion;
   }
 
+  async function handleFollowUpAction(applicationId, payload) {
+    const result = await applyApplicationFollowUpAction(applicationId, payload);
+    setApplications((currentApplications) =>
+      currentApplications.map((application) =>
+        application.id === result.application.id ? result.application : application,
+      ),
+    );
+    return result;
+  }
+
   async function handleDeleteApplication(applicationId) {
     await deleteApplication(applicationId);
     setApplications((currentApplications) => removeApplicationById(currentApplications, applicationId));
@@ -276,7 +286,7 @@ export default function App() {
     <AppLayout activePage={activePage} isDemoMode={isDemoMode()} onNavigate={navigateToPage}>
       {activePage === "command-center" ? (
         <CommandCenterPage
-          onUpdateApplication={handleUpdateApplication}
+          onApplyFollowUpAction={handleFollowUpAction}
         />
       ) : activePage === "dashboard" ? (
         <DashboardPage onOpenStatusBoard={() => navigateToPage("pipeline")} />

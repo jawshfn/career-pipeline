@@ -25,6 +25,10 @@ export function updateApplication(applicationId, applicationData) {
   return apiPatch(`/api/applications/${applicationId}`, applicationData, APPLICATION_ERROR);
 }
 
+export function applyApplicationFollowUpAction(applicationId, payload) {
+  return apiPatch(`/api/applications/${applicationId}/follow-up`, payload, APPLICATION_ERROR);
+}
+
 export function deleteApplication(applicationId) {
   return apiDelete(
     `/api/applications/${applicationId}`,

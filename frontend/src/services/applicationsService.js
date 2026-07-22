@@ -5,6 +5,7 @@ import { isDemoMode } from "../config/runtimeMode.js";
 const applicationsApi = isDemoMode() ? demoApplicationsApi : realApplicationsApi;
 
 export const {
+  applyApplicationFollowUpAction,
   createApplication,
   deleteApplication,
   getApplication,

@@ -6,6 +6,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  applyApplicationFollowUpAction: vi.fn(),
   consumeBrowserTextCapture: vi.fn(),
   createApplication: vi.fn(),
   getApplications: vi.fn(),
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("./services/applicationsService.js", () => ({
+  applyApplicationFollowUpAction: mocks.applyApplicationFollowUpAction,
   createApplication: mocks.createApplication,
   getApplications: mocks.getApplications,
   updateApplication: vi.fn(),

@@ -220,6 +220,79 @@ export function updateDemoApplication(applicationId, payload) {
   return clone(updatedApplication);
 }
 
+export function applyDemoFollowUpAction(applicationId, payload) {
+  const application = demoState.applications.find((item) => String(item.id) === String(applicationId));
+  if (!application) {
+    throw new Error("Application not found.");
+  }
+  if (
+    !application.follow_up_date ||
+    application.follow_up_date !== payload.expected_follow_up_date ||
+    isArchived(application) ||
+    FOLLOW_UP_EXCLUDED_STATUSES.has(application.status)
+  ) {
+    throw new Error("This follow-up changed after it was loaded. Refresh Reminders and try again.");
+  }
+
+  const validActions = new Set(["complete", "complete_and_schedule", "reschedule", "clear"]);
+  if (!validActions.has(payload.action)) {
+    throw new Error("Invalid follow-up action.");
+  }
+  const today = getTodayValue();
+  const hasTargetDate = payload.follow_up_date !== undefined && payload.follow_up_date !== null;
+  if (["complete", "clear"].includes(payload.action) && hasTargetDate) {
+    throw new Error(`follow_up_date must be omitted or null for ${payload.action}.`);
+  }
+  if (payload.action === "reschedule" && (!hasTargetDate || payload.follow_up_date < today || payload.follow_up_date === application.follow_up_date)) {
+    throw new Error("A rescheduled follow-up must be a different date that is today or later.");
+  }
+  if (payload.action === "complete_and_schedule" && (!hasTargetDate || payload.follow_up_date <= today)) {
+    throw new Error("A scheduled next follow-up must be later than today.");
+  }
+
+  const normalizeOptionalText = (value, field) => {
+    if (value === null || value === undefined) return value;
+    if (typeof value !== "string" || !value.trim()) throw new Error(`${field} must not be blank.`);
+    return value.trim();
+  };
+  const hasNextAction = Object.prototype.hasOwnProperty.call(payload, "next_action");
+  const hasActivityNote = Object.prototype.hasOwnProperty.call(payload, "activity_note");
+  const nextAction = hasNextAction ? normalizeOptionalText(payload.next_action, "next_action") : application.next_action;
+  const activityNote = hasActivityNote ? normalizeOptionalText(payload.activity_note, "activity_note") : undefined;
+  const targetDate = ["reschedule", "complete_and_schedule"].includes(payload.action) ? payload.follow_up_date : null;
+  let note;
+  if (payload.action === "complete") note = "Completed follow-up.";
+  else if (payload.action === "complete_and_schedule") note = `Completed follow-up and scheduled the next follow-up for ${targetDate}.`;
+  else if (payload.action === "reschedule") note = `Rescheduled follow-up from ${application.follow_up_date} to ${targetDate}.`;
+  else note = "Cleared follow-up without marking it complete.";
+  if (activityNote !== undefined && activityNote !== null) note += ` Note: ${activityNote}`;
+  if (hasNextAction) note += nextAction === null ? " Next action cleared." : ` Next action: ${nextAction}`;
+
+  const timestamp = nowIso();
+  const updatedApplication = {
+    ...application,
+    follow_up_date: targetDate,
+    ...(hasNextAction ? { next_action: nextAction } : {}),
+    updated_at: timestamp,
+  };
+  const activity = {
+    id: demoState.nextActivityId,
+    application_id: application.id,
+    activity_date: today,
+    activity_type: "Follow-up",
+    note,
+    created_at: timestamp,
+    updated_at: timestamp,
+  };
+  demoState = {
+    ...demoState,
+    applications: demoState.applications.map((item) => item.id === application.id ? updatedApplication : item),
+    activities: [activity, ...demoState.activities],
+    nextActivityId: demoState.nextActivityId + 1,
+  };
+  return clone({ application: updatedApplication, activity });
+}
+
 export function deleteDemoApplication(applicationId) {
   const application = demoState.applications.find((item) => String(item.id) === String(applicationId));
 

@@ -6,16 +6,13 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  createApplicationActivity: vi.fn(),
+  applyApplicationFollowUpAction: vi.fn(),
   getApplicationActionItems: vi.fn(),
 }));
 
 vi.mock("../services/applicationsService.js", () => ({
+  applyApplicationFollowUpAction: mocks.applyApplicationFollowUpAction,
   getApplicationActionItems: mocks.getApplicationActionItems,
-}));
-
-vi.mock("../services/applicationActivitiesService.js", () => ({
-  createApplicationActivity: mocks.createApplicationActivity,
 }));
 
 import CommandCenterPage from "./CommandCenterPage.jsx";
@@ -64,7 +61,7 @@ describe("CommandCenterPage", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
-    mocks.createApplicationActivity.mockResolvedValue({});
+    mocks.applyApplicationFollowUpAction.mockResolvedValue({ application: overdueApplication, activity: {} });
   });
 
   afterEach(async () => {
@@ -73,14 +70,14 @@ describe("CommandCenterPage", () => {
     vi.clearAllMocks();
   });
 
-  async function renderPage(items, onUpdateApplication = vi.fn().mockResolvedValue({})) {
+  async function renderPage(items, onApplyFollowUpAction = vi.fn().mockResolvedValue({})) {
     mocks.getApplicationActionItems.mockResolvedValue(items);
     await act(async () => {
-      root.render(<CommandCenterPage onUpdateApplication={onUpdateApplication} />);
+      root.render(<CommandCenterPage onApplyFollowUpAction={onApplyFollowUpAction} />);
       await Promise.resolve();
       await Promise.resolve();
     });
-    return onUpdateApplication;
+    return onApplyFollowUpAction;
   }
 
   it("shows the reminders heading and only renders populated reminder sections with accessible counts", async () => {
@@ -122,7 +119,7 @@ describe("CommandCenterPage", () => {
   it("keeps load errors visible without rendering reminder panels", async () => {
     mocks.getApplicationActionItems.mockRejectedValue(new Error("Could not load reminder action items."));
     await act(async () => {
-      root.render(<CommandCenterPage onUpdateApplication={vi.fn()} />);
+      root.render(<CommandCenterPage onApplyFollowUpAction={vi.fn()} />);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -134,10 +131,10 @@ describe("CommandCenterPage", () => {
 
   it("keeps reminder actions in a native secondary disclosure and disables them while updating", async () => {
     let resolveUpdate;
-    const onUpdateApplication = vi.fn(() => new Promise((resolve) => {
+    const onApplyFollowUpAction = vi.fn(() => new Promise((resolve) => {
       resolveUpdate = resolve;
     }));
-    await renderPage(actionItems({ overdue: [overdueApplication], upcoming: [upcomingApplication] }), onUpdateApplication);
+    await renderPage(actionItems({ overdue: [overdueApplication], upcoming: [upcomingApplication] }), onApplyFollowUpAction);
 
     const overdueSection = container.querySelector(".command-center-section-overdue");
     const details = overdueSection.querySelector("details.command-center-action-details");
@@ -154,7 +151,7 @@ describe("CommandCenterPage", () => {
     const snooze = [...overdueSection.querySelectorAll("button")].find((button) => button.textContent.includes("Snooze 3 days"));
     await act(async () => snooze.click());
 
-    expect(onUpdateApplication).toHaveBeenCalledTimes(1);
+    expect(onApplyFollowUpAction).toHaveBeenCalledTimes(1);
     expect(snooze.disabled).toBe(true);
     expect([...overdueSection.querySelectorAll("button")].every((button) => button.disabled)).toBe(true);
 
@@ -166,8 +163,8 @@ describe("CommandCenterPage", () => {
   });
 
   it("keeps action feedback near the page heading after a follow-up update", async () => {
-    const onUpdateApplication = vi.fn().mockResolvedValue({});
-    await renderPage(actionItems({ overdue: [overdueApplication] }), onUpdateApplication);
+    const onApplyFollowUpAction = vi.fn().mockResolvedValue({ application: overdueApplication, activity: {} });
+    await renderPage(actionItems({ overdue: [overdueApplication] }), onApplyFollowUpAction);
 
     const section = container.querySelector(".command-center-section-overdue");
     await act(async () => section.querySelector("summary").click());
@@ -180,7 +177,10 @@ describe("CommandCenterPage", () => {
 
     expect(container.querySelector('[role="status"]')).not.toBeNull();
     expect(container.textContent).toContain("Follow-up cleared.");
-    expect(onUpdateApplication).toHaveBeenCalledWith(overdueApplication.id, { follow_up_date: null });
-    expect(mocks.createApplicationActivity).toHaveBeenCalledTimes(1);
+    expect(onApplyFollowUpAction).toHaveBeenCalledWith(overdueApplication.id, {
+      action: "clear",
+      expected_follow_up_date: overdueApplication.follow_up_date,
+    });
+    expect(mocks.applyApplicationFollowUpAction).not.toHaveBeenCalled();
   });
 });
