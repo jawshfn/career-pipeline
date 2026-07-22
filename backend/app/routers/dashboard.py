@@ -8,6 +8,7 @@ from ..database import get_db
 from ..domain import (
     ACTIVE_APPLICATION_STATUSES,
     CLOSED_APPLICATION_STATUSES,
+    FOLLOW_UP_EXCLUDED_STATUSES,
     INTERVIEW_APPLICATION_STATUS,
     OFFER_APPLICATION_STATUS,
     RED_FLAG_FIELDS,
@@ -146,14 +147,21 @@ def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
 
     today = date.today()
     upcoming_cutoff = today + timedelta(days=3)
+    follow_up_applications = [
+        application
+        for application in applications
+        if application.status not in FOLLOW_UP_EXCLUDED_STATUSES
+    ]
     status_counts = Counter(application.status or SAVED_APPLICATION_STATUS for application in applications)
     active_application_count = sum(1 for application in applications if application.status in ACTIVE_APPLICATION_STATUSES)
     overdue_followup_count = sum(
-        1 for application in applications if application.follow_up_date and application.follow_up_date < today
+        1
+        for application in follow_up_applications
+        if application.follow_up_date and application.follow_up_date < today
     )
     upcoming_followup_count = sum(
         1
-        for application in applications
+        for application in follow_up_applications
         if application.follow_up_date and today <= application.follow_up_date <= upcoming_cutoff
     )
     closed_application_count = sum(1 for application in applications if application.status in CLOSED_APPLICATION_STATUSES)

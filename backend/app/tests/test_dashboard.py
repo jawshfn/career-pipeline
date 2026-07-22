@@ -81,15 +81,51 @@ def test_dashboard_status_and_closed_counts(client):
 
 def test_dashboard_follow_up_counts(client):
     today = date.today()
-    create_application(client, follow_up_date=(today - timedelta(days=1)).isoformat())
-    create_application(client, follow_up_date=today.isoformat())
-    create_application(client, follow_up_date=(today + timedelta(days=3)).isoformat())
-    create_application(client, follow_up_date=(today + timedelta(days=4)).isoformat())
+    create_application(client, company_name="Active overdue", follow_up_date=(today - timedelta(days=1)).isoformat())
+    create_application(
+        client,
+        company_name="Rejected overdue",
+        status="Rejected",
+        follow_up_date=(today - timedelta(days=1)).isoformat(),
+    )
+    create_application(
+        client,
+        company_name="Withdrawn overdue",
+        status="Withdrawn",
+        follow_up_date=(today - timedelta(days=1)).isoformat(),
+    )
+    create_application(client, company_name="Offer upcoming", status="Offer", follow_up_date=today.isoformat())
+    create_application(
+        client,
+        company_name="Rejected upcoming",
+        status="Rejected",
+        follow_up_date=today.isoformat(),
+    )
+    create_application(
+        client,
+        company_name="Withdrawn upcoming",
+        status="Withdrawn",
+        follow_up_date=(today + timedelta(days=3)).isoformat(),
+    )
+    create_application(client, company_name="Three days out", follow_up_date=(today + timedelta(days=3)).isoformat())
+    create_application(client, company_name="Four days out", follow_up_date=(today + timedelta(days=4)).isoformat())
+
+    archived = create_application(
+        client,
+        company_name="Archived overdue",
+        follow_up_date=(today - timedelta(days=1)).isoformat(),
+    ).json()
+    archived_response = client.patch(f"/api/applications/{archived['id']}", json={"status": "Archived"})
+    assert archived_response.json()["follow_up_date"] == (today - timedelta(days=1)).isoformat()
 
     summary = get_summary(client)
 
     assert get_card(summary, "overdue_followups")["value"] == 1
     assert get_card(summary, "upcoming_followups")["value"] == 2
+    assert get_card(summary, "closed_applications")["value"] == 4
+    assert get_count(summary["status_breakdown"], "Rejected") == 2
+    assert get_count(summary["status_breakdown"], "Withdrawn") == 2
+    assert sum(item["closed"] for item in summary["source_effectiveness"]) == 4
 
 
 def test_dashboard_red_flag_counts(client):

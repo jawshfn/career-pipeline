@@ -17,6 +17,13 @@ function validResult(warnings = []) {
   return { is_valid: true, backup_summary: backupSummary, current_workspace_summary: { ...backupSummary }, warnings, errors: [] };
 }
 
+function restorableResult() {
+  return {
+    ...validResult(), eligible_for_restore: true,
+    restore_authorization: { token: "never-render-this", expires_at: "2026-07-01T12:05:00Z", mode: "replace" },
+  };
+}
+
 async function mount(props = {}) {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   const container = document.createElement("div");
@@ -37,6 +44,12 @@ function file(name = "backup.json", type = "", text = '{"ok":true}') {
   const selected = new File([text], name, { type });
   selected.text = vi.fn().mockResolvedValue(text);
   return selected;
+}
+
+function typeInto(input, value) {
+  const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+  setter.call(input, value);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
 }
 
 afterEach(() => { document.body.replaceChildren(); });
@@ -99,7 +112,7 @@ describe("WorkspaceBackupReview", () => {
     const result = container.querySelector('[role="status"]');
     expect(result.textContent).toContain("Backup is valid");
     expect(result.textContent).toContain("No data has been changed");
-    expect(result.textContent).toContain("Restore is not available");
+    expect(result.textContent).toContain("authorization is temporary");
     expect(result.textContent).toContain("pursuithq-workspace-backup");
     expect(result.textContent).toContain("Version: 1");
     expect(result.textContent).toContain("Exported:");
@@ -122,6 +135,39 @@ describe("WorkspaceBackupReview", () => {
     expect(alert.textContent).toContain("data.applications[0].id");
     expect(alert.textContent).toContain("Count mismatch.");
     expect(document.activeElement).toBe(alert);
+    await act(async () => root.unmount());
+  });
+
+  it("requires an exact typed phrase and restores the same file only after confirmation", async () => {
+    const validate = vi.fn().mockResolvedValue(restorableResult());
+    const restore = vi.fn().mockResolvedValue({
+      restored: true, backup_exported_at: "2026-07-01T12:00:00Z", restored_at: "2026-07-01T12:10:00Z",
+      previous_workspace_summary: backupSummary, restored_workspace_summary: { ...backupSummary, applications: 4 },
+    });
+    const onWorkspaceRestored = vi.fn().mockResolvedValue(true);
+    const { container, root } = await mount({ onValidateWorkspaceBackup: validate, onRestoreWorkspaceBackup: restore, onWorkspaceRestored });
+    const selected = file("raw.json", "application/json", " { raw restore text } ");
+    const nativeInput = await chooseFile(container, selected);
+    await act(async () => [...container.querySelectorAll("button")].find((item) => item.textContent === "Review backup").click());
+    expect(container.textContent).toContain("Replace current workspace");
+    expect(container.textContent).not.toContain("never-render-this");
+    await act(async () => [...container.querySelectorAll("button")].find((item) => item.textContent === "Replace current workspace").click());
+    expect(container.querySelector('[role="dialog"]').textContent).toContain("This is not a merge");
+    const confirm = [...container.querySelectorAll("button")].find((item) => item.textContent === "Replace workspace");
+    expect(confirm.disabled).toBe(true);
+    const phrase = container.querySelector('input:not([type="file"])');
+    await act(async () => typeInto(phrase, "restore"));
+    expect(confirm.disabled).toBe(true);
+    await act(async () => typeInto(phrase, " RESTORE "));
+    expect(confirm.disabled).toBe(false);
+    await act(async () => { confirm.click(); confirm.click(); });
+    expect(restore).toHaveBeenCalledOnce();
+    expect(restore).toHaveBeenCalledWith(" { raw restore text } ", "never-render-this");
+    expect(selected.text).toHaveBeenCalledTimes(2);
+    expect(nativeInput.value).toBe("");
+    expect(container.textContent).toContain("Workspace restored");
+    expect(container.textContent).not.toContain("Backup is valid");
+    expect(onWorkspaceRestored).toHaveBeenCalledOnce();
     await act(async () => root.unmount());
   });
 

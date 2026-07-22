@@ -146,8 +146,10 @@ export default function App() {
       setApplications(applicationsData);
       setResumeVersions(activeResumeVersionsData);
       setAllResumeVersions(allResumeVersionsData);
+      return true;
     } catch (error) {
       setLoadError(error.message || "Could not load workspace data.");
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -177,6 +179,13 @@ export default function App() {
   const handlePageUnsavedChangesChange = useCallback((hasUnsavedChanges) => {
     setActivePageHasUnsavedChanges(Boolean(hasUnsavedChanges));
   }, []);
+
+  const handleWorkspaceRestored = useCallback(async () => {
+    setRequestedApplicationId(null);
+    setActivePageHasUnsavedChanges(false);
+    setPendingNavigation(null);
+    return loadWorkspaceData();
+  }, [loadWorkspaceData]);
 
   const completeNavigation = useCallback((targetPage, applicationId = null) => {
     setActivePageHasUnsavedChanges(false);
@@ -314,6 +323,7 @@ export default function App() {
           onDownloadApplicationsCsv={downloadApplicationsCsv}
           onDownloadWorkspaceBackup={downloadWorkspaceBackup}
           onNavigate={navigateToPage}
+          onWorkspaceRestored={handleWorkspaceRestored}
         />
       ) : (
         <ApplicationsPage

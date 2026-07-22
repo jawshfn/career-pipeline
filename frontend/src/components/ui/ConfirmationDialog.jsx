@@ -5,6 +5,7 @@ import ErrorMessage from "./ErrorMessage.jsx";
 export default function ConfirmationDialog({
   cancelLabel = "Cancel",
   confirmLabel = "Confirm",
+  confirmDisabled = false,
   confirmTone = "warning",
   description,
   errorMessage = "",
@@ -30,6 +31,16 @@ export default function ConfirmationDialog({
     cancelButtonRef.current?.focus();
     return () => {
       returnFocusRef.current?.focus?.();
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const scrollElement = document.scrollingElement || document.documentElement;
+    const previousOverflow = scrollElement.style.overflow;
+    scrollElement.style.overflow = "hidden";
+    return () => {
+      scrollElement.style.overflow = previousOverflow;
     };
   }, [isOpen]);
 
@@ -70,7 +81,7 @@ export default function ConfirmationDialog({
         {errorMessage ? <div role="alert"><ErrorMessage message={errorMessage} /></div> : null}
         <div className="confirmation-dialog-actions">
           <button className="secondary-button" disabled={isProcessing} ref={cancelButtonRef} type="button" onClick={onCancel}>{cancelLabel}</button>
-          <button className={confirmTone === "danger" ? "delete-application-confirm-button" : "primary-small-button"} disabled={isProcessing} type="button" onClick={onConfirm}>
+          <button className={confirmTone === "danger" ? "delete-application-confirm-button" : "primary-small-button"} disabled={isProcessing || confirmDisabled} type="button" onClick={onConfirm}>
             {isProcessing ? processingLabel : confirmLabel}
           </button>
         </div>

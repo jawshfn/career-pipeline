@@ -503,10 +503,13 @@ export function getDemoDashboardSummary() {
   const activeApplicationCount = applications.filter((application) =>
     ACTIVE_APPLICATION_STATUSES.has(application.status),
   ).length;
-  const overdueFollowupCount = applications.filter(
+  const followUpApplications = applications.filter(
+    (application) => !FOLLOW_UP_EXCLUDED_STATUSES.has(application.status),
+  );
+  const overdueFollowupCount = followUpApplications.filter(
     (application) => application.follow_up_date && application.follow_up_date < today,
   ).length;
-  const upcomingFollowupCount = applications.filter(
+  const upcomingFollowupCount = followUpApplications.filter(
     (application) =>
       application.follow_up_date &&
       application.follow_up_date >= today &&
