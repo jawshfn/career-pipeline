@@ -68,6 +68,39 @@ describe("activity timeline refresh decisions", () => {
 });
 
 describe("ApplicationActivityTimeline", () => {
+  describe("formatLoggedTime", () => {
+    it("treats timezone-less backend timestamps as UTC", () => {
+      expect(formatLoggedTime("2026-07-22T04:39:00")).toBe(
+        formatLoggedTime("2026-07-22T04:39:00Z"),
+      );
+      expect(formatLoggedTime("2026-07-22T04:39:00")).toBe(
+        formatLoggedTime("2026-07-22T00:39:00-04:00"),
+      );
+    });
+
+    it("treats timezone-less fractional-second timestamps as UTC", () => {
+      expect(formatLoggedTime("2026-07-22T04:39:00.255243")).toBe(
+        formatLoggedTime("2026-07-22T04:39:00.255243Z"),
+      );
+    });
+
+    it("continues to accept explicitly zoned timestamps", () => {
+      [
+        "2026-07-22T04:39:00Z",
+        "2026-07-22T04:39:00+00:00",
+        "2026-07-22T00:39:00-04:00",
+      ].forEach((timestamp) => {
+        expect(formatLoggedTime(timestamp)).not.toBe("");
+      });
+    });
+
+    it("returns an empty string for missing or invalid timestamps", () => {
+      expect(formatLoggedTime()).toBe("");
+      expect(formatLoggedTime(null)).toBe("");
+      expect(formatLoggedTime("not a timestamp")).toBe("");
+    });
+  });
+
   let container;
   let root;
 

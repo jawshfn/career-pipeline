@@ -63,9 +63,31 @@ export function formatActivityDate(value) {
   }).format(date);
 }
 
+function normalizeUtcTimestamp(value) {
+  const timestamp = String(value || "").trim();
+
+  if (!timestamp) {
+    return "";
+  }
+
+  if (/(?:Z|[+-]\d{2}:?\d{2})$/i.test(timestamp)) {
+    return timestamp;
+  }
+
+  const isTimezoneLessIsoDateTime =
+    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(timestamp);
+
+  return isTimezoneLessIsoDateTime ? `${timestamp}Z` : timestamp;
+}
+
 export function formatLoggedTime(value) {
-  const date = new Date(value);
-  if (!value || Number.isNaN(date.getTime())) {
+  const timestamp = normalizeUtcTimestamp(value);
+  if (!timestamp) {
+    return "";
+  }
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
     return "";
   }
 
