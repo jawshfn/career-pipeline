@@ -8,7 +8,7 @@ export const jobBriefResponseSchema = {
   additionalProperties: false,
   required: ["schema_version", "role_summary", "responsibilities", "required_qualifications", "preferred_qualifications", "skills_and_keywords", "interview_topics", "research_tasks", "concerns_and_unknowns", "suggested_next_action", "limitations"],
   properties: {
-    schema_version: { type: "string", minLength: 1, maxLength: 10 },
+    schema_version: { type: "string", enum: [BRIEF_SCHEMA_VERSION] },
     role_summary: text(1000),
     responsibilities: { type: "array", maxItems: 12, items: evidenceItem("statement") },
     required_qualifications: { type: "array", maxItems: 12, items: evidenceItem("statement") },
