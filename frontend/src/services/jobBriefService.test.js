@@ -64,8 +64,18 @@ describe("job brief source helpers", () => {
 });
 
 describe("generateJobBrief", () => {
+  it("creates one stable fallback ID when localStorage is unavailable", async () => {
+    vi.resetModules();
+    vi.stubGlobal("localStorage", { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); } });
+    const { getBrowserLocalClientId: getFreshClientId } = await import("./jobBriefService.js");
+
+    const first = getFreshClientId();
+    expect(getFreshClientId()).toBe(first);
+    expect(first).toMatch(/^phq_[A-Za-z0-9_-]{8,120}$/);
+  });
+
   it("uses a stable browser-local client ID and sends only the request allowlist", async () => {
-    const store = new Map([[CLIENT_ID_STORAGE_KEY, "phq_web_abcdefghijklmnopqrstuvwxyz"]]);
+    const store = new Map([[CLIENT_ID_STORAGE_KEY, "phq_test-client_123"]]);
     vi.stubGlobal("localStorage", { getItem: vi.fn((key) => store.get(key) || null), setItem: vi.fn((key, value) => store.set(key, value)) });
     const fetchMock = vi.fn().mockResolvedValue(response(validResponse));
     vi.stubGlobal("fetch", fetchMock);
@@ -73,17 +83,20 @@ describe("generateJobBrief", () => {
     const [url, options] = fetchMock.mock.calls[0];
     expect(url).toBe(`${DEFAULT_AI_GATEWAY_URL}/v1/job-brief`);
     expect(options).toMatchObject({ method: "POST", credentials: "omit", cache: "no-store" });
-    expect(options.headers).toEqual({ "Content-Type": "application/json", "X-PursuitHQ-Client-ID": "phq_web_abcdefghijklmnopqrstuvwxyz" });
+    expect(options.headers).toEqual({ "Content-Type": "application/json", "X-PursuitHQ-Client-ID": "phq_test-client_123" });
     expect(JSON.parse(options.body)).toEqual({ company_name: "PursuitHQ", role_title: "Product manager", job_posting_text: "a".repeat(200) });
   });
 
-  it("replaces an invalid stored ID and continues when storage is blocked", async () => {
+  it("replaces an invalid stored ID and reuses an in-memory ID when storage is blocked", async () => {
     const storage = { getItem: vi.fn().mockReturnValue("not-valid"), setItem: vi.fn() };
     vi.stubGlobal("localStorage", storage);
     const id = getBrowserLocalClientId();
     expect(id).toMatch(/^phq_web_/);
     expect(storage.setItem).toHaveBeenCalledWith(CLIENT_ID_STORAGE_KEY, id);
     vi.stubGlobal("localStorage", { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); } });
+    const blockedId = getBrowserLocalClientId();
+    expect(blockedId).toBe(getBrowserLocalClientId());
+    expect(blockedId).toMatch(/^phq_[A-Za-z0-9_-]{8,120}$/);
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response(validResponse)));
     await expect(generateJobBrief(payload())).resolves.toEqual(validResponse);
   });

@@ -316,7 +316,11 @@ export default function ApplicationDetailPanel({
     };
   }, [applicationId]);
 
-  useEffect(() => () => briefAbortControllerRef.current?.abort(), []);
+  useEffect(() => () => {
+    const controller = briefAbortControllerRef.current;
+    briefAbortControllerRef.current = null;
+    controller?.abort();
+  }, []);
 
   useEffect(() => {
     setActiveTab(getValidDetailTab(initialTab));

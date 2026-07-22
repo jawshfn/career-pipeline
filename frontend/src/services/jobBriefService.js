@@ -4,7 +4,8 @@ export const MIN_JOB_POSTING_LENGTH = 200;
 export const MAX_JOB_POSTING_LENGTH = 20000;
 export const CLIENT_ID_STORAGE_KEY = "pursuithq.ai-client-id.v1";
 
-const CLIENT_ID_PATTERN = /^phq_web_[A-Za-z0-9_-]{16,128}$/;
+const CLIENT_ID_PATTERN = /^phq_[A-Za-z0-9_-]{8,120}$/;
+let inMemoryClientId = "";
 
 export const JOB_BRIEF_MESSAGES = {
   rateLimited: "AI brief limit reached. Wait a minute and try again.",
@@ -78,12 +79,13 @@ export function getBrowserLocalClientId() {
     storage = null;
   }
 
-  const clientId = `phq_web_${randomClientValue()}`;
+  const clientId = inMemoryClientId || `phq_web_${randomClientValue()}`;
   try {
     storage?.setItem(CLIENT_ID_STORAGE_KEY, clientId);
   } catch {
     // Storage can be unavailable in private or restricted browser contexts.
   }
+  inMemoryClientId = clientId;
   return clientId;
 }
 
