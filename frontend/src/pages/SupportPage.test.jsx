@@ -157,11 +157,13 @@ describe("SupportPage", () => {
     const onDownloadWorkspaceBackup = vi.fn(() => new Promise((resolve) => { resolveWorkspace = resolve; }));
     let rejectCsv;
     const onDownloadApplicationsCsv = vi.fn(() => new Promise((_, reject) => { rejectCsv = reject; }));
+    const onDownloadApplicationsWorkbook = vi.fn().mockResolvedValue(undefined);
 
     await act(async () => root.render(
       <SupportPage
         isDemoMode
         onDownloadApplicationsCsv={onDownloadApplicationsCsv}
+        onDownloadApplicationsWorkbook={onDownloadApplicationsWorkbook}
         onDownloadWorkspaceBackup={onDownloadWorkspaceBackup}
       />,
     ));
@@ -170,11 +172,19 @@ describe("SupportPage", () => {
     expect(container.textContent).toContain("Long-form job descriptions and complete notes remain available in the workspace backup.");
     const workspaceButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Download workspace backup");
     const csvButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Download applications CSV");
+    const workbookButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Download Excel workbook");
+    expect(container.textContent).toContain("Complete backup");
+    expect(container.textContent).toContain("Best for Excel and Google Sheets");
+    expect(container.textContent).toContain("Portable fallback");
     await act(async () => workspaceButton.click());
     expect(workspaceButton.textContent).toBe("Preparing backup...");
     expect(csvButton.disabled).toBe(true);
     await act(async () => resolveWorkspace());
     expect(container.querySelector('[role="status"]').textContent).toBe("Workspace backup downloaded.");
+
+    await act(async () => workbookButton.click());
+    expect(onDownloadApplicationsWorkbook).toHaveBeenCalledOnce();
+    expect(container.querySelector('[role="status"]').textContent).toBe("Applications workbook downloaded.");
 
     await act(async () => csvButton.click());
     expect(csvButton.textContent).toBe("Preparing CSV...");

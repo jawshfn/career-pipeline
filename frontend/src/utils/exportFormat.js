@@ -1,11 +1,8 @@
+import { APPLICATIONS_REVIEW_HEADERS, createApplicationReviewRows, reviewRowValues } from "./applicationReviewRows.js";
+
 export const BACKUP_FORMAT = "pursuithq-workspace-backup";
 export const BACKUP_VERSION = 1;
-export const APPLICATIONS_CSV_HEADERS = [
-  "Application ID", "Company", "Role", "Status", "Source", "Location", "Compensation",
-  "Employment Type", "Date Saved", "Date Applied", "Follow-up Date", "Next Action",
-  "Resume Version", "Job Link", "Notes Preview", "Preparation Notes Preview", "Job Description Saved",
-  "Red Flags", "Red Flag Notes Preview", "Updated At",
-];
+export const APPLICATIONS_CSV_HEADERS = APPLICATIONS_REVIEW_HEADERS;
 
 function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -26,31 +23,9 @@ function safeText(value) {
     : text;
 }
 
-function previewText(value) {
-  if (value == null || !String(value).trim()) return "";
-  const normalized = String(value).trim().replace(/\s+/gu, " ");
-  const characters = Array.from(normalized);
-  return safeText(characters.length > 500 ? `${characters.slice(0, 500).join("")}…` : normalized);
-}
-
 function csvCell(value) {
   const text = asCell(value);
   return /[",\r\n]/u.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
-}
-
-function booleanCell(value) {
-  return value ? "Yes" : "No";
-}
-
-function isArchived(application) {
-  return application.is_archived || application.status === "Archived";
-}
-
-function redFlagCount(application) {
-  return [
-    application.vague_job_description, application.unrealistic_salary, application.asks_for_payment,
-    application.suspicious_contact, application.company_mismatch, application.too_good_to_be_true,
-  ].filter(Boolean).length;
 }
 
 export function createWorkspaceBackup(snapshot, now = new Date()) {
@@ -81,20 +56,9 @@ export function createWorkspaceBackupBlob(snapshot, now = new Date()) {
 }
 
 export function createApplicationsCsv(snapshot) {
-  const resumesById = new Map((snapshot.resume_versions || []).map((resume) => [resume.id, resume.name]));
-  const applications = [...(snapshot.applications || [])]
-    .filter((application) => !isArchived(application))
-    .sort((first, second) => String(second.date_saved || "").localeCompare(String(first.date_saved || "")) || Number(second.id) - Number(first.id));
   const rows = [APPLICATIONS_CSV_HEADERS];
-  for (const application of applications) {
-    rows.push([
-      application.id, safeText(application.company_name), safeText(application.role_title), safeText(application.status),
-      safeText(application.source), safeText(application.location), safeText(application.compensation), safeText(application.employment_type),
-      asCell(application.date_saved), asCell(application.date_applied), asCell(application.follow_up_date), safeText(application.next_action),
-      safeText(resumesById.get(application.resume_version_id)), safeText(application.job_link),
-      previewText(application.notes), previewText(application.prep_notes), booleanCell(Boolean(application.job_description?.trim())),
-      redFlagCount(application), previewText(application.red_flags_notes), asCell(application.updated_at),
-    ]);
+  for (const reviewRow of createApplicationReviewRows(snapshot.applications || [], snapshot.resume_versions || [])) {
+    rows.push(reviewRowValues(reviewRow).map((value, index) => [7, 8, 9, 16, 18].includes(index) ? asCell(value) : safeText(value)));
   }
   return `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\n")}\n`;
 }
@@ -111,5 +75,5 @@ export function createExportFilename(kind, now = new Date()) {
   ].join("-") + `-${String(now.getUTCHours()).padStart(2, "0")}${String(now.getUTCMinutes()).padStart(2, "0")}${String(now.getUTCSeconds()).padStart(2, "0")}Z`;
   return kind === "workspace"
     ? `pursuithq-workspace-backup-${timestamp}.json`
-    : `pursuithq-applications-${timestamp}.csv`;
+    : `pursuithq-applications-${timestamp}.${kind === "workbook" ? "xlsx" : "csv"}`;
 }

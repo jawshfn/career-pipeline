@@ -95,17 +95,17 @@ def test_applications_csv_uses_safe_concise_spreadsheet_rows_and_is_read_only(cl
     rows = list(csv.DictReader(io.StringIO(response.content.decode("utf-8-sig"))))
     assert list(rows[0]) == CSV_HEADERS
     assert CSV_HEADERS == [
-        "Application ID", "Company", "Role", "Status", "Source", "Location", "Compensation",
+        "Company", "Role", "Status", "Source", "Location", "Compensation",
         "Employment Type", "Date Saved", "Date Applied", "Follow-up Date", "Next Action",
         "Resume Version", "Job Link", "Notes Preview", "Preparation Notes Preview", "Job Description Saved",
         "Red Flags", "Red Flag Notes Preview", "Updated At",
     ]
     assert len(rows) == 4
-    row = next(row for row in rows if row["Application ID"] == str(current.id))
-    blank_row = next(row for row in rows if row["Application ID"] == str(blank_description.id))
-    one_flag_row = next(row for row in rows if row["Application ID"] == str(one_flag.id))
-    all_flags_row = next(row for row in rows if row["Application ID"] == str(all_flags.id))
-    assert row["Application ID"] == str(current.id)
+    row = next(row for row in rows if row["Company"] == "'=Formula Co")
+    blank_row = next(row for row in rows if row["Company"] == "No description")
+    one_flag_row = next(row for row in rows if row["Company"] == "One flag")
+    all_flags_row = next(row for row in rows if row["Company"] == "All flags")
+    assert "Application ID" not in CSV_HEADERS
     assert row["Company"] == "'=Formula Co"
     assert row["Source"] == "'@Referral"
     assert row["Compensation"] == "'+100"

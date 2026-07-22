@@ -18,7 +18,7 @@ router = APIRouter(prefix="/api/exports", tags=["exports"])
 BACKUP_FORMAT = "pursuithq-workspace-backup"
 BACKUP_VERSION = 1
 CSV_HEADERS = [
-    "Application ID", "Company", "Role", "Status", "Source", "Location", "Compensation",
+    "Company", "Role", "Status", "Source", "Location", "Compensation",
     "Employment Type", "Date Saved", "Date Applied", "Follow-up Date", "Next Action",
     "Resume Version", "Job Link", "Notes Preview", "Preparation Notes Preview", "Job Description Saved",
     "Red Flags", "Red Flag Notes Preview", "Updated At",
@@ -109,7 +109,6 @@ def applications_csv_content(db: Session) -> str:
     writer.writerow(CSV_HEADERS)
     for application in applications:
         writer.writerow([
-            application.id,
             spreadsheet_text(application.company_name),
             spreadsheet_text(application.role_title),
             spreadsheet_text(application.status),

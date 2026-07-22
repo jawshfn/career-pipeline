@@ -67,12 +67,13 @@ describe("export formatting", () => {
 
     expect(headers).toEqual(APPLICATIONS_CSV_HEADERS);
     expect(headers).toEqual([
-      "Application ID", "Company", "Role", "Status", "Source", "Location", "Compensation",
+      "Company", "Role", "Status", "Source", "Location", "Compensation",
       "Employment Type", "Date Saved", "Date Applied", "Follow-up Date", "Next Action",
       "Resume Version", "Job Link", "Notes Preview", "Preparation Notes Preview", "Job Description Saved",
       "Red Flags", "Red Flag Notes Preview", "Updated At",
     ]);
     expect(headers).not.toContain("Contact Name");
+    expect(headers).not.toContain("Application ID");
     expect(headers).not.toContain("Contact Info");
     expect(headers).not.toContain("Job Description");
     expect(headers).not.toContain("Resume Version ID");
@@ -106,5 +107,6 @@ describe("export formatting", () => {
     const date = new Date("2026-07-21T22:30:00Z");
     expect(createExportFilename("workspace", date)).toBe("pursuithq-workspace-backup-2026-07-21-223000Z.json");
     expect(createExportFilename("csv", date)).toBe("pursuithq-applications-2026-07-21-223000Z.csv");
+    expect(createExportFilename("workbook", date)).toBe("pursuithq-applications-2026-07-21-223000Z.xlsx");
   });
 });

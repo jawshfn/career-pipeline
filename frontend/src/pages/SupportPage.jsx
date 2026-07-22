@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { downloadApplicationsCsv, downloadWorkspaceBackup } from "../services/exportsService.js";
+import { downloadApplicationsCsv, downloadApplicationsWorkbook, downloadWorkspaceBackup } from "../services/exportsService.js";
 
 export const SUPPORT_EMAIL = "nunezjf2001@gmail.com";
 export const SUPPORT_MAILTO_SUBJECT = "PursuitHQ Issue Report";
@@ -168,6 +168,7 @@ const commonTasks = [
 export default function SupportPage({
   isDemoMode = false,
   onDownloadApplicationsCsv = downloadApplicationsCsv,
+  onDownloadApplicationsWorkbook = downloadApplicationsWorkbook,
   onDownloadWorkspaceBackup = downloadWorkspaceBackup,
   onNavigate = () => {},
 }) {
@@ -213,12 +214,15 @@ export default function SupportPage({
       if (kind === "workspace") {
         await onDownloadWorkspaceBackup();
         setExportStatus("Workspace backup downloaded.");
-      } else {
+      } else if (kind === "csv") {
         await onDownloadApplicationsCsv();
         setExportStatus("Applications CSV downloaded.");
+      } else {
+        await onDownloadApplicationsWorkbook();
+        setExportStatus("Applications workbook downloaded.");
       }
     } catch {
-      setExportError(kind === "workspace" ? "Could not download the workspace backup." : "Could not download the applications CSV.");
+      setExportError(kind === "workspace" ? "Could not download the workspace backup." : kind === "csv" ? "Could not download the applications CSV." : "Could not download the applications workbook.");
     } finally {
       exportInFlightRef.current = false;
       setActiveExport(null);
@@ -280,14 +284,23 @@ export default function SupportPage({
         {isDemoMode ? <p className="support-demo-export-note">Fictional demo data: exports contain the current demo session. Demo data still resets when the page reloads.</p> : null}
         <div className="support-export-grid">
           <section className="support-export-card" aria-labelledby="workspace-backup-heading">
+            <p className="support-recommended-label">Complete backup</p>
             <h3 id="workspace-backup-heading">Workspace backup</h3>
             <p>Download a complete PursuitHQ backup containing applications, activity history, resume versions, and their relationships.</p>
             <p className="support-export-supporting-text">Use this JSON file for safekeeping and future restore support.</p>
             <button className="support-action-control support-primary-action" type="button" disabled={activeExport !== null} onClick={() => handleExport("workspace")}>{activeExport === "workspace" ? "Preparing backup..." : "Download workspace backup"}</button>
           </section>
+          <section className="support-export-card" aria-labelledby="applications-workbook-heading">
+            <p className="support-recommended-label">Best for Excel and Google Sheets</p>
+            <h3 id="applications-workbook-heading">Formatted applications workbook</h3>
+            <p>Download a formatted workbook with filters, readable dates, clickable job links, and application-status highlights.</p>
+            <p className="support-export-supporting-text">The workbook contains concise review fields. Complete notes, job descriptions, activity history, and relationships remain in the workspace backup.</p>
+            <button className="support-action-control support-primary-action" type="button" disabled={activeExport !== null} onClick={() => handleExport("workbook")}>{activeExport === "workbook" ? "Preparing workbook..." : "Download Excel workbook"}</button>
+          </section>
           <section className="support-export-card" aria-labelledby="applications-spreadsheet-heading">
-            <h3 id="applications-spreadsheet-heading">Applications spreadsheet</h3>
-            <p>Download one CSV row per application for review in Excel, Google Sheets, or another spreadsheet tool.</p>
+            <p className="support-recommended-label">Portable fallback</p>
+            <h3 id="applications-spreadsheet-heading">Applications CSV</h3>
+            <p>Download one plain CSV row per application for use with spreadsheet tools and other software.</p>
             <p className="support-export-supporting-text">Activity history remains in the full workspace backup and is not expanded into CSV rows. Long-form job descriptions and complete notes remain available in the workspace backup.</p>
             <button className="support-action-control secondary-button" type="button" disabled={activeExport !== null} onClick={() => handleExport("csv")}>{activeExport === "csv" ? "Preparing CSV..." : "Download applications CSV"}</button>
           </section>
