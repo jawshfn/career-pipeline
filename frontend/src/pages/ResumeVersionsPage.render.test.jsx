@@ -313,7 +313,12 @@ describe("ResumeVersionsPage library experience", () => {
   });
 
   it("prepares a duplicate draft without creating a record and focuses its editable name", async () => {
-    const onCreateResumeVersion = vi.fn().mockResolvedValue({ name: "Engineering Resume copy 2" });
+    let resolveCreate;
+    const onCreateResumeVersion = vi.fn(
+      () => new Promise((resolve) => {
+        resolveCreate = resolve;
+      }),
+    );
     await renderPage([resume, { ...resume, id: 2, name: "Engineering Resume copy" }], { onCreateResumeVersion });
     const duplicate = [...container.querySelectorAll("button")].find((button) => button.textContent === "Duplicate");
     await act(async () => duplicate.click());
@@ -334,6 +339,10 @@ describe("ResumeVersionsPage library experience", () => {
       description: resume.description,
       name: "Engineering Resume copy 2",
       target_role: resume.target_role,
+    });
+    await act(async () => {
+      resolveCreate({ name: "Engineering Resume copy 2" });
+      await Promise.resolve();
     });
     expect(disclosure.open).toBe(false);
   });
