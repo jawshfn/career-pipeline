@@ -2129,6 +2129,9 @@ a {
 .follow-up-action-context-heading > div { display: grid; gap: 3px; min-width: 0; }
 .follow-up-action-context-heading strong { overflow-wrap: anywhere; }
 .follow-up-action-context-heading span:not(.status-badge) { color: var(--color-text-muted, #52605d); font-weight: 700; overflow-wrap: anywhere; }
+.follow-up-action-open-application { justify-self: start; border: 0; padding: 0; color: var(--color-primary); background: transparent; font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.follow-up-action-open-application:focus-visible { border-radius: 4px; outline: 3px solid rgba(69, 87, 216, 0.32); outline-offset: 2px; }
+.follow-up-action-open-application:disabled { cursor: not-allowed; opacity: 0.6; }
 .follow-up-action-fieldset { margin: 0; padding: 0; border: 0; }
 .follow-up-action-fieldset legend, .follow-up-action-label { color: var(--color-text); font-weight: 800; }
 .follow-up-action-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -3106,24 +3109,36 @@ a {
   min-width: 0;
 }
 
-.command-center-item-heading > div {
+.command-center-application-link {
+  display: grid;
+  flex: 1 1 0;
+  gap: 4px;
   min-width: 0;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
-.command-center-item-heading h4 {
+.command-center-application-company {
   margin: 0;
   color: #17202a;
   font-size: 1rem;
+  font-weight: 800;
   letter-spacing: 0;
   overflow-wrap: anywhere;
 }
 
-.command-center-item-heading p {
-  margin: 4px 0 0;
+.command-center-application-role {
   color: #52605d;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
+
+.command-center-application-link:hover .command-center-application-company { color: var(--color-primary); }
+.command-center-application-link:focus-visible { border-radius: 4px; outline: 3px solid rgba(69, 87, 216, 0.32); outline-offset: 2px; }
 
 .command-center-item-heading .status-badge {
   margin-left: auto;

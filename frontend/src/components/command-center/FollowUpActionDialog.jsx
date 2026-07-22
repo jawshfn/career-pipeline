@@ -18,7 +18,7 @@ function formatLocalDate(date) {
 function addDays(date, days) { const result = new Date(date); result.setDate(result.getDate() + days); return result; }
 function initialState(application) { return { action: "", date: "", nextActionDraft: application?.next_action || "", nextActionMode: "keep", validation: "" }; }
 
-export default function FollowUpActionDialog({ application, errorMessage, hasStateConflict = false, isOpen, isProcessing = false, onCancel, onSubmit }) {
+export default function FollowUpActionDialog({ application, errorMessage, hasStateConflict = false, isOpen, isProcessing = false, onCancel, onOpenApplication, onSubmit }) {
   const [form, setForm] = useState(() => initialState(application));
   const actionGroupId = useId(); const nextActionGroupId = useId(); const validationId = useId();
   useEffect(() => { if (isOpen) setForm(initialState(application)); }, [application?.id, isOpen]);
@@ -54,7 +54,7 @@ export default function FollowUpActionDialog({ application, errorMessage, hasSta
   }
 
   const content = <div className="follow-up-action-dialog-content">
-    <div className="follow-up-action-context"><div className="follow-up-action-context-heading"><div><strong>{application.company_name}</strong><span>{application.role_title}</span></div><StatusBadge status={application.status} /></div><p><strong>Current follow-up:</strong> {formatDisplayDate(application.follow_up_date)}</p><p><strong>Next action:</strong> {hasNextAction ? application.next_action : "No next action"}</p></div>
+    <div className="follow-up-action-context"><div className="follow-up-action-context-heading"><div><strong>{application.company_name}</strong><span>{application.role_title}</span></div><StatusBadge status={application.status} /></div><button className="follow-up-action-open-application" disabled={isProcessing} type="button" onClick={() => onOpenApplication(application)}>Open application</button><p><strong>Current follow-up:</strong> {formatDisplayDate(application.follow_up_date)}</p><p><strong>Next action:</strong> {hasNextAction ? application.next_action : "No next action"}</p></div>
     {hasStateConflict ? <p className="follow-up-action-conflict">This reminder changed after it was loaded. Close and reopen it before making another change.</p> : null}
     <fieldset className="follow-up-action-fieldset" disabled={mutableDisabled}>
       <legend id={actionGroupId}>Choose an action</legend>

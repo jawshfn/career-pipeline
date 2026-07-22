@@ -11,13 +11,24 @@ describe("FollowUpActionDialog", () => {
   let container; let root; let onSubmit;
   beforeEach(() => { globalThis.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); onSubmit = vi.fn(); });
   afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
-  async function render(props = {}) { await act(async () => root.render(<FollowUpActionDialog application={application} isOpen onCancel={vi.fn()} onSubmit={onSubmit} {...props} />)); }
+  async function render(props = {}) { await act(async () => root.render(<FollowUpActionDialog application={application} isOpen onCancel={vi.fn()} onOpenApplication={vi.fn()} onSubmit={onSubmit} {...props} />)); }
   const select = async (value) => act(async () => container.querySelector(`input[value="${value}"]`).click());
   const confirm = async () => act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent.includes("Mark complete") || button.textContent.includes("Complete & schedule") || button.textContent === "Reschedule" || button.textContent.includes("Clear reminder")).click());
 
   it("renders context in the wide shared dialog with no selected action", async () => {
     await render(); const dialog = container.querySelector('[role="dialog"]');
     expect(dialog.classList.contains("confirmation-dialog-wide")).toBe(true); expect(dialog.textContent).toContain(application.company_name); expect(dialog.textContent).toContain(application.role_title); expect(dialog.textContent).toContain("Current follow-up: Jul 25, 2026"); expect(dialog.textContent).not.toContain("Activity note"); expect(dialog.querySelectorAll("textarea")).toHaveLength(0); expect(dialog.querySelectorAll('input[name="follow-up-action"]:checked')).toHaveLength(0); expect([...dialog.querySelectorAll("button")].find((button) => button.textContent.includes("Choose an action")).disabled).toBe(true);
+  });
+
+  it("opens the selected application and disables that action only while processing", async () => {
+    const onOpenApplication = vi.fn();
+    await render({ onOpenApplication });
+    const openButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Open application");
+    expect(openButton.disabled).toBe(false);
+    await act(async () => openButton.click());
+    expect(onOpenApplication).toHaveBeenCalledWith(application);
+    await render({ isProcessing: true, onOpenApplication });
+    expect([...container.querySelectorAll("button")].find((button) => button.textContent === "Open application").disabled).toBe(true);
   });
 
   it("builds complete payloads with omitted, updated, and cleared Next Action values", async () => {

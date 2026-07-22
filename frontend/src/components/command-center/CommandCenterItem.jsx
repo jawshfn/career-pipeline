@@ -8,11 +8,17 @@ function formatDate(value) {
   return formatDisplayDate(String(value).slice(0, 10), String(value).slice(0, 10));
 }
 
-export default function CommandCenterItem({ application, isUpdating = false, onManageReminder, showUpdatedAt }) {
+export default function CommandCenterItem({ application, isUpdating = false, onManageReminder, onOpenApplication, showUpdatedAt }) {
   const showFollowUpActions = Boolean(onManageReminder && application.follow_up_date);
 
   return <article className="command-center-item">
-    <div className="command-center-item-heading"><div><h4>{application.company_name}</h4><p>{application.role_title}</p></div><StatusBadge status={application.status} /></div>
+    <div className="command-center-item-heading">
+      <button aria-label={`Open ${application.company_name} — ${application.role_title}`} className="command-center-application-link" type="button" onClick={() => onOpenApplication(application)}>
+        <span className="command-center-application-company">{application.company_name}</span>
+        <span className="command-center-application-role">{application.role_title}</span>
+      </button>
+      <StatusBadge status={application.status} />
+    </div>
     <div className="command-center-item-meta">
       {!showUpdatedAt ? <p><strong>Follow-up:</strong> <span className="command-center-date-value">{formatDate(application.follow_up_date)}</span></p> : null}
       {showUpdatedAt ? <p><strong>Last updated:</strong> <span className="command-center-date-value">{formatDate(application.updated_at)}</span></p> : null}

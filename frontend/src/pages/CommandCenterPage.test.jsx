@@ -17,7 +17,7 @@ describe("CommandCenterPage", () => {
   let container; let root;
   beforeEach(() => { globalThis.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); });
   afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.clearAllMocks(); });
-  async function renderPage(items, onApplyFollowUpAction = vi.fn().mockResolvedValue({})) { mocks.getApplicationActionItems.mockResolvedValue(items); await act(async () => { root.render(<CommandCenterPage onApplyFollowUpAction={onApplyFollowUpAction} />); await Promise.resolve(); await Promise.resolve(); }); return onApplyFollowUpAction; }
+  async function renderPage(items, onApplyFollowUpAction = vi.fn().mockResolvedValue({}), onOpenApplication = vi.fn()) { mocks.getApplicationActionItems.mockResolvedValue(items); await act(async () => { root.render(<CommandCenterPage onApplyFollowUpAction={onApplyFollowUpAction} onOpenApplication={onOpenApplication} />); await Promise.resolve(); await Promise.resolve(); }); return { onApplyFollowUpAction, onOpenApplication }; }
 
   it("keeps populated sections in urgency order and preserves the daily header", async () => {
     await renderPage(actionItems({ overdue: [overdueApplication], upcoming: [upcomingApplication], stale: [staleApplication] }));
@@ -34,7 +34,7 @@ describe("CommandCenterPage", () => {
   });
 
   it("opens one dialog for the selected application and applies the reviewed clear payload", async () => {
-    const onApply = await renderPage(actionItems({ overdue: [overdueApplication] }));
+    const { onApplyFollowUpAction: onApply } = await renderPage(actionItems({ overdue: [overdueApplication] }));
     await act(async () => container.querySelector(".command-center-manage-reminder").click());
     const dialog = container.querySelector('[role="dialog"]');
     expect(dialog).not.toBeNull(); expect(dialog.textContent).toContain(overdueApplication.company_name);
@@ -45,11 +45,25 @@ describe("CommandCenterPage", () => {
   });
 
   it("keeps a non-conflict failure in the dialog", async () => {
-    const onApply = await renderPage(actionItems({ overdue: [overdueApplication] }), vi.fn().mockRejectedValue(new Error("Service unavailable")));
+    const { onApplyFollowUpAction: onApply } = await renderPage(actionItems({ overdue: [overdueApplication] }), vi.fn().mockRejectedValue(new Error("Service unavailable")));
     await act(async () => container.querySelector(".command-center-manage-reminder").click());
     const dialog = container.querySelector('[role="dialog"]');
     await act(async () => dialog.querySelector('input[value="complete"]').click());
     await act(async () => [...dialog.querySelectorAll("button")].find((button) => button.textContent.includes("Mark complete")).click());
     expect(onApply).toHaveBeenCalledTimes(1); expect(container.querySelector('[role="dialog"]')).not.toBeNull(); expect(container.textContent).toContain("Service unavailable");
+  });
+
+  it("opens the selected application from card titles and the reminder dialog without reloading action items", async () => {
+    const onOpenApplication = vi.fn();
+    await renderPage(actionItems({ overdue: [overdueApplication], stale: [staleApplication] }), vi.fn().mockResolvedValue({}), onOpenApplication);
+    await act(async () => container.querySelector(".command-center-application-link").click());
+    expect(onOpenApplication).toHaveBeenCalledWith(overdueApplication.id);
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    await act(async () => container.querySelector(".command-center-manage-reminder").click());
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Open application").click());
+    expect(onOpenApplication).toHaveBeenLastCalledWith(overdueApplication.id);
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+    expect(mocks.getApplicationActionItems).toHaveBeenCalledTimes(1);
+    expect(container.querySelector(".command-center-section-stale .command-center-application-link")).not.toBeNull();
   });
 });

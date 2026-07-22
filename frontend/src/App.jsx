@@ -287,6 +287,7 @@ export default function App() {
       {activePage === "command-center" ? (
         <CommandCenterPage
           onApplyFollowUpAction={handleFollowUpAction}
+          onOpenApplication={handleOpenApplicationDetails}
         />
       ) : activePage === "dashboard" ? (
         <DashboardPage onOpenStatusBoard={() => navigateToPage("pipeline")} />

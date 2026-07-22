@@ -9,7 +9,7 @@ import LoadingState from "../components/ui/LoadingState.jsx";
 
 const emptyActionItems = { overdue_followups: [], upcoming_followups: [], stale_applications: [] };
 
-export default function CommandCenterPage({ onApplyFollowUpAction }) {
+export default function CommandCenterPage({ onApplyFollowUpAction, onOpenApplication }) {
   const [actionItems, setActionItems] = useState(emptyActionItems);
   const [actionItemsError, setActionItemsError] = useState("");
   const [isActionItemsLoading, setIsActionItemsLoading] = useState(true);
@@ -41,6 +41,14 @@ export default function CommandCenterPage({ onApplyFollowUpAction }) {
     if (isReminderActionProcessing) return;
     setSelectedReminderApplication(null); setReminderDialogError(""); setHasReminderStateConflict(false);
   }
+  function handleOpenApplication(application) {
+    onOpenApplication(application.id);
+  }
+  function handleOpenDialogApplication(application) {
+    if (isReminderActionProcessing) return;
+    setSelectedReminderApplication(null); setReminderDialogError(""); setHasReminderStateConflict(false);
+    onOpenApplication(application.id);
+  }
   async function handleApplyReminderAction(payload, successMessage) {
     const application = selectedReminderApplication;
     if (!application || actionInFlightRef.current.has(application.id) || hasReminderStateConflict) return;
@@ -70,10 +78,10 @@ export default function CommandCenterPage({ onApplyFollowUpAction }) {
     {!isActionItemsLoading && actionItemsError ? <ErrorMessage message={actionItemsError} /> : null}
     {!isActionItemsLoading && !actionItemsError && !hasActionItems ? <div className="empty-state command-center-all-clear"><h3>No urgent follow-ups today</h3><p>Add follow-up dates and next actions to keep your search moving.</p></div> : null}
     {!isActionItemsLoading && !actionItemsError && hasActionItems ? <div className="command-center-layout"><div className="command-center-grid">
-      {actionItems.overdue_followups.length > 0 ? <CommandCenterSection accent="overdue" applications={actionItems.overdue_followups} description="Follow-up dates before today." onManageReminder={handleManageReminder} title="Overdue Follow-ups" updatingApplicationId={isReminderActionProcessing ? selectedReminderApplication?.id : null} /> : null}
-      {actionItems.upcoming_followups.length > 0 ? <CommandCenterSection accent="upcoming" applications={actionItems.upcoming_followups} description="Follow-ups due today through the next 3 days." onManageReminder={handleManageReminder} title="Upcoming Follow-ups" updatingApplicationId={isReminderActionProcessing ? selectedReminderApplication?.id : null} /> : null}
-      {actionItems.stale_applications.length > 0 ? <CommandCenterSection accent="stale" applications={actionItems.stale_applications} description="Active applications without a follow-up and no recent update." title="Needs check-in" showUpdatedAt /> : null}
+      {actionItems.overdue_followups.length > 0 ? <CommandCenterSection accent="overdue" applications={actionItems.overdue_followups} description="Follow-up dates before today." onManageReminder={handleManageReminder} onOpenApplication={handleOpenApplication} title="Overdue Follow-ups" updatingApplicationId={isReminderActionProcessing ? selectedReminderApplication?.id : null} /> : null}
+      {actionItems.upcoming_followups.length > 0 ? <CommandCenterSection accent="upcoming" applications={actionItems.upcoming_followups} description="Follow-ups due today through the next 3 days." onManageReminder={handleManageReminder} onOpenApplication={handleOpenApplication} title="Upcoming Follow-ups" updatingApplicationId={isReminderActionProcessing ? selectedReminderApplication?.id : null} /> : null}
+      {actionItems.stale_applications.length > 0 ? <CommandCenterSection accent="stale" applications={actionItems.stale_applications} description="Active applications without a follow-up and no recent update." onOpenApplication={handleOpenApplication} title="Needs check-in" showUpdatedAt /> : null}
     </div></div> : null}
-    <FollowUpActionDialog application={selectedReminderApplication} errorMessage={reminderDialogError} hasStateConflict={hasReminderStateConflict} isOpen={Boolean(selectedReminderApplication)} isProcessing={isReminderActionProcessing} onCancel={handleCloseDialog} onSubmit={handleApplyReminderAction} />
+    <FollowUpActionDialog application={selectedReminderApplication} errorMessage={reminderDialogError} hasStateConflict={hasReminderStateConflict} isOpen={Boolean(selectedReminderApplication)} isProcessing={isReminderActionProcessing} onCancel={handleCloseDialog} onOpenApplication={handleOpenDialogApplication} onSubmit={handleApplyReminderAction} />
   </div>;
 }
