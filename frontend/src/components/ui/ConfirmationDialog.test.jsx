@@ -68,6 +68,14 @@ describe("ConfirmationDialog", () => {
     expect(container.querySelectorAll("button")[1].disabled).toBe(false);
   });
 
+  it("keeps the default width class and adds only the wide modifier when requested", async () => {
+    await render();
+    const dialog = container.querySelector(".confirmation-dialog");
+    expect(dialog.classList.contains("confirmation-dialog-wide")).toBe(false);
+    await render({ size: "wide" });
+    expect(container.querySelector(".confirmation-dialog").classList.contains("confirmation-dialog-wide")).toBe(true);
+  });
+
   it("does not restore trigger focus while processing or error state changes", async () => {
     const trigger = document.createElement("button");
     trigger.textContent = "Open";

@@ -2114,11 +2114,41 @@ a {
 
 .confirmation-dialog-backdrop { position: fixed; z-index: 40; inset: 0; display: flex; align-items: center; justify-content: center; box-sizing: border-box; overflow-y: auto; overscroll-behavior: contain; padding: 16px; background: rgba(18, 24, 43, 0.46); }
 .confirmation-dialog { box-sizing: border-box; width: min(520px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); min-width: 0; overflow-y: auto; overscroll-behavior: contain; overflow-wrap: anywhere; margin: auto; padding: 24px; border: 1px solid var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: 0 24px 60px rgba(18, 24, 43, 0.28); }
+.confirmation-dialog-wide { width: min(740px, 100%); }
 .confirmation-dialog h3, .confirmation-dialog p { margin: 0; }
 .confirmation-dialog p + p { margin-top: 12px; }
 .confirmation-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 20px; }
 .confirmation-dialog-actions button { max-width: 100%; }
 .confirmation-dialog button:focus-visible { outline: 3px solid var(--color-focus, #3b82f6); outline-offset: 2px; }
+
+.follow-up-action-dialog-content, .follow-up-action-fieldset, .follow-up-action-fields { display: grid; gap: 12px; min-width: 0; }
+.follow-up-action-dialog-content { margin-top: 16px; }
+.follow-up-action-context { display: grid; gap: 8px; border: 1px solid var(--color-border); border-radius: 8px; padding: 14px; background: var(--color-surface-subtle); overflow-wrap: anywhere; }
+.follow-up-action-context p { margin: 0; }
+.follow-up-action-context-heading { display: flex; justify-content: space-between; gap: 12px; min-width: 0; }
+.follow-up-action-context-heading > div { display: grid; gap: 3px; min-width: 0; }
+.follow-up-action-context-heading strong { overflow-wrap: anywhere; }
+.follow-up-action-context-heading span:not(.status-badge) { color: var(--color-text-muted, #52605d); font-weight: 700; overflow-wrap: anywhere; }
+.follow-up-action-fieldset { margin: 0; padding: 0; border: 0; }
+.follow-up-action-fieldset legend, .follow-up-action-label { color: var(--color-text); font-weight: 800; }
+.follow-up-action-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.follow-up-action-choice { display: flex; align-items: flex-start; gap: 10px; min-width: 0; border: 1px solid var(--color-border); border-radius: 8px; padding: 12px; background: var(--color-surface); cursor: pointer; }
+.follow-up-action-choice:hover { border-color: var(--color-primary); }
+.follow-up-action-choice:focus-within { outline: 3px solid rgba(69, 87, 216, 0.24); outline-offset: 2px; }
+.follow-up-action-choice-selected { border-color: var(--color-primary); background: var(--color-surface-subtle); }
+.follow-up-action-choice-danger { color: #8a3028; }
+.follow-up-action-choice input { flex: 0 0 auto; margin-top: 3px; }
+.follow-up-action-choice span { display: grid; gap: 4px; min-width: 0; }
+.follow-up-action-choice small { color: var(--color-text-muted, #52605d); line-height: 1.35; }
+.follow-up-action-fields > label, .follow-up-action-fields > label > textarea, .follow-up-action-fields > label > input { display: grid; gap: 6px; width: 100%; box-sizing: border-box; }
+.follow-up-action-quick-dates, .follow-up-action-next-mode { display: flex; flex-wrap: wrap; gap: 8px; }
+.follow-up-action-quick-dates button { border: 1px solid var(--color-border-strong); border-radius: 6px; padding: 7px 10px; background: var(--color-surface); color: var(--color-primary); font: inherit; font-weight: 700; cursor: pointer; }
+.follow-up-action-next-mode label { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
+.follow-up-action-fields input[type="date"], .follow-up-action-fields textarea { border: 1px solid var(--color-border-strong); border-radius: 6px; padding: 8px 10px; background: var(--color-surface); color: var(--color-text); font: inherit; }
+.follow-up-action-fields textarea { resize: vertical; }
+.follow-up-action-validation, .follow-up-action-conflict { margin: 0; border-left: 3px solid #b66a60; padding-left: 10px; color: #7a2d24; font-weight: 700; }
+.follow-up-action-fieldset:disabled .follow-up-action-choice, .follow-up-action-fieldset:disabled .follow-up-action-quick-dates button { cursor: not-allowed; opacity: .65; }
+@media (max-width: 560px) { .follow-up-action-choice-grid { grid-template-columns: 1fr; } }
 
 .delete-application-confirm-button {
   border: 1px solid #a52d39;
@@ -3129,72 +3159,33 @@ a {
   font-weight: 700;
 }
 
-.command-center-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.command-center-action-details {
-  border-top: 1px solid #edf2f0;
-  padding-top: 8px;
-}
-
-.command-center-action-details summary {
+.command-center-manage-reminder {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
   min-height: 32px;
-  list-style: none;
+  border-top: 1px solid #edf2f0;
+  padding-top: 8px;
+  border-right: 0;
+  border-bottom: 0;
+  border-left: 0;
+  background: transparent;
+  text-align: left;
   cursor: pointer;
   color: var(--color-primary);
   font-size: 0.86rem;
   font-weight: 800;
 }
-
-.command-center-action-details summary::-webkit-details-marker {
-  display: none;
-}
-
-.command-center-action-details summary::marker {
-  content: "";
-}
-
-.command-center-action-details summary:focus-visible {
+.command-center-manage-reminder:focus-visible {
   outline: 3px solid rgba(69, 87, 216, 0.24);
   outline-offset: 3px;
 }
-
 .command-center-action-chevron {
   flex: 0 0 auto;
   font-size: 1.15rem;
   line-height: 1;
-  transition: transform 160ms ease;
-}
-
-.command-center-action-details[open] summary {
-  margin-bottom: 8px;
-}
-
-.command-center-action-details[open] .command-center-action-chevron {
-  transform: rotate(90deg);
-}
-
-.command-center-action-panel {
-  display: grid;
-  gap: 10px;
-  border-radius: 8px;
-  padding: 11px;
-  background: var(--color-surface-subtle);
-}
-
-.command-center-action-note {
-  margin: 0 0 8px;
-  color: #60706d;
-  font-size: 0.84rem;
-  line-height: 1.4;
 }
 
 .pipeline-board {

@@ -14,6 +14,7 @@ export default function ConfirmationDialog({
   onCancel,
   onConfirm,
   processingLabel = "Working...",
+  size,
   title,
 }) {
   const dialogRef = useRef(null);
@@ -75,7 +76,7 @@ export default function ConfirmationDialog({
 
   return (
     <div className="confirmation-dialog-backdrop" role="presentation">
-      <section aria-describedby={descriptionId} aria-labelledby={titleId} aria-modal="true" className={`confirmation-dialog confirmation-dialog-${confirmTone}`} onKeyDown={trapFocus} ref={dialogRef} role="dialog">
+      <section aria-describedby={descriptionId} aria-labelledby={titleId} aria-modal="true" className={`confirmation-dialog confirmation-dialog-${confirmTone}${size === "wide" ? " confirmation-dialog-wide" : ""}`} onKeyDown={trapFocus} ref={dialogRef} role="dialog">
         <h3 id={titleId}>{title}</h3>
         <div id={descriptionId}>{typeof description === "string" ? <p>{description}</p> : description}</div>
         {errorMessage ? <div role="alert"><ErrorMessage message={errorMessage} /></div> : null}
