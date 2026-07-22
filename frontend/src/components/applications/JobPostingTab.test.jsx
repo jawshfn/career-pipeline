@@ -16,6 +16,7 @@ describe("JobPostingTab", () => {
       "dates",
       "job-details",
       "job-posting",
+      "ai-brief",
       "contact-prep",
       "red-flags",
       "activity",

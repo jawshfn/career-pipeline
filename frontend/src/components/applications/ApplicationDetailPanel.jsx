@@ -24,12 +24,21 @@ import ApplicationDetailOverview from "./ApplicationDetailOverview.jsx";
 import ApplicationDetailSummaryStrip from "./ApplicationDetailSummaryStrip.jsx";
 import ContactPrepTab from "./ContactPrepTab.jsx";
 import JobDetailsTab from "./JobDetailsTab.jsx";
+import JobIntelligenceBriefTab from "./JobIntelligenceBriefTab.jsx";
 import JobPostingTab from "./JobPostingTab.jsx";
 import RedFlagsTab from "./RedFlagsTab.jsx";
 import StatusFollowUpTab from "./StatusFollowUpTab.jsx";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
 import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
+import {
+  JOB_BRIEF_MESSAGES,
+  JobBriefServiceError,
+  createJobBriefPayload,
+  generateJobBrief,
+  getJobBriefEligibility,
+  getJobBriefFingerprint,
+} from "../../services/jobBriefService.js";
 
 const initialFormState = {
   company_name: "",
@@ -64,6 +73,7 @@ export const detailTabs = [
   { id: "dates", label: "Follow-up" },
   { id: "job-details", label: "Job Details" },
   { id: "job-posting", label: "Job Posting" },
+  { id: "ai-brief", label: "AI Brief" },
   { id: "contact-prep", label: "Resume & Prep" },
   { id: "red-flags", label: "Red Flags" },
   { id: "activity", label: "Activity" },
@@ -241,6 +251,12 @@ export default function ApplicationDetailPanel({
   const [deleteError, setDeleteError] = useState("");
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
   const deleteTriggerRef = useRef(null);
+  const briefAbortControllerRef = useRef(null);
+  const [brief, setBrief] = useState(null);
+  const [briefMeta, setBriefMeta] = useState(null);
+  const [briefError, setBriefError] = useState("");
+  const [briefFingerprint, setBriefFingerprint] = useState("");
+  const [isGeneratingBrief, setIsGeneratingBrief] = useState(false);
 
   function resetActivityDraft() {
     const nextActivityDraft = getInitialActivityForm();
@@ -262,6 +278,13 @@ export default function ApplicationDetailPanel({
       }
 
       resetActivityDraft();
+      briefAbortControllerRef.current?.abort();
+      briefAbortControllerRef.current = null;
+      setBrief(null);
+      setBriefMeta(null);
+      setBriefError("");
+      setBriefFingerprint("");
+      setIsGeneratingBrief(false);
       setActiveTab(getValidDetailTab(initialTab));
       setLoadError("");
       setSaveError("");
@@ -293,6 +316,8 @@ export default function ApplicationDetailPanel({
     };
   }, [applicationId]);
 
+  useEffect(() => () => briefAbortControllerRef.current?.abort(), []);
+
   useEffect(() => {
     setActiveTab(getValidDetailTab(initialTab));
   }, [initialTab]);
@@ -302,6 +327,9 @@ export default function ApplicationDetailPanel({
   const hasUnsavedActivityDraft = isActivityDraftDirty(activityDraft, activityDraftBaseline);
   const hasUnsavedChanges = hasUnsavedApplicationChanges || hasUnsavedActivityDraft;
   const unsavedWarningTitle = getUnsavedWarningTitle(hasUnsavedApplicationChanges, hasUnsavedActivityDraft);
+  const briefPayload = createJobBriefPayload(formData);
+  const briefEligibility = getJobBriefEligibility(formData);
+  const isBriefStale = Boolean(brief && briefFingerprint && getJobBriefFingerprint(briefPayload) !== briefFingerprint);
 
   useEffect(() => {
     onUnsavedChangesChange?.(hasUnsavedChanges);
@@ -338,6 +366,35 @@ export default function ApplicationDetailPanel({
   function applyJobPostingSnapshot(value) {
     setFormData((current) => ({ ...current, job_description: value }));
     setSaveMessage("");
+  }
+
+  async function handleGenerateBrief() {
+    if (isGeneratingBrief) return;
+    const eligibility = getJobBriefEligibility(formData);
+    if (!eligibility.isEligible) return;
+
+    const requestPayload = createJobBriefPayload(formData);
+    const controller = new AbortController();
+    briefAbortControllerRef.current = controller;
+    setBriefError("");
+    setIsGeneratingBrief(true);
+
+    try {
+      const response = await generateJobBrief(requestPayload, { signal: controller.signal });
+      if (briefAbortControllerRef.current !== controller) return;
+      setBrief(response.brief);
+      setBriefMeta(response.meta);
+      setBriefFingerprint(getJobBriefFingerprint(requestPayload));
+      setBriefError("");
+    } catch (error) {
+      if (controller.signal.aborted || error?.name === "AbortError" || briefAbortControllerRef.current !== controller) return;
+      setBriefError(error instanceof JobBriefServiceError ? error.message : JOB_BRIEF_MESSAGES.unexpected);
+    } finally {
+      if (briefAbortControllerRef.current === controller) {
+        briefAbortControllerRef.current = null;
+        setIsGeneratingBrief(false);
+      }
+    }
   }
 
   function handleClose() {
@@ -554,6 +611,18 @@ export default function ApplicationDetailPanel({
 
             {activeTab === "job-posting" ? (
               <JobPostingTab formData={formData} onApplySnapshot={applyJobPostingSnapshot} />
+            ) : null}
+
+            {activeTab === "ai-brief" ? (
+              <JobIntelligenceBriefTab
+                brief={brief}
+                eligibility={briefEligibility}
+                error={briefError}
+                isGenerating={isGeneratingBrief}
+                isStale={isBriefStale}
+                meta={briefMeta}
+                onGenerate={handleGenerateBrief}
+              />
             ) : null}
 
             {activeTab === "contact-prep" ? (
