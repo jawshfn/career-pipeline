@@ -4,8 +4,6 @@
 
 **A local-first workspace for capturing job opportunities and following through on them.**
 
-[Open the public demo](https://jawshfn.github.io/career-pipeline/)
-
 PursuitHQ helps job seekers capture opportunities, track application status and next actions, manage follow-ups, organize resume variants, preserve Job Posting Snapshots, review red flags, track activity, and export or restore their workspace. It can also generate an optional, session-only Job Intelligence Brief from a saved job posting.
 
 ## What it does
