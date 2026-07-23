@@ -36,13 +36,36 @@ const application = {
   notes: "Private notes",
 };
 const brief = {
-  role_summary: "A product management role.", responsibilities: [], required_qualifications: [],
-  preferred_qualifications: [], skills_and_keywords: [], interview_topics: [], research_tasks: [],
-  concerns_and_unknowns: [], suggested_next_action: { action: "Prepare examples.", reason: "The posting emphasizes planning." }, limitations: [],
+  schema_version: "2",
+  role_summary: "A product management role. It supports cross-functional planning.",
+  responsibility_themes: ["Coordinate product planning"],
+  formal_requirements: ["Product management experience"],
+  preferred_qualifications: [],
+  important_conditions: [],
+  skills_and_tools: ["Product planning"],
+  interview_preparation: [
+    {
+      topic: "Planning",
+      preparation: "Prepare an example of coordinating a product plan.",
+    },
+  ],
+  research_questions: ["Which product team would this role support?"],
+  unknowns: ["The reporting line is not specified."],
+  next_action: {
+    action: "Prepare examples.",
+    reason: "The posting emphasizes planning.",
+  },
+  limitations: ["Based only on the supplied posting."],
 };
 const response = (roleSummary = brief.role_summary) => ({
   brief: { ...brief, role_summary: roleSummary },
-  meta: { generated_at: "2026-07-22T19:14:00.000Z" },
+  meta: {
+    schema_version: "2",
+    prompt_version: "job-brief-v5",
+    model: "gemini-3.5-flash-lite",
+    generated_at: "2026-07-22T19:14:00.000Z",
+    request_id: "request-test",
+  },
 });
 
 function click(container, text) {
