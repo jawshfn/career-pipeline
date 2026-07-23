@@ -18,18 +18,22 @@ PursuitHQ helps job seekers capture opportunities, track application status and 
 ## Runtime architecture
 
 ```text
-Local app: React/Vite <-> FastAPI <-> SQLite
-                         ^
-              optional local Browser Capture companion
+Local workspace:
+React/Vite <-> FastAPI <-> SQLite
+     |
+     +-> deployed Cloudflare Worker -> Google Gemini
 
-Public demo: static React/Vite + fictional in-memory data
-                         |
-                    Cloudflare Worker -> Google Gemini
+Public demo:
+Static React/Vite + fictional in-memory data
+     |
+     +-> deployed Cloudflare Worker -> Google Gemini
 ```
 
 The local full-stack app stores workspace data in SQLite. The optional Chrome companion is locally loaded and opens an editable review; it never saves an application automatically.
 
-The public demo is a static GitHub Pages build. It uses fictional in-memory workspace data, so ordinary edits reset on reload and it does not connect to FastAPI. It can call the separately deployed AI gateway, includes five AI-ready fictional applications (with Harborview Systems featured), and keeps generated briefs only for the browser session. Browser Capture and workspace restore are local-only.
+The locally running PursuitHQ app includes AI access by default through the deployed PursuitHQ gateway. The Gemini API key remains server-side in that Worker: normal local use needs neither a Gemini key nor Cloudflare, Wrangler, or gateway setup. Job Intelligence Brief does not run Gemini or the Worker on the user's computer.
+
+The public demo is a static GitHub Pages build. It uses fictional in-memory workspace data, so ordinary edits reset on reload and it does not connect to FastAPI. It also uses the deployed AI gateway, includes five AI-ready fictional applications (with Harborview Systems featured), and keeps generated briefs only for the browser session. Browser Capture and workspace restore are local-only.
 
 The AI gateway is a Cloudflare Worker that validates a six-field request, calls Google Gemini with `gemini-3.5-flash-lite`, validates schema version 2 responses, and returns a session-only result. Generation is user initiated; two valid attempts per minute are allowed per bounded client key.
 
@@ -57,7 +61,7 @@ npm install
 npm run dev
 ```
 
-See the subsystem guides for Browser Capture and AI gateway setup.
+The backend and frontend above are all that ordinary local use requires. Browser Capture is optional; [AI gateway setup](ai-gateway/README.md) is only for contributors and operators developing, testing, deploying, or self-hosting that service.
 
 ## Verification
 

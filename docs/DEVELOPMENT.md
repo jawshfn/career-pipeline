@@ -14,7 +14,9 @@ Keep PursuitHQ local-first, review-first, and clear about privacy boundaries. Ch
 
 ## Runtime modes and setup
 
-Start the backend and frontend using the commands in [the root README](../README.md). Local mode calls FastAPI and uses SQLite. Demo mode uses fictional in-memory data, does not call FastAPI, and resets after reload.
+Start the backend and frontend using the commands in [the root README](../README.md). That is the complete setup for ordinary local PursuitHQ use: local mode calls FastAPI and uses SQLite, while Job Intelligence Brief uses the deployed PursuitHQ gateway by default. It does not run Gemini or a Worker process locally. Demo mode uses fictional in-memory data, does not call FastAPI, resets after reload, and uses that same deployed gateway for AI Briefs.
+
+Running `ai-gateway/` locally is optional contributor/operator work for developing, testing, deploying, or self-hosting the gateway. It is not part of normal local app setup.
 
 ## Environment and secrets
 
@@ -22,7 +24,7 @@ Start the backend and frontend using the commands in [the root README](../README
 | --- | --- | --- |
 | Frontend | `VITE_APP_MODE` | `demo` selects demo mode; other values use local mode. |
 | Frontend | `VITE_BASE_PATH` | Vite deployment base path. |
-| Frontend | `VITE_AI_GATEWAY_URL` | Optional gateway override; otherwise the committed deployed gateway URL is used. |
+| Frontend | `VITE_AI_GATEWAY_URL` | Optional contributor/operator override; otherwise both runtime modes use the committed deployed gateway URL. |
 | Backend | `CAREER_PIPELINE_DATABASE_URL` | Optional SQLite/SQLAlchemy database URL. |
 | AI gateway | `GEMINI_API_KEY` | Worker secret; never commit it. |
 | AI gateway | `AI_ENABLED` | Enables generation when `true`. |
@@ -31,7 +33,7 @@ Start the backend and frontend using the commands in [the root README](../README
 | AI gateway | `ALLOWED_ORIGINS` | Comma-separated CORS allowlist. |
 | AI gateway | `AI_RATE_LIMITER` | Required Worker rate-limit binding. |
 
-Use ignored `ai-gateway/.dev.vars` for local gateway secrets; do not add it to source control.
+The AI gateway rows apply only when working on `ai-gateway/`. Use ignored `ai-gateway/.dev.vars` for its local secrets; do not add it to source control. No Gemini or Cloudflare secret belongs in the frontend or FastAPI environment.
 
 ## Verification matrix
 

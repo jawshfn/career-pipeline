@@ -2,7 +2,9 @@
 
 The AI gateway is a Cloudflare Worker that creates session-only Job Intelligence Briefs. It validates requests, calls Google Gemini with the fixed production model `gemini-3.5-flash-lite`, validates schema version `2`, and returns a structured response. It does not persist workspace data.
 
-## Requirements and local setup
+Ordinary PursuitHQ users do not need to set up this directory. The local React/FastAPI app and public demo use the deployed PursuitHQ gateway by default; the Gemini API key stays server-side in the deployed Worker. The setup below is only for contributors or operators developing, testing, deploying, or self-hosting the gateway.
+
+## Contributor/operator local setup
 
 Node.js 22 or later is required.
 
