@@ -1,4 +1,4 @@
-# PursuitHQ
+# PursuitHQ · [Live Demo](https://jawshfn.github.io/career-pipeline/)
 
 [![CI](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml)
 
