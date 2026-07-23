@@ -1,4 +1,4 @@
-"""Read-only validation for version 1 workspace backups."""
+"""Read-only validation for version 1 and version 2 workspace backups."""
 
 from datetime import date, datetime, timedelta, timezone
 import re
@@ -311,7 +311,7 @@ def _record_limits(payload: Any) -> list[dict[str, str | None]]:
 
 
 def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDocument | None, list[dict[str, str | None]]]:
-    """Apply the single strict version-1 validation rule set without database reads."""
+    """Apply strict validation for supported workspace-backup versions without database reads."""
     issues = _record_limits(payload)
     if issues:
         return None, issues

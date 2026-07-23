@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from app.models import Application, ApplicationActivity, ResumeVersion
+from app.models import Application, ApplicationActivity, ApplicationAiBrief, ResumeVersion
 from app.routers.exports import workspace_backup_payload
 from app.services.workspace_restore_authorizations import WorkspaceRestoreAuthorizations
 
@@ -172,7 +172,21 @@ def test_restore_rolls_back_if_any_replace_stage_fails(client, db_session, monke
 def test_invalid_preview_has_no_authorization_and_missing_header_is_controlled(client, db_session):
     backup = _source_backup(db_session)
     invalid = copy.deepcopy(backup)
-    invalid["version"] = 2
+    invalid["version"] = 3
     assert _post_preview(client, _raw(invalid)).json()["restore_authorization"] is None
     response = client.post("/api/imports/workspace/restore", content=_raw(backup), headers={"Content-Type": "application/json"})
     assert response.status_code == 400
+
+
+def test_version_one_restore_has_no_ai_briefs(client, db_session):
+    legacy = _source_backup(db_session)
+    legacy["version"] = 1
+    legacy["counts"].pop("application_ai_briefs")
+    legacy["data"].pop("application_ai_briefs")
+    raw = _raw(legacy)
+    _replace_with_current_workspace(db_session)
+    preview = _post_preview(client, raw).json()
+    assert preview["is_valid"] is True
+    response = _post_restore(client, raw, preview["restore_authorization"]["token"])
+    assert response.status_code == 200
+    assert db_session.query(ApplicationAiBrief).count() == 0
