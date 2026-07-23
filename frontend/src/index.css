@@ -5187,6 +5187,7 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 .ai-brief-information h4 { margin-bottom: 5px; color: var(--color-text); font-size: 0.9rem; }
 .ai-brief-information p { margin-top: 0; }
 .ai-brief-action-area { display: grid; justify-items: start; gap: 10px; margin-top: 16px; }
+.ai-brief-action-area + .message-error { margin-top: 12px; }
 .ai-brief-eligibility { margin: 0; padding: 10px 12px; border-left: 3px solid var(--color-warning); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font-size: 0.9rem; }
 .ai-brief-primary-action, .ai-brief-secondary-action { appearance: none; display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border-radius: var(--radius-sm); padding: 10px 16px; font: inherit; font-weight: 800; cursor: pointer; transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease; }
 .ai-brief-primary-action { border: 1px solid var(--color-primary); color: var(--color-surface); background: var(--color-primary); }
