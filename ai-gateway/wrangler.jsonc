@@ -4,9 +4,6 @@
   "main": "src/index.js",
   "compatibility_date": "2026-07-22",
   "workers_dev": true,
-  "ai": {
-    "binding": "AI"
-  },
   "ratelimits": [
     {
       "name": "AI_RATE_LIMITER",
@@ -19,16 +16,8 @@
   ],
   "vars": {
     "AI_ENABLED": "true",
-    "AI_PROVIDER": "google",
-    "AI_MODEL": "@cf/meta/llama-3.1-8b-instruct-fast",
-    "GOOGLE_AI_MODEL": "gemini-3.5-flash-lite",
-    "GOOGLE_THINKING_LEVEL": "minimal",
     "GOOGLE_AI_TIMEOUT_MS": "15000",
-    "AI_OUTPUT_MODE": "prompt_json",
-    "AI_BRIEF_SCHEMA_VERSION": "2",
     "AI_MAX_COMPLETION_TOKENS": "4096",
-    "PROMPT_VERSION": "job-brief-v5",
-    "AI_DEBUG_PROVIDER_ERRORS": "false",
     "ALLOWED_ORIGINS": "https://jawshfn.github.io,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173"
   }
 }

@@ -12,21 +12,9 @@ import {
   isValidJobBriefResponse,
 } from "./jobBriefService.js";
 
-const validResponse = {
-  brief: {
-    schema_version: "1", role_summary: "A product role.",
-    responsibilities: [{ statement: "Lead planning", evidence: "The posting asks for planning." }],
-    required_qualifications: [{ statement: "Experience", evidence: "Experience is required." }],
-    preferred_qualifications: [], skills_and_keywords: [{ skill: "React", evidence: "React is named." }],
-    interview_topics: [{ topic: "Planning", reason: "It is central to the role.", evidence: "Planning is named." }],
-    research_tasks: [], concerns_and_unknowns: [],
-    suggested_next_action: { action: "Prepare one planning example.", reason: "Planning is emphasized." }, limitations: [],
-  },
-  meta: { schema_version: "1", prompt_version: "job-brief-v2", model: "server-controlled", generated_at: "2026-07-22T19:14:00.000Z", request_id: "request-1" },
-};
 const validV2Response = {
   brief: { schema_version: "2", role_summary: "A product role. It partners across teams.", responsibility_themes: ["Lead planning"], formal_requirements: ["Product experience"], preferred_qualifications: [], important_conditions: [], skills_and_tools: ["Roadmapping"], interview_preparation: [{ topic: "Planning", preparation: "Prepare a planning example." }], research_questions: ["Which team owns the roadmap?"], unknowns: ["The reporting line is not specified."], next_action: { action: "Prepare one planning example.", reason: "Planning is emphasized." }, limitations: ["Based only on the supplied posting."] },
-  meta: { schema_version: "2", prompt_version: "job-brief-v4-eval-gemma", model: "server-controlled", generated_at: "2026-07-22T19:14:00.000Z", request_id: "request-2" },
+  meta: { schema_version: "2", prompt_version: "job-brief-v5", model: "gemini-3.5-flash-lite", generated_at: "2026-07-22T19:14:00.000Z", request_id: "request-2" },
 };
 
 function response(body, status = 200) {
@@ -71,6 +59,7 @@ describe("job brief source helpers", () => {
 describe("generateJobBrief", () => {
   it("accepts a well-formed v2 result and rejects mismatched or malformed v2 results", () => {
     expect(isValidJobBriefResponse(validV2Response)).toBe(true);
+    expect(isValidJobBriefResponse({ ...validV2Response, brief: { ...validV2Response.brief, schema_version: "1" }, meta: { ...validV2Response.meta, schema_version: "1" } })).toBe(false);
     expect(isValidJobBriefResponse({ ...validV2Response, meta: { ...validV2Response.meta, schema_version: "1" } })).toBe(false);
     expect(isValidJobBriefResponse({ ...validV2Response, brief: { ...validV2Response.brief, interview_preparation: [{ topic: "Planning" }] } })).toBe(false);
   });
@@ -87,7 +76,7 @@ describe("generateJobBrief", () => {
   it("uses a stable browser-local client ID and sends only the request allowlist", async () => {
     const store = new Map([[CLIENT_ID_STORAGE_KEY, "phq_test-client_123"]]);
     vi.stubGlobal("localStorage", { getItem: vi.fn((key) => store.get(key) || null), setItem: vi.fn((key, value) => store.set(key, value)) });
-    const fetchMock = vi.fn().mockResolvedValue(response(validResponse));
+    const fetchMock = vi.fn().mockResolvedValue(response(validV2Response));
     vi.stubGlobal("fetch", fetchMock);
     await generateJobBrief(payload({ status: "Applied", notes: "private", contact_info: "private" }));
     const [url, options] = fetchMock.mock.calls[0];
@@ -107,8 +96,8 @@ describe("generateJobBrief", () => {
     const blockedId = getBrowserLocalClientId();
     expect(blockedId).toBe(getBrowserLocalClientId());
     expect(blockedId).toMatch(/^phq_[A-Za-z0-9_-]{8,120}$/);
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response(validResponse)));
-    await expect(generateJobBrief(payload())).resolves.toEqual(validResponse);
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(response(validV2Response)));
+    await expect(generateJobBrief(payload())).resolves.toEqual(validV2Response);
   });
 
   it.each([

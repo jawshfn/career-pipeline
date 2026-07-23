@@ -5155,22 +5155,19 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 
 /* Phase 25.1a Job Intelligence Brief. */
 .ai-brief-tab, .ai-brief-report { display: grid; gap: 18px; }
-.ai-brief-intro, .ai-brief-section, .ai-brief-next-action, .ai-brief-limitations { padding: 18px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
-.ai-brief-intro h3, .ai-brief-section h4, .ai-brief-next-action h4, .ai-brief-limitations h4 { margin-top: 0; }
-.ai-brief-intro > :last-child, .ai-brief-section > :last-child, .ai-brief-next-action > :last-child, .ai-brief-limitations > :last-child { margin-bottom: 0; }
+.ai-brief-intro, .ai-brief-section, .ai-brief-next-action { padding: 18px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.ai-brief-intro h3, .ai-brief-section h4, .ai-brief-next-action h4 { margin-top: 0; }
+.ai-brief-intro > :last-child, .ai-brief-section > :last-child, .ai-brief-next-action > :last-child { margin-bottom: 0; }
 .ai-brief-disclosure, .ai-brief-caution, .ai-brief-eligibility { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); color: var(--color-text-soft); font-size: 0.9rem; }
 .ai-brief-eligibility { border-left: 3px solid var(--color-warning); color: var(--color-text); }
 .ai-brief-loading { min-height: 1.35em; margin: 0; color: var(--color-text-soft); }
 .ai-brief-list { display: grid; gap: 12px; margin: 0; padding-left: 20px; }
 .ai-brief-list li { padding-left: 2px; }
-.ai-brief-evidence, .ai-brief-reason { margin: 5px 0 0; color: var(--color-text-soft); font-size: 0.9rem; }
-.ai-brief-empty { margin: 0; color: var(--color-text-soft); font-style: italic; }
-.ai-brief-skill { display: inline-block; padding: 3px 9px; border: 1px solid var(--color-border-strong); border-radius: 999px; background: var(--color-primary-surface); color: var(--color-primary); font-weight: 700; }
+.ai-brief-reason { margin: 5px 0 0; color: var(--color-text-soft); font-size: 0.9rem; }
 .ai-brief-next-action { border-color: #b8c8f4; background: var(--color-primary-surface); }
-.ai-brief-limitations { color: var(--color-text-soft); background: var(--color-surface-subtle); }
 .ai-brief-generated-at { margin: -6px 2px 0; color: var(--color-text-soft); font-size: 0.86rem; }
 
 @media (max-width: 640px) {
-  .ai-brief-intro, .ai-brief-section, .ai-brief-next-action, .ai-brief-limitations { padding: 14px; }
+  .ai-brief-intro, .ai-brief-section, .ai-brief-next-action { padding: 14px; }
   .ai-brief-intro button { width: 100%; }
 }

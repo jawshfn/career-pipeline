@@ -1,17 +1,10 @@
 import { buildJobBriefMessages } from "./jobBrief.js";
 
-export const GOOGLE_AI_MODELS = Object.freeze({
-  GEMMA: "gemma-4-26b-a4b-it",
-  FLASH_LITE: "gemini-3.5-flash-lite",
-});
-export const GOOGLE_AI_MODEL = GOOGLE_AI_MODELS.FLASH_LITE;
+export const GEMINI_MODEL = "gemini-3.5-flash-lite";
+export const GEMINI_THINKING_LEVEL = "minimal";
 
-export function isAllowedGoogleModel(model) {
-  return Object.values(GOOGLE_AI_MODELS).includes(model);
-}
-
-function endpointFor(model) {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+function endpointFor() {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 }
 
 export class GoogleProviderError extends Error {
@@ -24,28 +17,18 @@ export class GoogleProviderError extends Error {
 }
 
 /** Makes one direct, abortable Gemini generateContent request without exposing provider data. */
-export async function generateGoogleJobBrief({ env, request, configuration }) {
-  const messages = buildJobBriefMessages(request, "2");
+export async function generateGoogleJobBrief({ env, request, timeoutMs, maxCompletionTokens }) {
+  const messages = buildJobBriefMessages(request);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), configuration.googleTimeoutMs);
-  const generationConfig = configuration.model === GOOGLE_AI_MODELS.GEMMA
-    ? {
-      temperature: 0.2,
-      maxOutputTokens: configuration.maxCompletionTokens,
-      thinkingConfig: { thinkingLevel: configuration.googleThinkingLevel },
-    }
-    : {
-      maxOutputTokens: configuration.maxCompletionTokens,
-      thinkingConfig: { thinkingLevel: configuration.googleThinkingLevel },
-    };
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const body = {
     systemInstruction: { parts: [{ text: messages[0].content }] },
     contents: [{ role: "user", parts: [{ text: messages[1].content }] }],
-    generationConfig,
+    generationConfig: { maxOutputTokens: maxCompletionTokens, thinkingConfig: { thinkingLevel: GEMINI_THINKING_LEVEL } },
   };
   let response;
   try {
-    response = await fetch(endpointFor(configuration.model), {
+    response = await fetch(endpointFor(), {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
       body: JSON.stringify(body),

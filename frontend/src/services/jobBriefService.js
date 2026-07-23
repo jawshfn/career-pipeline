@@ -109,21 +109,7 @@ function hasExactFields(value, fields) {
   return hasFields(value, fields) && Object.keys(value).length === fields.length;
 }
 
-function isValidV1Brief(brief) {
-  return brief.schema_version === "1" &&
-    isString(brief.role_summary) &&
-    Array.isArray(brief.responsibilities) && brief.responsibilities.every((item) => hasExactFields(item, [["statement", isString], ["evidence", isString]])) &&
-    Array.isArray(brief.required_qualifications) && brief.required_qualifications.every((item) => hasExactFields(item, [["statement", isString], ["evidence", isString]])) &&
-    Array.isArray(brief.preferred_qualifications) && brief.preferred_qualifications.every((item) => hasExactFields(item, [["statement", isString], ["evidence", isString]])) &&
-    Array.isArray(brief.skills_and_keywords) && brief.skills_and_keywords.every((item) => hasExactFields(item, [["skill", isString], ["evidence", isString]])) &&
-    Array.isArray(brief.interview_topics) && brief.interview_topics.every((item) => hasExactFields(item, [["topic", isString], ["reason", isString], ["evidence", isString]])) &&
-    isStringArray(brief.research_tasks) &&
-    Array.isArray(brief.concerns_and_unknowns) && brief.concerns_and_unknowns.every((item) => hasExactFields(item, [["item", isString], ["evidence", isString]])) &&
-    hasExactFields(brief.suggested_next_action, [["action", isString], ["reason", isString]]) &&
-    isStringArray(brief.limitations);
-}
-
-function isValidV2Brief(brief) {
+function isValidBrief(brief) {
   return brief.schema_version === "2" &&
     isString(brief.role_summary) &&
     ["responsibility_themes", "formal_requirements", "preferred_qualifications", "important_conditions", "skills_and_tools", "research_questions", "unknowns", "limitations"].every((field) => isStringArray(brief[field])) &&
@@ -135,7 +121,7 @@ export function isValidJobBriefResponse(response) {
   if (!isObject(response) || !isObject(response.brief) || !isObject(response.meta)) return false;
   const { brief, meta } = response;
   return ["schema_version", "prompt_version", "model", "generated_at", "request_id"].every((field) => isString(meta[field])) &&
-    brief.schema_version === meta.schema_version && (isValidV1Brief(brief) || isValidV2Brief(brief));
+    meta.schema_version === "2" && brief.schema_version === meta.schema_version && isValidBrief(brief);
 }
 
 function getErrorMessage(status, code) {

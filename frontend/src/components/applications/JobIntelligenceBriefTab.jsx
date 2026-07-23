@@ -1,22 +1,11 @@
 import React from "react";
 
-const emptyMessage = "None identified from the supplied posting.";
-
-function Evidence({ children }) {
-  return <p className="ai-brief-evidence"><strong>Evidence:</strong> {children}</p>;
-}
-
-function EmptyOrList({ items, children, empty = "No details were identified from the supplied posting." }) {
-  if (!items?.length) return <p className="ai-brief-empty">{empty}</p>;
-  return <ul className="ai-brief-list">{items.map(children)}</ul>;
-}
-
 function SimpleListSection({ heading, items }) {
   if (!items?.length) return null;
   return <section className="ai-brief-section"><h4>{heading}</h4><ul className="ai-brief-list">{items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}</ul></section>;
 }
 
-function V2Brief({ brief }) {
+function Brief({ brief }) {
   return <>
     <section className="ai-brief-section"><h4>Role summary</h4><p>{brief.role_summary}</p></section>
     <SimpleListSection heading="Responsibility themes" items={brief.responsibility_themes} />
@@ -59,18 +48,7 @@ export default function JobIntelligenceBriefTab({ brief, error, eligibility, isG
 
       {brief ? (
         <div className="ai-brief-report">
-          {brief.schema_version === "2" ? <V2Brief brief={brief} /> : <>
-          <section className="ai-brief-section"><h4>Role summary</h4><p>{brief.role_summary}</p></section>
-          <section className="ai-brief-section"><h4>Responsibilities</h4><EmptyOrList items={brief.responsibilities}>{(item, index) => <li key={`${item.statement}-${index}`}><strong>{item.statement}</strong><Evidence>{item.evidence}</Evidence></li>}</EmptyOrList></section>
-          <section className="ai-brief-section"><h4>Required qualifications</h4><EmptyOrList items={brief.required_qualifications}>{(item, index) => <li key={`${item.statement}-${index}`}><strong>{item.statement}</strong><Evidence>{item.evidence}</Evidence></li>}</EmptyOrList></section>
-          <section className="ai-brief-section"><h4>Preferred qualifications</h4><EmptyOrList items={brief.preferred_qualifications} empty={emptyMessage}>{(item, index) => <li key={`${item.statement}-${index}`}><strong>{item.statement}</strong><Evidence>{item.evidence}</Evidence></li>}</EmptyOrList></section>
-          <section className="ai-brief-section"><h4>Skills and keywords</h4><EmptyOrList items={brief.skills_and_keywords}>{(item, index) => <li key={`${item.skill}-${index}`}><span className="ai-brief-skill">{item.skill}</span><Evidence>{item.evidence}</Evidence></li>}</EmptyOrList></section>
-          <section className="ai-brief-section"><h4>Interview preparation themes</h4><EmptyOrList items={brief.interview_topics}>{(item, index) => <li key={`${item.topic}-${index}`}><strong>{item.topic}</strong><p className="ai-brief-reason"><strong>Why it matters:</strong> {item.reason}</p><Evidence>{item.evidence}</Evidence></li>}</EmptyOrList></section>
-          <section className="ai-brief-section"><h4>Details to research</h4><EmptyOrList items={brief.research_tasks} empty={emptyMessage}>{(item, index) => <li key={`${item}-${index}`}>{item}</li>}</EmptyOrList></section>
-          <section className="ai-brief-section"><h4>Unknowns to clarify</h4><EmptyOrList items={brief.concerns_and_unknowns} empty={emptyMessage}>{(item, index) => <li key={`${item.item}-${index}`}><strong>{item.item}</strong><Evidence>{item.evidence}</Evidence></li>}</EmptyOrList></section>
-          <section className="ai-brief-next-action"><h4>Suggested next preparation step</h4><p><strong>{brief.suggested_next_action.action}</strong></p><p>{brief.suggested_next_action.reason}</p></section>
-          <section className="ai-brief-limitations"><h4>Analysis limitations</h4><EmptyOrList items={brief.limitations}>{(item, index) => <li key={`${item}-${index}`}>{item}</li>}</EmptyOrList></section>
-          </>}
+          <Brief brief={brief} />
           {generatedAt ? <p className="ai-brief-generated-at">{generatedAt}</p> : null}
         </div>
       ) : null}
