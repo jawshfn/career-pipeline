@@ -36,7 +36,7 @@ describe("privacy-safe AI response inspection", () => {
     ["missing message", { choices: [{}] }, "choices_message_missing"],
     ["invalid message", { choices: [{ message: [] }] }, "choices_message_invalid"],
     ["ordinary prose", chatEnvelope({ content: privateSentinel }), "choices_message_invalid_json"],
-    ["fenced JSON", chatEnvelope({ content: "```json\n{}\n```" }), "choices_message_invalid_json"],
+    ["multiple fenced JSON blocks", chatEnvelope({ content: "```json\n{}\n```\n```json\n{}\n```" }), "choices_message_invalid_json"],
     ["array JSON", chatEnvelope({ content: "[]" }), "choices_message_unsupported"],
     ["only later choice valid", { choices: [{ message: { content: null } }, { message: { parsed: completeShape } }] }, "choices_message_unsupported"],
   ])("classifies rejected Chat Completions %s", (_name, result, path) => {
@@ -54,6 +54,11 @@ describe("privacy-safe AI response inspection", () => {
     expect(inspectAiResult({ provider_key: privateSentinel, usage: {} }).diagnostic.extraction_path).toBe("unsupported");
   });
 
+  it("accepts one complete fenced JSON object and rejects surrounding prose", () => {
+    expect(inspectAiResult(chatEnvelope({ content: `\`\`\`json\n${JSON.stringify(completeShape)}\n\`\`\`` })).diagnostic.extraction_path).toBe("choices_message_fenced_json");
+    expect(inspectAiResult(chatEnvelope({ content: `Before\n\`\`\`json\n${JSON.stringify(completeShape)}\n\`\`\`` })).value).toBeNull();
+  });
+
   it("keeps raw provider fields out of diagnostics", () => {
     const rawContent = "```json\n" + privateSentinel + "\n```";
     const { diagnostic } = inspectAiResult({ [privateSentinel]: privateSentinel, id: privateSentinel, model: privateSentinel, choices: [{ message: { parsed: { [privateSentinel]: privateSentinel }, content: rawContent }, finish_reason: privateSentinel }], usage: { [privateSentinel]: privateSentinel } });
@@ -63,5 +68,13 @@ describe("privacy-safe AI response inspection", () => {
     expect(serialized).not.toContain("usage");
     expect(serialized).not.toContain("message.content");
     expect(serialized).not.toContain("message.parsed");
+  });
+
+  it("reports documented reasoning structure without copying reasoning text", () => {
+    const reasoning = `${privateSentinel}${"r".repeat(1_000_000)}`;
+    const reasoningContent = privateSentinel.repeat(3);
+    const { diagnostic } = inspectAiResult(chatEnvelope({ content: "", reasoning, reasoning_content: reasoningContent }, { choices: [{ message: { content: "", reasoning, reasoning_content: reasoningContent }, finish_reason: "length" }] }));
+    expect(diagnostic).toMatchObject({ extraction_path: "choices_message_invalid_json", finish_reason_state: "length", content_length: 0, reasoning_present: true, reasoning_type: "string", reasoning_length: 1_000_000, reasoning_content_present: true, reasoning_content_type: "string", reasoning_content_length: reasoningContent.length });
+    expect(JSON.stringify(diagnostic)).not.toContain(privateSentinel);
   });
 });

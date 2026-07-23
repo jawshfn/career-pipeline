@@ -9,6 +9,7 @@ import {
   getBrowserLocalClientId,
   getJobBriefEligibility,
   getJobBriefFingerprint,
+  isValidJobBriefResponse,
 } from "./jobBriefService.js";
 
 const validResponse = {
@@ -22,6 +23,10 @@ const validResponse = {
     suggested_next_action: { action: "Prepare one planning example.", reason: "Planning is emphasized." }, limitations: [],
   },
   meta: { schema_version: "1", prompt_version: "job-brief-v2", model: "server-controlled", generated_at: "2026-07-22T19:14:00.000Z", request_id: "request-1" },
+};
+const validV2Response = {
+  brief: { schema_version: "2", role_summary: "A product role. It partners across teams.", responsibility_themes: ["Lead planning"], formal_requirements: ["Product experience"], preferred_qualifications: [], important_conditions: [], skills_and_tools: ["Roadmapping"], interview_preparation: [{ topic: "Planning", preparation: "Prepare a planning example." }], research_questions: ["Which team owns the roadmap?"], unknowns: ["The reporting line is not specified."], next_action: { action: "Prepare one planning example.", reason: "Planning is emphasized." }, limitations: ["Based only on the supplied posting."] },
+  meta: { schema_version: "2", prompt_version: "job-brief-v4-eval-gemma", model: "server-controlled", generated_at: "2026-07-22T19:14:00.000Z", request_id: "request-2" },
 };
 
 function response(body, status = 200) {
@@ -64,6 +69,11 @@ describe("job brief source helpers", () => {
 });
 
 describe("generateJobBrief", () => {
+  it("accepts a well-formed v2 result and rejects mismatched or malformed v2 results", () => {
+    expect(isValidJobBriefResponse(validV2Response)).toBe(true);
+    expect(isValidJobBriefResponse({ ...validV2Response, meta: { ...validV2Response.meta, schema_version: "1" } })).toBe(false);
+    expect(isValidJobBriefResponse({ ...validV2Response, brief: { ...validV2Response.brief, interview_preparation: [{ topic: "Planning" }] } })).toBe(false);
+  });
   it("creates one stable fallback ID when localStorage is unavailable", async () => {
     vi.resetModules();
     vi.stubGlobal("localStorage", { getItem: () => { throw new Error("blocked"); }, setItem: () => { throw new Error("blocked"); } });
@@ -104,6 +114,7 @@ describe("generateJobBrief", () => {
   it.each([
     [429, { error: { code: "rate_limited", message: "provider detail" } }, JOB_BRIEF_MESSAGES.rateLimited],
     [503, { error: { code: "ai_disabled" } }, JOB_BRIEF_MESSAGES.unavailable],
+    [503, { error: { code: "ai_misconfigured" } }, JOB_BRIEF_MESSAGES.unavailable],
     [502, { error: { code: "generation_failed" } }, JOB_BRIEF_MESSAGES.generationFailed],
     [400, { error: { code: "validation_error" } }, JOB_BRIEF_MESSAGES.invalidRequest],
   ])("maps gateway error %s without exposing details", async (status, body, message) => {

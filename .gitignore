@@ -231,3 +231,4 @@ private/
 *.private.md
 local-examples/
 screenshots/
+.dev.vars

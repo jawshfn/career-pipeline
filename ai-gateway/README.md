@@ -1,6 +1,6 @@
 # PursuitHQ Workers AI Gateway Spike
 
-This isolated Cloudflare Worker is a Phase 25.0 feasibility spike. It is not integrated with the PursuitHQ frontend, FastAPI backend, or persisted product data.
+This isolated Cloudflare Worker powers PursuitHQ's Job Intelligence Brief. It is not integrated with persisted product data.
 
 ## Endpoints
 
@@ -9,7 +9,7 @@ This isolated Cloudflare Worker is a Phase 25.0 feasibility spike. It is not int
 
 The POST body accepts exactly `company_name`, `role_title`, and `job_posting_text`, with optional `location`, `compensation`, and `employment_type`. Required strings are trimmed; the posting must be 200-20,000 characters. Complete request bodies are limited to 32 KiB of UTF-8 data. The response is `{ "brief": ..., "meta": ... }`; the model, prompt version, timestamp, and request ID are server-controlled.
 
-The Worker owns the model, prompt, output schema, low randomness, and output limit. Browsers never receive AI credentials. GitHub Actions secrets are deployment-only; runtime inference uses the Worker `AI` binding, not an API token.
+The Worker owns the provider, model, prompt, output schema, and output limit. Browsers never receive AI credentials. Runtime Google inference requires a `GEMINI_API_KEY` Worker secret; never place it in Wrangler configuration or source control. For local development, place the secret in ignored `ai-gateway/.dev.vars`.
 
 ## Local use
 
@@ -41,13 +41,17 @@ The `Deploy PursuitHQ AI gateway` GitHub Actions workflow is manual-only (`workf
 
 CORS allows only these exact browser origins: `https://jawshfn.github.io`, `http://localhost:5173`, `http://127.0.0.1:5173`, `http://localhost:4173`, and `http://127.0.0.1:4173`. Requests without `Origin` remain usable for command-line/server smoke tests. CORS is interoperability, not authentication.
 
-Set `AI_ENABLED` to `false` in server configuration to disable generation: health remains available and generation returns `503` without invoking the limiter or model. `AI_MODEL`, `PROMPT_VERSION`, and allowed origins are also server configuration; replacing the provider/model does not require browser changes.
+Set `AI_ENABLED` to `false` in server configuration to disable generation: health remains available and generation returns `503` without invoking the limiter or model. Production uses Google Gemini `gemini-3.5-flash-lite`, schema version 2, prompt version `job-brief-v5`, prompt-directed JSON, minimal thinking, a 4096-token completion limit, and a 15-second provider timeout. Provider-error diagnostics are disabled by default.
 
-The `AI_RATE_LIMITER` binding permits five valid generation attempts per 60 seconds per bounded client key (a valid `phq_` client ID, otherwise Cloudflare's connecting IP, otherwise `anonymous`). It is best-effort soft abuse protection, not authentication and not a precise global daily quota.
+`AI_PROVIDER=google` is the committed production setting. Cloudflare Workers AI remains available only as a temporary emergency rollback by explicitly setting `AI_PROVIDER=cloudflare` with a supported Cloudflare model/schema/output configuration; Google failures do not automatically retry through Cloudflare.
+
+The `AI_RATE_LIMITER` binding permits two valid generation attempts per 60 seconds per bounded client key (a valid `phq_` client ID, otherwise Cloudflare's connecting IP, otherwise `anonymous`). It is best-effort soft abuse protection, not authentication and not a precise global daily quota.
 
 The prompt treats job postings as untrusted evidence and explicitly refuses instructions contained in them. The Worker rejects arbitrary prompts, provider parameters, unknown fields, oversized requests, and malformed model results. It validates structured output again at runtime and returns controlled JSON errors without provider internals.
 
-The current feasibility model is `@cf/meta/llama-3.1-8b-instruct-fast`; it is controlled through the Worker's `AI_MODEL` configuration. Workers AI responses may use a Chat Completions envelope or a response field. The gateway accepts a validated brief only from `choices[0].message.parsed`, from `choices[0].message.content` when the complete content string is valid JSON, or from its documented response-object formats. It does not search prose, strip code fences, or repair malformed output. Provider metadata and usage are neither exposed to clients nor written to diagnostics, and strict runtime validation still applies after extraction.
+Google receives only company, role title, Job Posting Snapshot, and optional location, compensation, and employment type. It never receives resumes, personal employment history, notes, contacts, application activity, red flags, or follow-up information. On the current free Google API tier, submitted content and generated responses may be used to improve Google services and processed by human reviewers; do not submit personal, confidential, or sensitive information.
+
+The gateway validates the schema-v2 response at runtime and never exposes provider metadata, usage, or provider errors to clients. Cloudflare Workers AI responses remain supported only for the explicit rollback configuration.
 
 ## Privacy-safe diagnostics
 
