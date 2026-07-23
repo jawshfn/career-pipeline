@@ -4,7 +4,7 @@
 
 **A local-first workspace for capturing job opportunities and following through on them.**
 
-PursuitHQ helps job seekers capture opportunities, track application status and next actions, manage follow-ups, organize resume variants, preserve Job Posting Snapshots, review red flags, track activity, and export or restore their workspace. It can also generate an optional, session-only Job Intelligence Brief from a saved job posting.
+PursuitHQ helps job seekers capture opportunities, track application status and next actions, manage follow-ups, organize resume variants, preserve Job Posting Snapshots, review red flags, track activity, and export or restore their workspace. It can also generate and save the latest optional Job Intelligence Brief with an application.
 
 ## What it does
 
@@ -13,7 +13,7 @@ PursuitHQ helps job seekers capture opportunities, track application status and 
 - Manage applications in Application Detail, Status Board, Reminders, and Dashboard.
 - Assign resume variants, record preparation notes, red flags, and activity.
 - Back up a complete workspace as JSON; export applications as CSV or XLSX.
-- Generate an explicit, review-only AI Brief without changing saved application fields.
+- Generate an explicit, review-only AI Brief without changing saved application fields; local mode stores the latest brief in SQLite.
 
 ## Runtime architecture
 
@@ -35,7 +35,7 @@ The locally running PursuitHQ app includes AI access by default through the depl
 
 The public demo is a static GitHub Pages build. It uses fictional in-memory workspace data, so ordinary edits reset on reload and it does not connect to FastAPI. It also uses the deployed AI gateway, includes five AI-ready fictional applications (with Harborview Systems featured), and keeps generated briefs only for the browser session. Browser Capture and workspace restore are local-only.
 
-The AI gateway is a Cloudflare Worker that validates a six-field request, calls Google Gemini with `gemini-3.5-flash-lite`, validates schema version 2 responses, and returns a session-only result. Generation is user initiated; two valid attempts per minute are allowed per bounded client key.
+The AI gateway is a Cloudflare Worker that validates a six-field request, calls Google Gemini with `gemini-3.5-flash-lite`, validates schema version 2 responses, and returns a result for the local app to save. The gateway does not persist workspace data. Generation is user initiated; two valid attempts per minute are allowed per bounded client key.
 
 ## Technology
 

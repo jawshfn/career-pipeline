@@ -13,7 +13,8 @@ FastAPI serves the local JSON API under `/api`; generated interactive schemas ar
 | Method | Path | Purpose | Important behavior |
 | --- | --- | --- | --- |
 | GET, POST | `/api/applications` | List or create applications | List can filter; new records are not archived. |
-| GET, PATCH, DELETE | `/api/applications/{id}` | Read, update, or permanently delete | Status changes log activity; deletion removes related activities. |
+| GET, PATCH, DELETE | `/api/applications/{id}` | Read, update, or permanently delete | Status changes log activity; deletion removes related activities and any saved AI brief. |
+| GET, PUT, DELETE | `/api/applications/{id}/ai-brief` | Read, save, or remove the latest persisted AI brief | GET returns `null` when absent; PUT rejects briefs whose saved source no longer matches the application. |
 | PATCH | `/api/applications/{id}/follow-up` | Apply a reviewed follow-up action | `complete`, `complete_and_schedule`, `reschedule`, and `clear` are atomic and use expected-date conflict protection. |
 | GET | `/api/applications/action-items` | Read reminder action items | Read-only overdue, upcoming, and needs-check-in groups. |
 

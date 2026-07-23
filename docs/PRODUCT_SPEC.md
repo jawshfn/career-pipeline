@@ -24,7 +24,7 @@ PursuitHQ is a local-first job-search workspace for people who want to move from
 2. **Review and save.** Correct the editable draft, choose source and job link, then explicitly save it as an application.
 3. **Manage the application.** Update status, dates, contact details, next action, and notes in Application Detail.
 4. **Keep the posting.** Store and review a Job Posting Snapshot separately from Personal Notes.
-5. **Generate an AI Brief.** From Application Detail, explicitly analyze the current approved company, role, optional job details, and snapshot. A brief is optional, session-only, and never stored.
+5. **Generate an AI Brief.** From Application Detail, explicitly analyze the current approved company, role, optional job details, and snapshot. Local mode saves the latest brief; demo mode keeps it in memory until reload.
 6. **Follow through.** Manage reminders with Complete, Complete and schedule next, Reschedule, or Clear; review the resulting activity history.
 7. **Prepare and assess.** Assign a resume variant, add preparation notes, and record red flags.
 8. **Review progress.** Use Dashboard and Status Board to inspect the current workspace.
@@ -32,7 +32,7 @@ PursuitHQ is a local-first job-search workspace for people who want to move from
 
 ## Application Detail
 
-Application Detail is organized into **Overview**, **Follow-up**, **Job Details**, **Job Posting**, **AI Brief**, **Resume & Prep**, **Red Flags**, and **Activity**. The AI Brief is distinct from capture: it does not create or silently overwrite application fields, and refreshing or closing the app removes the result.
+Application Detail is organized into **Overview**, **Follow-up**, **Job Details**, **Job Posting**, **AI Brief**, **Resume & Prep**, **Red Flags**, and **Activity**. The AI Brief is distinct from capture: it does not create or silently overwrite application fields, and reopening it does not call Google.
 
 ## Boundaries and non-goals
 

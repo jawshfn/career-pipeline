@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import { getApplication } from "../../services/applicationsService.js";
+import { deleteApplicationAiBrief, getApplication, getApplicationAiBrief, saveApplicationAiBrief } from "../../services/applicationsService.js";
 import {
   APPLIED_OR_LATER_APPLICATION_STATUSES,
   DEFAULT_APPLICATION_SOURCE,
@@ -32,12 +32,10 @@ import ErrorMessage from "../ui/ErrorMessage.jsx";
 import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
 import {
-  JOB_BRIEF_MESSAGES,
   JobBriefServiceError,
   createJobBriefPayload,
   generateJobBrief,
   getJobBriefEligibility,
-  getJobBriefFingerprint,
 } from "../../services/jobBriefService.js";
 
 const initialFormState = {
@@ -257,6 +255,11 @@ export default function ApplicationDetailPanel({
   const [briefError, setBriefError] = useState("");
   const [briefFingerprint, setBriefFingerprint] = useState("");
   const [isGeneratingBrief, setIsGeneratingBrief] = useState(false);
+  const [isBriefLoading, setIsBriefLoading] = useState(true);
+  const [isStoredBriefStale, setIsStoredBriefStale] = useState(false);
+  const [isRemoveBriefDialogOpen, setIsRemoveBriefDialogOpen] = useState(false);
+  const [isRemovingBrief, setIsRemovingBrief] = useState(false);
+  const [briefRemovalError, setBriefRemovalError] = useState("");
 
   function resetActivityDraft() {
     const nextActivityDraft = getInitialActivityForm();
@@ -285,6 +288,11 @@ export default function ApplicationDetailPanel({
       setBriefError("");
       setBriefFingerprint("");
       setIsGeneratingBrief(false);
+      setIsBriefLoading(true);
+      setIsStoredBriefStale(false);
+      setIsRemoveBriefDialogOpen(false);
+      setIsRemovingBrief(false);
+      setBriefRemovalError("");
       setActiveTab(getValidDetailTab(initialTab));
       setLoadError("");
       setSaveError("");
@@ -306,6 +314,19 @@ export default function ApplicationDetailPanel({
         if (isCurrent) {
           setIsLoading(false);
         }
+      }
+      try {
+        const savedBrief = await getApplicationAiBrief(applicationId);
+        if (isCurrent && savedBrief) {
+          setBrief(savedBrief.brief);
+          setBriefMeta(savedBrief.meta);
+          setBriefFingerprint(savedBrief.source_fingerprint);
+          setIsStoredBriefStale(Boolean(savedBrief.is_stale));
+        }
+      } catch {
+        if (isCurrent) setBriefError("Could not load the saved AI brief. Reload this application and try again.");
+      } finally {
+        if (isCurrent) setIsBriefLoading(false);
       }
     }
 
@@ -331,9 +352,10 @@ export default function ApplicationDetailPanel({
   const hasUnsavedActivityDraft = isActivityDraftDirty(activityDraft, activityDraftBaseline);
   const hasUnsavedChanges = hasUnsavedApplicationChanges || hasUnsavedActivityDraft;
   const unsavedWarningTitle = getUnsavedWarningTitle(hasUnsavedApplicationChanges, hasUnsavedActivityDraft);
-  const briefPayload = createJobBriefPayload(formData);
-  const briefEligibility = getJobBriefEligibility(formData);
-  const isBriefStale = Boolean(brief && briefFingerprint && getJobBriefFingerprint(briefPayload) !== briefFingerprint);
+  const savedBriefPayload = createJobBriefPayload(savedFormData);
+  const hasUnsavedAiSourceChanges = JSON.stringify(createJobBriefPayload(formData)) !== JSON.stringify(savedBriefPayload);
+  const briefEligibility = hasUnsavedAiSourceChanges ? { isEligible: false, reason: "Save the company, role, job details, or Job Posting Snapshot before generating or refreshing this brief." } : getJobBriefEligibility(savedFormData);
+  const isPersistedBriefStale = Boolean(brief && isStoredBriefStale);
 
   useEffect(() => {
     onUnsavedChangesChange?.(hasUnsavedChanges);
@@ -374,10 +396,11 @@ export default function ApplicationDetailPanel({
 
   async function handleGenerateBrief() {
     if (isGeneratingBrief) return;
-    const eligibility = getJobBriefEligibility(formData);
+    const eligibility = getJobBriefEligibility(savedFormData);
     if (!eligibility.isEligible) return;
 
-    const requestPayload = createJobBriefPayload(formData);
+    if (hasUnsavedAiSourceChanges) return;
+    const requestPayload = createJobBriefPayload(savedFormData);
     const controller = new AbortController();
     briefAbortControllerRef.current = controller;
     setBriefError("");
@@ -386,18 +409,60 @@ export default function ApplicationDetailPanel({
     try {
       const response = await generateJobBrief(requestPayload, { signal: controller.signal });
       if (briefAbortControllerRef.current !== controller) return;
-      setBrief(response.brief);
-      setBriefMeta(response.meta);
-      setBriefFingerprint(getJobBriefFingerprint(requestPayload));
+      const persisted = await saveApplicationAiBrief(applicationId, { source: requestPayload, brief: response.brief, meta: response.meta });
+      if (briefAbortControllerRef.current !== controller) return;
+      setBrief(persisted.brief);
+      setBriefMeta(persisted.meta);
+      setBriefFingerprint(persisted.source_fingerprint);
+      setIsStoredBriefStale(false);
       setBriefError("");
     } catch (error) {
       if (controller.signal.aborted || error?.name === "AbortError" || briefAbortControllerRef.current !== controller) return;
-      setBriefError(error instanceof JobBriefServiceError ? error.message : JOB_BRIEF_MESSAGES.unexpected);
+      setBriefError(
+        error instanceof JobBriefServiceError
+          ? error.message
+          : String(error?.message || "").includes("changed while")
+            ? "This application changed while the brief was being generated. Save those changes, then generate again."
+            : "Could not save the AI brief locally. Try again.",
+      );
     } finally {
       if (briefAbortControllerRef.current === controller) {
         briefAbortControllerRef.current = null;
         setIsGeneratingBrief(false);
       }
+    }
+  }
+
+  function openRemoveBriefDialog() {
+    if (!brief || isRemovingBrief) return;
+    setBriefRemovalError("");
+    setIsRemoveBriefDialogOpen(true);
+  }
+
+  function closeRemoveBriefDialog() {
+    if (isRemovingBrief) return;
+    setIsRemoveBriefDialogOpen(false);
+    setBriefRemovalError("");
+  }
+
+  async function confirmRemoveBrief() {
+    if (!brief || isRemovingBrief) return;
+    setIsRemovingBrief(true);
+    setBriefRemovalError("");
+    try {
+      await deleteApplicationAiBrief(applicationId);
+      setBrief(null);
+      setBriefMeta(null);
+      setBriefFingerprint("");
+      setIsStoredBriefStale(false);
+      setBriefError("");
+      setIsRemoveBriefDialogOpen(false);
+    } catch (error) {
+      const message = error?.message || "Could not remove the saved AI brief. Try again.";
+      setBriefRemovalError(message);
+      setBriefError(message);
+    } finally {
+      setIsRemovingBrief(false);
     }
   }
 
@@ -448,6 +513,13 @@ export default function ApplicationDetailPanel({
       const nextFormState = toFormState(updatedApplication);
       setFormData(nextFormState);
       setSavedFormData(nextFormState);
+      const refreshedBrief = await getApplicationAiBrief(applicationId);
+      if (refreshedBrief) {
+        setBrief(refreshedBrief.brief);
+        setBriefMeta(refreshedBrief.meta);
+        setBriefFingerprint(refreshedBrief.source_fingerprint);
+        setIsStoredBriefStale(Boolean(refreshedBrief.is_stale));
+      }
       onLoadApplication?.(updatedApplication);
       if (shouldRefreshActivitiesAfterApplicationSave(previousSavedStatus, nextFormState.status)) {
         setActivityRefreshVersion((currentVersion) => currentVersion + 1);
@@ -623,9 +695,13 @@ export default function ApplicationDetailPanel({
                 eligibility={briefEligibility}
                 error={briefError}
                 isGenerating={isGeneratingBrief}
-                isStale={isBriefStale}
+                isLoading={isBriefLoading}
+                hasUnsavedAiSourceChanges={hasUnsavedAiSourceChanges}
+                isPersistedBriefStale={isPersistedBriefStale}
+                isRemoving={isRemovingBrief}
                 meta={briefMeta}
                 onGenerate={handleGenerateBrief}
+                onRemove={openRemoveBriefDialog}
               />
             ) : null}
 
@@ -675,6 +751,7 @@ export default function ApplicationDetailPanel({
       {isDeleteDialogOpen ? (
         <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Delete permanently" confirmTone="danger" description={<><p>This will delete the application, notes, job posting, preparation details, red flags, and activity history. This action cannot be undone.</p>{hasUnsavedChanges ? <p>Any unsaved changes or activity draft will also be discarded.</p> : null}</>} errorMessage={deleteError} isOpen={isDeleteDialogOpen} isProcessing={isDeleting} processingLabel="Deleting..." title={`Permanently delete ${roleTitle} at ${companyName}?`} onCancel={closeDeleteDialog} onConfirm={confirmDeleteApplication} />
       ) : null}
+      {isRemoveBriefDialogOpen ? <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Remove brief" confirmTone="danger" description="This removes the locally saved analysis from this application. You can generate a new brief later." errorMessage={briefRemovalError} isOpen={isRemoveBriefDialogOpen} isProcessing={isRemovingBrief} processingLabel="Removing..." title="Remove saved AI brief?" onCancel={closeRemoveBriefDialog} onConfirm={confirmRemoveBrief} /> : null}
       {isCloseDialogOpen ? <ConfirmationDialog cancelLabel="Keep editing" confirmTone="warning" isOpen={isCloseDialogOpen} {...getCloseConfirmation(hasUnsavedApplicationChanges, hasUnsavedActivityDraft)} onCancel={() => setIsCloseDialogOpen(false)} onConfirm={onClose} /> : null}
     </section>
   );

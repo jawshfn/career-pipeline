@@ -1,4 +1,6 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+import hashlib
+import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import or_, update
@@ -12,7 +14,7 @@ from ..domain import (
     STATUS_CHANGE_ACTIVITY_TYPE,
     should_default_date_applied,
 )
-from ..models import Application, ApplicationActivity, utc_now
+from ..models import Application, ApplicationActivity, ApplicationAiBrief, utc_now
 from ..schemas import (
     ApplicationActionItemsRead,
     ApplicationActivityCreate,
@@ -23,9 +25,49 @@ from ..schemas import (
     ApplicationFollowUpActionRequest,
     ApplicationRead,
     ApplicationUpdate,
+    ApplicationAiBriefRead,
+    ApplicationAiBriefUpsert,
 )
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
+
+
+AI_SOURCE_FIELDS = ("company_name", "role_title", "job_posting_text", "location", "compensation", "employment_type")
+
+
+def normalized_ai_source(source: dict) -> dict:
+    normalized = {
+        "company_name": str(source.get("company_name") or "").strip(),
+        "role_title": str(source.get("role_title") or "").strip(),
+        "job_posting_text": str(source.get("job_posting_text", source.get("job_description")) or "").strip(),
+    }
+    for field in ("location", "compensation", "employment_type"):
+        value = str(source.get(field) or "").strip()
+        if value:
+            normalized[field] = value
+    return normalized
+
+
+def application_ai_source(application: Application) -> dict:
+    return normalized_ai_source({
+        "company_name": application.company_name, "role_title": application.role_title,
+        "job_description": application.job_description, "location": application.location,
+        "compensation": application.compensation, "employment_type": application.employment_type,
+    })
+
+
+def ai_source_fingerprint(source: dict) -> str:
+    canonical = json.dumps(source, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
+def ai_brief_response(record: ApplicationAiBrief, application: Application) -> dict:
+    return {"id": record.id, "application_id": record.application_id, "brief": json.loads(record.brief_json),
+            "meta": {"schema_version": record.schema_version, "prompt_version": record.prompt_version,
+                     "model": record.model, "generated_at": record.generated_at.isoformat(), "request_id": record.request_id},
+            "source_fingerprint": record.source_fingerprint,
+            "is_stale": record.source_fingerprint != ai_source_fingerprint(application_ai_source(application)),
+            "created_at": record.created_at, "updated_at": record.updated_at}
 
 
 def get_existing_application(application_id: int, db: Session) -> Application:
@@ -40,6 +82,53 @@ def get_existing_activity(application_id: int, activity_id: int, db: Session) ->
     if activity is None or activity.application_id != application_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
     return activity
+
+
+@router.get("/{application_id}/ai-brief", response_model=ApplicationAiBriefRead | None)
+def get_application_ai_brief(application_id: int, db: Session = Depends(get_db)) -> dict | None:
+    application = get_existing_application(application_id, db)
+    record = db.query(ApplicationAiBrief).filter(ApplicationAiBrief.application_id == application.id).one_or_none()
+    return ai_brief_response(record, application) if record else None
+
+
+@router.put("/{application_id}/ai-brief", response_model=ApplicationAiBriefRead)
+def save_application_ai_brief(
+    application_id: int, payload: ApplicationAiBriefUpsert, db: Session = Depends(get_db)
+) -> dict:
+    application = get_existing_application(application_id, db)
+    submitted_source = normalized_ai_source(payload.source.model_dump())
+    current_source = application_ai_source(application)
+    if submitted_source != current_source:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This application changed while the AI brief was being generated. Reload the application and try again.")
+    if payload.brief.schema_version != payload.meta.schema_version:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="AI brief schema version does not match metadata.")
+    record = db.query(ApplicationAiBrief).filter(ApplicationAiBrief.application_id == application.id).one_or_none()
+    values = {
+        "brief_json": json.dumps(payload.brief.model_dump(mode="json"), ensure_ascii=False, sort_keys=True, separators=(",", ":")),
+        "source_fingerprint": ai_source_fingerprint(current_source), "generated_at": datetime.fromisoformat(payload.meta.generated_at.replace("Z", "+00:00")),
+        "model": payload.meta.model, "prompt_version": payload.meta.prompt_version,
+        "schema_version": payload.meta.schema_version, "request_id": payload.meta.request_id,
+    }
+    if record is None:
+        record = ApplicationAiBrief(application_id=application.id, **values)
+        db.add(record)
+    else:
+        for field, value in values.items():
+            setattr(record, field, value)
+    try:
+        db.commit()
+        db.refresh(record)
+    except Exception:
+        db.rollback()
+        raise
+    return ai_brief_response(record, application)
+
+
+@router.delete("/{application_id}/ai-brief", status_code=status.HTTP_204_NO_CONTENT)
+def delete_application_ai_brief(application_id: int, db: Session = Depends(get_db)) -> None:
+    application = get_existing_application(application_id, db)
+    db.query(ApplicationAiBrief).filter(ApplicationAiBrief.application_id == application.id).delete(synchronize_session=False)
+    db.commit()
 
 
 def create_status_change_activity(
@@ -337,6 +426,9 @@ def delete_application(application_id: int, db: Session = Depends(get_db)) -> No
     application = get_existing_application(application_id, db)
 
     db.query(ApplicationActivity).filter(ApplicationActivity.application_id == application.id).delete(
+        synchronize_session=False
+    )
+    db.query(ApplicationAiBrief).filter(ApplicationAiBrief.application_id == application.id).delete(
         synchronize_session=False
     )
     db.delete(application)

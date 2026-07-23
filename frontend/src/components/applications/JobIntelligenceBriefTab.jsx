@@ -29,7 +29,7 @@ function InformationPanel() {
   return <section className="ai-brief-information" aria-label="AI brief information">
     <div className="ai-brief-information-group"><h4>Data sent</h4><p>PursuitHQ sends only the current company, role, optional job details, and Job Posting Snapshot. It does not send application status, contacts, notes, resume data, red flags, or activity history.</p></div>
     <div className="ai-brief-information-group"><h4>Privacy</h4><p>This feature uses Google Gemini. On the current free API tier, Google may use submitted content and generated responses to improve its services, and human reviewers may process that content. Do not include personal, confidential, or sensitive information.</p></div>
-    <div className="ai-brief-information-group"><h4>Review and storage</h4><p>Review generated details against the original posting. This brief is session-only and is not saved to the application.</p></div>
+    <div className="ai-brief-information-group"><h4>Review and storage</h4><p>Review generated details against the original posting. Local mode saves the latest brief with this application; the public demo keeps it only in memory until reload. Reopening a saved brief does not send it to Google. Generate or Refresh explicitly sends the approved job fields again; the gateway does not store workspace data.</p></div>
   </section>;
 }
 
@@ -44,14 +44,23 @@ function GenerationAction({ eligibility, isGenerating, onGenerate }) {
   </div>;
 }
 
-function ReportHeader({ generatedAt, isGenerating, isStale, onGenerate }) {
+function UnsavedSourceWarning() {
+  return <div className="message message-warning ai-brief-report-message" role="status">Save changes before using AI Brief</div>;
+}
+
+function StaleBriefWarning() {
+  return <div className="message message-warning ai-brief-report-message" role="status">Saved job details changed. Refresh this brief.</div>;
+}
+
+function ReportHeader({ generatedAt, hasUnsavedAiSourceChanges, isGenerating, isPersistedBriefStale, isRemoving, onGenerate, onRemove }) {
   const label = isGenerating ? "Refreshing brief\u2026" : "Refresh brief";
-  return <header className="ai-brief-report-header" aria-busy={isStale && isGenerating}>
+  return <header className="ai-brief-report-header" aria-busy={isPersistedBriefStale && isGenerating}>
     <div><h3>Generated brief</h3>{generatedAt ? <p className="ai-brief-generated-at">{generatedAt}</p> : null}</div>
-    {isStale ? <button type="button" className="ai-brief-secondary-action" disabled={isGenerating} onClick={onGenerate}>
+    {isPersistedBriefStale && !hasUnsavedAiSourceChanges ? <button type="button" className="ai-brief-secondary-action" disabled={isGenerating} onClick={onGenerate}>
       <span className="ai-brief-action-content">{isGenerating ? <Spinner /> : null}{label}</span>
     </button> : null}
-    <span className="visually-hidden" aria-live="polite">{isStale && isGenerating ? "Refreshing AI brief." : ""}</span>
+    <button type="button" className="ai-brief-remove-action" disabled={isGenerating || isRemoving} onClick={onRemove}>Remove brief</button>
+    <span className="visually-hidden" aria-live="polite">{isPersistedBriefStale && isGenerating ? "Refreshing AI brief." : ""}</span>
   </header>;
 }
 
@@ -61,9 +70,10 @@ function formatGeneratedAt(value) {
   return `Generated ${date.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} at ${date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
 }
 
-export default function JobIntelligenceBriefTab({ brief, error, eligibility, isGenerating, isStale, meta, onGenerate }) {
+export default function JobIntelligenceBriefTab({ brief, error, eligibility, hasUnsavedAiSourceChanges, isGenerating, isLoading, isPersistedBriefStale, isRemoving, meta, onGenerate, onRemove }) {
   const generatedAt = formatGeneratedAt(meta?.generated_at);
   const hasBrief = Boolean(brief);
+  const stateWarning = hasUnsavedAiSourceChanges ? <UnsavedSourceWarning /> : isPersistedBriefStale ? <StaleBriefWarning /> : null;
 
   return <div className="ai-brief-tab">
     <section className="ai-brief-intro" aria-labelledby="ai-brief-title">
@@ -71,14 +81,17 @@ export default function JobIntelligenceBriefTab({ brief, error, eligibility, isG
       <h3 id="ai-brief-title">Job Intelligence Brief</h3>
       <p>Turn the current Job Posting Snapshot into a structured review of responsibilities, qualifications, skills, interview topics, research questions, and next steps.</p>
       <InformationPanel />
-      {!hasBrief ? <><GenerationAction eligibility={eligibility} isGenerating={isGenerating} onGenerate={onGenerate} />{error ? <div className="message message-error" role="alert">{error}</div> : null}</> : null}
     </section>
 
     {hasBrief ? <div className="ai-brief-report">
-      <ReportHeader generatedAt={generatedAt} isGenerating={isGenerating} isStale={isStale} onGenerate={onGenerate} />
+      <ReportHeader generatedAt={generatedAt} hasUnsavedAiSourceChanges={hasUnsavedAiSourceChanges} isGenerating={isGenerating} isPersistedBriefStale={isPersistedBriefStale} isRemoving={isRemoving} onGenerate={onGenerate} onRemove={onRemove} />
+      {stateWarning}
       {error ? <div className="message message-error ai-brief-report-message" role="alert">{error}</div> : null}
-      {isStale ? <div className="message message-warning ai-brief-report-message" role="status">The company, role, job details, or Job Posting Snapshot changed after this brief was generated. Refresh it to update the analysis.</div> : null}
       <div className="ai-brief-report-body"><Brief brief={brief} /></div>
-    </div> : null}
+    </div> : <>
+      {stateWarning}
+      {!isLoading && !hasUnsavedAiSourceChanges ? <><GenerationAction eligibility={eligibility} isGenerating={isGenerating} onGenerate={onGenerate} />{error ? <div className="message message-error" role="alert">{error}</div> : null}</> : null}
+      {isLoading ? <p aria-live="polite">Loading saved AI brief…</p> : null}
+    </>}
   </div>;
 }

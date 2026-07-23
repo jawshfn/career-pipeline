@@ -17,4 +17,4 @@ The Job Posting Snapshot preserves the employer content. Personal Notes are your
 
 ## Job Intelligence Brief
 
-After saving, Application Detail offers **AI Brief**. It analyzes the current approved snapshot only after you explicitly generate it, does not modify captured application fields, and is separate from Paste Job Text extraction. Generated briefs are session-only and require a snapshot of at least 200 characters.
+After saving, Application Detail offers **AI Brief**. It analyzes the current approved snapshot only after you explicitly generate it, does not modify captured application fields, and is separate from Paste Job Text extraction. The latest successful brief is saved locally for that application (or in resettable demo memory) and requires a snapshot of at least 200 characters.

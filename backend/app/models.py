@@ -70,6 +70,25 @@ class Application(Base):
 
     resume_version: Mapped[ResumeVersion | None] = relationship(back_populates="applications")
     activities: Mapped[list["ApplicationActivity"]] = relationship(back_populates="application")
+    ai_brief: Mapped["ApplicationAiBrief | None"] = relationship(back_populates="application", uselist=False)
+
+
+class ApplicationAiBrief(Base):
+    __tablename__ = "application_ai_briefs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    application_id: Mapped[int] = mapped_column(ForeignKey("applications.id"), nullable=False, unique=True, index=True)
+    brief_json: Mapped[str] = mapped_column(Text, nullable=False)
+    source_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    model: Mapped[str] = mapped_column(String(160), nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String(160), nullable=False)
+    schema_version: Mapped[str] = mapped_column(String(20), nullable=False)
+    request_id: Mapped[str] = mapped_column(String(200), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+
+    application: Mapped[Application] = relationship(back_populates="ai_brief")
 
 
 class ApplicationActivity(Base):

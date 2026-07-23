@@ -39,9 +39,10 @@ describe("export formatting", () => {
     const backup = createWorkspaceBackup(snapshot, new Date("2026-07-21T22:30:00Z"));
 
     expect(backup.format).toBe("pursuithq-workspace-backup");
-    expect(backup.version).toBe(1);
+    expect(backup.version).toBe(2);
     expect(backup.exported_at).toBe("2026-07-21T22:30:00.000Z");
-    expect(backup.counts).toEqual({ resume_versions: 2, applications: 4, application_activities: 2 });
+    expect(backup.counts).toEqual({ resume_versions: 2, applications: 4, application_activities: 2, application_ai_briefs: 0 });
+    expect(backup.data.application_ai_briefs).toEqual([]);
     expect(backup.data.resume_versions.map((item) => item.id)).toEqual([1, 2]);
     expect(backup.data.application_activities.map((item) => item.id)).toEqual([1, 2]);
     expect(backup.data.applications[1].notes).toBe('  =Quote "\n\tand   newline ');

@@ -59,6 +59,10 @@ export function apiPatch(path, payload, fallbackErrorMessage) {
   return apiRequest(path, { body: payload, fallbackErrorMessage, method: "PATCH" });
 }
 
+export function apiPut(path, payload, fallbackErrorMessage) {
+  return apiRequest(path, { body: payload, fallbackErrorMessage, method: "PUT" });
+}
+
 export function apiDelete(path, fallbackErrorMessage) {
   return apiRequest(path, { fallbackErrorMessage, method: "DELETE" });
 }

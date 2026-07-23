@@ -16,7 +16,7 @@ Legacy archive fields remain compatible with older records and backups; normal a
 
 ## AI boundary
 
-FastAPI does not generate Job Intelligence Briefs. Those requests go directly from the frontend to the separate Cloudflare Worker gateway, and the backend neither receives nor persists generated briefs.
+FastAPI does not generate Job Intelligence Briefs. Requests go directly from the frontend to the separate Cloudflare Worker gateway; after frontend validation, FastAPI stores the latest saved brief with the local application.
 
 ## Setup
 

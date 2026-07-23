@@ -394,9 +394,11 @@ export function createDemoState() {
   return {
     applications,
     resumeVersions,
+    aiBriefs: [],
     activities,
     nextApplicationId: 13,
     nextResumeVersionId: 5,
     nextActivityId: 7,
+    nextAiBriefId: 1,
   };
 }

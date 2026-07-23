@@ -6,6 +6,9 @@ import {
   getDemoApplication,
   getDemoApplications,
   updateDemoApplication,
+  getDemoApplicationAiBrief,
+  saveDemoApplicationAiBrief,
+  deleteDemoApplicationAiBrief,
 } from "./demoStore.js";
 
 function asAsync(value) {
@@ -39,3 +42,7 @@ export function deleteApplication(applicationId) {
 export function getApplicationActionItems() {
   return asAsync(getDemoActionItems());
 }
+
+export function getApplicationAiBrief(applicationId) { return asAsync(getDemoApplicationAiBrief(applicationId)); }
+export function saveApplicationAiBrief(applicationId, payload) { return asAsync(saveDemoApplicationAiBrief(applicationId, payload)); }
+export function deleteApplicationAiBrief(applicationId) { return asAsync(deleteDemoApplicationAiBrief(applicationId)); }

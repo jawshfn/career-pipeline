@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPatch, apiPost } from "./apiClient.js";
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "./apiClient.js";
 
 const APPLICATION_ERROR = "Application request failed.";
 
@@ -38,4 +38,16 @@ export function deleteApplication(applicationId) {
 
 export function getApplicationActionItems() {
   return apiGet("/api/applications/action-items", APPLICATION_ERROR);
+}
+
+export function getApplicationAiBrief(applicationId) {
+  return apiGet(`/api/applications/${applicationId}/ai-brief`, "Could not load the saved AI brief.");
+}
+
+export function saveApplicationAiBrief(applicationId, payload) {
+  return apiPut(`/api/applications/${applicationId}/ai-brief`, payload, "Could not save the AI brief locally.");
+}
+
+export function deleteApplicationAiBrief(applicationId) {
+  return apiDelete(`/api/applications/${applicationId}/ai-brief`, "Could not remove the saved AI brief.");
 }

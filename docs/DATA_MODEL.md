@@ -26,4 +26,4 @@ Deleting an application removes its activities. Removing a resume version requir
 
 ## AI persistence boundary
 
-Job Intelligence Briefs are frontend session state. They are not stored in SQLite: there is no AI brief table or application field, and gateway request metadata is not stored in the workspace. Refreshing or closing the application removes a generated result.
+Job Intelligence Briefs use the `application_ai_briefs` one-to-one SQLite table. The latest validated brief, source fingerprint, and generation metadata are stored locally with its application. The gateway does not persist workspace data; demo briefs remain in memory until reload.

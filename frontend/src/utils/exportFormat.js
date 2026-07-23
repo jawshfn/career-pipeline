@@ -1,7 +1,7 @@
 import { APPLICATIONS_REVIEW_HEADERS, createApplicationReviewRows, reviewRowValues } from "./applicationReviewRows.js";
 
 export const BACKUP_FORMAT = "pursuithq-workspace-backup";
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
 export const APPLICATIONS_CSV_HEADERS = APPLICATIONS_REVIEW_HEADERS;
 
 function deepClone(value) {
@@ -10,6 +10,17 @@ function deepClone(value) {
 
 function sortById(records) {
   return [...records].sort((first, second) => Number(first.id) - Number(second.id));
+}
+
+function toBackupBrief({ source_snapshot, is_stale, meta = {}, ...brief }) {
+  return {
+    ...brief,
+    model: meta.model,
+    prompt_version: meta.prompt_version,
+    schema_version: meta.schema_version,
+    generated_at: meta.generated_at,
+    request_id: meta.request_id,
+  };
 }
 
 function asCell(value) {
@@ -32,6 +43,7 @@ export function createWorkspaceBackup(snapshot, now = new Date()) {
   const resumeVersions = sortById(snapshot.resume_versions || []);
   const applications = sortById(snapshot.applications || []);
   const activities = sortById(snapshot.application_activities || []);
+  const briefs = sortById(snapshot.application_ai_briefs || []);
   return {
     format: BACKUP_FORMAT,
     version: BACKUP_VERSION,
@@ -40,11 +52,13 @@ export function createWorkspaceBackup(snapshot, now = new Date()) {
       resume_versions: resumeVersions.length,
       applications: applications.length,
       application_activities: activities.length,
+      application_ai_briefs: briefs.length,
     },
     data: deepClone({
       resume_versions: resumeVersions,
       applications,
       application_activities: activities,
+      application_ai_briefs: briefs.map(toBackupBrief),
     }),
   };
 }

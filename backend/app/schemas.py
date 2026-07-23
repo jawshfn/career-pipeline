@@ -376,6 +376,78 @@ class ApplicationActivityRead(ApplicationActivityBase):
     updated_at: datetime
 
 
+class _AiBriefStrictModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+
+class AiBriefSourceSnapshot(_AiBriefStrictModel):
+    company_name: StrictStr = Field(min_length=1, max_length=160)
+    role_title: StrictStr = Field(min_length=1, max_length=160)
+    job_posting_text: StrictStr = Field(min_length=200, max_length=20_000)
+    location: StrictStr | None = Field(default=None, max_length=160)
+    compensation: StrictStr | None = Field(default=None, max_length=160)
+    employment_type: StrictStr | None = Field(default=None, max_length=80)
+
+
+class AiBriefInterviewPreparation(_AiBriefStrictModel):
+    topic: StrictStr = Field(max_length=2_000)
+    preparation: StrictStr = Field(max_length=10_000)
+
+
+class AiBriefNextAction(_AiBriefStrictModel):
+    action: StrictStr = Field(max_length=2_000)
+    reason: StrictStr = Field(max_length=10_000)
+
+
+class JobBriefV2(_AiBriefStrictModel):
+    schema_version: Literal["2"]
+    role_summary: StrictStr = Field(max_length=10_000)
+    responsibility_themes: list[StrictStr]
+    formal_requirements: list[StrictStr]
+    preferred_qualifications: list[StrictStr]
+    important_conditions: list[StrictStr]
+    skills_and_tools: list[StrictStr]
+    interview_preparation: list[AiBriefInterviewPreparation]
+    research_questions: list[StrictStr]
+    unknowns: list[StrictStr]
+    next_action: AiBriefNextAction
+    limitations: list[StrictStr]
+
+
+class AiBriefGatewayMeta(_AiBriefStrictModel):
+    schema_version: Literal["2"]
+    prompt_version: StrictStr = Field(min_length=1, max_length=160)
+    model: StrictStr = Field(min_length=1, max_length=160)
+    generated_at: StrictStr
+    request_id: StrictStr = Field(min_length=1, max_length=200)
+
+    @field_validator("generated_at")
+    @classmethod
+    def generated_timestamp(cls, value: str) -> str:
+        try:
+            datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as error:
+            raise ValueError("generated_at must be an ISO timestamp") from error
+        return value
+
+
+class ApplicationAiBriefUpsert(_AiBriefStrictModel):
+    source: AiBriefSourceSnapshot
+    brief: JobBriefV2
+    meta: AiBriefGatewayMeta
+
+
+class ApplicationAiBriefRead(_AiBriefStrictModel):
+    id: int
+    application_id: int
+    brief: JobBriefV2
+    meta: AiBriefGatewayMeta
+    source_fingerprint: str
+    is_stale: bool
+    created_at: datetime
+    updated_at: datetime
+
+
 class ResumeVersionCreate(BaseModel):
     name: str = Field(min_length=1)
     target_role: str | None = None

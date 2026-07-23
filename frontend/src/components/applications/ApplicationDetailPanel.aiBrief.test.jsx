@@ -5,17 +5,25 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { generateBrief, getApplication, getApplicationActivities } = vi.hoisted(() => ({
+const { deleteAiBrief, generateBrief, getAiBrief, getApplication, getApplicationActivities, saveAiBrief } = vi.hoisted(() => ({
+  deleteAiBrief: vi.fn(),
   generateBrief: vi.fn(),
+  getAiBrief: vi.fn(),
   getApplication: vi.fn(),
   getApplicationActivities: vi.fn(),
+  saveAiBrief: vi.fn(),
 }));
 
 vi.mock("../../services/jobBriefService.js", async (importOriginal) => ({
   ...(await importOriginal()),
   generateJobBrief: generateBrief,
 }));
-vi.mock("../../services/applicationsService.js", () => ({ getApplication }));
+vi.mock("../../services/applicationsService.js", () => ({
+  deleteApplicationAiBrief: deleteAiBrief,
+  getApplication,
+  getApplicationAiBrief: getAiBrief,
+  saveApplicationAiBrief: saveAiBrief,
+}));
 vi.mock("../../services/applicationActivitiesService.js", () => ({
   createApplicationActivity: vi.fn(),
   deleteApplicationActivity: vi.fn(),
@@ -74,6 +82,13 @@ function click(container, text) {
   button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 }
 
+function clickLast(container, text) {
+  const buttons = [...container.querySelectorAll("button")].filter((candidate) => candidate.textContent === text);
+  const button = buttons.at(-1);
+  if (!button) throw new Error(`Could not find ${text}`);
+  button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+}
+
 function setValue(control, value) {
   const setter = Object.getOwnPropertyDescriptor(control.constructor.prototype, "value").set;
   setter.call(control, value);
@@ -95,7 +110,14 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     onUnsavedChangesChange = vi.fn();
     getApplication.mockResolvedValue(application);
     getApplicationActivities.mockResolvedValue([]);
+    getAiBrief.mockResolvedValue(null);
     generateBrief.mockResolvedValue(response());
+    saveAiBrief.mockImplementation((_id, payload) => Promise.resolve({
+      brief: payload.brief,
+      meta: payload.meta,
+      source_fingerprint: "a".repeat(64),
+      is_stale: false,
+    }));
   });
 
   afterEach(async () => {
@@ -110,7 +132,7 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     });
   }
 
-  it("generates from current visible AI fields without submitting, and keeps the brief across tabs", async () => {
+  it("keeps a saved brief visible and requires saving before refreshing unsaved AI-source changes", async () => {
     await render();
     await act(async () => click(container, "Generate AI brief"));
     expect(container.textContent).not.toContain("Unsaved changes");
@@ -121,14 +143,12 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
       setValue(container.querySelector('input[name="company_name"]'), "Updated Northstar");
       setValue(container.querySelector('input[name="location"]'), "Hybrid");
     });
-    await act(async () => {
-      click(container, "AI Brief");
-    });
-    await act(async () => {
-      click(container, "Refresh brief");
-    });
-
-    expect(generateBrief).toHaveBeenCalledWith({ company_name: "Updated Northstar", role_title: "Product Manager", job_posting_text: "a".repeat(220), location: "Hybrid", compensation: "$120,000", employment_type: "Full time" }, expect.objectContaining({ signal: expect.any(AbortSignal) }));
+    await act(async () => click(container, "AI Brief"));
+    expect(container.textContent).toContain("Save changes before using AI Brief");
+    expect(container.textContent).not.toContain("Refresh it to update the analysis.");
+    expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Refresh brief")).toBe(false);
+    expect(generateBrief).toHaveBeenCalledTimes(1);
+    expect(saveAiBrief).toHaveBeenCalledTimes(1);
     expect(onSaveApplication).not.toHaveBeenCalled();
     expect(container.textContent).toContain("A product management role.");
     expect(container.textContent).toContain("Unsaved changes");
@@ -142,7 +162,7 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     expect(container.textContent).toContain("A product management role.");
   });
 
-  it("marks only AI-source edits stale and replaces a stale brief while preserving it after a failed regeneration", async () => {
+  it("does not mark unrelated unsaved edits stale", async () => {
     await render();
     await act(async () => click(container, "Generate AI brief"));
     expect(container.textContent).toContain("A product management role.");
@@ -158,36 +178,26 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     });
     expect(container.textContent).not.toContain("Refresh it to update the analysis.");
 
-    await act(async () => {
-      click(container, "Job Details");
-    });
-    await act(async () => {
-      setValue(container.querySelector('input[name="location"]'), "New York");
-    });
-    await act(async () => {
-      click(container, "AI Brief");
-    });
-    expect(container.textContent).toContain("Refresh it to update the analysis.");
-
-    generateBrief.mockResolvedValueOnce(response("A refreshed role summary."));
-    await act(async () => click(container, "Refresh brief"));
-    expect(container.textContent).toContain("A refreshed role summary.");
+    expect(container.textContent).not.toContain("Save changes to refresh this brief");
     expect(container.textContent).not.toContain("Refresh it to update the analysis.");
+  });
 
-    await act(async () => {
-      click(container, "Job Details");
-    });
-    await act(async () => {
-      setValue(container.querySelector('input[name="location"]'), "Boston");
-    });
-    await act(async () => {
-      click(container, "AI Brief");
-    });
+  it("uses the PursuitHQ confirmation dialog before removing a saved brief", async () => {
+    await render();
+    await act(async () => click(container, "Generate AI brief"));
 
-    generateBrief.mockRejectedValueOnce(new Error("gateway failure"));
-    await act(async () => click(container, "Refresh brief"));
-    expect(container.textContent).toContain("The AI service returned an unexpected response. Try again.");
-    expect(container.textContent).toContain("A refreshed role summary.");
+    await act(async () => clickLast(container, "Remove brief"));
+    expect(container.textContent).toContain("Remove saved AI brief?");
+    expect(container.textContent).toContain("You can generate a new brief later.");
+    expect(deleteAiBrief).not.toHaveBeenCalled();
+
+    await act(async () => click(container, "Cancel"));
+    expect(container.textContent).toContain("A product management role.");
+
+    await act(async () => click(container, "Remove brief"));
+    await act(async () => clickLast(container, "Remove brief"));
+    expect(deleteAiBrief).toHaveBeenCalledWith(1);
+    expect(container.textContent).toContain("Generate AI brief");
   });
 
   it("aborts active requests on application changes and unmount without rendering a result or error", async () => {

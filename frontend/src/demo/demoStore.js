@@ -6,6 +6,7 @@ import {
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../constants/applicationConstants.js";
 import { createDemoState } from "./demoData.js";
+import { createJobBriefPayload } from "../services/jobBriefService.js";
 
 const FOLLOW_UP_EXCLUDED_STATUSES = new Set(["Rejected", "Withdrawn", "Archived"]);
 const STALE_EXCLUDED_STATUSES = new Set(["Offer", "Rejected", "Withdrawn", "Archived"]);
@@ -25,6 +26,7 @@ export function getDemoExportSnapshot() {
     resume_versions: demoState.resumeVersions,
     applications: demoState.applications,
     application_activities: demoState.activities,
+    application_ai_briefs: demoState.aiBriefs,
   });
 }
 
@@ -123,6 +125,41 @@ export function getDemoApplication(applicationId) {
   }
 
   return clone(application);
+}
+
+function demoBriefFor(applicationId) {
+  return demoState.aiBriefs.find((brief) => String(brief.application_id) === String(applicationId));
+}
+
+export function getDemoApplicationAiBrief(applicationId) {
+  const application = getDemoApplication(applicationId);
+  const record = demoBriefFor(applicationId);
+  if (!record) return null;
+  return clone({ ...record, is_stale: JSON.stringify(createJobBriefPayload(application)) !== record.source_snapshot });
+}
+
+export function saveDemoApplicationAiBrief(applicationId, payload) {
+  const application = getDemoApplication(applicationId);
+  const source = createJobBriefPayload(payload.source);
+  if (JSON.stringify(source) !== JSON.stringify(createJobBriefPayload(application))) {
+    throw new Error("This application changed while the AI brief was being generated. Reload the application and try again.");
+  }
+  const timestamp = nowIso();
+  const existing = demoBriefFor(applicationId);
+  const record = {
+    id: existing?.id || demoState.nextAiBriefId,
+    application_id: Number(applicationId), brief: clone(payload.brief), meta: clone(payload.meta),
+    source_snapshot: JSON.stringify(source), source_fingerprint: "0".repeat(64), is_stale: false,
+    created_at: existing?.created_at || timestamp, updated_at: timestamp,
+  };
+  demoState = { ...demoState, aiBriefs: [...demoState.aiBriefs.filter((item) => String(item.application_id) !== String(applicationId)), record], nextAiBriefId: existing ? demoState.nextAiBriefId : demoState.nextAiBriefId + 1 };
+  return clone(record);
+}
+
+export function deleteDemoApplicationAiBrief(applicationId) {
+  getDemoApplication(applicationId);
+  demoState = { ...demoState, aiBriefs: demoState.aiBriefs.filter((item) => String(item.application_id) !== String(applicationId)) };
+  return null;
 }
 
 export function createDemoApplication(payload) {
@@ -304,6 +341,7 @@ export function deleteDemoApplication(applicationId) {
     ...demoState,
     applications: demoState.applications.filter((item) => String(item.id) !== String(applicationId)),
     activities: demoState.activities.filter((activity) => String(activity.application_id) !== String(applicationId)),
+    aiBriefs: demoState.aiBriefs.filter((brief) => String(brief.application_id) !== String(applicationId)),
   };
 
   return null;

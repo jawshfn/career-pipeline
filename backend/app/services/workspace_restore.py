@@ -1,13 +1,14 @@
 """Transactional replace restore for an already reviewed workspace backup."""
 
 from datetime import datetime, timezone
+import json
 import hmac
 from typing import Any
 
 from sqlalchemy import delete, text
 from sqlalchemy.orm import Session
 
-from ..models import Application, ApplicationActivity, ResumeVersion
+from ..models import Application, ApplicationActivity, ApplicationAiBrief, ResumeVersion
 from .workspace_backup_validation import (
     WorkspaceBackupDocument,
     application_summary,
@@ -37,6 +38,7 @@ def _summary_from_document(document: WorkspaceBackupDocument) -> dict[str, int]:
         "resume_versions": len(document.data.resume_versions),
         **application_summary(applications),
         "application_activities": len(document.data.application_activities),
+        "application_ai_briefs": len(document.data.application_ai_briefs),
     }
 
 
@@ -81,6 +83,7 @@ def _activity_rows(document: WorkspaceBackupDocument) -> list[dict[str, Any]]:
 
 def _delete_workspace(db: Session) -> None:
     db.execute(delete(ApplicationActivity))
+    db.execute(delete(ApplicationAiBrief))
     db.execute(delete(Application))
     db.execute(delete(ResumeVersion))
 
@@ -101,6 +104,17 @@ def _insert_activities(db: Session, document: WorkspaceBackupDocument) -> None:
     rows = _activity_rows(document)
     if rows:
         db.execute(ApplicationActivity.__table__.insert(), rows)
+
+
+def _insert_ai_briefs(db: Session, document: WorkspaceBackupDocument) -> None:
+    rows = []
+    for record in document.data.application_ai_briefs:
+        rows.append({"id": record.id, "application_id": record.application_id, "source_fingerprint": record.source_fingerprint,
+                     "brief_json": json.dumps(record.brief.model_dump(mode="json"), ensure_ascii=False, sort_keys=True, separators=(",", ":")), "model": record.model, "prompt_version": record.prompt_version,
+                     "schema_version": record.schema_version, "generated_at": parse_backup_datetime(record.generated_at),
+                     "request_id": record.request_id, "created_at": parse_backup_datetime(record.created_at), "updated_at": parse_backup_datetime(record.updated_at)})
+    if rows:
+        db.execute(ApplicationAiBrief.__table__.insert(), rows)
 
 
 def restore_workspace_replace(
@@ -131,6 +145,7 @@ def restore_workspace_replace(
         _insert_resumes(db, document)
         _insert_applications(db, document)
         _insert_activities(db, document)
+        _insert_ai_briefs(db, document)
         restored_summary = _summary_from_document(document)
         db.commit()
         db.expire_all()

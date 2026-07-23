@@ -4,16 +4,18 @@ from datetime import date, datetime, timedelta, timezone
 import re
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, ValidationError, field_validator, model_validator
 from sqlalchemy.orm import Session
 
 from ..backup_format import BACKUP_FORMAT, BACKUP_VERSION
+from ..schemas import JobBriefV2
 from ..domain import ACTIVE_APPLICATION_STATUSES, ARCHIVED_APPLICATION_STATUS, CLOSED_APPLICATION_STATUSES
 from .workspace_backup_data import workspace_content_payload
 
 MAX_RESUME_VERSIONS = 5_000
 MAX_APPLICATIONS = 25_000
 MAX_APPLICATION_ACTIVITIES = 100_000
+MAX_APPLICATION_AI_BRIEFS = 25_000
 MAX_RETURNED_ERRORS = 100
 _DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _DATETIME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})?$")
@@ -41,8 +43,9 @@ class BackupCounts(_StrictBackupModel):
     resume_versions: StrictInt
     applications: StrictInt
     application_activities: StrictInt
+    application_ai_briefs: StrictInt = 0
 
-    @field_validator("resume_versions", "applications", "application_activities")
+    @field_validator("resume_versions", "applications", "application_activities", "application_ai_briefs")
     @classmethod
     def nonnegative(cls, value: int) -> int:
         if value < 0:
@@ -183,10 +186,44 @@ class ActivityBackupRecord(_StrictBackupModel):
         return value
 
 
+class ApplicationAiBriefBackupRecord(_StrictBackupModel):
+    id: StrictInt
+    application_id: StrictInt
+    source_fingerprint: StrictStr = Field(pattern=r"^[0-9a-f]{64}$")
+    brief: JobBriefV2
+    model: StrictStr = Field(min_length=1, max_length=160)
+    prompt_version: StrictStr = Field(min_length=1, max_length=160)
+    schema_version: StrictStr
+    generated_at: StrictStr
+    request_id: StrictStr = Field(min_length=1, max_length=200)
+    created_at: StrictStr
+    updated_at: StrictStr
+
+    @field_validator("id", "application_id")
+    @classmethod
+    def positive_id(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("must be a positive integer")
+        return value
+
+    @field_validator("generated_at", "created_at", "updated_at")
+    @classmethod
+    def timestamp(cls, value: str) -> str:
+        parse_backup_datetime(value)
+        return value
+
+    @model_validator(mode="after")
+    def schema_matches(self):
+        if self.schema_version != self.brief.schema_version:
+            raise ValueError("brief schema version must match record schema version")
+        return self
+
+
 class BackupData(_StrictBackupModel):
     resume_versions: list[ResumeBackupRecord]
     applications: list[ApplicationBackupRecord]
     application_activities: list[ActivityBackupRecord]
+    application_ai_briefs: list[ApplicationAiBriefBackupRecord] = Field(default_factory=list)
 
 
 class WorkspaceBackupDocument(_StrictBackupModel):
@@ -195,6 +232,14 @@ class WorkspaceBackupDocument(_StrictBackupModel):
     exported_at: StrictStr
     counts: BackupCounts
     data: BackupData
+
+    @model_validator(mode="after")
+    def version_shape(self):
+        if self.version == 1 and (self.counts.application_ai_briefs or self.data.application_ai_briefs):
+            raise ValueError("version 1 backups cannot include AI briefs")
+        if self.version == 2 and ("application_ai_briefs" not in self.counts.model_fields_set or "application_ai_briefs" not in self.data.model_fields_set):
+            raise ValueError("version 2 backups must include AI briefs")
+        return self
 
     @field_validator("exported_at")
     @classmethod
@@ -248,6 +293,7 @@ def workspace_content_summary(content: dict[str, Any]) -> dict[str, int]:
         "resume_versions": content["counts"]["resume_versions"],
         **application_summary(applications),
         "application_activities": content["counts"]["application_activities"],
+        "application_ai_briefs": content["counts"].get("application_ai_briefs", 0),
     }
 
 
@@ -259,7 +305,7 @@ def _record_limits(payload: Any) -> list[dict[str, str | None]]:
     if not isinstance(payload, dict) or not isinstance(payload.get("data"), dict):
         return []
     limits = (("resume_versions", MAX_RESUME_VERSIONS), ("applications", MAX_APPLICATIONS),
-              ("application_activities", MAX_APPLICATION_ACTIVITIES))
+              ("application_activities", MAX_APPLICATION_ACTIVITIES), ("application_ai_briefs", MAX_APPLICATION_AI_BRIEFS))
     return [_issue("record_limit_exceeded", f"data.{name}", "This backup exceeds the supported record limit.")
             for name, maximum in limits if isinstance(payload["data"].get(name), list) and len(payload["data"][name]) > maximum]
 
@@ -279,15 +325,16 @@ def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDoc
     if document is not None:
         if document.format != BACKUP_FORMAT:
             issues.append(_issue("unsupported_format", "format", "This is not a supported PursuitHQ workspace backup."))
-        if document.version != BACKUP_VERSION:
+        if document.version not in {1, BACKUP_VERSION}:
             issues.append(_issue("unsupported_version", "version", "This backup version is not supported."))
         if not issues:
             data = document.data
             declared = document.counts
             collections = (("resume_versions", data.resume_versions, declared.resume_versions),
                            ("applications", data.applications, declared.applications),
-                           ("application_activities", data.application_activities, declared.application_activities))
-            collection_labels = {"resume_versions": "resume version", "applications": "application", "application_activities": "application activity"}
+                           ("application_activities", data.application_activities, declared.application_activities),
+                           ("application_ai_briefs", data.application_ai_briefs, declared.application_ai_briefs))
+            collection_labels = {"resume_versions": "resume version", "applications": "application", "application_activities": "application activity", "application_ai_briefs": "application AI brief"}
             for name, records, count in collections:
                 if len(records) != count:
                     issues.append(_issue("counts_mismatch", f"counts.{name}", f"Declared {collection_labels[name]} count does not match data.{name}."))
@@ -304,6 +351,13 @@ def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDoc
             for index, record in enumerate(data.application_activities):
                 if record.application_id not in application_ids:
                     issues.append(_issue("missing_application_reference", f"data.application_activities[{index}].application_id", "Activity references an application that is not included."))
+            brief_application_ids: set[int] = set()
+            for index, record in enumerate(data.application_ai_briefs):
+                if record.application_id not in application_ids:
+                    issues.append(_issue("missing_application_reference", f"data.application_ai_briefs[{index}].application_id", "AI brief references an application that is not included."))
+                if record.application_id in brief_application_ids:
+                    issues.append(_issue("duplicate_application_brief", f"data.application_ai_briefs[{index}].application_id", "Only one AI brief may reference each application."))
+                brief_application_ids.add(record.application_id)
 
     return document if not issues else None, issues
 
@@ -314,8 +368,8 @@ def workspace_backup_summary(document: WorkspaceBackupDocument, now: datetime | 
     applications = [record.model_dump() for record in data.applications]
     breakdown = application_summary(applications)
     summary = {"format": document.format, "version": document.version, "exported_at": document.exported_at,
-               "resume_versions": len(data.resume_versions), "application_activities": len(data.application_activities), **breakdown}
-    if not data.resume_versions and not data.applications and not data.application_activities:
+               "resume_versions": len(data.resume_versions), "application_activities": len(data.application_activities), "application_ai_briefs": len(data.application_ai_briefs), **breakdown}
+    if not data.resume_versions and not data.applications and not data.application_activities and not data.application_ai_briefs:
         warnings.append("This backup contains no workspace records.")
     if parse_backup_datetime(document.exported_at).astimezone(timezone.utc) > (now or datetime.now(timezone.utc)).astimezone(timezone.utc) + timedelta(minutes=5):
         warnings.append("The backup export time is in the future.")
@@ -338,7 +392,7 @@ def validate_workspace_backup(
     if document is not None:
         summary, warnings = workspace_backup_summary(document, now)
         data = document.data
-        if not data.resume_versions and not data.applications and not data.application_activities:
+        if not data.resume_versions and not data.applications and not data.application_activities and not data.application_ai_briefs:
             warnings[0] += " A future replace restore would result in an empty workspace." if any(current_summary.values()) else ""
 
     issues = _cap_issues(issues)

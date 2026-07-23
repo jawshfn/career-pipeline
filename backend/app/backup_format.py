@@ -1,2 +1,2 @@
 BACKUP_FORMAT = "pursuithq-workspace-backup"
-BACKUP_VERSION = 1
+BACKUP_VERSION = 2

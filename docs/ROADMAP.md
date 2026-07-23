@@ -28,11 +28,11 @@ PursuitHQ is a mature local-first prototype with capture workflows, application 
 ### Capture integrations and data portability
 
 - Locally loaded Browser Capture for documented supported layouts.
-- JSON backup, validation, transactional replace restore, CSV export, and frontend-generated XLSX export.
+- Versioned JSON backup (v2 includes persisted AI briefs), validation, transactional replace restore, CSV export, and frontend-generated XLSX export.
 
 ### AI Job Intelligence and public demo
 
-- User-initiated, session-only Job Intelligence Briefs through the Cloudflare Worker gateway.
+- User-initiated Job Intelligence Briefs through the Cloudflare Worker gateway, persisted locally per application after successful generation.
 - A static public demo with fictional in-memory data and AI-ready examples.
 
 ## Next planned area: Outcome Insights
