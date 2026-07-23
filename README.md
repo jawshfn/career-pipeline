@@ -1,4 +1,4 @@
-# PursuitHQ
+# PursuitHQ · [Live Demo](https://jawshfn.github.io/career-pipeline/)
 
 [![CI](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/jawshfn/career-pipeline/actions/workflows/ci.yml)
 
@@ -9,8 +9,6 @@ PursuitHQ is a local-first job-search workspace for quickly capturing opportunit
 It is built as a practical product prototype: fast capture when a job looks interesting, richer detail when context matters, and clear daily surfaces for follow-ups, status changes, resumes, red flags, and activity history.
 
 ## Static Demo
-
-A GitHub Pages demo is available at [https://jawshfn.github.io/career-pipeline/](https://jawshfn.github.io/career-pipeline/).
 
 The hosted demo uses fictional in-memory sample data. It is useful for reviewing the interface, but it does not connect to the FastAPI backend and changes reset when the page reloads.
 
