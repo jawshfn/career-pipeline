@@ -24,27 +24,35 @@ export async function generateGoogleJobBrief({ env, request, timeoutMs, maxCompl
   const body = {
     systemInstruction: { parts: [{ text: messages[0].content }] },
     contents: [{ role: "user", parts: [{ text: messages[1].content }] }],
-    generationConfig: { maxOutputTokens: maxCompletionTokens, thinkingConfig: { thinkingLevel: GEMINI_THINKING_LEVEL } },
+    generationConfig: {
+      maxOutputTokens: maxCompletionTokens,
+      thinkingConfig: { thinkingLevel: GEMINI_THINKING_LEVEL },
+    },
   };
+
   let response;
   try {
     response = await fetch(endpointFor(), {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": env.GEMINI_API_KEY,
+      },
       body: JSON.stringify(body),
       signal: controller.signal,
     });
-  } catch (error) {
-    if (controller.signal.aborted) throw new GoogleProviderError("generation_failed");
+  } catch {
     throw new GoogleProviderError("generation_failed");
   } finally {
     clearTimeout(timeout);
   }
+
   if (response.status === 429) throw new GoogleProviderError("rate_limited", 429);
   if (!response.ok) {
     if (response.status >= 500) throw new GoogleProviderError("generation_failed", response.status);
     throw new GoogleProviderError("ai_misconfigured", response.status);
   }
+
   try {
     return { payload: await response.json(), status: response.status };
   } catch {
