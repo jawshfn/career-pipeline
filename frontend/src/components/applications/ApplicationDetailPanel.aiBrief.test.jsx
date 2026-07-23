@@ -125,7 +125,7 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
       click(container, "AI Brief");
     });
     await act(async () => {
-      click(container, "Regenerate AI brief");
+      click(container, "Refresh brief");
     });
 
     expect(generateBrief).toHaveBeenCalledWith({ company_name: "Updated Northstar", role_title: "Product Manager", job_posting_text: "a".repeat(220), location: "Hybrid", compensation: "$120,000", employment_type: "Full time" }, expect.objectContaining({ signal: expect.any(AbortSignal) }));
@@ -156,7 +156,7 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     await act(async () => {
       click(container, "AI Brief");
     });
-    expect(container.textContent).not.toContain("Regenerate it to refresh the analysis.");
+    expect(container.textContent).not.toContain("Refresh it to update the analysis.");
 
     await act(async () => {
       click(container, "Job Details");
@@ -167,15 +167,25 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     await act(async () => {
       click(container, "AI Brief");
     });
-    expect(container.textContent).toContain("Regenerate it to refresh the analysis.");
+    expect(container.textContent).toContain("Refresh it to update the analysis.");
 
     generateBrief.mockResolvedValueOnce(response("A refreshed role summary."));
-    await act(async () => click(container, "Regenerate AI brief"));
+    await act(async () => click(container, "Refresh brief"));
     expect(container.textContent).toContain("A refreshed role summary.");
-    expect(container.textContent).not.toContain("Regenerate it to refresh the analysis.");
+    expect(container.textContent).not.toContain("Refresh it to update the analysis.");
+
+    await act(async () => {
+      click(container, "Job Details");
+    });
+    await act(async () => {
+      setValue(container.querySelector('input[name="location"]'), "Boston");
+    });
+    await act(async () => {
+      click(container, "AI Brief");
+    });
 
     generateBrief.mockRejectedValueOnce(new Error("gateway failure"));
-    await act(async () => click(container, "Regenerate AI brief"));
+    await act(async () => click(container, "Refresh brief"));
     expect(container.textContent).toContain("The AI service returned an unexpected response. Try again.");
     expect(container.textContent).toContain("A refreshed role summary.");
   });

@@ -5174,21 +5174,53 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
   .pipeline-status-select, .pipeline-status-trigger { width: 100%; }
 }
 
-/* Phase 25.1a Job Intelligence Brief. */
+/* Phase 25.3c Job Intelligence Brief. */
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .ai-brief-tab, .ai-brief-report { display: grid; gap: 18px; }
-.ai-brief-intro, .ai-brief-section, .ai-brief-next-action { padding: 18px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
-.ai-brief-intro h3, .ai-brief-section h4, .ai-brief-next-action h4 { margin-top: 0; }
-.ai-brief-intro > :last-child, .ai-brief-section > :last-child, .ai-brief-next-action > :last-child { margin-bottom: 0; }
-.ai-brief-disclosure, .ai-brief-caution, .ai-brief-eligibility { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--color-surface-subtle); color: var(--color-text-soft); font-size: 0.9rem; }
-.ai-brief-eligibility { border-left: 3px solid var(--color-warning); color: var(--color-text); }
-.ai-brief-loading { min-height: 1.35em; margin: 0; color: var(--color-text-soft); }
+.ai-brief-intro { padding: 18px; border: 1px solid var(--color-border); border-top: 3px solid var(--color-signal); border-radius: var(--radius-md); background: var(--color-signal-soft); }
+.ai-brief-intro h3, .ai-brief-report-header h3, .ai-brief-section h4, .ai-brief-next-action h4, .ai-brief-information h4 { margin-top: 0; }
+.ai-brief-intro > :last-child, .ai-brief-section > :last-child, .ai-brief-next-action > :last-child, .ai-brief-information > div > :last-child { margin-bottom: 0; }
+.ai-brief-eyebrow { margin: 0 0 5px; color: var(--color-signal-strong); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.ai-brief-information { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr); padding: 14px 0; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text-soft); font-size: 0.9rem; }
+.ai-brief-information-group { min-width: 0; padding: 0 16px; }
+.ai-brief-information-group + .ai-brief-information-group { border-left: 1px solid var(--color-border); }
+.ai-brief-information h4 { margin-bottom: 5px; color: var(--color-text); font-size: 0.9rem; }
+.ai-brief-information p { margin-top: 0; }
+.ai-brief-action-area { display: grid; justify-items: start; gap: 10px; margin-top: 16px; }
+.ai-brief-eligibility { margin: 0; padding: 10px 12px; border-left: 3px solid var(--color-warning); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font-size: 0.9rem; }
+.ai-brief-primary-action, .ai-brief-secondary-action { appearance: none; display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border-radius: var(--radius-sm); padding: 10px 16px; font: inherit; font-weight: 800; cursor: pointer; transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease; }
+.ai-brief-primary-action { border: 1px solid var(--color-primary); color: var(--color-surface); background: var(--color-primary); }
+.ai-brief-primary-action:hover:not(:disabled) { border-color: var(--color-primary-hover); background: var(--color-primary-hover); }
+.ai-brief-secondary-action { border: 1px solid var(--color-border-strong); color: var(--color-primary); background: var(--color-surface); }
+.ai-brief-secondary-action:hover:not(:disabled) { border-color: var(--color-primary); background: var(--color-primary-soft); }
+.ai-brief-primary-action:focus-visible, .ai-brief-secondary-action:focus-visible { outline: 3px solid var(--color-primary-soft); outline-offset: 2px; }
+.ai-brief-primary-action:disabled, .ai-brief-secondary-action:disabled { opacity: 0.68; cursor: not-allowed; }
+.ai-brief-action-content { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 132px; }
+.ai-brief-spinner { width: 0.9em; height: 0.9em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ai-brief-spin 0.8s linear infinite; }
+@keyframes ai-brief-spin { to { transform: rotate(360deg); } }
+.ai-brief-report-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.ai-brief-report-header h3 { margin-bottom: 3px; font-size: 1rem; }
+.ai-brief-generated-at { margin: 0; color: var(--color-text-soft); font-size: 0.86rem; }
+.ai-brief-report-message { margin: -8px 0 0; }
+.ai-brief-report-body { padding: 0 18px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.ai-brief-section { padding: 18px 0; border-bottom: 1px solid var(--color-border); }
+.ai-brief-section h4, .ai-brief-next-action h4 { margin-bottom: 8px; }
 .ai-brief-list { display: grid; gap: 12px; margin: 0; padding-left: 20px; }
 .ai-brief-list li { padding-left: 2px; }
 .ai-brief-reason { margin: 5px 0 0; color: var(--color-text-soft); font-size: 0.9rem; }
-.ai-brief-next-action { border-color: #b8c8f4; background: var(--color-primary-surface); }
-.ai-brief-generated-at { margin: -6px 2px 0; color: var(--color-text-soft); font-size: 0.86rem; }
+.ai-brief-next-action { margin: 18px 0; padding: 16px; border: 1px solid var(--color-border); border-left: 3px solid var(--color-signal); border-radius: var(--radius-sm); background: var(--color-signal-soft); }
+.ai-brief-limitations { border-bottom: 0; color: var(--color-text-soft); font-size: 0.9rem; }
 
 @media (max-width: 640px) {
-  .ai-brief-intro, .ai-brief-section, .ai-brief-next-action { padding: 14px; }
-  .ai-brief-intro button { width: 100%; }
+  .ai-brief-intro, .ai-brief-report-body { padding: 14px; }
+  .ai-brief-information { grid-template-columns: 1fr; padding: 0 14px; }
+  .ai-brief-information-group { padding: 14px 0; }
+  .ai-brief-information-group + .ai-brief-information-group { border-top: 1px solid var(--color-border); border-left: 0; }
+  .ai-brief-report-header { align-items: stretch; flex-direction: column; }
+  .ai-brief-primary-action, .ai-brief-secondary-action { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-brief-primary-action, .ai-brief-secondary-action { transition: none; }
+  .ai-brief-spinner { animation: none; }
 }
