@@ -1,0 +1,1 @@
+export const FEATURED_DEMO_APPLICATION_ID = 3;

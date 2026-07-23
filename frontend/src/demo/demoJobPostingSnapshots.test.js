@@ -6,6 +6,7 @@ import { getDemoApplication, resetDemoState, updateDemoApplication } from "./dem
 const SELECTED_APPLICATIONS = [
   { id: 1, company: "Northstar Analytics", role: "Junior Data Analyst" },
   { id: 2, company: "BrightForge Labs", role: "Frontend Software Engineer" },
+  { id: 3, company: "Harborview Systems", role: "Associate Full Stack Developer" },
   { id: 5, company: "Lumen Grove", role: "Product Support Specialist" },
   { id: 12, company: "Evergreen Civic Tech", role: "Junior Business Systems Analyst" },
 ];
@@ -13,7 +14,7 @@ const SELECTED_APPLICATIONS = [
 describe("AI-ready demo job posting snapshots", () => {
   beforeEach(() => resetDemoState());
 
-  it("populates only the four selected applications with eligible, role-specific snapshots", () => {
+  it("populates only the five selected applications with eligible, role-specific snapshots", () => {
     const applications = createDemoState().applications;
     const selectedIds = new Set(SELECTED_APPLICATIONS.map(({ id }) => id));
 
@@ -46,12 +47,26 @@ describe("AI-ready demo job posting snapshots", () => {
   });
 
   it("returns snapshots through the demo store and restores them on reset", () => {
-    const original = getDemoApplication(2).job_description;
+    const original = getDemoApplication(3).job_description;
 
-    updateDemoApplication(2, { job_description: "Temporary demo edit" });
-    expect(getDemoApplication(2).job_description).toBe("Temporary demo edit");
+    updateDemoApplication(3, { job_description: "Temporary demo edit" });
+    expect(getDemoApplication(3).job_description).toBe("Temporary demo edit");
 
     resetDemoState();
-    expect(getDemoApplication(2).job_description).toBe(original);
+    expect(getDemoApplication(3).job_description).toBe(original);
+  });
+
+  it("preserves Harborview's existing application details while adding no generated brief", () => {
+    const harborview = createDemoState().applications.find((application) => application.id === 3);
+
+    expect(harborview).toMatchObject({
+      company_name: "Harborview Systems",
+      role_title: "Associate Full Stack Developer",
+      location: "Norfolk, VA",
+      compensation: "$70,000 - $84,000 a year",
+      employment_type: "Full-time",
+    });
+    expect(harborview).not.toHaveProperty("ai_brief");
+    expect(harborview).not.toHaveProperty("ai_response");
   });
 });

@@ -6,7 +6,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../components/applications/ApplicationDetailPanel.jsx", () => ({
-  default: ({ initialTab }) => <div data-testid="application-detail">Detail tab: {initialTab}</div>,
+  default: ({ initialTab, onClose }) => <div data-testid="application-detail">Detail tab: {initialTab}<button type="button" onClick={onClose}>Close</button></div>,
 }));
 
 import ApplicationsPage from "./ApplicationsPage.jsx";
@@ -185,5 +185,84 @@ describe("ApplicationsPage", () => {
     await act(async () => setControlValue(search, "No matching opportunity"));
 
     expect(container.textContent).toContain("No applications match your current filters.");
+  });
+
+  it("opens the featured demo application on the AI Brief tab once", async () => {
+    const onFeaturedApplicationPresented = vi.fn();
+    await act(async () => {
+      root.render(
+        <ApplicationsPage
+          applications={applications}
+          error=""
+          featuredApplicationId={3}
+          isDemoMode
+          isLoading={false}
+          onFeaturedApplicationPresented={onFeaturedApplicationPresented}
+          onUnsavedChangesChange={vi.fn()}
+          onUpdateApplication={vi.fn()}
+          resumeVersions={[]}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="application-detail"]').textContent).toContain("ai-brief");
+    expect(onFeaturedApplicationPresented).toHaveBeenCalledTimes(1);
+
+    await act(async () => clickButton(container, "Close"));
+    expect(container.querySelector('[data-testid="application-detail"]')).toBeNull();
+  });
+
+  it("keeps an explicitly requested application ahead of the featured demo", async () => {
+    const onFeaturedApplicationPresented = vi.fn();
+    await act(async () => {
+      root.render(
+        <ApplicationsPage
+          applications={applications}
+          error=""
+          featuredApplicationId={3}
+          isDemoMode
+          isLoading={false}
+          onFeaturedApplicationPresented={onFeaturedApplicationPresented}
+          onRequestedApplicationHandled={vi.fn()}
+          onUnsavedChangesChange={vi.fn()}
+          onUpdateApplication={vi.fn()}
+          requestedApplicationId={2}
+          resumeVersions={[]}
+        />,
+      );
+    });
+
+    expect(container.querySelector('[data-testid="application-detail"]').textContent).toContain("overview");
+    expect(onFeaturedApplicationPresented).not.toHaveBeenCalled();
+  });
+
+  it("pins Harborview only for the default demo sort without overriding filters", async () => {
+    const activeApplications = applications.map((application) => (
+      application.id === 3 ? { ...application, status: "Interview" } : application
+    ));
+    await act(async () => {
+      root.render(
+        <ApplicationsPage
+          applications={activeApplications}
+          error=""
+          featuredApplicationId={3}
+          isDemoMode
+          isLoading={false}
+          onUnsavedChangesChange={vi.fn()}
+          onUpdateApplication={vi.fn()}
+          resumeVersions={[]}
+        />,
+      );
+    });
+
+    expect(container.querySelector("tbody tr .opportunity-company").textContent).toBe("Harbor Works");
+    const sort = container.querySelector('select[name="sortBy"]');
+    await act(async () => setControlValue(sort, "company_asc"));
+    expect(container.querySelector("tbody tr .opportunity-company").textContent).toBe("Cedar Labs");
+
+    const search = container.querySelector('input[name="search"]');
+    await act(async () => setControlValue(search, "Northstar"));
+    expect(container.querySelector("tbody tr .opportunity-company").textContent).toBe("Northstar Analytics");
+    expect(container.textContent).not.toContain("Harbor Works");
   });
 });

@@ -1,4 +1,14 @@
 export const DEMO_JOB_POSTING_SNAPSHOTS = Object.freeze({
+  harborviewSystems: `Harborview Systems is a fictional technology company that builds dependable internal tools for operations teams. We are hiring an Associate Full Stack Developer to help improve the web applications employees use to manage requests, review work, and keep routine processes moving.
+
+In this full-time role, you will create React interfaces and develop or integrate FastAPI and Python REST APIs. You will work with relational data and SQL, turn product or operational needs into clear implementation tasks, and help maintain the internal web applications that support daily business workflows. The work includes writing automated tests, debugging frontend and backend integration problems, participating in code review, documenting implementation decisions, and assisting with releases and production issue investigation.
+
+We are looking for a relevant degree or equivalent practical experience and approximately one to two years of software-development experience, including projects or internships. You should have experience with JavaScript and React, familiarity with Python and REST APIs, SQL and relational-database fundamentals, and Git. You should be able to explain technical decisions clearly and collaborate with technical and non-technical partners.
+
+Experience with FastAPI, TypeScript, SQLite or PostgreSQL, Pytest or Vitest, CI workflows, Docker, or internal-tools and workflow-automation work is helpful.
+
+This role is based in Norfolk, VA and pays $70,000 - $84,000 a year. The team works primarily during normal weekday business hours. Interviews may include walking through a full-stack project, explaining API design decisions, debugging a frontend and backend issue, describing testing choices, and discussing how you worked with a non-technical stakeholder.`.trim(),
+
   northstarAnalytics: `Northstar Analytics is a fictional reporting and insights company that helps customer teams make everyday operational decisions with confidence.
 
 About the role

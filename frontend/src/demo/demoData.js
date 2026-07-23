@@ -1,3 +1,5 @@
+import { DEMO_JOB_POSTING_SNAPSHOTS } from "./demoJobPostingSnapshots.js";
+
 function formatLocalDate(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -158,6 +160,7 @@ export function createDemoState() {
       contact_info: null,
       prep_notes: "Ask about release process, testing expectations, and product roadmap.",
       resume_version_id: 1,
+      job_description: DEMO_JOB_POSTING_SNAPSHOTS.harborviewSystems,
       notes: "Second-round interview for fictional internal tools team.",
       updated_at: timestamp(0),
     }),
@@ -397,4 +400,3 @@ export function createDemoState() {
     nextActivityId: 7,
   };
 }
-import { DEMO_JOB_POSTING_SNAPSHOTS } from "./demoJobPostingSnapshots.js";

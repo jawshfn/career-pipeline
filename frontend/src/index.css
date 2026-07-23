@@ -2540,6 +2540,27 @@ a {
   font-size: 0.8rem;
 }
 
+.ai-ready-button {
+  justify-self: start;
+  border: 1px solid #cbd6d3;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--color-primary);
+  background: #f7faf9;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.ai-ready-button:hover {
+  border-color: var(--color-primary);
+  background: #eef7f5;
+}
+
+.ai-ready-button:focus-visible {
+  outline: 3px solid var(--color-focus, #3b82f6);
+  outline-offset: 2px;
+}
+
 .resume-cell {
   max-width: 220px;
 }

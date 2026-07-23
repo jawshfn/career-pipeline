@@ -92,8 +92,12 @@ function compareUpdatedDesc(firstApplication, secondApplication) {
   return compareDatesWithMissingLast(firstApplication.updated_at, secondApplication.updated_at, "desc");
 }
 
-function sortApplications(applications, sortBy) {
+function sortApplications(applications, sortBy, featuredApplicationId = null) {
   return [...applications].sort((firstApplication, secondApplication) => {
+    if (sortBy === "updated_desc" && featuredApplicationId) {
+      if (firstApplication.id === featuredApplicationId) return -1;
+      if (secondApplication.id === featuredApplicationId) return 1;
+    }
     if (sortBy === "saved_desc") {
       return (
         compareDatesWithMissingLast(firstApplication.date_saved, secondApplication.date_saved, "desc") ||
@@ -128,7 +132,7 @@ function sortApplications(applications, sortBy) {
   });
 }
 
-function getFilteredApplications(applications, filters) {
+function getFilteredApplications(applications, filters, featuredApplicationId = null) {
   const searchTerm = normalizeSearchValue(filters.search.trim());
 
   const filteredApplications = applications.filter((application) => {
@@ -167,7 +171,7 @@ function getFilteredApplications(applications, filters) {
     return true;
   });
 
-  return sortApplications(filteredApplications, filters.sortBy);
+  return sortApplications(filteredApplications, filters.sortBy, featuredApplicationId);
 }
 
 function getApplicationsForView(applications, applicationView) {
@@ -212,11 +216,14 @@ function hasAnyNonDefaultFilter(filters) {
 export default function ApplicationsPage({
   applications,
   error,
+  featuredApplicationId = null,
   isLoading,
+  isDemoMode = false,
   onUnsavedChangesChange,
   requestedApplicationId,
   onRequestedApplicationHandled,
   onDeleteApplication,
+  onFeaturedApplicationPresented,
   onUpdateApplication,
   resumeVersions,
 }) {
@@ -232,7 +239,11 @@ export default function ApplicationsPage({
   const detailPanelRef = useRef(null);
   const shouldScrollToDetailRef = useRef(false);
   const viewedApplications = getApplicationsForView(applications, applicationView);
-  const filteredApplications = getFilteredApplications(viewedApplications, filters);
+  const filteredApplications = getFilteredApplications(
+    viewedApplications,
+    filters,
+    filters.sortBy === "updated_desc" ? featuredApplicationId : null,
+  );
   const sourceOptions = getSourceOptions(viewedApplications);
   const cachedSelectedApplication = selectedApplicationId ? applicationDetailCache.get(selectedApplicationId) : null;
   const selectedApplication =
@@ -332,6 +343,15 @@ export default function ApplicationsPage({
     openDetails(requestedApplicationId);
     onRequestedApplicationHandled?.();
   }, [onRequestedApplicationHandled, requestedApplicationId]);
+
+  useEffect(() => {
+    if (!featuredApplicationId || requestedApplicationId) {
+      return;
+    }
+
+    completeOpenDetails(featuredApplicationId, "ai-brief");
+    onFeaturedApplicationPresented?.();
+  }, [featuredApplicationId, onFeaturedApplicationPresented, requestedApplicationId]);
 
   return (
     <div className="applications-page">
@@ -481,6 +501,7 @@ export default function ApplicationsPage({
           <ApplicationsTable
             applications={filteredApplications}
             hasFilteredResults={viewedApplications.length > 0 && hasActiveFilters}
+            isDemoMode={isDemoMode}
             onOpenDetails={openDetails}
             resumeVersions={resumeVersions}
           />

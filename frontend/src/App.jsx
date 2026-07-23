@@ -9,6 +9,7 @@ import {
   updateResumeVersion,
 } from "./services/resumesService.js";
 import { isDemoMode } from "./config/runtimeMode.js";
+import { FEATURED_DEMO_APPLICATION_ID } from "./demo/demoApplications.js";
 import { consumeBrowserCaptureFromWindow } from "./capture/browserCapturePayload.js";
 import { consumeBrowserTextCaptureFromWindow } from "./capture/browserTextCapturePayload.js";
 import { consumeBrowserTextCaptureOnce } from "./services/browserTextCapturesService.js";
@@ -87,6 +88,7 @@ export function getBrowserCaptureStartupState(windowObject = typeof window === "
 }
 
 export default function App() {
+  const demoMode = isDemoMode();
   const [browserCaptureStartup] = useState(() => getBrowserCaptureStartupState());
   const [activePage, setActivePage] = useState(
     browserCaptureStartup.shouldOpenQuickAdd ? "quick-add" : "command-center",
@@ -94,6 +96,7 @@ export default function App() {
   const [activePageHasUnsavedChanges, setActivePageHasUnsavedChanges] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
   const [requestedApplicationId, setRequestedApplicationId] = useState(null);
+  const [hasPresentedFeaturedDemoApplication, setHasPresentedFeaturedDemoApplication] = useState(false);
   const [applications, setApplications] = useState([]);
   const [resumeVersions, setResumeVersions] = useState([]);
   const [allResumeVersions, setAllResumeVersions] = useState([]);
@@ -112,7 +115,7 @@ export default function App() {
     const token = browserCaptureStartup.incomingBrowserTextCaptureToken;
     if (!token) return;
     let cancelled = false;
-    if (isDemoMode()) {
+    if (demoMode) {
       setIncomingBrowserTextCaptureError("Browser-assisted text capture is available only in the local full-stack app.");
       return undefined;
     }
@@ -130,7 +133,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [browserCaptureStartup.incomingBrowserTextCaptureToken]);
+  }, [browserCaptureStartup.incomingBrowserTextCaptureToken, demoMode]);
 
   const loadWorkspaceData = useCallback(async () => {
     setIsLoading(true);
@@ -189,9 +192,12 @@ export default function App() {
 
   const completeNavigation = useCallback((targetPage, applicationId = null) => {
     setActivePageHasUnsavedChanges(false);
-    if (applicationId) setRequestedApplicationId(applicationId);
+    if (applicationId) {
+      if (demoMode) setHasPresentedFeaturedDemoApplication(true);
+      setRequestedApplicationId(applicationId);
+    }
     setActivePage(targetPage);
-  }, []);
+  }, [demoMode]);
 
   const handleOpenApplicationDetails = useCallback((applicationId) => {
     if (shouldConfirmPageNavigation(activePage, "applications", activePageHasUnsavedChanges)) {
@@ -283,7 +289,7 @@ export default function App() {
     : resumeVersions.filter((resumeVersion) => resumeVersion.is_active);
 
   return (
-    <AppLayout activePage={activePage} isDemoMode={isDemoMode()} onNavigate={navigateToPage}>
+    <AppLayout activePage={activePage} isDemoMode={demoMode} onNavigate={navigateToPage}>
       {activePage === "command-center" ? (
         <CommandCenterPage
           onApplyFollowUpAction={handleFollowUpAction}
@@ -330,7 +336,7 @@ export default function App() {
         />
       ) : activePage === "support" ? (
         <SupportPage
-          isDemoMode={isDemoMode()}
+          isDemoMode={demoMode}
           onDownloadApplicationsCsv={downloadApplicationsCsv}
           onDownloadWorkspaceBackup={downloadWorkspaceBackup}
           onNavigate={navigateToPage}
@@ -341,6 +347,9 @@ export default function App() {
           applications={activeApplications}
           error={loadError}
           isLoading={isLoading}
+          isDemoMode={demoMode}
+          featuredApplicationId={demoMode && !hasPresentedFeaturedDemoApplication ? FEATURED_DEMO_APPLICATION_ID : null}
+          onFeaturedApplicationPresented={() => setHasPresentedFeaturedDemoApplication(true)}
           onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onRequestedApplicationHandled={() => setRequestedApplicationId(null)}
           onDeleteApplication={handleDeleteApplication}

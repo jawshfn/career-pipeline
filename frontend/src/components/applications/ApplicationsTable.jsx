@@ -3,6 +3,7 @@ import React from "react";
 import EmptyApplicationsState from "./EmptyApplicationsState.jsx";
 import StatusBadge from "./StatusBadge.jsx";
 import { formatDisplayDate, parseLocalDateValue } from "../../utils/dateFormatting.js";
+import { getJobBriefEligibility } from "../../services/jobBriefService.js";
 
 const millisecondsPerDay = 24 * 60 * 60 * 1000;
 
@@ -73,7 +74,7 @@ function ClampedTableText({ className = "", value }) {
   );
 }
 
-function OpportunityCell({ application }) {
+function OpportunityCell({ application, isDemoMode, onOpenDetails }) {
   const source = application.source?.trim() || "";
   const location = application.location?.trim() || "";
   const metadata = [source, location].filter(Boolean).join(" - ");
@@ -84,6 +85,16 @@ function OpportunityCell({ application }) {
       <strong className="opportunity-title">{application.role_title || "Untitled role"}</strong>
       <span className="opportunity-company">{application.company_name || "Unknown company"}</span>
       {metadata ? <span className="opportunity-meta">{metadata}</span> : null}
+      {isDemoMode && getJobBriefEligibility(application).isEligible ? (
+        <button
+          className="ai-ready-button"
+          title="Open the AI Brief for this demo application"
+          type="button"
+          onClick={() => onOpenDetails(application.id, "ai-brief")}
+        >
+          AI-ready
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -115,7 +126,7 @@ function getRedFlagCount(application) {
   ].filter(Boolean).length;
 }
 
-export default function ApplicationsTable({ applications, hasFilteredResults = false, onOpenDetails, resumeVersions }) {
+export default function ApplicationsTable({ applications, hasFilteredResults = false, isDemoMode = false, onOpenDetails, resumeVersions }) {
   if (applications.length === 0) {
     return <EmptyApplicationsState isFiltered={hasFilteredResults} />;
   }
@@ -145,7 +156,7 @@ export default function ApplicationsTable({ applications, hasFilteredResults = f
             return (
               <tr key={application.id}>
                 <td data-label="Opportunity">
-                  <OpportunityCell application={application} />
+                  <OpportunityCell application={application} isDemoMode={isDemoMode} onOpenDetails={onOpenDetails} />
                 </td>
                 <td data-label="Status">
                   <StatusBadge status={application.status} />
