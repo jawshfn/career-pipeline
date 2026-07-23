@@ -10,7 +10,7 @@ const application = { id: 1, company_name: "Northstar Analytics", role_title: "P
 describe("FollowUpActionDialog", () => {
   let container; let root; let onSubmit;
   beforeEach(() => { globalThis.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); onSubmit = vi.fn(); });
-  afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
+  afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.useRealTimers(); });
   async function render(props = {}) { await act(async () => root.render(<FollowUpActionDialog application={application} isOpen onCancel={vi.fn()} onOpenApplication={vi.fn()} onSubmit={onSubmit} {...props} />)); }
   const select = async (value) => act(async () => container.querySelector(`input[value="${value}"]`).click());
   const confirm = async () => act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent.includes("Mark complete") || button.textContent.includes("Complete & schedule") || button.textContent === "Reschedule" || button.textContent.includes("Clear reminder")).click());
@@ -42,9 +42,10 @@ describe("FollowUpActionDialog", () => {
   });
 
   it("populates quick dates and requires a valid reschedule date", async () => {
+    vi.useFakeTimers(); vi.setSystemTime(new Date("2026-07-20T12:00:00"));
     await render(); await select("reschedule"); const dateInput = container.querySelector('input[type="date"]');
     await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "In 3 days").click()); expect(dateInput.value).not.toBe("");
-    await act(async () => { dateInput.value = application.follow_up_date; dateInput.dispatchEvent(new Event("change", { bubbles: true })); }); await confirm(); expect(container.textContent).toContain("different from the current reminder");
+    await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(dateInput, application.follow_up_date); dateInput.dispatchEvent(new Event("input", { bubbles: true })); }); await confirm(); expect(container.textContent).toContain("different from the current reminder");
   });
 
   it("builds schedule, reschedule, and clear payloads without an activity note", async () => {

@@ -6,7 +6,7 @@ import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../ui/AutoGrowingTextarea.jsx", () => ({
-  default: (props) => <textarea data-auto-growing-textarea="true" {...props} />,
+  default: ({ maxRows, isVisible, ...props }) => <textarea data-auto-growing-textarea="true" {...props} />,
 }));
 
 import StatusFollowUpTab from "./StatusFollowUpTab.jsx";
