@@ -1,13 +1,51 @@
 # PursuitHQ AI Gateway
 
-This Cloudflare Worker gateway powers PursuitHQ's session-only Job Intelligence Brief. It sends validated job details to the Google Gemini API using the fixed production model `gemini-3.5-flash-lite`, schema version 2, and prompt version `job-brief-v5`.
+The AI gateway is a Cloudflare Worker that creates session-only Job Intelligence Briefs. It validates requests, calls Google Gemini with the fixed production model `gemini-3.5-flash-lite`, validates schema version `2`, and returns a structured response. It does not persist workspace data.
 
-`GET /health` is deterministic and reports the AI kill switch. `POST /v1/job-brief` accepts exactly `company_name`, `role_title`, and `job_posting_text`, plus optional `location`, `compensation`, and `employment_type`. The Worker validates and bounds input, rate-limits valid requests, and returns a validated `{ "brief": ..., "meta": ... }` response. The model, schema, prompt version, and timestamp are server-controlled.
+## Requirements and local setup
 
-Set `GEMINI_API_KEY` as a Cloudflare Worker secret; never add it to source control or Wrangler configuration. For local development, use ignored `ai-gateway/.dev.vars`. The remaining operational variables are `AI_ENABLED`, `GOOGLE_AI_TIMEOUT_MS` (default `15000`), `AI_MAX_COMPLETION_TOKENS` (default `4096`), and `ALLOWED_ORIGINS`. `AI_RATE_LIMITER` is the required Worker rate-limit binding.
+Node.js 22 or later is required.
 
-The gateway makes one abortable Google request using the API key only in the `x-goog-api-key` header, `systemInstruction`, one user message, `maxOutputTokens`, and `thinkingLevel: minimal`. It does not use retries, tools, grounding, a Google SDK, sampling fields, or provider-enforced response schemas. Google failures and malformed responses return controlled errors.
+```powershell
+cd ai-gateway
+npm install
+# Create ignored .dev.vars with: GEMINI_API_KEY=your-local-key
+npm run dev
+```
 
-Google receives only the current company, role, optional job details, and Job Posting Snapshot. It never receives resumes, personal employment history, notes, contacts, application activity, red flags, or follow-up information. On the current free Google API tier, submitted content and generated responses may be used to improve Google services and processed by human reviewers; do not submit personal, confidential, or sensitive information.
+Never commit `.dev.vars` or a real key. Configure `GEMINI_API_KEY` as a Cloudflare Worker secret for deployment.
 
-The `Deploy PursuitHQ AI gateway` GitHub Actions workflow runs gateway checks and deploys the Worker. CORS permits only committed browser origins; rate limiting permits two valid generation attempts per minute per bounded client key. Run `npm run check` for tests and a Wrangler deployment dry run.
+## Commands
+
+```powershell
+npm test
+npm run deploy:dry-run
+npm run check
+npm run deploy
+```
+
+The repository’s manually dispatched AI gateway workflow runs tests, a dry run, and deployment. Local `npm run deploy` requires configured Cloudflare credentials.
+
+## API
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/health` | Deterministic service health and AI kill-switch state. |
+| POST | `/v1/job-brief` | Generate one validated Job Intelligence Brief. |
+
+The POST request accepts only `company_name`, `role_title`, `job_posting_text`, `location`, `compensation`, and `employment_type`. Company, role, and a 200–20,000 character posting are required. Successful responses use `{ "brief": { ... }, "meta": { ... } }`; metadata includes the server-controlled model, prompt version, schema version, timestamp, and request ID.
+
+## Configuration and operations
+
+- `GEMINI_API_KEY`: required Worker secret.
+- `AI_ENABLED`: generation kill switch.
+- `GOOGLE_AI_TIMEOUT_MS`: bounded provider timeout.
+- `AI_MAX_COMPLETION_TOKENS`: bounded output setting.
+- `ALLOWED_ORIGINS`: comma-separated CORS allowlist.
+- `AI_RATE_LIMITER`: Worker binding for the rate limiter.
+
+Valid generation requests are limited to two attempts per minute per bounded client key. CORS accepts only configured browser origins. The Worker makes one abortable provider request and uses no retries, tools, grounding, Google SDK, provider fallback, or provider-enforced response schema.
+
+## Privacy and logging
+
+Only current company, role, optional job details, and Job Posting Snapshot are sent to Google. Resume data, notes, contacts, status, red flags, follow-ups, and activity history are excluded. The gateway logs operational diagnostic metadata rather than submitted content. AI output requires review; do not submit personal, confidential, or sensitive information.

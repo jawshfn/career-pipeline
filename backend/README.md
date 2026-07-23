@@ -1,22 +1,22 @@
 # PursuitHQ Backend
 
-FastAPI backend for the PursuitHQ local-first prototype. It provides SQLite persistence, SQLAlchemy models, Pydantic schemas, demo data seeding, and pytest coverage for the core job-search workflows.
+The local FastAPI/SQLAlchemy backend persists the PursuitHQ workspace in SQLite and exposes the `/api` JSON API.
 
-The backend is used by the full local app. It is not hosted by GitHub Pages; the Pages version is a static frontend demo with fictional in-memory data.
+## API areas
 
-## Current API Areas
+- Applications, permanent deletion, and backend-owned status-change activities.
+- Application activities, atomic follow-up actions, and reminder action items.
+- Dashboard summaries and resume variants, including delete-impact protection.
+- Hosted Greenhouse, custom Greenhouse discovery, and canonical Lever imports.
+- One-time browser text-capture transfer for the local companion.
+- JSON workspace export, applications CSV export, read-only validation, and transactional replace restore.
+- `GET /api/health`.
 
-- Applications: create, list, retrieve, update, archive
-- Application activities: list, create, update, delete timeline entries
-- Reminders action items: overdue follow-ups, upcoming follow-ups, and Needs check-in items
-- Dashboard summary metrics
-- Resume variants
-- Job imports: direct Greenhouse Job Board API import, direct canonical Lever Postings API import, and best-effort custom employer Greenhouse discovery
-- Health check
+Legacy archive fields remain compatible with older records and backups; normal application removal is permanent. See the [API reference](../docs/API_REFERENCE.md) for endpoint inventory.
 
-Greenhouse imports use the official Job Board API. Canonical `jobs.lever.co` and `jobs.eu.lever.co` posting links use Lever's documented individual Postings API; the backend never crawls a Lever board or infers a company name from its site token. The custom employer Greenhouse path verifies one board token from bounded safe-public-HTML structural evidence before importing; it does not provide generic scraping. The experimental browser helper can also send one user-initiated Indeed or LinkedIn text capture to a bounded, in-memory, one-time local transfer endpoint; it never fetches either job board or writes an application.
+## AI boundary
 
-The backend is local-development focused. Authentication, production backend deployment, generic scraping, AI extraction, import/export, and email/calendar integrations are not implemented.
+FastAPI does not generate Job Intelligence Briefs. Those requests go directly from the frontend to the separate Cloudflare Worker gateway, and the backend neither receives nor persists generated briefs.
 
 ## Setup
 
@@ -24,66 +24,17 @@ The backend is local-development focused. Authentication, production backend dep
 cd backend
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-```
-
-## Run The API
-
-```powershell
-cd backend
-.\.venv\Scripts\Activate.ps1
 python -m uvicorn app.main:app --reload
 ```
 
-The API will be available at:
+Check [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health) or interactive docs at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs). The default local database is `backend/career_pipeline.db`; override it with `CAREER_PIPELINE_DATABASE_URL`.
 
-```text
-http://127.0.0.1:8000
-```
-
-Health check:
-
-```text
-GET http://127.0.0.1:8000/api/health
-```
-
-## Local Database
-
-The default SQLite database is created at:
-
-```text
-backend/career_pipeline.db
-```
-
-This file is local development state and should not be committed. To use a different SQLite database path, set `CAREER_PIPELINE_DATABASE_URL` before starting the API.
-
-## Run Tests
+## Tests and demo seed
 
 ```powershell
-cd backend
 .\.venv\Scripts\python.exe -m pytest
-```
-
-Tests use a separate temporary SQLite database and do not write to `backend/career_pipeline.db`.
-
-## Seed Demo Data
-
-Seed fictional, public-safe demo data from the backend directory:
-
-```powershell
-cd backend
 .\.venv\Scripts\python.exe -m app.seed_demo_data
 ```
 
-The command refuses to run if local app data already exists:
-
-```text
-Demo seed refused because local data already exists. Run with --reset to clear local app demo tables first.
-```
-
-Use reset only when you intentionally want to clear local demo tables before reseeding:
-
-```powershell
-.\.venv\Scripts\python.exe -m app.seed_demo_data --reset
-```
+The optional seed uses fictional data and refuses to overwrite an existing workspace unless explicitly reset.

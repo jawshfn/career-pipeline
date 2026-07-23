@@ -1,92 +1,42 @@
 # PursuitHQ Frontend
 
-React/Vite frontend for the PursuitHQ local job-search workspace. Normal local mode talks to the FastAPI backend; demo mode uses bundled fictional in-memory data for GitHub Pages.
+The React/Vite frontend provides the local workspace and the static GitHub Pages demo.
 
 ## Pages
 
-- Reminders: overdue follow-ups, upcoming follow-ups, Needs check-in items, and follow-up quick actions
-- Dashboard: summary cards plus expandable Application Status, Sources, Red Flags, Source Results, and Resume Results sections
-- Add Job: Manual Entry, Paste Job Link, and Paste Job Text workflows
-- Applications: Active, Closed, and All views with search, filters, sorting, table actions, and Application Detail
-- Status Board: grouped status board with search, status filters, adaptive tiles, and quick status updates
-- Resumes: create, edit, deactivate, reactivate, and view reusable resume variants
+- Reminders
+- Dashboard
+- Add Job
+- Applications
+- Status Board
+- Resumes
+- Help
 
-## Local Backend
+Application Detail includes Overview, Follow-up, Job Details, Job Posting, AI Brief, Resume & Prep, Red Flags, and Activity.
 
-Interactive frontend features expect the FastAPI backend at:
+## Runtime modes
 
-```text
-http://127.0.0.1:8000
-```
+### Local mode
 
-Start the backend from the repository root:
+Local mode talks to FastAPI, uses persisted local workspace data, supports Browser Capture and workspace restore, and can use the deployed or configured AI gateway.
 
-```powershell
-cd backend
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
-```
+### Demo mode
 
-## Setup
+Demo mode uses fictional in-memory data, resets on reload, and does not call FastAPI. Browser Capture and restore are unavailable. It can call the deployed AI gateway, includes five AI-ready fictional applications, and never generates a brief automatically.
+
+## Environment
+
+- `VITE_APP_MODE=demo` enables demo mode; the default is local mode.
+- `VITE_BASE_PATH` configures the Vite deployment base path.
+- `VITE_AI_GATEWAY_URL` optionally overrides the deployed gateway URL; absent an override, the frontend uses its committed gateway default.
+
+## Scripts
 
 ```powershell
 cd frontend
 npm install
-```
-
-## Scripts
-
-Run the dev server:
-
-```powershell
 npm run dev
-```
-
-Run frontend tests:
-
-```powershell
 npm test
-```
-
-Build for production:
-
-```powershell
 npm run build
-```
-
-Preview the production build:
-
-```powershell
 npm run preview
 ```
-
-The production build can complete without the backend running, but API-driven pages need the backend for interactive use.
-
-## Local Browser Capture
-
-The optional local helper can open Add Job from a verified Greenhouse identifier or a click-initiated Indeed or LinkedIn text capture. Greenhouse uses the existing validated fragment handoff; text capture uses an opaque one-time token, then opens the ordinary Paste Job Text review with the original Job Link and matching Source. The user still reviews and saves manually.
-
-See the [Browser Extension Guide](../browser-extension/README.md) for local unpacked-extension setup. The static demo does not run browser-assisted live Greenhouse imports.
-
-## Paste Job Link Imports
-
-Paste Job Link automatically recognizes supported hosted Greenhouse and canonical Lever links. Lever supports `jobs.lever.co/{site}/{posting-id}` and `jobs.eu.lever.co/{site}/{posting-id}`, including `/apply` links; the review preserves the entered Job Link and selected Source. The user always reviews and saves manually. The static demo includes fictional Greenhouse and Lever fixtures only.
-
-## Static Demo Mode
-
-Demo mode is enabled only when `VITE_APP_MODE=demo`. It uses fictional in-memory frontend data, resets on page refresh, and does not make browser-assisted live Greenhouse imports.
-
-Build for GitHub Pages:
-
-```powershell
-$env:VITE_APP_MODE="demo"
-$env:VITE_BASE_PATH="/career-pipeline/"
-npm run build
-```
-
-Preview the built demo locally:
-
-```powershell
-npm run preview
-```
-
-The GitHub Pages workflow runs frontend tests, builds with `VITE_APP_MODE=demo`, and publishes `frontend/dist`.

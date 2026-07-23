@@ -1,61 +1,42 @@
 # PursuitHQ Capture
 
-This experimental, locally loaded Chrome extension supports verified Greenhouse identifier capture and click-initiated Indeed, LinkedIn, ZipRecruiter, and authenticated Handshake text capture into an editable local PursuitHQ review. Handshake supports `https://app.joinhandshake.com/jobs/<positive numeric job ID>` and the currently selected posting in `https://app.joinhandshake.com/job-search/<positive numeric job ID>`, with optional query parameters.
+PursuitHQ Capture is an experimental, locally loaded Chrome companion. A user click inspects a supported active job page and, after confirmation, opens an editable local PursuitHQ review. It is not Chrome Web Store distributed and never saves an application automatically.
 
-It is not a Chrome Web Store feature. It makes no request to the employer page or a remote PursuitHQ service, sends no telemetry, and stores no persistent data. Most captures only read the active page. On some standalone or selected side-panel Handshake postings, the complete description is not mounted until its bounded job-description `More` control is activated; during an explicitly user-initiated capture, PursuitHQ may activate only that control. It does not activate Quick apply, Save, Share, Withdraw application, location expansion, or unrelated controls, and it never submits or saves anything on Handshake. It does not read cookies, storage, authentication tokens, or network responses. Its permissions are `activeTab`, `scripting`, and a narrow local-backend host permission for `http://127.0.0.1:8000/*`.
+## Supported providers and layouts
 
-## Load locally
+| Provider | Supported page/layout | Transfer | Important limitation |
+| --- | --- | --- | --- |
+| Greenhouse | Verified Greenhouse identifiers | Identifier handoff to structured import | Only verified jobs. |
+| Indeed | One confidently detected current job | Cleaned text through a one-time local token | Unsupported or ambiguous layouts stop. |
+| LinkedIn | Standalone `/jobs/view/{id}` and selected current-job panels | Cleaned text token | One current job only. |
+| ZipRecruiter | Signed-in selected-job `/jobs-search` pane | Cleaned text token | No standalone or signed-out layouts. |
+| Handshake | Authenticated `/jobs/<id>` and selected `/job-search/<id>` panel | Cleaned text token | Selected panel must be unambiguous. |
 
-1. Open `chrome://extensions` in Chrome.
-2. Turn on Developer mode.
-3. Select **Load unpacked**.
-4. Choose this `browser-extension` directory.
-5. Pin **PursuitHQ Capture** from the Extensions menu.
-6. Start the local app in two terminals:
+## Local setup
 
-   ```powershell
-   cd backend
-   .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
-   ```
+1. Start the local FastAPI backend and Vite frontend.
+2. Open `chrome://extensions`, enable Developer mode, and choose **Load unpacked**.
+3. Select this `browser-extension` directory, pin **PursuitHQ Capture**, open a supported job, and click the extension.
+4. Confirm **Open in PursuitHQ** to open a new local review tab.
 
-   ```powershell
-   cd frontend
-   npm run dev
-   ```
+The target is `http://localhost:5173/`; the local backend host permission is limited to `http://127.0.0.1:8000/*`.
 
-7. Open a job page, wait for it to finish loading, and click the extension once.
+## Capture flow and permissions
 
-The popup reports whether one verified Greenhouse board and one supported job ID were detected. On a successful detection, select **Open in PursuitHQ**. The extension opens only `http://localhost:5173/` with a small versioned URL-fragment payload containing the provider, board token, job ID, and original job URL. PursuitHQ removes the fragment immediately, validates the data again, and calls its existing backend integration with the official Greenhouse Job Board API.
+Greenhouse uses verified identifiers with the existing backend importer. Other supported providers transfer the original URL and bounded cleaned visible job text to an in-memory local token that expires after two minutes and is consumed once. No provider data is saved unless the user reviews and explicitly saves it.
 
-The app opens **Add Job** -> **Paste Job Link**, starts an import into the existing editable review, preserves the original employer URL as Job Link, and defaults Source to Company Website. Source remains editable, and no application is saved automatically.
+Permissions are limited to `activeTab`, `scripting`, and the narrow local backend host permission. The extension makes no job-board network requests, has no persistent extension storage, no telemetry, no clipboard access, and no broad host permissions. It does not read cookies, storage, authentication tokens, or network responses.
 
-For Indeed, LinkedIn, ZipRecruiter, and Handshake, the helper reads only the current job after the user clicks the extension. It sends bounded cleaned text only after **Open in PursuitHQ** is selected. The local backend keeps that text in memory for at most two minutes and consumes it once into **Add Job** -> **Paste Job Text**. LinkedIn supports search-results current-job side panels and standalone `/jobs/view/{id}` pages. ZipRecruiter targets signed-in `/jobs-search` pages with exactly one `lk` selected-job key. Handshake supports authenticated standalone `/jobs/<positive numeric ID>` pages and the currently selected `/job-search/<positive numeric ID>` side-panel posting. For a side panel, it verifies one visible selected detail region and a matching direct job link, excludes left-side result cards, and preserves that direct `/jobs/<id>` link as Job Link. It sets Source to Handshake and opens editable review; it does not infer PursuitHQ status from an “Applied” banner. The extension makes no request to job boards and has no job-board host permissions. Captures are not written to SQLite unless the user reviews and explicitly saves.
+Handshake may activate only a bounded job-description **More** control during a user-initiated capture when necessary. It never activates application, save, share, withdrawal, or unrelated controls.
 
-The GitHub Pages demo does not support browser-assisted imports. Run the local full-stack version instead.
-
-## Run tests
-
-From the repository root:
+## Testing and removal
 
 ```powershell
 node --test browser-extension/*.test.mjs
 ```
 
-No install step or extension-specific dependency is required. After changing extension files, return to `chrome://extensions` and select **Reload** on the unpacked extension card.
+Reload the unpacked extension from `chrome://extensions` after extension changes. To remove it, select **Remove** on its extension card.
 
-## Current Limitations
+## Limitations
 
-- The local full-stack app must be running; the target is fixed to `http://localhost:5173/`.
-- Each handoff intentionally opens a new local PursuitHQ tab so existing unsaved work is not replaced.
-- The extension does not request the broader `tabs` or host permissions needed to search for and reuse arbitrary tabs.
-- Indeed and LinkedIn capture each support one confidently detected current job only. LinkedIn supports search-results current-job side panels and standalone `/jobs/view/{id}` pages. ZipRecruiter support is limited to the signed-in selected-job `/jobs-search` detail pane; standalone and signed-out ZipRecruiter layouts are not supported. Handshake supports standalone authenticated `/jobs/<positive numeric ID>` pages and one confidently selected `/job-search/<positive numeric ID>` right-side posting. Search pages with no selected current job, ambiguous or mismatched selected panels, unselected left-side result cards, employer administration routes, and other Handshake layouts are unsupported. Generic pages and selected text are not supported.
-- Greenhouse capture remains limited to verified Greenhouse jobs.
-- The helper is experimental and is not distributed through the Chrome Web Store.
-
-## Remove afterward
-
-Return to `chrome://extensions` and select **Remove** on the detector card.
-
-## Privacy boundary
-
-Greenhouse evidence remains in the popup only and is not transferred to PursuitHQ. Indeed, LinkedIn, ZipRecruiter, and Handshake transfer contains only the original job URL and cleaned visible job text; it never contains HTML, form values, cookies, headers, screenshots, browsing history, or storage data. A user-initiated Handshake capture may use the narrow job-description expansion exception described above when needed. The extension has no background script, persistent content script, storage, clipboard access, broad host permissions, or employer-page network activity.
+The local full-stack app must be running. There is no generic page or selected-text capture, no generic scraper, and no automatic application submission. Unsupported, ambiguous, or changed provider layouts are intentionally rejected.
