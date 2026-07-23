@@ -114,7 +114,7 @@ export function createDemoState() {
       prep_notes: "Mention dashboard cleanup and API testing examples.",
       resume_version_id: 2,
       job_description:
-        "Build clear reporting workflows for fictional customer teams.\n\nPartner with stakeholders to improve dashboard quality.",
+        DEMO_JOB_POSTING_SNAPSHOTS.northstarAnalytics,
       notes: "Ask how the analytics team prioritizes recurring reporting requests.",
       updated_at: timestamp(9),
     }),
@@ -136,6 +136,7 @@ export function createDemoState() {
       contact_info: null,
       prep_notes: "Review PursuitHQ architecture and responsive layout polish.",
       resume_version_id: 1,
+      job_description: DEMO_JOB_POSTING_SNAPSHOTS.brightForgeLabs,
       notes: "Recruiter screen scheduled for a fictional frontend role.",
       updated_at: timestamp(1),
     }),
@@ -192,6 +193,7 @@ export function createDemoState() {
       follow_up_date: addDays(0),
       next_action: "Complete the take-home assessment.",
       resume_version_id: 3,
+      job_description: DEMO_JOB_POSTING_SNAPSHOTS.lumenGrove,
       notes: "Assessment due today in the fictional demo data.",
       updated_at: timestamp(0),
     }),
@@ -323,6 +325,7 @@ export function createDemoState() {
       follow_up_date: addDays(-5),
       next_action: "Ask referral contact whether the team has reviewed applications.",
       resume_version_id: 2,
+      job_description: DEMO_JOB_POSTING_SNAPSHOTS.evergreenCivicTech,
       notes: "Second overdue follow-up to make Reminders meaningful.",
       updated_at: timestamp(8),
     }),
@@ -394,3 +397,4 @@ export function createDemoState() {
     nextActivityId: 7,
   };
 }
+import { DEMO_JOB_POSTING_SNAPSHOTS } from "./demoJobPostingSnapshots.js";
