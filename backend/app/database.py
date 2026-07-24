@@ -42,7 +42,10 @@ def create_db_and_tables() -> None:
 def parse_status_change_note(note: str | None) -> tuple[str, str] | None:
     """Return statuses only for an exact PursuitHQ-generated status note."""
     match = STATUS_CHANGE_NOTE_PATTERN.fullmatch(note or "")
-    return match.groups() if match else None
+    if match is None:
+        return None
+
+    return match.group(1), match.group(2)
 
 
 def add_application_additive_columns() -> None:
