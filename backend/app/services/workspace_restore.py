@@ -3,7 +3,6 @@
 from datetime import datetime, timezone
 import json
 import hmac
-import re
 from typing import Any
 
 from sqlalchemy import delete, text
@@ -56,13 +55,6 @@ def _resume_rows(document: WorkspaceBackupDocument) -> list[dict[str, Any]]:
 
 
 def _application_rows(document: WorkspaceBackupDocument) -> list[dict[str, Any]]:
-    history: dict[int, list[str]] = {}
-    pattern = re.compile(r"^Status changed from (Saved|Applied|Assessment|Recruiter Screen|Interview|Offer|Rejected|Withdrawn|Archived) to (Saved|Applied|Assessment|Recruiter Screen|Interview|Offer|Rejected|Withdrawn|Archived)\\.$")
-    for activity in document.data.application_activities:
-        if activity.activity_type == "Status Change":
-            match = pattern.fullmatch(activity.note)
-            if match:
-                history.setdefault(activity.application_id, []).extend(match.groups())
     rows = []
     for record in document.data.applications:
         row = record.model_dump(exclude={"date_saved", "date_applied", "follow_up_date", "created_at", "updated_at"})
@@ -74,8 +66,6 @@ def _application_rows(document: WorkspaceBackupDocument) -> list[dict[str, Any]]
             "updated_at": parse_backup_datetime(record.updated_at),
         })
         row["furthest_stage"] = furthest_stage_for(record.status, row["date_applied"], record.furthest_stage)
-        for status in history.get(record.id, []):
-            row["furthest_stage"] = furthest_stage_for(status, None, row["furthest_stage"])
         rows.append(row)
     return rows
 

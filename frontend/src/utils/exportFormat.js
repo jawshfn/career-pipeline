@@ -1,7 +1,6 @@
 import { APPLICATIONS_REVIEW_HEADERS, createApplicationReviewRows, reviewRowValues } from "./applicationReviewRows.js";
 
 export const BACKUP_FORMAT = "pursuithq-workspace-backup";
-export const BACKUP_VERSION = 2;
 export const APPLICATIONS_CSV_HEADERS = APPLICATIONS_REVIEW_HEADERS;
 
 function deepClone(value) {
@@ -46,7 +45,6 @@ export function createWorkspaceBackup(snapshot, now = new Date()) {
   const briefs = sortById(snapshot.application_ai_briefs || []);
   return {
     format: BACKUP_FORMAT,
-    version: BACKUP_VERSION,
     exported_at: now.toISOString(),
     counts: {
       resume_versions: resumeVersions.length,

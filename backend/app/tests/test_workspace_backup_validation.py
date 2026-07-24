@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from app.backup_format import BACKUP_FORMAT, BACKUP_VERSION
+from app.backup_format import BACKUP_FORMAT
 from app.domain import ALLOWED_APPLICATION_STATUSES
 from app.models import Application, ApplicationActivity, ResumeVersion
 from app.routers.exports import workspace_backup_payload
@@ -57,8 +57,7 @@ def test_transport_content_type_and_body_handling(client, db_session):
 
 @pytest.mark.parametrize("path,value,code", [
     (("format",), "other", "unsupported_format"),
-        (("version",), 4, "unsupported_version"),
-    (("version",), "1", "schema_error"),
+    (("version",), 4, "schema_error"),
     (("counts", "applications"), -1, "schema_error"),
     (("data", "resume_versions", 0, "id"), "1", "schema_error"),
     (("data", "applications", 0, "id"), "1", "schema_error"),
@@ -86,9 +85,18 @@ def test_strict_scalar_and_contract_errors_are_structured(client, db_session, pa
     lambda payload: payload.__setitem__("unexpected", True),
     lambda payload: payload.pop("counts"),
     lambda payload: payload.pop("data"),
+    lambda payload: payload["counts"].pop("resume_versions"),
+    lambda payload: payload["counts"].pop("applications"),
+    lambda payload: payload["counts"].pop("application_activities"),
+    lambda payload: payload["counts"].pop("application_ai_briefs"),
+    lambda payload: payload["data"].pop("resume_versions"),
+    lambda payload: payload["data"].pop("applications"),
+    lambda payload: payload["data"].pop("application_activities"),
+    lambda payload: payload["data"].pop("application_ai_briefs"),
     lambda payload: payload["data"]["resume_versions"][0].pop("name"),
     lambda payload: payload["data"]["resume_versions"][0].__setitem__("unexpected", True),
     lambda payload: payload["data"]["applications"][0].pop("company_name"),
+    lambda payload: payload["data"]["applications"][0].pop("furthest_stage"),
     lambda payload: payload["data"]["applications"][0].__setitem__("unexpected", True),
     lambda payload: payload["data"]["application_activities"][0].pop("note"),
     lambda payload: payload["data"]["application_activities"][0].__setitem__("unexpected", True),
@@ -223,13 +231,11 @@ def test_schema_error_cap_and_export_contract(client, db_session):
     assert all("bad" not in issue["message"] for issue in body["errors"])
     exported, _ = populated_backup(db_session)
     assert exported["format"] == BACKUP_FORMAT == "pursuithq-workspace-backup"
-    assert exported["version"] == BACKUP_VERSION == 3
+    assert set(exported) == {"format", "exported_at", "counts", "data"}
     assert post_backup(client, exported).json()["is_valid"] is True
 
 
-def test_version_one_backup_remains_valid_without_ai_briefs(client, db_session):
-    legacy, _ = populated_backup(db_session)
-    legacy["version"] = 1
-    legacy["counts"].pop("application_ai_briefs")
-    legacy["data"].pop("application_ai_briefs")
-    assert post_backup(client, legacy).json()["is_valid"] is True
+def test_current_contract_requires_supported_furthest_stage(client, db_session):
+    payload, _ = populated_backup(db_session)
+    payload["data"]["applications"][0]["furthest_stage"] = "Rejected"
+    assert "schema_error" in issue_codes(post_backup(client, payload))

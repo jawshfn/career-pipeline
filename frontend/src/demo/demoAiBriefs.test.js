@@ -20,7 +20,7 @@ describe("demo AI brief persistence", () => {
     expect(saved.is_stale).toBe(false);
 
     const backup = createWorkspaceBackup(getDemoExportSnapshot());
-    expect(backup.version).toBe(2);
+    expect(backup).not.toHaveProperty("version");
     expect(backup.counts.application_ai_briefs).toBe(1);
     expect(backup.data.application_ai_briefs[0]).toMatchObject({ source_fingerprint: saved.source_fingerprint, application_id: application.id });
     expect(backup.data.application_ai_briefs[0]).not.toHaveProperty("source_snapshot");

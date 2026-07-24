@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import WorkspaceBackupReview from "./WorkspaceBackupReview.jsx";
 
 const backupSummary = {
-  format: "pursuithq-workspace-backup", version: 1, exported_at: "2026-07-01T12:00:00Z",
+  format: "pursuithq-workspace-backup", exported_at: "2026-07-01T12:00:00Z",
   resume_versions: 1, applications: 3, application_activities: 2,
   active_applications: 1, closed_applications: 1, legacy_archived_applications: 1,
 };
@@ -114,7 +114,7 @@ describe("WorkspaceBackupReview", () => {
     expect(result.textContent).toContain("No data has been changed");
     expect(result.textContent).toContain("authorization is temporary");
     expect(result.textContent).toContain("pursuithq-workspace-backup");
-    expect(result.textContent).toContain("Version: 1");
+    expect(result.textContent).not.toContain("Version:");
     expect(result.textContent).toContain("Exported:");
     ["Resume versions", "Applications", "Activities", "Active applications", "Closed applications", "Legacy archived"].forEach((label) => expect(result.textContent).toContain(label));
     expect(result.textContent.indexOf("First warning")).toBeLessThan(result.textContent.indexOf("Second warning"));

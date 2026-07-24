@@ -1,4 +1,4 @@
-"""Read-only validation for version 1 and version 2 workspace backups."""
+"""Read-only validation for the current PursuitHQ workspace backup contract."""
 
 from datetime import date, datetime, timedelta, timezone
 import re
@@ -7,7 +7,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, ValidationError, field_validator, model_validator
 from sqlalchemy.orm import Session
 
-from ..backup_format import BACKUP_FORMAT, BACKUP_VERSION
+from ..backup_format import BACKUP_FORMAT
 from ..schemas import JobBriefV2
 from ..domain import ACTIVE_APPLICATION_STATUSES, ARCHIVED_APPLICATION_STATUS, CLOSED_APPLICATION_STATUSES
 from .workspace_backup_data import workspace_content_payload
@@ -43,7 +43,7 @@ class BackupCounts(_StrictBackupModel):
     resume_versions: StrictInt
     applications: StrictInt
     application_activities: StrictInt
-    application_ai_briefs: StrictInt = 0
+    application_ai_briefs: StrictInt
 
     @field_validator("resume_versions", "applications", "application_activities", "application_ai_briefs")
     @classmethod
@@ -90,7 +90,7 @@ class ApplicationBackupRecord(_StrictBackupModel):
     job_link: StrictStr | None
     source: StrictStr
     status: StrictStr
-    furthest_stage: StrictStr | None = None
+    furthest_stage: StrictStr
     location: StrictStr | None
     compensation: StrictStr | None
     employment_type: StrictStr | None
@@ -139,9 +139,9 @@ class ApplicationBackupRecord(_StrictBackupModel):
 
     @field_validator("furthest_stage")
     @classmethod
-    def supported_furthest_stage(cls, value: str | None) -> str | None:
+    def supported_furthest_stage(cls, value: str) -> str:
         from ..domain import PROGRESSION_STAGES
-        if value is not None and value not in PROGRESSION_STAGES:
+        if value not in PROGRESSION_STAGES:
             raise ValueError("must be a supported progression stage")
         return value
 
@@ -232,27 +232,14 @@ class BackupData(_StrictBackupModel):
     resume_versions: list[ResumeBackupRecord]
     applications: list[ApplicationBackupRecord]
     application_activities: list[ActivityBackupRecord]
-    application_ai_briefs: list[ApplicationAiBriefBackupRecord] = Field(default_factory=list)
+    application_ai_briefs: list[ApplicationAiBriefBackupRecord]
 
 
 class WorkspaceBackupDocument(_StrictBackupModel):
     format: StrictStr
-    version: StrictInt
     exported_at: StrictStr
     counts: BackupCounts
     data: BackupData
-
-    @model_validator(mode="after")
-    def version_shape(self):
-        if self.version == 1 and (self.counts.application_ai_briefs or self.data.application_ai_briefs):
-            raise ValueError("version 1 backups cannot include AI briefs")
-        if self.version == 2 and ("application_ai_briefs" not in self.counts.model_fields_set or "application_ai_briefs" not in self.data.model_fields_set):
-            raise ValueError("version 2 backups must include AI briefs")
-        if self.version == BACKUP_VERSION and any(
-            record.furthest_stage is None for record in self.data.applications
-        ):
-            raise ValueError("version 3 backups must include furthest_stage for every application")
-        return self
 
     @field_validator("exported_at")
     @classmethod
@@ -324,7 +311,7 @@ def _record_limits(payload: Any) -> list[dict[str, str | None]]:
 
 
 def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDocument | None, list[dict[str, str | None]]]:
-    """Apply strict validation for supported workspace-backup versions without database reads."""
+    """Apply strict validation for the current workspace-backup contract without database reads."""
     issues = _record_limits(payload)
     if issues:
         return None, issues
@@ -337,9 +324,7 @@ def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDoc
 
     if document is not None:
         if document.format != BACKUP_FORMAT:
-            issues.append(_issue("unsupported_format", "format", "This is not a supported PursuitHQ workspace backup."))
-        if document.version not in {1, 2, BACKUP_VERSION}:
-            issues.append(_issue("unsupported_version", "version", "This backup version is not supported."))
+            issues.append(_issue("unsupported_format", "format", "This file does not match the current PursuitHQ workspace backup format."))
         if not issues:
             data = document.data
             declared = document.counts
@@ -380,7 +365,7 @@ def workspace_backup_summary(document: WorkspaceBackupDocument, now: datetime | 
     data = document.data
     applications = [record.model_dump() for record in data.applications]
     breakdown = application_summary(applications)
-    summary = {"format": document.format, "version": document.version, "exported_at": document.exported_at,
+    summary = {"format": document.format, "exported_at": document.exported_at,
                "resume_versions": len(data.resume_versions), "application_activities": len(data.application_activities), "application_ai_briefs": len(data.application_ai_briefs), **breakdown}
     if not data.resume_versions and not data.applications and not data.application_activities and not data.application_ai_briefs:
         warnings.append("This backup contains no workspace records.")

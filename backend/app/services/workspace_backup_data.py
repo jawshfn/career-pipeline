@@ -6,7 +6,7 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from ..backup_format import BACKUP_FORMAT, BACKUP_VERSION
+from ..backup_format import BACKUP_FORMAT
 from ..models import Application, ApplicationActivity, ApplicationAiBrief, ResumeVersion
 from ..schemas import ApplicationActivityRead, ApplicationRead, ResumeVersionRead
 
@@ -30,7 +30,6 @@ def workspace_content_payload(db: Session) -> dict[str, Any]:
                       "created_at": item.created_at.isoformat(), "updated_at": item.updated_at.isoformat()} for item in briefs]
     return {
         "format": BACKUP_FORMAT,
-        "version": BACKUP_VERSION,
         "counts": {
             "resume_versions": len(resume_records),
             "applications": len(application_records),

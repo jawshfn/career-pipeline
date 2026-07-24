@@ -28,7 +28,7 @@ PursuitHQ is a mature local-first prototype with capture workflows, application 
 ### Capture integrations and data portability
 
 - Locally loaded Browser Capture for documented supported layouts.
-- Versioned JSON backup (v2 includes persisted AI briefs), validation, transactional replace restore, CSV export, and frontend-generated XLSX export.
+- JSON backup including persisted AI briefs, validation, transactional replace restore, CSV export, and frontend-generated XLSX export.
 
 ### AI Job Intelligence and public demo
 

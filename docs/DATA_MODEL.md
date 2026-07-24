@@ -22,7 +22,7 @@ An activity belongs to one application and stores its date, type, note, and time
 resume_versions 1 <- 0..many applications 1 <- 0..many application_activities
 ```
 
-Deleting an application removes its activities. Removing a resume version requires its applications to be reassigned or cleared first. JSON backups preserve IDs, relationships, inactive resumes, and legacy archived records; restore replaces the workspace transactionally.
+Deleting an application removes its activities. Removing a resume version requires its applications to be reassigned or cleared first. JSON backups preserve IDs, relationships, inactive resumes, and archived records; restore replaces the workspace transactionally.
 
 ## AI persistence boundary
 

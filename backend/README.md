@@ -12,7 +12,7 @@ The local FastAPI/SQLAlchemy backend persists the PursuitHQ workspace in SQLite 
 - JSON workspace export, applications CSV export, read-only validation, and transactional replace restore.
 - `GET /api/health`.
 
-Legacy archive fields remain compatible with older records and backups; normal application removal is permanent. See the [API reference](../docs/API_REFERENCE.md) for endpoint inventory.
+Legacy archive fields remain compatible with older records; normal application removal is permanent. See the [API reference](../docs/API_REFERENCE.md) for endpoint inventory.
 
 ## AI boundary
 

@@ -44,7 +44,7 @@ FastAPI serves the local JSON API under `/api`; generated interactive schemas ar
 
 | Method | Path | Purpose | Important behavior |
 | --- | --- | --- | --- |
-| GET | `/api/exports/workspace` | Download versioned JSON backup | Read-only complete workspace backup. |
+| GET | `/api/exports/workspace` | Download JSON backup | Read-only complete workspace backup. |
 | GET | `/api/exports/applications.csv` | Download review CSV | Read-only human-review export; legacy archived records excluded. |
 | POST | `/api/imports/workspace/validate` | Validate a backup | Read-only validation and short-lived restore authorization. |
 | POST | `/api/imports/workspace/restore` | Replace a workspace | Requires authorization; transactional replace restore preserves compatible legacy archives. |
