@@ -13,7 +13,6 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_DATABASE_URL = f"sqlite:///{BACKEND_DIR / 'career_pipeline.db'}"
 DATABASE_URL = os.getenv("CAREER_PIPELINE_DATABASE_URL", DEFAULT_DATABASE_URL)
 FURTHEST_STAGE_HISTORY_BACKFILL_KEY = "furthest_stage_history_backfill_complete"
-_OLD_FURTHEST_STAGE_HISTORY_BACKFILL_KEY = "furthest_stage_history_backfill_v1"
 _STATUS_PATTERN_PART = "|".join(ALLOWED_APPLICATION_STATUSES)
 STATUS_CHANGE_NOTE_PATTERN = re.compile(
     rf"^Status changed from ({_STATUS_PATTERN_PART}) to ({_STATUS_PATTERN_PART})\.$"
