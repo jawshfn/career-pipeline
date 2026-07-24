@@ -250,6 +250,7 @@ export default function ApplicationDetailPanel({
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
   const deleteTriggerRef = useRef(null);
   const briefAbortControllerRef = useRef(null);
+  const briefStatusRequestRef = useRef(0);
   const [brief, setBrief] = useState(null);
   const [briefMeta, setBriefMeta] = useState(null);
   const [briefError, setBriefError] = useState("");
@@ -281,6 +282,7 @@ export default function ApplicationDetailPanel({
       }
 
       resetActivityDraft();
+      briefStatusRequestRef.current += 1;
       briefAbortControllerRef.current?.abort();
       briefAbortControllerRef.current = null;
       setBrief(null);
@@ -338,6 +340,7 @@ export default function ApplicationDetailPanel({
   }, [applicationId]);
 
   useEffect(() => () => {
+    briefStatusRequestRef.current += 1;
     const controller = briefAbortControllerRef.current;
     briefAbortControllerRef.current = null;
     controller?.abort();
@@ -401,6 +404,7 @@ export default function ApplicationDetailPanel({
 
     if (hasUnsavedAiSourceChanges) return;
     const requestPayload = createJobBriefPayload(savedFormData);
+    briefStatusRequestRef.current += 1;
     const controller = new AbortController();
     briefAbortControllerRef.current = controller;
     setBriefError("");
@@ -447,6 +451,7 @@ export default function ApplicationDetailPanel({
 
   async function confirmRemoveBrief() {
     if (!brief || isRemovingBrief) return;
+    briefStatusRequestRef.current += 1;
     setIsRemovingBrief(true);
     setBriefRemovalError("");
     try {
@@ -519,26 +524,36 @@ export default function ApplicationDetailPanel({
         setActivityRefreshVersion((currentVersion) => currentVersion + 1);
       }
       setSaveMessage("Changes saved.");
+      if (brief && hadUnsavedAiSourceChanges) setIsStoredBriefStale(true);
+      setIsSaving(false);
     } catch (error) {
       setSaveError(error.message || "Could not save application details.");
       setIsSaving(false);
       return;
     }
 
-    try {
-      const refreshedBrief = await getApplicationAiBrief(applicationId);
-      if (refreshedBrief) {
-        setBrief(refreshedBrief.brief);
-        setBriefMeta(refreshedBrief.meta);
-        setBriefFingerprint(refreshedBrief.source_fingerprint);
-        setIsStoredBriefStale(Boolean(refreshedBrief.is_stale));
+    const requestToken = ++briefStatusRequestRef.current;
+    void (async () => {
+      try {
+        const refreshedBrief = await getApplicationAiBrief(applicationId);
+        if (briefStatusRequestRef.current !== requestToken) return;
+        setBriefError("");
+        if (refreshedBrief) {
+          setBrief(refreshedBrief.brief);
+          setBriefMeta(refreshedBrief.meta);
+          setBriefFingerprint(refreshedBrief.source_fingerprint);
+          setIsStoredBriefStale(Boolean(refreshedBrief.is_stale));
+        } else {
+          setBrief(null);
+          setBriefMeta(null);
+          setBriefFingerprint("");
+          setIsStoredBriefStale(false);
+        }
+      } catch {
+        if (briefStatusRequestRef.current !== requestToken) return;
+        setBriefError("Changes were saved, but PursuitHQ could not refresh the saved AI brief status. Reload this application and try again.");
       }
-    } catch {
-      setBriefError("Changes were saved, but PursuitHQ could not refresh the saved AI brief status. Reload this application and try again.");
-      if (brief && hadUnsavedAiSourceChanges) setIsStoredBriefStale(true);
-    } finally {
-      setIsSaving(false);
-    }
+    })();
   }
 
   function openDeleteDialog() {

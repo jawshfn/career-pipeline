@@ -95,9 +95,20 @@ function setValue(control, value) {
   control.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((nextResolve, nextReject) => {
+    resolve = nextResolve;
+    reject = nextReject;
+  });
+  return { promise, reject, resolve };
+}
+
 describe("ApplicationDetailPanel AI Brief integration", () => {
   let container;
   let root;
+  let onLoadApplication;
   let onSaveApplication;
   let onUnsavedChangesChange;
 
@@ -106,6 +117,7 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
+    onLoadApplication = vi.fn();
     onSaveApplication = vi.fn();
     onUnsavedChangesChange = vi.fn();
     getApplication.mockResolvedValue(application);
@@ -128,7 +140,7 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
 
   async function render(props = {}) {
     await act(async () => {
-      root.render(<ApplicationDetailPanel applicationId={1} initialApplication={application} initialTab="ai-brief" onClose={vi.fn()} onDeleteApplication={vi.fn()} onSaveApplication={onSaveApplication} onUnsavedChangesChange={onUnsavedChangesChange} resumeVersions={[]} {...props} />);
+      root.render(<ApplicationDetailPanel applicationId={1} initialApplication={application} initialTab="ai-brief" onClose={vi.fn()} onDeleteApplication={vi.fn()} onLoadApplication={onLoadApplication} onSaveApplication={onSaveApplication} onUnsavedChangesChange={onUnsavedChangesChange} resumeVersions={[]} {...props} />);
     });
   }
 
@@ -199,6 +211,109 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     expect(container.textContent).toContain("A product management role.");
     expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Refresh brief")).toBe(true);
     expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Remove brief")).toBe(true);
+  });
+
+  it("finishes the primary save and conservatively marks relevant saved changes stale while the brief status reload is pending", async () => {
+    const statusReload = deferred();
+    onSaveApplication.mockResolvedValue({ ...application, company_name: "Updated Northstar" });
+    await render();
+    await act(async () => click(container, "Generate AI brief"));
+    getAiBrief.mockImplementationOnce(() => statusReload.promise);
+
+    await act(async () => click(container, "Job Details"));
+    await act(async () => setValue(container.querySelector('input[name="company_name"]'), "Updated Northstar"));
+    await act(async () => {
+      click(container, "Save changes");
+      await Promise.resolve();
+    });
+    await act(async () => click(container, "AI Brief"));
+
+    const saveButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Save changes");
+    expect(container.textContent).toContain("Changes saved.");
+    expect(saveButton.disabled).toBe(false);
+    expect(onLoadApplication).toHaveBeenCalledWith({ ...application, company_name: "Updated Northstar" });
+    expect(container.textContent).toContain("A product management role.");
+    expect(container.textContent).toContain("Saved job details changed. Refresh this brief.");
+    expect(container.textContent).toContain("Refresh brief");
+    expect(container.textContent).not.toContain("Save changes before using AI Brief");
+
+    await act(async () => statusReload.resolve({ ...response("Authoritative current brief"), source_fingerprint: "b".repeat(64), is_stale: false }));
+    expect(container.textContent).toContain("Authoritative current brief");
+    expect(container.textContent).not.toContain("Saved job details changed. Refresh this brief.");
+    expect(container.textContent).not.toContain("Refresh brief");
+  });
+
+  it("keeps a current brief current while an unrelated saved change reloads its status", async () => {
+    const statusReload = deferred();
+    onSaveApplication.mockResolvedValue({ ...application, notes: "Changed private note" });
+    await render();
+    await act(async () => click(container, "Generate AI brief"));
+    getAiBrief.mockImplementationOnce(() => statusReload.promise);
+
+    await act(async () => click(container, "Job Details"));
+    await act(async () => setValue(container.querySelector('textarea[name="notes"]'), "Changed private note"));
+    await act(async () => {
+      click(container, "Save changes");
+      await Promise.resolve();
+    });
+    await act(async () => click(container, "AI Brief"));
+
+    expect(container.textContent).toContain("Changes saved.");
+    expect(container.textContent).toContain("A product management role.");
+    expect(container.textContent).not.toContain("Refresh brief");
+    expect(container.textContent).not.toContain("Saved job details changed. Refresh this brief.");
+  });
+
+  it("clears a recovered brief-status error only when a later status reload succeeds", async () => {
+    onSaveApplication.mockResolvedValueOnce({ ...application, company_name: "Updated Northstar" }).mockResolvedValueOnce({ ...application, company_name: "Updated Northstar", notes: "Saved note" });
+    await render();
+    await act(async () => click(container, "Generate AI brief"));
+    getAiBrief.mockRejectedValueOnce(new Error("brief status unavailable"));
+
+    await act(async () => click(container, "Job Details"));
+    await act(async () => setValue(container.querySelector('input[name="company_name"]'), "Updated Northstar"));
+    await act(async () => click(container, "Save changes"));
+    await act(async () => click(container, "AI Brief"));
+    expect(container.textContent).toContain("Changes were saved, but PursuitHQ could not refresh the saved AI brief status.");
+
+    getAiBrief.mockResolvedValueOnce({ ...response("Recovered brief"), source_fingerprint: "c".repeat(64), is_stale: false });
+    await act(async () => click(container, "Job Details"));
+    await act(async () => setValue(container.querySelector('textarea[name="notes"]'), "Saved note"));
+    await act(async () => click(container, "Save changes"));
+    await act(async () => click(container, "AI Brief"));
+    expect(container.textContent).toContain("Recovered brief");
+    expect(container.textContent).not.toContain("Changes were saved, but PursuitHQ could not refresh the saved AI brief status.");
+  });
+
+  it("does not start a brief-status reload when the primary application save fails", async () => {
+    onSaveApplication.mockRejectedValueOnce(new Error("Application save failed"));
+    await render();
+    await act(async () => click(container, "Job Details"));
+    await act(async () => setValue(container.querySelector('textarea[name="notes"]'), "Unsaved note"));
+    await act(async () => click(container, "Save changes"));
+
+    expect(container.textContent).toContain("Application save failed");
+    expect(container.textContent).not.toContain("Changes saved.");
+    expect(getAiBrief).toHaveBeenCalledTimes(1);
+    expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Saving...")).toBe(false);
+  });
+
+  it("ignores a superseded post-save brief-status response after the selected application changes", async () => {
+    const statusReload = deferred();
+    onSaveApplication.mockResolvedValue({ ...application, notes: "Saved note" });
+    await render();
+    getAiBrief.mockImplementationOnce(() => statusReload.promise);
+    await act(async () => click(container, "Job Details"));
+    await act(async () => setValue(container.querySelector('textarea[name="notes"]'), "Saved note"));
+    await act(async () => {
+      click(container, "Save changes");
+      await Promise.resolve();
+    });
+
+    await render({ applicationId: 2, initialApplication: { ...application, id: 2, company_name: "Other Co." } });
+    await act(async () => statusReload.resolve({ ...response("Stale response"), source_fingerprint: "d".repeat(64), is_stale: false }));
+    expect(container.textContent).not.toContain("Stale response");
+    expect(container.textContent).not.toContain("A product management role.");
   });
 
   it("uses the PursuitHQ confirmation dialog before removing a saved brief", async () => {
