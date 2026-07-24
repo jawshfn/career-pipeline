@@ -4,7 +4,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import JobIntelligenceBriefTab, { copyTextToClipboard, formatJobBriefForClipboard } from "./JobIntelligenceBriefTab.jsx";
+import JobIntelligenceBriefTab, { copyTextToClipboard, formatGeneratedAt, formatJobBriefForClipboard } from "./JobIntelligenceBriefTab.jsx";
 
 const brief = { schema_version: "2", role_summary: "Own platform reliability. Partner with product teams.", responsibility_themes: ["Build reliable services"], formal_requirements: ["Engineering experience"], preferred_qualifications: [], important_conditions: [], skills_and_tools: ["Observability"], interview_preparation: [{ topic: "Reliability", preparation: "Prepare a reliability example." }], research_questions: ["Which systems come first?"], unknowns: ["The reporting structure is not specified."], next_action: { action: "Prepare examples.", reason: "Reliability is central." }, limitations: ["Based only on the supplied posting."] };
 const eligible = { isEligible: true, reason: "" };
@@ -12,6 +12,20 @@ const generatedMeta = { generated_at: "2026-07-22T19:14:00.000Z" };
 const renderBrief = (props = {}) => renderToStaticMarkup(<JobIntelligenceBriefTab brief={null} eligibility={eligible} error="" hasUnsavedAiSourceChanges={false} isGenerating={false} isPersistedBriefStale={false} meta={null} onGenerate={() => {}} onRemove={() => {}} {...props} />);
 
 describe("JobIntelligenceBriefTab", () => {
+  it("formats generated timestamps in the browser timezone after normalizing UTC", () => {
+    expect(formatGeneratedAt("2026-07-24T03:36:00")).toBe(
+      formatGeneratedAt("2026-07-24T03:36:00Z")
+    );
+    expect(formatGeneratedAt("2026-07-24T03:36:00-04:00")).toBe(
+      formatGeneratedAt("2026-07-24T07:36:00Z")
+    );
+    expect(formatGeneratedAt("2026-07-24T03:36:00.255243")).toBe(
+      formatGeneratedAt("2026-07-24T03:36:00.255243Z")
+    );
+    expect(formatGeneratedAt()).toBe("");
+    expect(formatGeneratedAt("not a timestamp")).toBe("");
+  });
+
   it("renders the eligible empty state with one consolidated privacy panel", () => {
     const markup = renderBrief();
     expect(markup).toContain("AI-assisted analysis");

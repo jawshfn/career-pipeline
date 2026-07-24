@@ -9,6 +9,7 @@ import ErrorMessage from "../ui/ErrorMessage.jsx";
 import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
 import AutoGrowingTextarea from "../ui/AutoGrowingTextarea.jsx";
+import { normalizeUtcTimestamp } from "../../utils/dateFormatting.js";
 
 const activityTypeOptions = [
   "Note",
@@ -61,23 +62,6 @@ export function formatActivityDate(value) {
     day: "numeric",
     year: "numeric",
   }).format(date);
-}
-
-function normalizeUtcTimestamp(value) {
-  const timestamp = String(value || "").trim();
-
-  if (!timestamp) {
-    return "";
-  }
-
-  if (/(?:Z|[+-]\d{2}:?\d{2})$/i.test(timestamp)) {
-    return timestamp;
-  }
-
-  const isTimezoneLessIsoDateTime =
-    /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(timestamp);
-
-  return isTimezoneLessIsoDateTime ? `${timestamp}Z` : timestamp;
 }
 
 export function formatLoggedTime(value) {

@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useRef, useState } from "react";
+import { normalizeUtcTimestamp } from "../../utils/dateFormatting.js";
 
 function addListSection(lines, heading, items) {
   if (!items?.length) return;
@@ -263,8 +264,10 @@ function ReportHeader({ copyState, generatedAt, hasUnsavedAiSourceChanges, isGen
   </header>;
 }
 
-function formatGeneratedAt(value) {
-  const date = new Date(value);
+export function formatGeneratedAt(value) {
+  const timestamp = normalizeUtcTimestamp(value);
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return "";
   return `Generated ${date.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })} at ${date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}`;
 }
