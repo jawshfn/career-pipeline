@@ -2318,7 +2318,14 @@ a {
   color: #52605d;
 }
 
-.resume-version-description { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.resume-version-description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  /* Standard property for compatibility */
+  line-clamp: 2;
+}
 
 .resume-version-state {
   display: inline-flex;

@@ -59,6 +59,17 @@ export function getJobBriefFingerprint(payload) {
   return JSON.stringify(payload);
 }
 
+export function createCanonicalJobBriefSource(formData = {}) {
+  const source = createJobBriefPayload(formData);
+  return JSON.stringify(Object.fromEntries(Object.keys(source).sort().map((key) => [key, source[key]])));
+}
+
+export async function createJobBriefSourceFingerprint(formData = {}) {
+  if (!globalThis.crypto?.subtle) throw new JobBriefServiceError("Could not create the AI brief source fingerprint.");
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(createCanonicalJobBriefSource(formData)));
+  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, "0")).join("");
+}
+
 function randomClientValue() {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
   const values = new Uint32Array(3);

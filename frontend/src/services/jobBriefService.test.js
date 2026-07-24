@@ -5,6 +5,8 @@ import {
   CLIENT_ID_STORAGE_KEY,
   JOB_BRIEF_MESSAGES,
   createJobBriefPayload,
+  createCanonicalJobBriefSource,
+  createJobBriefSourceFingerprint,
   generateJobBrief,
   getBrowserLocalClientId,
   getJobBriefEligibility,
@@ -53,6 +55,19 @@ describe("job brief source helpers", () => {
     expect(normalized).toEqual({ company_name: "PursuitHQ", role_title: "Product manager", job_posting_text: "a".repeat(200), location: "Remote", employment_type: "Full time" });
     expect(getJobBriefFingerprint(normalized)).toBe(getJobBriefFingerprint(createJobBriefPayload({ ...source, status: "Interviewing", notes: "different" })));
     expect(getJobBriefFingerprint(normalized)).not.toBe(getJobBriefFingerprint(createJobBriefPayload({ ...source, location: "Hybrid" })));
+  });
+
+  it("matches the backend canonical JSON and SHA-256 fingerprint for Unicode source data", async () => {
+    const source = {
+      company_name: " PursuitHQ — Montréal ", role_title: " Staff Engineer ",
+      job_description: ` ${"é".repeat(201)} `, location: " Remote ",
+      compensation: " USD 180000 ", employment_type: " Full time ", notes: "excluded",
+    };
+    expect(createCanonicalJobBriefSource(source)).toBe(JSON.stringify({
+      company_name: "PursuitHQ — Montréal", compensation: "USD 180000", employment_type: "Full time",
+      job_posting_text: "é".repeat(201), location: "Remote", role_title: "Staff Engineer",
+    }));
+    await expect(createJobBriefSourceFingerprint(source)).resolves.toBe("d819b95dcb7b0b07458fba6dbfd9e7e5d690eb48cb77c6d34a9228ab7c906d37");
   });
 });
 

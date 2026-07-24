@@ -182,6 +182,25 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     expect(container.textContent).not.toContain("Refresh it to update the analysis.");
   });
 
+  it("keeps a saved brief and reports a brief-specific error when post-save status refresh fails", async () => {
+    onSaveApplication.mockResolvedValue({ ...application, company_name: "Updated Northstar" });
+    await render();
+    await act(async () => click(container, "Generate AI brief"));
+    getAiBrief.mockRejectedValueOnce(new Error("brief status unavailable"));
+
+    await act(async () => click(container, "Job Details"));
+    await act(async () => setValue(container.querySelector('input[name="company_name"]'), "Updated Northstar"));
+    await act(async () => click(container, "Save changes"));
+    await act(async () => click(container, "AI Brief"));
+
+    expect(onSaveApplication).toHaveBeenCalledWith(1, expect.objectContaining({ company_name: "Updated Northstar" }));
+    expect(container.textContent).toContain("Changes saved.");
+    expect(container.textContent).toContain("Changes were saved, but PursuitHQ could not refresh the saved AI brief status. Reload this application and try again.");
+    expect(container.textContent).toContain("A product management role.");
+    expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Refresh brief")).toBe(true);
+    expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Remove brief")).toBe(true);
+  });
+
   it("uses the PursuitHQ confirmation dialog before removing a saved brief", async () => {
     await render();
     await act(async () => click(container, "Generate AI brief"));

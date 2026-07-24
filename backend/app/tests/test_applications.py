@@ -1,5 +1,7 @@
 from datetime import date
 
+from app.routers.applications import ai_source_fingerprint
+
 
 def create_application(client, **overrides):
     payload = {
@@ -9,6 +11,19 @@ def create_application(client, **overrides):
     }
     payload.update(overrides)
     return client.post("/api/applications", json=payload)
+
+
+def test_ai_source_fingerprint_matches_frontend_unicode_parity_fixture():
+    source = {
+        "company_name": "PursuitHQ — Montréal",
+        "role_title": "Staff Engineer",
+        "job_posting_text": "é" * 201,
+        "location": "Remote",
+        "compensation": "USD 180000",
+        "employment_type": "Full time",
+    }
+
+    assert ai_source_fingerprint(source) == "d819b95dcb7b0b07458fba6dbfd9e7e5d690eb48cb77c6d34a9228ab7c906d37"
 
 
 def get_activities(client, application_id):

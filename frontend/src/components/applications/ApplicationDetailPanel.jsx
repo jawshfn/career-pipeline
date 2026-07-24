@@ -479,6 +479,7 @@ export default function ApplicationDetailPanel({
     setSaveError("");
     setSaveMessage("");
     const previousSavedStatus = savedFormData.status;
+    const hadUnsavedAiSourceChanges = hasUnsavedAiSourceChanges;
 
     const payload = {
       company_name: normalizeRequiredText(formData.company_name),
@@ -513,13 +514,6 @@ export default function ApplicationDetailPanel({
       const nextFormState = toFormState(updatedApplication);
       setFormData(nextFormState);
       setSavedFormData(nextFormState);
-      const refreshedBrief = await getApplicationAiBrief(applicationId);
-      if (refreshedBrief) {
-        setBrief(refreshedBrief.brief);
-        setBriefMeta(refreshedBrief.meta);
-        setBriefFingerprint(refreshedBrief.source_fingerprint);
-        setIsStoredBriefStale(Boolean(refreshedBrief.is_stale));
-      }
       onLoadApplication?.(updatedApplication);
       if (shouldRefreshActivitiesAfterApplicationSave(previousSavedStatus, nextFormState.status)) {
         setActivityRefreshVersion((currentVersion) => currentVersion + 1);
@@ -527,6 +521,21 @@ export default function ApplicationDetailPanel({
       setSaveMessage("Changes saved.");
     } catch (error) {
       setSaveError(error.message || "Could not save application details.");
+      setIsSaving(false);
+      return;
+    }
+
+    try {
+      const refreshedBrief = await getApplicationAiBrief(applicationId);
+      if (refreshedBrief) {
+        setBrief(refreshedBrief.brief);
+        setBriefMeta(refreshedBrief.meta);
+        setBriefFingerprint(refreshedBrief.source_fingerprint);
+        setIsStoredBriefStale(Boolean(refreshedBrief.is_stale));
+      }
+    } catch {
+      setBriefError("Changes were saved, but PursuitHQ could not refresh the saved AI brief status. Reload this application and try again.");
+      if (brief && hadUnsavedAiSourceChanges) setIsStoredBriefStale(true);
     } finally {
       setIsSaving(false);
     }
