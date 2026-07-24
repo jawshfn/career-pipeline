@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { getDashboardSummary } from "../services/dashboardService.js";
+import { fetchResource, getCachedResource } from "../services/staleResource.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
@@ -92,34 +93,46 @@ function getResumeCoverageSummary(resumeUsage, resumeEffectiveness) {
   return `${comparedCount} ${versionLabel} compared • ${assignedCount} assigned / ${unassignedCount} unassigned`;
 }
 
+function normalizeDashboardSummary(summary) {
+  return {
+    summary_cards: summary.summary_cards || [],
+    status_breakdown: summary.status_breakdown || [],
+    source_breakdown: summary.source_breakdown || [],
+    resume_usage: summary.resume_usage || [],
+    red_flag_snapshot: summary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
+  };
+}
+
 export default function DashboardPage({ onOpenStatusBoard, onOpenInsights }) {
-  const [dashboardSummary, setDashboardSummary] = useState(emptyDashboardSummary);
+  const cachedSummary = getCachedResource("dashboard");
+  const [dashboardSummary, setDashboardSummary] = useState(() => cachedSummary ? normalizeDashboardSummary(cachedSummary) : emptyDashboardSummary);
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [refreshError, setRefreshError] = useState("");
+  const [isLoading, setIsLoading] = useState(() => !cachedSummary);
 
   useEffect(() => {
+    const hasCachedSummary = Boolean(getCachedResource("dashboard"));
+    let isActive = true;
     async function loadDashboardSummary() {
-      setIsLoading(true);
+      if (!hasCachedSummary) setIsLoading(true);
       setError("");
+      setRefreshError("");
 
       try {
-        const nextSummary = await getDashboardSummary();
-        setDashboardSummary({
-          summary_cards: nextSummary.summary_cards || [],
-          status_breakdown: nextSummary.status_breakdown || [],
-          source_breakdown: nextSummary.source_breakdown || [],
-          resume_usage: nextSummary.resume_usage || [],
-          red_flag_snapshot: nextSummary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
-        });
+        const nextSummary = await fetchResource("dashboard", getDashboardSummary);
+        if (isActive) setDashboardSummary(normalizeDashboardSummary(nextSummary));
       } catch (loadError) {
-        setDashboardSummary(emptyDashboardSummary);
-        setError(loadError.message || "Could not load dashboard summary.");
+        if (!hasCachedSummary && isActive) {
+          setDashboardSummary(emptyDashboardSummary);
+          setError(loadError.message || "Could not load dashboard summary.");
+        } else if (isActive) setRefreshError("Could not refresh dashboard. Showing the previous summary.");
       } finally {
-        setIsLoading(false);
+        if (isActive && !hasCachedSummary) setIsLoading(false);
       }
     }
 
     loadDashboardSummary();
+    return () => { isActive = false; };
   }, []);
 
   const totalApplications = dashboardSummary.status_breakdown.reduce((total, item) => total + item.count, 0);
@@ -138,6 +151,7 @@ export default function DashboardPage({ onOpenStatusBoard, onOpenInsights }) {
 
       {isLoading ? <LoadingState message="Loading dashboard..." /> : null}
       {!isLoading && error ? <ErrorMessage message={error} /> : null}
+      {!isLoading && !error && refreshError ? <p className="message" role="status">{refreshError}</p> : null}
 
       {!isLoading && !error ? (
         <section className="dashboard-metric-grid" aria-label="Summary metrics">

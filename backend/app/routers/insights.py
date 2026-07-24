@@ -9,42 +9,56 @@ from ..models import Application, ResumeVersion
 from ..schemas import OutcomesInsightsRead
 
 router = APIRouter(prefix="/api/insights", tags=["insights"])
+COUNTER_KEYS = ("submitted", "progressed", "human_responses", "interviews", "offers")
 
 
 def _rate(count: int, submitted: int) -> float | None:
     return count / submitted if submitted else None
 
 
-def _counts(applications: list[Application]) -> dict[str, int]:
-    submitted = sum(progression_rank(a.furthest_stage) >= 1 for a in applications)
-    return {"submitted": submitted, "progressed": sum(progression_rank(a.furthest_stage) >= 2 for a in applications),
-            "human_responses": sum(progression_rank(a.furthest_stage) >= 3 for a in applications),
-            "interviews": sum(progression_rank(a.furthest_stage) >= 4 for a in applications),
-            "offers": sum(progression_rank(a.furthest_stage) >= 5 for a in applications)}
+def _new_counts() -> dict[str, int]:
+    return {key: 0 for key in COUNTER_KEYS}
 
 
-def _group(key: str, label: str, applications: list[Application]) -> dict:
-    c = _counts(applications)
-    return {"id": key, "label": label, **c, **{f"{name}_rate": _rate(c[name], c["submitted"]) for name in ("progressed", "human_responses", "interviews", "offers")}}
+def _add_rank(counts: dict[str, int], rank: int) -> None:
+    for threshold, key in enumerate(COUNTER_KEYS, 1):
+        if rank >= threshold:
+            counts[key] += 1
+
+
+def _group(key: str, label: str, counts: dict[str, int]) -> dict:
+    return {"id": key, "label": label, **counts, **{f"{name}_rate": _rate(counts[name], counts["submitted"]) for name in COUNTER_KEYS[1:]}}
 
 
 @router.get("/outcomes", response_model=OutcomesInsightsRead)
 def get_outcomes(db: Session = Depends(get_db)) -> dict:
-    applications = db.query(Application).all()  # historical scope includes archived
-    c = _counts(applications)
-    labels = [("submitted", "Submitted"), ("progressed", "Progressed"), ("human_responses", "Human response"), ("interviews", "Interview reached"), ("offers", "Offer received")]
-    summary = [{"key": key, "label": label, "count": c[key], "denominator": None if key == "submitted" else c["submitted"], "rate": None if key == "submitted" else _rate(c[key], c["submitted"])} for key, label in labels]
-    funnel = [{"key": stage.lower().replace(" ", "_"), "label": stage, "stage": stage, "count": sum(progression_rank(a.furthest_stage) >= index for a in applications), "denominator": c["submitted"], "rate": _rate(sum(progression_rank(a.furthest_stage) >= index for a in applications), c["submitted"])} for index, stage in enumerate(PROGRESSION_STAGES[1:], 1)]
-    sources = defaultdict(list)
-    resumes = defaultdict(list)
-    versions = {r.id: r for r in db.query(ResumeVersion).all()}
-    for app in applications:
-        if progression_rank(app.furthest_stage) < 1: continue
-        source = (app.source or "").strip() or "Unspecified"
-        sources[source].append(app)
-        if app.resume_version_id is None: key, label = "unassigned", "Unassigned"
+    applications = db.query(Application).all()  # Historical scope includes archived.
+    versions = {version.id: version for version in db.query(ResumeVersion).all()}
+    counts = _new_counts()
+    funnel_counts = [0] * (len(PROGRESSION_STAGES) - 1)
+    source_counts: dict[str, dict[str, int]] = defaultdict(_new_counts)
+    resume_counts: dict[tuple[str, str], dict[str, int]] = defaultdict(_new_counts)
+
+    for application in applications:
+        rank = progression_rank(application.furthest_stage)
+        _add_rank(counts, rank)
+        for threshold in range(1, min(rank, len(PROGRESSION_STAGES) - 1) + 1):
+            funnel_counts[threshold - 1] += 1
+        if rank < 1:
+            continue
+        source = (application.source or "").strip() or "Unspecified"
+        _add_rank(source_counts[source], rank)
+        if application.resume_version_id is None:
+            resume_key = ("unassigned", "Unassigned")
         else:
-            version = versions.get(app.resume_version_id); key = str(app.resume_version_id); label = version.name if version else f"Resume #{app.resume_version_id}"
-        resumes[(key, label)].append(app)
-    ordered_sources = [*filter(lambda value: value in sources, SOURCE_ORDER), *sorted(value for value in sources if value not in SOURCE_ORDER)]
-    return {"total_applications": len(applications), "summary": summary, "funnel": funnel, "source_performance": [_group(source, source, sources[source]) for source in ordered_sources], "resume_version_performance": sorted((_group(key, label, rows) for (key, label), rows in resumes.items()), key=lambda row: (-row["submitted"], row["label"]))}
+            version = versions.get(application.resume_version_id)
+            label = version.name if version else f"Resume #{application.resume_version_id}"
+            resume_key = (str(application.resume_version_id), label)
+        _add_rank(resume_counts[resume_key], rank)
+
+    labels = (("submitted", "Submitted"), ("progressed", "Progressed"), ("human_responses", "Human response"), ("interviews", "Interview reached"), ("offers", "Offer received"))
+    summary = [{"key": key, "label": label, "count": counts[key], "denominator": None if key == "submitted" else counts["submitted"], "rate": None if key == "submitted" else _rate(counts[key], counts["submitted"])} for key, label in labels]
+    funnel = [{"key": stage.lower().replace(" ", "_"), "label": stage, "stage": stage, "count": funnel_counts[index - 1], "denominator": counts["submitted"], "rate": _rate(funnel_counts[index - 1], counts["submitted"])} for index, stage in enumerate(PROGRESSION_STAGES[1:], 1)]
+    ordered_sources = [*filter(lambda source: source in source_counts, SOURCE_ORDER), *sorted(source for source in source_counts if source not in SOURCE_ORDER)]
+    resume_rows = (_group(key, label, row_counts) for (key, label), row_counts in resume_counts.items())
+    return {"total_applications": len(applications), "summary": summary, "funnel": funnel, "source_performance": [_group(source, source, source_counts[source]) for source in ordered_sources], "resume_version_performance": sorted(resume_rows, key=lambda row: (-row["submitted"], row["label"]))}

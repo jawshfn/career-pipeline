@@ -16,7 +16,7 @@ export const navigationItems = [
 const pageTitles = {
   "command-center": "Reminders",
   dashboard: "Dashboard",
-  insights: "Outcome Insights",
+  insights: "Insights",
   "quick-add": "Add Job",
   applications: "Applications",
   pipeline: "Status Board",

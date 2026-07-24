@@ -14,6 +14,7 @@ vi.mock("../services/dashboardService.js", () => ({
 }));
 
 import DashboardPage from "./DashboardPage.jsx";
+import { resetStaleResourcesForTests } from "../services/staleResource.js";
 
 const summaryCards = [
   { key: "total", label: "Total applications", tone: "total", value: 18 },
@@ -81,6 +82,7 @@ describe("DashboardPage", () => {
   let root;
 
   beforeEach(() => {
+    resetStaleResourcesForTests();
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement("div");
     document.body.appendChild(container);
@@ -90,6 +92,7 @@ describe("DashboardPage", () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     container.remove();
+    resetStaleResourcesForTests();
     vi.clearAllMocks();
   });
 
@@ -205,5 +208,18 @@ describe("DashboardPage", () => {
     });
     expect(container.textContent).toContain("Could not load dashboard summary.");
     expect(container.querySelector(".dashboard-metric-grid")).toBeNull();
+  });
+
+  it("keeps cached summary content visible while a revisit refreshes it", async () => {
+    await renderDashboard();
+    await act(async () => root.unmount());
+    root = createRoot(container);
+    let resolveRefresh;
+    mocks.getDashboardSummary.mockReturnValue(new Promise((resolve) => { resolveRefresh = resolve; }));
+    await act(async () => { root.render(<DashboardPage onOpenStatusBoard={vi.fn()} />); });
+    expect(container.textContent).toContain("Total applications");
+    expect(container.textContent).not.toContain("Loading dashboard...");
+    await act(async () => { resolveRefresh({ ...dashboardSummary, summary_cards: [{ ...summaryCards[0], value: 99 }] }); await Promise.resolve(); });
+    expect(container.textContent).toContain("99");
   });
 });
