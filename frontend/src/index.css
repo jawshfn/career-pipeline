@@ -5183,10 +5183,11 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 
 /* Phase 25.3c Job Intelligence Brief. */
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
-.ai-brief-tab, .ai-brief-report { display: grid; gap: 18px; }
+.ai-brief-tab { display: grid; gap: 18px; }
+.ai-brief-report { container: ai-brief-report / inline-size; display: grid; gap: 0; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
 .ai-brief-intro { padding: 18px; border: 1px solid var(--color-border); border-top: 3px solid var(--color-signal); border-radius: var(--radius-md); background: var(--color-signal-soft); }
-.ai-brief-intro h3, .ai-brief-report-header h3, .ai-brief-section h4, .ai-brief-next-action h4, .ai-brief-information h4 { margin-top: 0; }
-.ai-brief-intro > :last-child, .ai-brief-section > :last-child, .ai-brief-next-action > :last-child, .ai-brief-information > div > :last-child { margin-bottom: 0; }
+.ai-brief-intro h3, .ai-brief-report-header h3, .ai-brief-section h4, .ai-brief-section h5, .ai-brief-information h4 { margin-top: 0; }
+.ai-brief-intro > :last-child, .ai-brief-section > :last-child, .ai-brief-information > div > :last-child { margin-bottom: 0; }
 .ai-brief-eyebrow { margin: 0 0 5px; color: var(--color-signal-strong); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
 .ai-brief-information { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr); padding: 14px 0; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text-soft); font-size: 0.9rem; }
 .ai-brief-information-group { min-width: 0; padding: 0 16px; }
@@ -5202,26 +5203,75 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
 .ai-brief-secondary-action { border: 1px solid var(--color-border-strong); color: var(--color-primary); background: var(--color-surface); }
 .ai-brief-secondary-action:hover:not(:disabled) { border-color: var(--color-primary); background: var(--color-primary-soft); }
 .ai-brief-remove-action { appearance: none; min-height: 34px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 6px 10px; color: var(--color-text-muted); background: var(--color-surface); font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; }
-.ai-brief-remove-action:hover:not(:disabled) { border-color: var(--color-border-strong); color: var(--color-text); background: var(--color-primary-soft); }
-.ai-brief-remove-action:focus-visible { outline: 3px solid var(--color-primary-soft); outline-offset: 2px; }
+.ai-brief-copy-action { appearance: none; min-height: 34px; border: 1px solid var(--color-signal); border-radius: var(--radius-sm); padding: 6px 10px; color: var(--color-signal-strong); background: var(--color-surface); font: inherit; font-size: 0.8125rem; font-weight: 800; cursor: pointer; }
+.ai-brief-copy-action:hover { border-color: var(--color-signal-strong); background: var(--color-signal-soft); }
+.ai-brief-remove-action:hover:not(:disabled) { border-color: var(--color-border-strong); color: var(--color-text); background: var(--color-surface-subtle); }
+.ai-brief-remove-action:focus-visible { outline: 3px solid var(--color-surface-subtle); outline-offset: 2px; }
+.ai-brief-copy-action:focus-visible { outline: 3px solid var(--color-signal-soft); outline-offset: 2px; }
 .ai-brief-remove-action:disabled { opacity: 0.68; cursor: not-allowed; }
 .ai-brief-primary-action:focus-visible, .ai-brief-secondary-action:focus-visible { outline: 3px solid var(--color-primary-soft); outline-offset: 2px; }
 .ai-brief-primary-action:disabled, .ai-brief-secondary-action:disabled { opacity: 0.68; cursor: not-allowed; }
 .ai-brief-action-content { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 132px; }
 .ai-brief-spinner { width: 0.9em; height: 0.9em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ai-brief-spin 0.8s linear infinite; }
 @keyframes ai-brief-spin { to { transform: rotate(360deg); } }
-.ai-brief-report-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
+.ai-brief-report-header { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--color-border); background: var(--color-surface); }
+.ai-brief-report-title { min-width: 0; }
 .ai-brief-report-header h3 { margin-bottom: 3px; font-size: 1rem; }
-.ai-brief-generated-at { margin: 0; color: var(--color-text-soft); font-size: 0.86rem; }
-.ai-brief-report-message { margin: -8px 0 0; }
-.ai-brief-report-body { padding: 0 18px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); }
-.ai-brief-section { padding: 18px 0; border-bottom: 1px solid var(--color-border); }
-.ai-brief-section h4, .ai-brief-next-action h4 { margin-bottom: 8px; }
+.ai-brief-report-heading { display: inline-flex; align-items: center; gap: 7px; }
+.ai-brief-title-sparkle { color: var(--color-signal-strong); font-size: 0.9rem; }
+.ai-brief-generated-badge { border: 1px solid var(--color-signal); border-radius: 999px; padding: 4px 10px; color: var(--color-signal-strong); background: var(--color-signal-soft); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em; }
+.ai-brief-generated-at, .ai-brief-review-reminder { margin: 3px 0 0; color: var(--color-text-soft); font-size: 0.82rem; }
+.ai-brief-report-actions { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.ai-brief-report-message { margin: 14px 18px 0; }
+.ai-brief-report-body { min-width: 0; padding: 0 18px; background: var(--color-surface); }
+.ai-brief-section { min-width: 0; padding: 24px 0; }
+.ai-brief-section + .ai-brief-section { border-top: 1px solid var(--color-border); }
+.ai-brief-section h4 { margin-bottom: 12px; }
+.ai-brief-section h5 { margin-bottom: 8px; font-size: 0.9rem; }
 .ai-brief-list { display: grid; gap: 12px; margin: 0; padding-left: 20px; }
-.ai-brief-list li { padding-left: 2px; }
-.ai-brief-reason { margin: 5px 0 0; color: var(--color-text-soft); font-size: 0.9rem; }
-.ai-brief-next-action { margin: 18px 0; padding: 16px; border: 1px solid var(--color-border); border-left: 3px solid var(--color-signal); border-radius: var(--radius-sm); background: var(--color-signal-soft); }
-.ai-brief-limitations { border-bottom: 0; color: var(--color-text-soft); font-size: 0.9rem; }
+.ai-brief-list li, .ai-brief-condition-list li { min-width: 0; overflow-wrap: anywhere; }
+.ai-brief-overview { padding-top: 22px; }
+.ai-brief-overview-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px 30px; }
+.ai-brief-overview-grid > section { min-width: 0; }
+.ai-brief-overview-grid p { overflow-wrap: anywhere; }
+.ai-brief-next-action { padding: 2px 0 2px 16px; border-left: 3px solid var(--color-signal); background: transparent; }
+.ai-brief-recommendation-label { margin: 0 0 5px; color: var(--color-signal-strong); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.ai-brief-next-action p { margin: 0; }
+.ai-brief-next-action p + p { margin-top: 6px; color: var(--color-text-soft); font-size: 0.9rem; }
+.ai-brief-reference-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 20px 30px; }
+.ai-brief-reference-grid > section { min-width: 0; }
+.ai-brief-condition-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ai-brief-condition-list li, .ai-brief-skill-list li { max-width: 100%; padding: 5px 9px; border: 1px solid var(--color-border-strong); border-radius: 999px; color: var(--color-text); background: var(--color-surface-subtle); font-size: 0.86rem; }
+.ai-brief-role-analysis-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 20px 30px; }
+.ai-brief-list-section { min-width: 0; }
+.ai-brief-list-section h5 { color: var(--color-signal-strong); }
+.ai-brief-skill-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ai-brief-preferred-qualifications { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--color-border); }
+.ai-brief-interview-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 30px; margin: 0; padding: 0; list-style: none; }
+.ai-brief-interview-list li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; min-width: 0; padding: 13px 0; border-top: 1px solid var(--color-border); }
+.ai-brief-interview-number { color: var(--color-signal-strong); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.04em; }
+.ai-brief-interview-list li strong { display: block; color: var(--color-text); }
+.ai-brief-interview-list li p { margin: 5px 0 0; color: var(--color-text-soft); overflow-wrap: anywhere; }
+.ai-brief-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ai-brief-section-heading h4 { margin-bottom: 12px; }
+.ai-brief-expand-all, .ai-brief-disclosure-button { appearance: none; font: inherit; cursor: pointer; }
+.ai-brief-expand-all { flex: 0 0 auto; border: 0; padding: 5px 0; color: var(--color-signal-strong); background: transparent; font-size: 0.86rem; font-weight: 800; }
+.ai-brief-expand-all:hover { color: var(--color-signal); text-decoration: underline; }
+.ai-brief-expand-all:focus-visible, .ai-brief-disclosure-button:focus-visible { outline: 3px solid var(--color-signal-soft); outline-offset: 2px; }
+.ai-brief-disclosure-list { border-top: 1px solid var(--color-border); }
+.ai-brief-disclosure { min-width: 0; border-bottom: 1px solid var(--color-border); background: transparent; }
+.ai-brief-disclosure-button { display: flex; align-items: center; width: 100%; min-height: 42px; gap: 8px; border: 0; padding: 10px 0; color: var(--color-text); background: transparent; text-align: left; font-weight: 800; }
+.ai-brief-disclosure-button:hover { background: var(--color-signal-soft); }
+.ai-brief-disclosure-cue::before { display: inline-block; content: "›"; color: var(--color-signal-strong); font-size: 1.2rem; line-height: 1; transition: transform 160ms ease; }
+.ai-brief-disclosure-button[aria-expanded="true"] .ai-brief-disclosure-cue::before { transform: rotate(90deg); }
+.ai-brief-disclosure-count { color: var(--color-text-soft); font-size: 0.86rem; font-weight: 700; }
+.ai-brief-disclosure-content { padding: 0 14px 14px 24px; background: transparent; }
+.ai-brief-disclosure-content .ai-brief-list { padding-top: 8px; }
+.ai-brief-supporting-analysis { padding-bottom: 20px; }
+
+@container ai-brief-report (max-width: 680px) {
+  .ai-brief-overview-grid, .ai-brief-reference-grid, .ai-brief-role-analysis-grid, .ai-brief-interview-list { grid-template-columns: minmax(0, 1fr); }
+}
 
 @media (max-width: 640px) {
   .ai-brief-intro, .ai-brief-report-body { padding: 14px; }
@@ -5229,10 +5279,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
   .ai-brief-information-group { padding: 14px 0; }
   .ai-brief-information-group + .ai-brief-information-group { border-top: 1px solid var(--color-border); border-left: 0; }
   .ai-brief-report-header { align-items: stretch; flex-direction: column; }
+  .ai-brief-report-actions { justify-content: flex-start; }
   .ai-brief-primary-action, .ai-brief-secondary-action { width: 100%; }
+  .ai-brief-overview-grid, .ai-brief-reference-grid, .ai-brief-role-analysis-grid, .ai-brief-interview-list { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ai-brief-primary-action, .ai-brief-secondary-action { transition: none; }
+  .ai-brief-primary-action, .ai-brief-secondary-action, .ai-brief-disclosure-cue::before { transition: none; }
   .ai-brief-spinner { animation: none; }
 }
