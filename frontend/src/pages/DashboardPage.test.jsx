@@ -13,7 +13,7 @@ vi.mock("../services/dashboardService.js", () => ({
   getDashboardSummary: mocks.getDashboardSummary,
 }));
 
-import DashboardPage, { EffectivenessGrid } from "./DashboardPage.jsx";
+import DashboardPage from "./DashboardPage.jsx";
 
 const summaryCards = [
   { key: "total", label: "Total applications", tone: "total", value: 18 },
@@ -108,7 +108,7 @@ describe("DashboardPage", () => {
     await renderDashboard();
 
     expect(container.textContent).toContain("Dashboard");
-    expect(container.textContent).toContain("Scan your job search progress, follow-ups, sources, and resume results.");
+    expect(container.textContent).toContain("Scan your current job search snapshot, follow-ups, sources, and red flags.");
     expect(container.querySelectorAll(".dashboard-metric-card")).toHaveLength(6);
     summaryCards.forEach((metric) => {
       expect(container.textContent).toContain(metric.label);
@@ -124,7 +124,7 @@ describe("DashboardPage", () => {
 
     expect(onOpenStatusBoard).toHaveBeenCalledTimes(1);
     const disclosures = [...container.querySelectorAll("details.dashboard-disclosure")];
-    expect(disclosures).toHaveLength(5);
+    expect(disclosures).toHaveLength(3);
     disclosures.forEach((details) => {
       expect(details.open).toBe(true);
       expect(details.querySelector("summary.dashboard-disclosure-summary")).not.toBeNull();
@@ -144,15 +144,12 @@ describe("DashboardPage", () => {
     expect(container.querySelectorAll(".dashboard-breakdown-count-red-flags")).toHaveLength(2);
   });
 
-  it("keeps effectiveness tables accessible with long labels and mobile metric labels", async () => {
+  it("links to Outcome Insights instead of embedding effectiveness tables", async () => {
     await renderDashboard();
 
-    expect(container.querySelector('[role="table"][aria-label="Source effectiveness metrics"]')).not.toBeNull();
-    expect(container.querySelector('[role="table"][aria-label="Resume version effectiveness metrics"]')).not.toBeNull();
-    expect(container.textContent).toContain(effectivenessItems[0].label);
-    expect(container.textContent).toContain(effectivenessItems[1].label);
-    expect(container.querySelector('[data-label="Applications"]')).not.toBeNull();
-    expect(container.querySelector('[data-label="Closed"]')).not.toBeNull();
+    expect(container.textContent).toContain("Outcome Insights");
+    expect(container.textContent).toContain("View Insights");
+    expect(container.querySelector('[role="table"]')).toBeNull();
   });
 
   it("renders the no-applications and subsection-empty messages", async () => {
@@ -188,7 +185,7 @@ describe("DashboardPage", () => {
 
     expect(container.textContent).toContain("No source data yet.");
     expect(container.textContent).toContain("No red flags marked on applications.");
-    expect(container.textContent).toContain("No resume-version data yet.");
+    expect(container.textContent).not.toContain("No resume-version data yet.");
   });
 
   it("shows loading and an initial error without metric panels", async () => {
@@ -208,29 +205,5 @@ describe("DashboardPage", () => {
     });
     expect(container.textContent).toContain("Could not load dashboard summary.");
     expect(container.querySelector(".dashboard-metric-grid")).toBeNull();
-  });
-});
-
-describe("EffectivenessGrid", () => {
-  it("renders all six desktop headings with accessible table roles", () => {
-    const markup = document.createElement("div");
-    const staticRoot = createRoot(markup);
-    act(() => {
-      staticRoot.render(
-        <EffectivenessGrid
-          ariaLabel="Source effectiveness metrics"
-          firstColumnLabel="Source"
-          items={effectivenessItems}
-        />,
-      );
-    });
-
-    ["Source", "Applications", "Active", "Interviews", "Offers", "Closed"].forEach((heading) => {
-      expect(markup.textContent).toContain(heading);
-    });
-    expect(markup.querySelector('[role="table"]')).not.toBeNull();
-    expect(markup.querySelector('[role="columnheader"]')).not.toBeNull();
-    expect(markup.querySelector('[role="cell"]')).not.toBeNull();
-    act(() => staticRoot.unmount());
   });
 });

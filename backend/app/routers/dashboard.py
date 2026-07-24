@@ -9,8 +9,6 @@ from ..domain import (
     ACTIVE_APPLICATION_STATUSES,
     CLOSED_APPLICATION_STATUSES,
     FOLLOW_UP_EXCLUDED_STATUSES,
-    INTERVIEW_APPLICATION_STATUS,
-    OFFER_APPLICATION_STATUS,
     RED_FLAG_FIELDS,
     SAVED_APPLICATION_STATUS,
     SOURCE_ORDER,
@@ -71,67 +69,6 @@ def get_resume_usage(
         usage_items.append({"label": "No resume version", "count": unassigned_count})
 
     return usage_items
-
-
-def get_source_effectiveness(applications: list[Application]) -> list[dict[str, int | str]]:
-    metrics_by_source: dict[str, dict[str, int | str]] = {}
-
-    for application in applications:
-        source = get_source_label(application.source)
-        metrics = metrics_by_source.setdefault(
-            source,
-            {"source": source, "applications": 0, "active": 0, "interviews": 0, "offers": 0, "closed": 0},
-        )
-        update_effectiveness_metrics(metrics, application)
-
-    return sorted(
-        metrics_by_source.values(),
-        key=lambda item: (-int(item["applications"]), str(item["source"])),
-    )
-
-
-def get_resume_version_effectiveness(
-    applications: list[Application],
-    resume_versions_by_id: dict[int, ResumeVersion],
-) -> list[dict[str, int | str]]:
-    metrics_by_resume: dict[str, dict[str, int | str]] = {}
-
-    for application in applications:
-        resume_id = str(application.resume_version_id) if application.resume_version_id else "unassigned"
-        resume_version = resume_versions_by_id.get(application.resume_version_id) if application.resume_version_id else None
-        label = (
-            get_resume_version_label(resume_version)
-            if resume_version
-            else "Unassigned"
-            if resume_id == "unassigned"
-            else f"Resume #{resume_id}"
-        )
-        metrics = metrics_by_resume.setdefault(
-            resume_id,
-            {"id": resume_id, "label": label, "applications": 0, "active": 0, "interviews": 0, "offers": 0, "closed": 0},
-        )
-        update_effectiveness_metrics(metrics, application)
-
-    return sorted(
-        metrics_by_resume.values(),
-        key=lambda item: (-int(item["applications"]), str(item["label"])),
-    )
-
-
-def update_effectiveness_metrics(metrics: dict[str, int | str], application: Application) -> None:
-    metrics["applications"] = int(metrics["applications"]) + 1
-
-    if application.status in ACTIVE_APPLICATION_STATUSES:
-        metrics["active"] = int(metrics["active"]) + 1
-
-    if application.status == INTERVIEW_APPLICATION_STATUS:
-        metrics["interviews"] = int(metrics["interviews"]) + 1
-
-    if application.status == OFFER_APPLICATION_STATUS:
-        metrics["offers"] = int(metrics["offers"]) + 1
-
-    if application.status in CLOSED_APPLICATION_STATUSES:
-        metrics["closed"] = int(metrics["closed"]) + 1
 
 
 @router.get("/summary", response_model=DashboardSummaryRead)
@@ -223,6 +160,4 @@ def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
             "flagged_count": red_flagged_count,
             "items": [item for item in red_flag_items if item["count"] > 0],
         },
-        "source_effectiveness": get_source_effectiveness(applications),
-        "resume_version_effectiveness": get_resume_version_effectiveness(applications, resume_versions_by_id),
     }

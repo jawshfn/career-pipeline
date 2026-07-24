@@ -105,6 +105,7 @@ class ApplicationRead(ApplicationBase):
     id: int
     company_name: str
     role_title: str
+    furthest_stage: str
     date_saved: date
     created_at: datetime
     updated_at: datetime
@@ -177,33 +178,43 @@ class DashboardRedFlagSnapshotRead(BaseModel):
     items: list[DashboardBreakdownItemRead]
 
 
-class DashboardSourceEffectivenessRead(BaseModel):
-    source: str
-    applications: int
-    active: int
-    interviews: int
-    offers: int
-    closed: int
-
-
-class DashboardResumeVersionEffectivenessRead(BaseModel):
-    id: str
-    label: str
-    applications: int
-    active: int
-    interviews: int
-    offers: int
-    closed: int
-
-
 class DashboardSummaryRead(BaseModel):
     summary_cards: list[DashboardSummaryCardRead]
     status_breakdown: list[DashboardBreakdownItemRead]
     source_breakdown: list[DashboardBreakdownItemRead]
     resume_usage: list[DashboardBreakdownItemRead]
     red_flag_snapshot: DashboardRedFlagSnapshotRead
-    source_effectiveness: list[DashboardSourceEffectivenessRead]
-    resume_version_effectiveness: list[DashboardResumeVersionEffectivenessRead]
+
+
+class OutcomeMetricRead(BaseModel):
+    key: str
+    label: str
+    count: int
+    stage: str | None = None
+    denominator: int | None = None
+    rate: float | None = None
+
+
+class OutcomeGroupRead(BaseModel):
+    id: str
+    label: str
+    submitted: int
+    progressed: int
+    human_responses: int
+    interviews: int
+    offers: int
+    progressed_rate: float | None
+    human_responses_rate: float | None
+    interviews_rate: float | None
+    offers_rate: float | None
+
+
+class OutcomesInsightsRead(BaseModel):
+    total_applications: int
+    summary: list[OutcomeMetricRead]
+    funnel: list[OutcomeMetricRead]
+    source_performance: list[OutcomeGroupRead]
+    resume_version_performance: list[OutcomeGroupRead]
 
 
 class GreenhouseImportRequest(BaseModel):

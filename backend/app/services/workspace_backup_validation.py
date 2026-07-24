@@ -90,6 +90,7 @@ class ApplicationBackupRecord(_StrictBackupModel):
     job_link: StrictStr | None
     source: StrictStr
     status: StrictStr
+    furthest_stage: StrictStr | None = None
     location: StrictStr | None
     compensation: StrictStr | None
     employment_type: StrictStr | None
@@ -134,6 +135,14 @@ class ApplicationBackupRecord(_StrictBackupModel):
         from ..domain import ALLOWED_APPLICATION_STATUSES
         if value not in ALLOWED_APPLICATION_STATUSES:
             raise ValueError("must be a supported application status")
+        return value
+
+    @field_validator("furthest_stage")
+    @classmethod
+    def supported_furthest_stage(cls, value: str | None) -> str | None:
+        from ..domain import PROGRESSION_STAGES
+        if value is not None and value not in PROGRESSION_STAGES:
+            raise ValueError("must be a supported progression stage")
         return value
 
     @field_validator("date_saved", "date_applied", "follow_up_date")
@@ -239,6 +248,10 @@ class WorkspaceBackupDocument(_StrictBackupModel):
             raise ValueError("version 1 backups cannot include AI briefs")
         if self.version == 2 and ("application_ai_briefs" not in self.counts.model_fields_set or "application_ai_briefs" not in self.data.model_fields_set):
             raise ValueError("version 2 backups must include AI briefs")
+        if self.version == BACKUP_VERSION and any(
+            record.furthest_stage is None for record in self.data.applications
+        ):
+            raise ValueError("version 3 backups must include furthest_stage for every application")
         return self
 
     @field_validator("exported_at")
@@ -325,7 +338,7 @@ def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDoc
     if document is not None:
         if document.format != BACKUP_FORMAT:
             issues.append(_issue("unsupported_format", "format", "This is not a supported PursuitHQ workspace backup."))
-        if document.version not in {1, BACKUP_VERSION}:
+        if document.version not in {1, 2, BACKUP_VERSION}:
             issues.append(_issue("unsupported_version", "version", "This backup version is not supported."))
         if not issues:
             data = document.data

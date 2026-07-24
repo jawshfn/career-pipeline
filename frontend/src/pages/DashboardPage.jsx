@@ -13,8 +13,6 @@ const emptyDashboardSummary = {
     flagged_count: 0,
     items: [],
   },
-  source_effectiveness: [],
-  resume_version_effectiveness: [],
 };
 
 function MetricCard({ label, tone, value }) {
@@ -56,31 +54,6 @@ function BreakdownList({ emptyMessage, items, tone = "neutral" }) {
   );
 }
 
-export function EffectivenessGrid({ ariaLabel, firstColumnLabel, items }) {
-  return (
-    <div className="effectiveness-grid" role="table" aria-label={ariaLabel}>
-      <div className="effectiveness-row effectiveness-header" role="row">
-        <span role="columnheader">{firstColumnLabel}</span>
-        <span role="columnheader">Applications</span>
-        <span role="columnheader">Active</span>
-        <span role="columnheader">Interviews</span>
-        <span role="columnheader">Offers</span>
-        <span role="columnheader">Closed</span>
-      </div>
-      {items.map((item) => (
-        <div className="effectiveness-row" role="row" key={item.id || item.source}>
-          <strong role="cell">{item.label || item.source}</strong>
-          <span role="cell" data-label="Applications">{item.applications}</span>
-          <span role="cell" data-label="Active">{item.active}</span>
-          <span role="cell" data-label="Interviews">{item.interviews}</span>
-          <span role="cell" data-label="Offers">{item.offers}</span>
-          <span role="cell" data-label="Closed">{item.closed}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function DashboardDisclosureSection({ children, defaultOpen = true, id, summary, title, tone }) {
   return (
     <details className={`panel dashboard-panel dashboard-disclosure dashboard-panel-${tone}`} open={defaultOpen}>
@@ -119,7 +92,7 @@ function getResumeCoverageSummary(resumeUsage, resumeEffectiveness) {
   return `${comparedCount} ${versionLabel} compared • ${assignedCount} assigned / ${unassignedCount} unassigned`;
 }
 
-export default function DashboardPage({ onOpenStatusBoard }) {
+export default function DashboardPage({ onOpenStatusBoard, onOpenInsights }) {
   const [dashboardSummary, setDashboardSummary] = useState(emptyDashboardSummary);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -137,8 +110,6 @@ export default function DashboardPage({ onOpenStatusBoard }) {
           source_breakdown: nextSummary.source_breakdown || [],
           resume_usage: nextSummary.resume_usage || [],
           red_flag_snapshot: nextSummary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
-          source_effectiveness: nextSummary.source_effectiveness || [],
-          resume_version_effectiveness: nextSummary.resume_version_effectiveness || [],
         });
       } catch (loadError) {
         setDashboardSummary(emptyDashboardSummary);
@@ -154,10 +125,6 @@ export default function DashboardPage({ onOpenStatusBoard }) {
   const totalApplications = dashboardSummary.status_breakdown.reduce((total, item) => total + item.count, 0);
   const redFlaggedCount = dashboardSummary.red_flag_snapshot.flagged_count;
   const sourceTotal = dashboardSummary.source_breakdown.reduce((total, item) => total + item.count, 0);
-  const resumeCoverageSummary = getResumeCoverageSummary(
-    dashboardSummary.resume_usage,
-    dashboardSummary.resume_version_effectiveness,
-  );
 
   return (
     <div className="dashboard-page">
@@ -165,7 +132,7 @@ export default function DashboardPage({ onOpenStatusBoard }) {
         <div>
           <p className="eyebrow">Job search snapshot</p>
           <h2>Dashboard</h2>
-          <p>Scan your job search progress, follow-ups, sources, and resume results.</p>
+          <p>Scan your current job search snapshot, follow-ups, sources, and red flags.</p>
         </div>
       </header>
 
@@ -191,6 +158,7 @@ export default function DashboardPage({ onOpenStatusBoard }) {
           </button>
         </section>
       ) : null}
+      {!isLoading && !error ? <section className="dashboard-status-board-cta" aria-labelledby="dashboard-insights-cta-title"><div><h3 id="dashboard-insights-cta-title">Outcome Insights</h3><p>See how applications progress and compare source and resume outcomes.</p></div><button className="secondary-button" type="button" onClick={onOpenInsights}>View Insights</button></section> : null}
 
       {!isLoading && !error && totalApplications === 0 ? (
         <div className="empty-state">
@@ -234,41 +202,6 @@ export default function DashboardPage({ onOpenStatusBoard }) {
             </DashboardDisclosureSection>
           </div>
 
-          <div className="dashboard-results-grid">
-            <DashboardDisclosureSection
-              id="dashboard-source-results-panel"
-              summary={`${dashboardSummary.source_effectiveness.length} sources compared`}
-              title="Source Results"
-              tone="source-results"
-            >
-              {dashboardSummary.source_effectiveness.length === 0 ? (
-                <p className="dashboard-empty-panel">No source data yet.</p>
-              ) : (
-                <EffectivenessGrid
-                  ariaLabel="Source effectiveness metrics"
-                  firstColumnLabel="Source"
-                  items={dashboardSummary.source_effectiveness}
-                />
-              )}
-            </DashboardDisclosureSection>
-
-            <DashboardDisclosureSection
-              id="dashboard-resume-results-panel"
-              summary={resumeCoverageSummary}
-              title="Resume Results"
-              tone="resume-results"
-            >
-              {dashboardSummary.resume_version_effectiveness.length === 0 ? (
-                <p className="dashboard-empty-panel">No resume-version data yet.</p>
-              ) : (
-                <EffectivenessGrid
-                  ariaLabel="Resume version effectiveness metrics"
-                  firstColumnLabel="Resume Version"
-                  items={dashboardSummary.resume_version_effectiveness}
-                />
-              )}
-            </DashboardDisclosureSection>
-          </div>
         </div>
       ) : null}
     </div>

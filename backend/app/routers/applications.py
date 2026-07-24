@@ -13,6 +13,7 @@ from ..domain import (
     STALE_EXCLUDED_STATUSES,
     STATUS_CHANGE_ACTIVITY_TYPE,
     should_default_date_applied,
+    furthest_stage_for,
 )
 from ..models import Application, ApplicationActivity, ApplicationAiBrief, utc_now
 from ..schemas import (
@@ -256,6 +257,7 @@ def create_application(payload: ApplicationCreate, db: Session = Depends(get_db)
         create_data["date_applied"] = date.today()
 
     application = Application(**create_data)
+    application.furthest_stage = furthest_stage_for(application.status, application.date_applied)
     db.add(application)
     db.commit()
     db.refresh(application)
@@ -412,6 +414,7 @@ def update_application(
 
     for field, value in updates.items():
         setattr(application, field, value)
+    application.furthest_stage = furthest_stage_for(application.status, application.date_applied, application.furthest_stage)
 
     if next_status is not None and next_status != previous_status:
         create_status_change_activity(application, previous_status, next_status, db)

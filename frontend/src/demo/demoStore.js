@@ -10,6 +10,7 @@ import { createCanonicalJobBriefSource, createJobBriefPayload, createJobBriefSou
 
 const FOLLOW_UP_EXCLUDED_STATUSES = new Set(["Rejected", "Withdrawn", "Archived"]);
 const STALE_EXCLUDED_STATUSES = new Set(["Offer", "Rejected", "Withdrawn", "Archived"]);
+const PROGRESSION_STAGES = ["Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"];
 
 let demoState = createDemoState();
 
@@ -57,6 +58,13 @@ function normalizeDateOnly(value) {
   return value || null;
 }
 
+function furthestStageFor(application) {
+  const storedRank = PROGRESSION_STAGES.indexOf(application.furthest_stage);
+  const statusRank = PROGRESSION_STAGES.indexOf(application.status);
+  const impliedApplied = application.date_applied || ["Rejected", "Withdrawn"].includes(application.status);
+  return PROGRESSION_STAGES[Math.max(storedRank, statusRank, impliedApplied ? 1 : 0)];
+}
+
 function isArchived(application) {
   return application.is_archived || application.status === "Archived";
 }
@@ -77,26 +85,6 @@ function getResumeLabel(resumeVersion) {
 
 function getSourceLabel(source) {
   return String(source || "").trim() || "Unspecified";
-}
-
-function updateEffectivenessMetrics(metrics, application) {
-  metrics.applications += 1;
-
-  if (ACTIVE_APPLICATION_STATUSES.has(application.status)) {
-    metrics.active += 1;
-  }
-
-  if (application.status === "Interview") {
-    metrics.interviews += 1;
-  }
-
-  if (application.status === "Offer") {
-    metrics.offers += 1;
-  }
-
-  if (CLOSED_APPLICATION_STATUSES.has(application.status)) {
-    metrics.closed += 1;
-  }
 }
 
 function sortByUpdatedAt(applications) {
@@ -176,6 +164,7 @@ export function createDemoApplication(payload) {
     job_link: payload.job_link || "",
     source: payload.source || DEFAULT_APPLICATION_SOURCE,
     status: payload.status || "Saved",
+    furthest_stage: furthestStageFor(payload),
     location: payload.location || "",
     compensation: payload.compensation || "",
     employment_type: payload.employment_type || "",
@@ -229,6 +218,10 @@ export function updateDemoApplication(applicationId, payload) {
         is_archived: payload.status === "Archived" ? true : application.is_archived,
         updated_at: timestamp,
       };
+      updatedApplication.furthest_stage = furthestStageFor({
+        ...updatedApplication,
+        furthest_stage: application.furthest_stage,
+      });
       return updatedApplication;
     }),
   };
@@ -581,39 +574,14 @@ export function getDemoDashboardSummary() {
   const statusCounts = new Map(USER_SELECTABLE_APPLICATION_STATUSES.map((status) => [status, 0]));
   const sourceCounts = new Map();
   const resumeCounts = new Map();
-  const sourceEffectiveness = new Map();
-  const resumeEffectiveness = new Map();
 
   for (const application of applications) {
     statusCounts.set(application.status, (statusCounts.get(application.status) || 0) + 1);
 
     const source = getSourceLabel(application.source);
     sourceCounts.set(source, (sourceCounts.get(source) || 0) + 1);
-    const sourceMetrics = sourceEffectiveness.get(source) || {
-      source,
-      applications: 0,
-      active: 0,
-      interviews: 0,
-      offers: 0,
-      closed: 0,
-    };
-    updateEffectivenessMetrics(sourceMetrics, application);
-    sourceEffectiveness.set(source, sourceMetrics);
-
     const resumeKey = application.resume_version_id || "unassigned";
     resumeCounts.set(resumeKey, (resumeCounts.get(resumeKey) || 0) + 1);
-    const resumeVersion = resumeVersionsById.get(application.resume_version_id);
-    const resumeMetrics = resumeEffectiveness.get(resumeKey) || {
-      id: String(resumeKey),
-      label: resumeVersion ? getResumeLabel(resumeVersion) : "Unassigned",
-      applications: 0,
-      active: 0,
-      interviews: 0,
-      offers: 0,
-      closed: 0,
-    };
-    updateEffectivenessMetrics(resumeMetrics, application);
-    resumeEffectiveness.set(resumeKey, resumeMetrics);
   }
 
   const activeApplicationCount = applications.filter((application) =>
@@ -671,11 +639,23 @@ export function getDemoDashboardSummary() {
         count: applications.filter((application) => Boolean(application[option.name])).length,
       })).filter((item) => item.count > 0),
     },
-    source_effectiveness: [...sourceEffectiveness.values()].sort(
-      (first, second) => second.applications - first.applications || first.source.localeCompare(second.source),
-    ),
-    resume_version_effectiveness: [...resumeEffectiveness.values()].sort(
-      (first, second) => second.applications - first.applications || first.label.localeCompare(second.label),
-    ),
   });
+}
+
+export function getDemoOutcomeInsights() {
+  const stages = PROGRESSION_STAGES;
+  const rank = (app) => Math.max(0, stages.indexOf(furthestStageFor(app)));
+  const counts = (rows) => ({ submitted: rows.filter((a) => rank(a) >= 1).length, progressed: rows.filter((a) => rank(a) >= 2).length, human_responses: rows.filter((a) => rank(a) >= 3).length, interviews: rows.filter((a) => rank(a) >= 4).length, offers: rows.filter((a) => rank(a) >= 5).length });
+  const metricGroup = (id, label, rows) => {
+    const c = counts(rows); const rate = (n) => c.submitted ? n / c.submitted : null;
+    return { id, label, ...c, progressed_rate: rate(c.progressed), human_responses_rate: rate(c.human_responses), interviews_rate: rate(c.interviews), offers_rate: rate(c.offers) };
+  };
+  const applications = demoState.applications;
+  const c = counts(applications);
+  const summaryLabels = [["submitted", "Submitted"], ["progressed", "Progressed"], ["human_responses", "Human response"], ["interviews", "Interview reached"], ["offers", "Offer received"]];
+  const submitted = applications.filter((a) => rank(a) >= 1);
+  const bySource = new Map(); const byResume = new Map();
+  submitted.forEach((a) => { const source = (a.source || "").trim() || "Unspecified"; bySource.set(source, [...(bySource.get(source) || []), a]); const v = demoState.resumeVersions.find((r) => r.id === a.resume_version_id); const key = v ? String(v.id) : "unassigned"; const label = v ? v.name : "Unassigned"; byResume.set(`${key}|${label}`, [...(byResume.get(`${key}|${label}`) || []), a]); });
+  const sourceOrder = ["LinkedIn", "Indeed", "ZipRecruiter", "Company Website", "Referral", "Other"];
+  return clone({ total_applications: applications.length, summary: summaryLabels.map(([key, label]) => ({ key, label, count: c[key], denominator: key === "submitted" ? null : c.submitted, rate: key === "submitted" || !c.submitted ? null : c[key] / c.submitted })), funnel: stages.slice(1).map((stage, index) => ({ key: stage.toLowerCase().replaceAll(" ", "_"), label: stage, stage, count: applications.filter((a) => rank(a) >= index + 1).length, denominator: c.submitted, rate: c.submitted ? applications.filter((a) => rank(a) >= index + 1).length / c.submitted : null })), source_performance: [...bySource.entries()].sort((a,b) => (sourceOrder.indexOf(a[0]) + 99) % 99 - (sourceOrder.indexOf(b[0]) + 99) % 99 || a[0].localeCompare(b[0])).map(([label, rows]) => metricGroup(label, label, rows)), resume_version_performance: [...byResume.entries()].map(([value, rows]) => { const [id, label] = value.split("|"); return metricGroup(id, label, rows); }).sort((a,b) => b.submitted - a.submitted || a.label.localeCompare(b.label)) });
 }

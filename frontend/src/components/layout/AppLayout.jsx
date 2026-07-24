@@ -5,6 +5,7 @@ import "./AppLayout.css";
 export const navigationItems = [
   { id: "command-center", label: "Reminders" },
   { id: "dashboard", label: "Dashboard" },
+  { id: "insights", label: "Insights" },
   { id: "quick-add", label: "Add Job" },
   { id: "applications", label: "Applications" },
   { id: "pipeline", label: "Status Board" },
@@ -15,6 +16,7 @@ export const navigationItems = [
 const pageTitles = {
   "command-center": "Reminders",
   dashboard: "Dashboard",
+  insights: "Outcome Insights",
   "quick-add": "Add Job",
   applications: "Applications",
   pipeline: "Status Board",

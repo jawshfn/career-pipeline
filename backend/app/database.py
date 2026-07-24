@@ -62,9 +62,51 @@ def add_application_additive_columns() -> None:
         for column_name, definition in column_definitions.items()
         if column_name not in existing_columns
     ]
-    if not missing_columns:
-        return
-
     with engine.begin() as connection:
         for column_name, definition in missing_columns:
             connection.execute(text(f"ALTER TABLE applications ADD COLUMN {column_name} {definition}"))
+        if "furthest_stage" not in existing_columns:
+            connection.execute(text("ALTER TABLE applications ADD COLUMN furthest_stage VARCHAR(40) NOT NULL DEFAULT 'Saved'"))
+    # Reconcile old records once the column exists. Activity notes are deliberately
+    # only migration evidence; live reporting reads this stored value.
+    from .domain import furthest_stage_for, PROGRESSION_STAGES
+    import re
+    application_columns = {column["name"] for column in inspector.get_columns("applications")}
+    if not {"id", "status", "date_applied", "furthest_stage"}.issubset(application_columns):
+        return
+
+    history: dict[int, list[str]] = {}
+    if inspector.has_table("application_activities"):
+        activity_columns = {
+            column["name"] for column in inspector.get_columns("application_activities")
+        }
+        if {"application_id", "activity_type", "note"}.issubset(activity_columns):
+            with engine.connect() as connection:
+                activities = connection.execute(
+                    text(
+                        "SELECT application_id, note FROM application_activities "
+                        "WHERE activity_type = 'Status Change'"
+                    )
+                ).mappings()
+                pattern = re.compile(
+                    r"^Status changed from (Saved|Applied|Assessment|Recruiter Screen|Interview|Offer|Rejected|Withdrawn|Archived) to (Saved|Applied|Assessment|Recruiter Screen|Interview|Offer|Rejected|Withdrawn|Archived)\\.$"
+                )
+                for activity in activities:
+                    match = pattern.fullmatch(activity["note"] or "")
+                    if match:
+                        history.setdefault(activity["application_id"], []).extend(match.groups())
+
+    with engine.begin() as connection:
+        applications = connection.execute(
+            text("SELECT id, status, date_applied, furthest_stage FROM applications")
+        ).mappings()
+        for app in applications:
+            existing = app["furthest_stage"] if app["furthest_stage"] in PROGRESSION_STAGES else None
+            stage = furthest_stage_for(app["status"], app["date_applied"], existing)
+            for status_value in history.get(app["id"], []):
+                stage = furthest_stage_for(status_value, None, stage)
+            if app["furthest_stage"] != stage:
+                connection.execute(
+                    text("UPDATE applications SET furthest_stage = :stage WHERE id = :id"),
+                    {"stage": stage, "id": app["id"]},
+                )

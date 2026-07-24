@@ -40,8 +40,8 @@ def test_seed_demo_data_creates_representative_records(client, db_session):
     summary_response = client.get("/api/dashboard/summary")
     assert summary_response.status_code == 200
     summary = summary_response.json()
-    assert summary["source_effectiveness"]
-    assert summary["resume_version_effectiveness"]
+    assert "source_effectiveness" not in summary
+    assert "resume_version_effectiveness" not in summary
     assert summary["red_flag_snapshot"]["flagged_count"] >= 1
 
 

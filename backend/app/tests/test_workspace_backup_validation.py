@@ -57,7 +57,7 @@ def test_transport_content_type_and_body_handling(client, db_session):
 
 @pytest.mark.parametrize("path,value,code", [
     (("format",), "other", "unsupported_format"),
-    (("version",), 3, "unsupported_version"),
+        (("version",), 4, "unsupported_version"),
     (("version",), "1", "schema_error"),
     (("counts", "applications"), -1, "schema_error"),
     (("data", "resume_versions", 0, "id"), "1", "schema_error"),
@@ -223,7 +223,7 @@ def test_schema_error_cap_and_export_contract(client, db_session):
     assert all("bad" not in issue["message"] for issue in body["errors"])
     exported, _ = populated_backup(db_session)
     assert exported["format"] == BACKUP_FORMAT == "pursuithq-workspace-backup"
-    assert exported["version"] == BACKUP_VERSION == 2
+    assert exported["version"] == BACKUP_VERSION == 3
     assert post_backup(client, exported).json()["is_valid"] is True
 
 

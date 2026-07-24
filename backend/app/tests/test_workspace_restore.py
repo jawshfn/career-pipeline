@@ -172,7 +172,7 @@ def test_restore_rolls_back_if_any_replace_stage_fails(client, db_session, monke
 def test_invalid_preview_has_no_authorization_and_missing_header_is_controlled(client, db_session):
     backup = _source_backup(db_session)
     invalid = copy.deepcopy(backup)
-    invalid["version"] = 3
+    invalid["version"] = 4
     assert _post_preview(client, _raw(invalid)).json()["restore_authorization"] is None
     response = client.post("/api/imports/workspace/restore", content=_raw(backup), headers={"Content-Type": "application/json"})
     assert response.status_code == 400

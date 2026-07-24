@@ -18,6 +18,7 @@ import ConfirmationDialog from "./components/ui/ConfirmationDialog.jsx";
 import ApplicationsPage from "./pages/ApplicationsPage.jsx";
 import CommandCenterPage from "./pages/CommandCenterPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
+import InsightsPage from "./pages/InsightsPage.jsx";
 import PipelinePage from "./pages/PipelinePage.jsx";
 import QuickAddPage from "./pages/QuickAddPage.jsx";
 import ResumeVersionsPage from "./pages/ResumeVersionsPage.jsx";
@@ -296,7 +297,9 @@ export default function App() {
           onOpenApplication={handleOpenApplicationDetails}
         />
       ) : activePage === "dashboard" ? (
-        <DashboardPage onOpenStatusBoard={() => navigateToPage("pipeline")} />
+        <DashboardPage onOpenStatusBoard={() => navigateToPage("pipeline")} onOpenInsights={() => navigateToPage("insights")} />
+      ) : activePage === "insights" ? (
+        <InsightsPage />
       ) : activePage === "quick-add" ? (
         <QuickAddPage
           browserCaptureError={incomingBrowserCaptureError}
