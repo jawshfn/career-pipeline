@@ -4284,8 +4284,7 @@ textarea:focus-visible {
   background: #c75d4d;
 }
 
-.pipeline-card-withdrawn::before,
-.pipeline-card-archived::before {
+.pipeline-card-withdrawn::before {
   background: #9aa0a4;
 }
 
