@@ -20,10 +20,6 @@ export function getCachedResource(resource, runtime) {
   return getEntry(resource, runtime).data;
 }
 
-export function getResourceRefreshError(resource, runtime) {
-  return getEntry(resource, runtime).refreshError;
-}
-
 export function fetchResource(resource, fetcher, runtime) {
   const entry = getEntry(resource, runtime);
   if (entry.pending) return entry.pending;

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 
+import useStaleResource from "../hooks/useStaleResource.js";
 import { getDashboardSummary } from "../services/dashboardService.js";
-import { fetchResource, getCachedResource } from "../services/staleResource.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
@@ -86,36 +86,11 @@ function normalizeDashboardSummary(summary) {
 }
 
 export default function DashboardPage({ onOpenStatusBoard, onOpenInsights }) {
-  const cachedSummary = getCachedResource("dashboard");
-  const [dashboardSummary, setDashboardSummary] = useState(() => cachedSummary ? normalizeDashboardSummary(cachedSummary) : emptyDashboardSummary);
-  const [error, setError] = useState("");
-  const [refreshError, setRefreshError] = useState("");
-  const [isLoading, setIsLoading] = useState(() => !cachedSummary);
-
-  useEffect(() => {
-    const hasCachedSummary = Boolean(getCachedResource("dashboard"));
-    let isActive = true;
-    async function loadDashboardSummary() {
-      if (!hasCachedSummary) setIsLoading(true);
-      setError("");
-      setRefreshError("");
-
-      try {
-        const nextSummary = await fetchResource("dashboard", getDashboardSummary);
-        if (isActive) setDashboardSummary(normalizeDashboardSummary(nextSummary));
-      } catch (loadError) {
-        if (!hasCachedSummary && isActive) {
-          setDashboardSummary(emptyDashboardSummary);
-          setError(loadError.message || "Could not load dashboard summary.");
-        } else if (isActive) setRefreshError("Could not refresh dashboard. Showing the previous summary.");
-      } finally {
-        if (isActive && !hasCachedSummary) setIsLoading(false);
-      }
-    }
-
-    loadDashboardSummary();
-    return () => { isActive = false; };
-  }, []);
+  const { data, error, refreshError, isInitialLoading: isLoading } = useStaleResource("dashboard", getDashboardSummary, {
+    initialErrorMessage: "Could not load dashboard summary.",
+    refreshErrorMessage: "Could not refresh dashboard. Showing the previous summary.",
+  });
+  const dashboardSummary = normalizeDashboardSummary(data || emptyDashboardSummary);
 
   const totalApplications = dashboardSummary.status_breakdown.reduce((total, item) => total + item.count, 0);
   const redFlaggedCount = dashboardSummary.red_flag_snapshot.flagged_count;

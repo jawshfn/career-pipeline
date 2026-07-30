@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 
+import useStaleResource from "../hooks/useStaleResource.js";
 import StatusBadge from "../components/applications/StatusBadge.jsx";
 import ConfirmationDialog from "../components/ui/ConfirmationDialog.jsx";
 import ScrollableTable from "../components/ui/ScrollableTable.jsx";
@@ -7,7 +8,6 @@ import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 import { OUTCOME_METRICS } from "../constants/outcomeMetrics.js";
 import { getOutcomeContributors, getOutcomeInsights } from "../services/insightsService.js";
-import { fetchResource, getCachedResource, subscribeToResourceInvalidation } from "../services/staleResource.js";
 
 function percent(value) { return value == null ? "—" : `${Math.round(value * 100)}%`; }
 function caution(count) { return count < 5 ? "Very limited data" : count < 10 ? "Limited data" : ""; }
@@ -47,15 +47,11 @@ function OutcomeTable({ firstLabel, groupType, onContributors, rows, title }) {
 }
 
 export default function InsightsPage({ onOpenApplication }) {
-  const [data, setData] = useState(() => getCachedResource("outcome-insights"));
-  const [error, setError] = useState("");
-  const [refreshError, setRefreshError] = useState("");
+  const { data, error, refreshError } = useStaleResource("outcome-insights", getOutcomeInsights, {
+    initialErrorMessage: "Could not load outcome insights.",
+    refreshErrorMessage: "Could not refresh outcome insights. Showing the previous report.",
+  });
   const [contributorRequest, setContributorRequest] = useState(null);
-  useEffect(() => {
-    let active = true;
-    function refresh() { const cached = Boolean(getCachedResource("outcome-insights")); setError(""); setRefreshError(""); return fetchResource("outcome-insights", getOutcomeInsights).then(() => active && setData(getCachedResource("outcome-insights"))).catch((reason) => { if (!active) return; if (cached) setRefreshError("Could not refresh outcome insights. Showing the previous report."); else setError(reason.message || "Could not load outcome insights."); }); }
-    refresh(); return subscribeToResourceInvalidation("outcome-insights", refresh);
-  }, []);
   if (error) return <div className="insights-page"><ErrorMessage message={error} /></div>;
   if (!data) return <LoadingState message="Loading outcome insights..." />;
   const noApplications = data.scope.visible_applications === 0;
