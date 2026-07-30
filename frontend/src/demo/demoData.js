@@ -1,13 +1,12 @@
 import { DEMO_JOB_POSTING_SNAPSHOTS } from "./demoJobPostingSnapshots.js";
-
-const CONFIRMED_STAGES = ["Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"];
+import { PROGRESSION_STAGES } from "../constants/applicationConstants.js";
 
 function confirmedStageFor(applicationRecord) {
-  if (CONFIRMED_STAGES.includes(applicationRecord.furthest_stage)) {
+  if (PROGRESSION_STAGES.includes(applicationRecord.furthest_stage)) {
     return applicationRecord.furthest_stage;
   }
 
-  if (CONFIRMED_STAGES.includes(applicationRecord.status)) {
+  if (PROGRESSION_STAGES.includes(applicationRecord.status)) {
     return applicationRecord.status;
   }
 

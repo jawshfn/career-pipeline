@@ -2,15 +2,14 @@ import {
   ACTIVE_APPLICATION_STATUSES,
   CLOSED_APPLICATION_STATUSES,
   DEFAULT_APPLICATION_SOURCE,
+  FOLLOW_UP_EXCLUDED_STATUSES,
+  PROGRESSION_STAGES,
   RED_FLAG_OPTIONS,
+  STALE_EXCLUDED_STATUSES,
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../constants/applicationConstants.js";
 import { createDemoState } from "./demoData.js";
 import { createCanonicalJobBriefSource, createJobBriefPayload, createJobBriefSourceFingerprint } from "../services/jobBriefService.js";
-
-const FOLLOW_UP_EXCLUDED_STATUSES = new Set(["Rejected", "Withdrawn", "Archived"]);
-const STALE_EXCLUDED_STATUSES = new Set(["Offer", "Rejected", "Withdrawn", "Archived"]);
-const PROGRESSION_STAGES = ["Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"];
 
 let demoState = createDemoState();
 

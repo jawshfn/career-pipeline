@@ -1,6 +1,6 @@
-import { ACTIVE_APPLICATION_STATUSES, CLOSED_APPLICATION_STATUSES } from "../constants/applicationConstants.js";
+import { ACTIVE_APPLICATION_STATUSES, CLOSED_APPLICATION_STATUSES, PROGRESSION_STAGES } from "../constants/applicationConstants.js";
 
-export const CONFIRMED_STAGES = ["Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"];
+export const CONFIRMED_STAGES = PROGRESSION_STAGES;
 
 export function confirmedStageRank(stage) {
   return CONFIRMED_STAGES.indexOf(stage);

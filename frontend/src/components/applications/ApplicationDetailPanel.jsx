@@ -5,6 +5,7 @@ import {
   APPLIED_OR_LATER_APPLICATION_STATUSES,
   DEFAULT_APPLICATION_SOURCE,
   EMPLOYMENT_TYPE_OPTIONS,
+  PROGRESSION_STAGES,
   RED_FLAG_OPTIONS,
   SAVED_APPLICATION_STATUS,
   SOURCE_OPTIONS,
@@ -32,7 +33,7 @@ import ErrorMessage from "../ui/ErrorMessage.jsx";
 import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
 import StatusTransitionDialog from "./StatusTransitionDialog.jsx";
-import { analyzeStatusTransition, CONFIRMED_STAGES, confirmedStageRank, transitionPayloadForDecision } from "../../utils/statusTransition.js";
+import { analyzeStatusTransition, confirmedStageRank, transitionPayloadForDecision } from "../../utils/statusTransition.js";
 import {
   JobBriefServiceError,
   createJobBriefPayload,
@@ -221,7 +222,7 @@ function getCloseConfirmation(hasUnsavedApplicationChanges, hasUnsavedActivityDr
   return { title: "Close without saving?", description: "You have unsaved application changes. Closing will discard them.", confirmLabel: "Close without saving" };
 }
 
-const outcomeStages = CONFIRMED_STAGES;
+const outcomeStages = PROGRESSION_STAGES;
 const stageRank = confirmedStageRank;
 
 export function shouldRefreshActivitiesAfterApplicationSave(previousStatus, nextStatus) {
