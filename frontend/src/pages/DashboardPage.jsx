@@ -24,7 +24,6 @@ function MetricCard({ label, tone, value }) {
     </article>
   );
 }
-
 const statusCountClasses = {
   Applied: "status-applied",
   Assessment: "status-assessment",
@@ -76,21 +75,6 @@ function summarizeBreakdown(items, singularLabel, pluralLabel = `${singularLabel
   const total = items.reduce((sum, item) => sum + item.count, 0);
   const label = items.length === 1 ? singularLabel : pluralLabel;
   return `${total} applications across ${items.length} ${label}`;
-}
-
-function getResumeCoverageSummary(resumeUsage, resumeEffectiveness) {
-  const unassignedCount = resumeUsage.find((item) => item.label === "No resume version")?.count || 0;
-  const assignedCount = resumeUsage.reduce((total, item) => {
-    if (item.label === "No resume version") {
-      return total;
-    }
-
-    return total + item.count;
-  }, 0);
-  const comparedCount = resumeEffectiveness.filter((item) => item.label !== "Unassigned").length;
-  const versionLabel = comparedCount === 1 ? "resume version" : "resume versions";
-
-  return `${comparedCount} ${versionLabel} compared • ${assignedCount} assigned / ${unassignedCount} unassigned`;
 }
 
 function normalizeDashboardSummary(summary) {

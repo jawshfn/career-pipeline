@@ -25,27 +25,6 @@ const summaryCards = [
   { key: "flags", label: "Red-flagged applications", tone: "flags", value: 3 },
 ];
 
-const effectivenessItems = [
-  {
-    active: 4,
-    applications: 6,
-    closed: 1,
-    id: "source-1",
-    interviews: 2,
-    label: "Very Long Professional Community Referral Network Source",
-    offers: 1,
-  },
-  {
-    active: 2,
-    applications: 3,
-    closed: 0,
-    id: "resume-1",
-    interviews: 1,
-    label: "Full Stack Resume for Extremely Long Enterprise Platform Roles",
-    offers: 0,
-  },
-];
-
 const dashboardSummary = {
   red_flag_snapshot: {
     flagged_count: 3,
@@ -58,12 +37,10 @@ const dashboardSummary = {
     { count: 8, label: "Platform resume" },
     { count: 1, label: "No resume version" },
   ],
-  resume_version_effectiveness: [{ ...effectivenessItems[1], label: "Full Stack Resume for Extremely Long Enterprise Platform Roles" }],
   source_breakdown: [
     { count: 7, label: "Company Website" },
     { count: 4, label: "Referral" },
   ],
-  source_effectiveness: [effectivenessItems[0]],
   status_breakdown: [
     { count: 1, label: "Saved" },
     { count: 3, label: "Applied" },
@@ -161,9 +138,7 @@ describe("DashboardPage", () => {
         ...dashboardSummary,
         red_flag_snapshot: { flagged_count: 0, items: [] },
         resume_usage: [],
-        resume_version_effectiveness: [],
         source_breakdown: [],
-        source_effectiveness: [],
         status_breakdown: [],
         summary_cards: summaryCards.map((metric) => ({ ...metric, value: 0 })),
       },
@@ -179,9 +154,7 @@ describe("DashboardPage", () => {
         ...dashboardSummary,
         red_flag_snapshot: { flagged_count: 0, items: [] },
         resume_usage: [],
-        resume_version_effectiveness: [],
         source_breakdown: [],
-        source_effectiveness: [],
         status_breakdown: [{ count: 1, label: "Saved" }],
       },
     });
