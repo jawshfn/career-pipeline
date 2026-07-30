@@ -3,4 +3,4 @@ import * as demoInsightsApi from "../demo/demoInsightsApi.js";
 import { isDemoMode } from "../config/runtimeMode.js";
 
 const insightsApi = isDemoMode() ? demoInsightsApi : realInsightsApi;
-export const { getOutcomeInsights } = insightsApi;
+export const { getOutcomeInsights, getOutcomeContributors } = insightsApi;

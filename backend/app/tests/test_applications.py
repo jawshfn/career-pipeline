@@ -593,3 +593,66 @@ def test_create_application_rejects_archived_status(client):
     response = create_application(client, status="Archived")
 
     assert response.status_code == 422
+
+
+def test_status_transition_preserves_confirmed_history_when_reopening(client):
+    created = create_application(client, status="Interview").json()
+
+    response = client.post(
+        f"/api/applications/{created['id']}/status-transition",
+        json={
+            "status": "Applied",
+            "expected_status": "Interview",
+            "expected_furthest_stage": "Interview",
+            "backward_history_intent": "preserve",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "Applied"
+    assert response.json()["furthest_stage"] == "Interview"
+    activities = get_activities(client, created["id"])
+    assert activities[0]["note"] == "Status changed from Interview to Applied."
+
+
+def test_first_time_terminal_transition_requires_explicit_submission_intent(client):
+    created = create_application(client).json()
+    base_payload = {
+        "status": "Rejected",
+        "expected_status": "Saved",
+        "expected_furthest_stage": "Saved",
+    }
+
+    missing_intent = client.post(f"/api/applications/{created['id']}/status-transition", json=base_payload)
+    submitted = client.post(
+        f"/api/applications/{created['id']}/status-transition",
+        json={**base_payload, "terminal_submission_intent": "submitted", "confirmed_stage": "Assessment"},
+    )
+
+    assert missing_intent.status_code == 422
+    assert submitted.status_code == 200
+    assert submitted.json()["furthest_stage"] == "Assessment"
+    assert len(get_activities(client, created["id"])) == 1
+
+
+def test_outcome_history_correction_is_conflict_protected_and_does_not_change_status(client):
+    created = create_application(client, status="Interview").json()
+    closed = client.post(
+        f"/api/applications/{created['id']}/status-transition",
+        json={"status": "Rejected", "expected_status": "Interview", "expected_furthest_stage": "Interview"},
+    )
+    assert closed.status_code == 200
+    stale = client.post(
+        f"/api/applications/{created['id']}/outcome-history-correction",
+        json={"expected_furthest_stage": "Applied", "confirmed_stage": "Interview"},
+    )
+    corrected = client.post(
+        f"/api/applications/{created['id']}/outcome-history-correction",
+        json={"expected_furthest_stage": "Interview", "confirmed_stage": "Recruiter Screen"},
+    )
+
+    assert stale.status_code == 409
+    assert corrected.status_code == 200
+    assert corrected.json()["status"] == "Rejected"
+    assert corrected.json()["furthest_stage"] == "Recruiter Screen"
+    assert [activity["activity_type"] for activity in get_activities(client, created["id"])] == ["Outcome History Correction", "Status Change"]

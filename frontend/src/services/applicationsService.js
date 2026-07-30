@@ -13,6 +13,8 @@ export const {
   getApplicationActionItems,
   getApplications,
   updateApplication,
+  transitionApplicationStatus,
+  correctApplicationOutcomeHistory,
   saveApplicationAiBrief,
   deleteApplicationAiBrief,
 } = applicationsApi;

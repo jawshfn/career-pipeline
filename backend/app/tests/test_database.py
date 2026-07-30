@@ -115,7 +115,10 @@ def test_history_backfill_is_marked_once_and_second_startup_skips_full_scans(tmp
     database.add_application_additive_columns()
     with engine.connect() as connection:
         assert connection.execute(text("SELECT furthest_stage FROM applications")).scalar_one() == "Interview"
-        assert connection.execute(text("SELECT migration_key FROM internal_schema_migrations")).scalar_one() == database.FURTHEST_STAGE_HISTORY_BACKFILL_KEY
+        assert set(connection.execute(text("SELECT migration_key FROM internal_schema_migrations")).scalars()) == {
+            database.FURTHEST_STAGE_HISTORY_BACKFILL_KEY,
+            database.TERMINAL_SUBMISSION_HISTORY_RECONCILIATION_KEY,
+        }
 
     statements = []
     def capture_sql(_connection, _cursor, statement, _parameters, _context, _executemany):
@@ -180,4 +183,29 @@ def test_failed_backfill_does_not_write_success_marker(tmp_path, monkeypatch):
     with engine.connect() as connection:
         marker = connection.execute(text("SELECT migration_key FROM internal_schema_migrations")).scalar_one_or_none()
     assert marker is None
+    engine.dispose()
+
+
+def test_terminal_submission_reconciliation_repairs_only_proven_legacy_candidates(tmp_path, monkeypatch):
+    engine = create_engine(f"sqlite:///{tmp_path / 'terminal-reconciliation.db'}")
+    database.Base.metadata.create_all(bind=engine)
+    with Session(engine) as session:
+        unproven = Application(company_name="Unproven", role_title="Engineer", status="Rejected")
+        proven = Application(company_name="Proven", role_title="Engineer", status="Withdrawn")
+        applied = Application(company_name="Applied", role_title="Engineer", status="Rejected", date_applied=date.today())
+        session.add_all([unproven, proven, applied])
+        session.flush()
+        session.add(ApplicationActivity(application_id=proven.id, activity_date=date.today(), activity_type="Status Change", note="Status changed from Saved to Interview."))
+        session.commit()
+    with engine.begin() as connection:
+        connection.execute(text("UPDATE applications SET furthest_stage = 'Applied'"))
+
+    monkeypatch.setattr(database, "engine", engine)
+    database.add_application_additive_columns()
+
+    with engine.connect() as connection:
+        stages = dict(connection.execute(text("SELECT company_name, furthest_stage FROM applications")).all())
+        markers = set(connection.execute(text("SELECT migration_key FROM internal_schema_migrations")).scalars())
+    assert stages == {"Unproven": "Saved", "Proven": "Interview", "Applied": "Applied"}
+    assert database.TERMINAL_SUBMISSION_HISTORY_RECONCILIATION_KEY in markers
     engine.dispose()

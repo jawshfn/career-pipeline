@@ -12,6 +12,11 @@ from ..domain import (
     FOLLOW_UP_EXCLUDED_STATUSES,
     STALE_EXCLUDED_STATUSES,
     STATUS_CHANGE_ACTIVITY_TYPE,
+    OUTCOME_HISTORY_CORRECTION_ACTIVITY_TYPE,
+    ACTIVE_APPLICATION_STATUSES,
+    CLOSED_APPLICATION_STATUSES,
+    PROGRESSION_STAGES,
+    progression_rank,
     should_default_date_applied,
     furthest_stage_for,
 )
@@ -28,6 +33,8 @@ from ..schemas import (
     ApplicationUpdate,
     ApplicationAiBriefRead,
     ApplicationAiBriefUpsert,
+    ApplicationStatusTransitionRequest,
+    OutcomeHistoryCorrectionRequest,
 )
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
@@ -143,6 +150,94 @@ def create_status_change_activity(
             note=f"Status changed from {previous_status} to {next_status}.",
         )
     )
+
+
+def _status_conflict(application: Application, payload: ApplicationStatusTransitionRequest) -> None:
+    if application.status != payload.expected_status or application.furthest_stage != payload.expected_furthest_stage:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This application changed after it was loaded. Refresh it and try again.")
+
+
+def _validate_confirmed_stage(stage: str, minimum_status: str) -> None:
+    if progression_rank(stage) < progression_rank(minimum_status):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Highest confirmed stage cannot be below the current active status.")
+
+
+def apply_status_transition(application: Application, payload: ApplicationStatusTransitionRequest, db: Session) -> None:
+    """Apply every status change through one transactional, concurrency-safe rule set."""
+    _status_conflict(application, payload)
+    previous_status = application.status
+    next_status = payload.status
+    if previous_status == next_status:
+        return
+    if application.is_archived:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Archived applications cannot be restored through this endpoint")
+
+    current_rank = progression_rank(application.furthest_stage)
+    next_rank = progression_rank(next_status)
+    closing_unconfirmed = previous_status == "Saved" and next_status in CLOSED_APPLICATION_STATUSES and current_rank == 0 and application.date_applied is None
+    if closing_unconfirmed:
+        if payload.terminal_submission_intent not in {"not_submitted", "submitted"}:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Choose whether this application was submitted before it was closed.")
+        if payload.terminal_submission_intent == "submitted":
+            stage = payload.confirmed_stage or "Applied"
+            if progression_rank(stage) < 1:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="A submitted application must have at least Applied as its highest confirmed stage.")
+            application.furthest_stage = stage
+    elif next_status in ACTIVE_APPLICATION_STATUSES and next_rank < current_rank:
+        if payload.backward_history_intent not in {"preserve", "correct"}:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Choose whether to preserve or correct highest confirmed stage.")
+        if payload.backward_history_intent == "correct":
+            stage = payload.confirmed_stage or next_status
+            _validate_confirmed_stage(stage, next_status)
+            application.furthest_stage = stage
+    elif next_status in ACTIVE_APPLICATION_STATUSES:
+        application.furthest_stage = furthest_stage_for(next_status, application.date_applied, application.furthest_stage)
+
+    application.status = next_status
+    if should_default_date_applied(next_status) and application.date_applied is None:
+        application.date_applied = date.today()
+    # Derivation only raises ordinary evidence and never turns a terminal state into Applied.
+    application.furthest_stage = furthest_stage_for(application.status, application.date_applied, application.furthest_stage)
+    create_status_change_activity(application, previous_status, next_status, db)
+
+
+@router.post("/{application_id}/status-transition", response_model=ApplicationRead)
+def transition_application_status(application_id: int, payload: ApplicationStatusTransitionRequest, db: Session = Depends(get_db)) -> Application:
+    application = get_existing_application(application_id, db)
+    try:
+        apply_status_transition(application, payload, db)
+        db.commit()
+        db.refresh(application)
+        return application
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.post("/{application_id}/outcome-history-correction", response_model=ApplicationRead)
+def correct_outcome_history(application_id: int, payload: OutcomeHistoryCorrectionRequest, db: Session = Depends(get_db)) -> Application:
+    application = get_existing_application(application_id, db)
+    if application.is_archived or application.status == ARCHIVED_APPLICATION_STATUS:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Archived applications cannot have outcome history corrected.")
+    if application.furthest_stage != payload.expected_furthest_stage:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This application changed after it was loaded. Refresh it and try again.")
+    if payload.confirmed_stage == application.furthest_stage:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Highest confirmed stage is already set to that value.")
+    if application.status in ACTIVE_APPLICATION_STATUSES:
+        _validate_confirmed_stage(payload.confirmed_stage, application.status)
+    previous_stage = application.furthest_stage
+    application.furthest_stage = payload.confirmed_stage
+    db.add(ApplicationActivity(application_id=application.id, activity_date=date.today(), activity_type=OUTCOME_HISTORY_CORRECTION_ACTIVITY_TYPE, note=f"Highest confirmed stage corrected from {previous_stage} to {payload.confirmed_stage}."))
+    try:
+        db.commit()
+        db.refresh(application)
+        return application
+    except Exception:
+        db.rollback()
+        raise
 
 
 FOLLOW_UP_CONFLICT_DETAIL = "This follow-up changed after it was loaded. Refresh Reminders and try again."
@@ -391,9 +486,7 @@ def update_application(
     application = get_existing_application(application_id, db)
 
     updates = payload.model_dump(exclude_unset=True)
-    previous_status = application.status
     next_status = updates.get("status")
-
     if application.is_archived and (
         (next_status is not None and next_status != ARCHIVED_APPLICATION_STATUS) or updates.get("is_archived") is False
     ):
@@ -402,22 +495,31 @@ def update_application(
             detail="Archived applications cannot be restored through this endpoint",
         )
 
+    if next_status == ARCHIVED_APPLICATION_STATUS and next_status != application.status:
+        previous_status = application.status
+        application.status = ARCHIVED_APPLICATION_STATUS
+        application.is_archived = True
+        updates.pop("status")
+        updates.pop("is_archived", None)
+        create_status_change_activity(application, previous_status, ARCHIVED_APPLICATION_STATUS, db)
+    elif next_status is not None and next_status != application.status:
+        # Compatibility-only PATCH calls still use the authoritative transition
+        # rules; the user-facing clients call the dedicated endpoint with guards.
+        transition_payload = ApplicationStatusTransitionRequest(
+            status=next_status,
+            expected_status=application.status,
+            expected_furthest_stage=application.furthest_stage,
+            backward_history_intent="preserve",
+        )
+        apply_status_transition(application, transition_payload, db)
+        updates.pop("status")
+
     if next_status == ARCHIVED_APPLICATION_STATUS:
         updates["is_archived"] = True
-
-    if (
-        should_default_date_applied(next_status)
-        and application.date_applied is None
-        and "date_applied" not in updates
-    ):
-        updates["date_applied"] = date.today()
 
     for field, value in updates.items():
         setattr(application, field, value)
     application.furthest_stage = furthest_stage_for(application.status, application.date_applied, application.furthest_stage)
-
-    if next_status is not None and next_status != previous_status:
-        create_status_change_activity(application, previous_status, next_status, db)
 
     db.commit()
     db.refresh(application)

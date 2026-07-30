@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { applyApplicationFollowUpAction, createApplication, deleteApplication, getApplications, updateApplication } from "./services/applicationsService.js";
+import { applyApplicationFollowUpAction, correctApplicationOutcomeHistory, createApplication, deleteApplication, getApplications, transitionApplicationStatus, updateApplication } from "./services/applicationsService.js";
+import { updateCachedResource } from "./services/staleResource.js";
 import {
   createResumeVersion,
   deleteResumeVersion,
@@ -237,6 +238,27 @@ export default function App() {
     return updatedApplication;
   }
 
+  async function handleTransitionApplicationStatus(application, payload) {
+    const updatedApplication = await transitionApplicationStatus(application.id, {
+      ...payload,
+      expected_status: application.status,
+      expected_furthest_stage: application.furthest_stage,
+    });
+    setApplications((currentApplications) => currentApplications.map((item) => item.id === updatedApplication.id ? updatedApplication : item));
+    updateCachedResource("outcome-insights", undefined);
+    return updatedApplication;
+  }
+
+  async function handleCorrectApplicationOutcomeHistory(application, payload) {
+    const updatedApplication = await correctApplicationOutcomeHistory(application.id, {
+      ...payload,
+      expected_furthest_stage: application.furthest_stage,
+    });
+    setApplications((currentApplications) => currentApplications.map((item) => item.id === updatedApplication.id ? updatedApplication : item));
+    updateCachedResource("outcome-insights", undefined);
+    return updatedApplication;
+  }
+
   async function handleCreateResumeVersion(payload) {
     const createdResumeVersion = await createResumeVersion(payload);
     setResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, createdResumeVersion));
@@ -299,7 +321,7 @@ export default function App() {
       ) : activePage === "dashboard" ? (
         <DashboardPage onOpenStatusBoard={() => navigateToPage("pipeline")} onOpenInsights={() => navigateToPage("insights")} />
       ) : activePage === "insights" ? (
-        <InsightsPage />
+        <InsightsPage onOpenApplication={handleOpenApplicationDetails} />
       ) : activePage === "quick-add" ? (
         <QuickAddPage
           browserCaptureError={incomingBrowserCaptureError}
@@ -335,7 +357,7 @@ export default function App() {
           error={loadError}
           isLoading={isLoading}
           onOpenDetails={handleOpenApplicationDetails}
-          onUpdateApplication={handleUpdateApplication}
+          onTransitionApplicationStatus={handleTransitionApplicationStatus}
         />
       ) : activePage === "support" ? (
         <SupportPage
@@ -356,6 +378,8 @@ export default function App() {
           onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onRequestedApplicationHandled={() => setRequestedApplicationId(null)}
           onDeleteApplication={handleDeleteApplication}
+          onCorrectApplicationOutcomeHistory={handleCorrectApplicationOutcomeHistory}
+          onTransitionApplicationStatus={handleTransitionApplicationStatus}
           onUpdateApplication={handleUpdateApplication}
           requestedApplicationId={requestedApplicationId}
           resumeVersions={allResumeVersions}

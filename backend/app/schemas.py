@@ -156,6 +156,44 @@ class ApplicationFollowUpActionRequest(BaseModel):
         return self
 
 
+class ApplicationStatusTransitionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: str
+    expected_status: str
+    expected_furthest_stage: str
+    terminal_submission_intent: Literal["not_submitted", "submitted"] | None = None
+    confirmed_stage: str | None = None
+    backward_history_intent: Literal["preserve", "correct"] | None = None
+
+    @field_validator("status", "expected_status")
+    @classmethod
+    def transition_statuses(cls, value: str) -> str:
+        if value not in ALLOWED_APPLICATION_STATUSES or value == ARCHIVED_APPLICATION_STATUS:
+            raise ValueError("status must be an active or terminal application status")
+        return value
+
+    @field_validator("expected_furthest_stage", "confirmed_stage")
+    @classmethod
+    def confirmed_stages(cls, value: str | None) -> str | None:
+        if value is not None and value not in ("Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"):
+            raise ValueError("confirmed stage must be a progression stage")
+        return value
+
+
+class OutcomeHistoryCorrectionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expected_furthest_stage: str
+    confirmed_stage: str
+
+    @field_validator("expected_furthest_stage", "confirmed_stage")
+    @classmethod
+    def correction_stages(cls, value: str) -> str:
+        if value not in ("Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"):
+            raise ValueError("confirmed stage must be a progression stage")
+        return value
+
 class ApplicationFollowUpActionRead(BaseModel):
     application: ApplicationRead
     activity: "ApplicationActivityRead"
@@ -193,24 +231,52 @@ class OutcomeMetricRead(BaseModel):
     stage: str | None = None
     denominator: int | None = None
     rate: float | None = None
+    current_count: int | None = None
+    currently_elsewhere_count: int | None = None
 
 
 class OutcomeGroupRead(BaseModel):
     id: str
     label: str
-    submitted: int
-    progressed: int
+    analyzed: int
+    reached_assessment: int
     human_responses: int
-    interviews: int
-    offers: int
-    progressed_rate: float | None
+    reached_interview: int
+    reached_offer: int
+    reached_assessment_rate: float | None
     human_responses_rate: float | None
-    interviews_rate: float | None
-    offers_rate: float | None
+    reached_interview_rate: float | None
+    reached_offer_rate: float | None
+
+
+class OutcomeScopeRead(BaseModel):
+    visible_applications: int
+    analyzed_applications: int
+    saved_applications_excluded: int
+    closed_without_confirmed_submission_excluded: int
+    archived_applications_excluded: int
+
+
+class OutcomeContributorRead(BaseModel):
+    application_id: int
+    company_name: str
+    role_title: str
+    status: str
+    furthest_stage: str
+    source: str | None
+    resume_version_id: int | None = None
+    resume_version_label: str | None = None
+
+
+class OutcomeContributorsRead(BaseModel):
+    metric: str
+    group_type: Literal["global", "source", "resume"]
+    group_id: str | None = None
+    contributors: list[OutcomeContributorRead]
 
 
 class OutcomesInsightsRead(BaseModel):
-    total_applications: int
+    scope: OutcomeScopeRead
     summary: list[OutcomeMetricRead]
     funnel: list[OutcomeMetricRead]
     source_performance: list[OutcomeGroupRead]

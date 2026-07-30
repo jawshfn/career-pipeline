@@ -25,6 +25,14 @@ export function updateApplication(applicationId, applicationData) {
   return apiPatch(`/api/applications/${applicationId}`, applicationData, APPLICATION_ERROR);
 }
 
+export function transitionApplicationStatus(applicationId, payload) {
+  return apiPost(`/api/applications/${applicationId}/status-transition`, payload, APPLICATION_ERROR);
+}
+
+export function correctApplicationOutcomeHistory(applicationId, payload) {
+  return apiPost(`/api/applications/${applicationId}/outcome-history-correction`, payload, APPLICATION_ERROR);
+}
+
 export function applyApplicationFollowUpAction(applicationId, payload) {
   return apiPatch(`/api/applications/${applicationId}/follow-up`, payload, APPLICATION_ERROR);
 }

@@ -13,7 +13,9 @@ FastAPI serves the local JSON API under `/api`; generated interactive schemas ar
 | Method | Path | Purpose | Important behavior |
 | --- | --- | --- | --- |
 | GET, POST | `/api/applications` | List or create applications | List can filter; new records are not archived. |
-| GET, PATCH, DELETE | `/api/applications/{id}` | Read, update, or permanently delete | Status changes log activity; deletion removes related activities and any saved AI brief. |
+| GET, PATCH, DELETE | `/api/applications/{id}` | Read, update, or permanently delete | Compatibility PATCH delegates status changes to the protected transition logic; deletion removes related activities and any saved AI brief. |
+| POST | `/api/applications/{id}/status-transition` | Change current status | Requires expected status and furthest stage; handles first-time terminal closure and backward-stage confirmation explicitly, updates historical evidence safely, and logs one status-change activity. |
+| POST | `/api/applications/{id}/outcome-history-correction` | Correct confirmed historical reach | Requires expected furthest stage; never changes current status, rejects archived records and invalid active-stage combinations, and logs one correction activity. |
 | GET, PUT, DELETE | `/api/applications/{id}/ai-brief` | Read, save, or remove the latest persisted AI brief | GET returns `null` when absent; PUT rejects briefs whose saved source no longer matches the application. |
 | PATCH | `/api/applications/{id}/follow-up` | Apply a reviewed follow-up action | `complete`, `complete_and_schedule`, `reschedule`, and `clear` are atomic and use expected-date conflict protection. |
 | GET | `/api/applications/action-items` | Read reminder action items | Read-only overdue, upcoming, and needs-check-in groups. |
@@ -50,3 +52,10 @@ FastAPI serves the local JSON API under `/api`; generated interactive schemas ar
 | POST | `/api/imports/workspace/restore` | Replace a workspace | Requires authorization; transactional replace restore preserves compatible legacy archives. |
 
 The frontend generates XLSX directly; it is not a backend endpoint.
+
+## Outcome Insights
+
+| Method | Path | Purpose | Important behavior |
+| --- | --- | --- | --- |
+| GET | `/api/insights/outcomes` | Read confirmed historical outcomes | Excludes archived and unconfirmed records, returns scope counts, historical funnel metrics, source/resume groups, and current-versus-historical context. |
+| GET | `/api/insights/outcomes/contributors` | Inspect applications behind one outcome cell | Filters by metric and optional source/resume group; returns deterministic application identity, current status, confirmed stage, source, and resume identity. |

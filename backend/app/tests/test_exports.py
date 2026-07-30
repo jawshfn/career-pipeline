@@ -55,7 +55,7 @@ def test_workspace_backup_is_complete_ordered_and_read_only(client, db_session):
     assert [item["id"] for item in payload["data"]["application_activities"]] == [1, 2]
     assert payload["data"]["application_ai_briefs"] == []
     exported_current = payload["data"]["applications"][1]
-    assert exported_current["furthest_stage"] == "Applied"
+    assert exported_current["furthest_stage"] == "Saved"
     assert exported_current["resume_version_id"] == active_resume.id
     assert exported_current["notes"] == '  =Quoted "notes"\n\tand   another line  '
     assert exported_current["job_description"] == "A long, multiline\ndescription"

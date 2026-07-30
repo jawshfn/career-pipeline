@@ -106,12 +106,13 @@ describe("ApplicationDetailPanel permanent deletion", () => {
     const confirmSpy = vi.fn();
     vi.stubGlobal("confirm", confirmSpy);
     await renderPanel();
-    const statusSelect = container.querySelector('select[name="status"]');
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent.includes("Job Details")).click());
+    const companyInput = container.querySelector('input[name="company_name"]');
 
     await act(async () => {
-      const valueSetter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value").set;
-      valueSetter.call(statusSelect, "Applied");
-      statusSelect.dispatchEvent(new Event("change", { bubbles: true }));
+      const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+      valueSetter.call(companyInput, "Updated company");
+      companyInput.dispatchEvent(new Event("input", { bubbles: true }));
     });
 
     const trigger = container.querySelector(".delete-application-trigger");
@@ -126,7 +127,7 @@ describe("ApplicationDetailPanel permanent deletion", () => {
     });
 
     expect(container.querySelector('[role="dialog"]')).toBeNull();
-    expect(statusSelect.value).toBe("Applied");
+    expect(companyInput.value).toBe("Updated company");
     expect(document.activeElement).toBe(trigger);
     expect(confirmSpy).not.toHaveBeenCalled();
   });

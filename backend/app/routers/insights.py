@@ -1,64 +1,99 @@
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..domain import PROGRESSION_STAGES, SOURCE_ORDER, progression_rank
 from ..models import Application, ResumeVersion
-from ..schemas import OutcomesInsightsRead
+from ..schemas import OutcomeContributorsRead, OutcomesInsightsRead
 
 router = APIRouter(prefix="/api/insights", tags=["insights"])
-COUNTER_KEYS = ("submitted", "progressed", "human_responses", "interviews", "offers")
+METRICS = (("analyzed", "Applications analyzed", 1), ("reached_assessment", "Reached Assessment", 2), ("human_responses", "Human response", 3), ("reached_interview", "Reached Interview", 4), ("reached_offer", "Reached Offer", 5))
 
 
-def _rate(count: int, submitted: int) -> float | None:
-    return count / submitted if submitted else None
+def is_archived(application: Application) -> bool:
+    return bool(application.is_archived or application.status == "Archived")
 
 
-def _new_counts() -> dict[str, int]:
-    return {key: 0 for key in COUNTER_KEYS}
+def eligible(application: Application) -> bool:
+    return not is_archived(application) and progression_rank(application.furthest_stage) >= 1
 
 
-def _add_rank(counts: dict[str, int], rank: int) -> None:
-    for threshold, key in enumerate(COUNTER_KEYS, 1):
-        if rank >= threshold:
-            counts[key] += 1
+def metric_matches(application: Application, metric: str) -> bool:
+    threshold = dict((key, rank) for key, _label, rank in METRICS).get(metric)
+    if threshold is None:
+        return False
+    return eligible(application) and progression_rank(application.furthest_stage) >= threshold
 
 
-def _group(key: str, label: str, counts: dict[str, int]) -> dict:
-    return {"id": key, "label": label, **counts, **{f"{name}_rate": _rate(counts[name], counts["submitted"]) for name in COUNTER_KEYS[1:]}}
+def rate(count: int, analyzed: int) -> float | None:
+    return count / analyzed if analyzed else None
+
+
+def current_at(application: Application, threshold: int) -> bool:
+    return application.status in PROGRESSION_STAGES and progression_rank(application.status) == threshold
+
+
+def group_row(key: str, label: str, applications: list[Application]) -> dict:
+    row = {"id": key, "label": label, "analyzed": len(applications)}
+    for metric, _metric_label, threshold in METRICS[1:]:
+        count = sum(progression_rank(application.furthest_stage) >= threshold for application in applications)
+        row[metric] = count
+        row[f"{metric}_rate"] = rate(count, len(applications))
+    return row
+
+
+def outcome_population(db: Session) -> tuple[list[Application], dict[int, ResumeVersion], dict]:
+    applications = db.query(Application).all()
+    archived = [application for application in applications if is_archived(application)]
+    visible = [application for application in applications if not is_archived(application)]
+    analyzed = [application for application in visible if eligible(application)]
+    scope = {
+        "visible_applications": len(visible), "analyzed_applications": len(analyzed),
+        "saved_applications_excluded": sum(application.status == "Saved" and progression_rank(application.furthest_stage) == 0 for application in visible),
+        "closed_without_confirmed_submission_excluded": sum(application.status in {"Rejected", "Withdrawn"} and progression_rank(application.furthest_stage) == 0 for application in visible),
+        "archived_applications_excluded": len(archived),
+    }
+    versions = {version.id: version for version in db.query(ResumeVersion).all()}
+    return analyzed, versions, scope
 
 
 @router.get("/outcomes", response_model=OutcomesInsightsRead)
 def get_outcomes(db: Session = Depends(get_db)) -> dict:
-    applications = db.query(Application).all()  # Historical scope includes archived.
-    versions = {version.id: version for version in db.query(ResumeVersion).all()}
-    counts = _new_counts()
-    funnel_counts = [0] * (len(PROGRESSION_STAGES) - 1)
-    source_counts: dict[str, dict[str, int]] = defaultdict(_new_counts)
-    resume_counts: dict[tuple[str, str], dict[str, int]] = defaultdict(_new_counts)
-
-    for application in applications:
-        rank = progression_rank(application.furthest_stage)
-        _add_rank(counts, rank)
-        for threshold in range(1, min(rank, len(PROGRESSION_STAGES) - 1) + 1):
-            funnel_counts[threshold - 1] += 1
-        if rank < 1:
-            continue
-        source = (application.source or "").strip() or "Unspecified"
-        _add_rank(source_counts[source], rank)
+    analyzed, versions, scope = outcome_population(db)
+    summary = []
+    funnel = []
+    for metric, label, threshold in METRICS:
+        count = sum(progression_rank(application.furthest_stage) >= threshold for application in analyzed)
+        current_count = sum(current_at(application, threshold) for application in analyzed)
+        item = {"key": metric, "label": label, "count": count, "denominator": len(analyzed), "rate": rate(count, len(analyzed)), "current_count": current_count, "currently_elsewhere_count": count - current_count}
+        summary.append(item)
+        if metric != "analyzed":
+            funnel.append({**item, "stage": label.replace("Reached ", "")})
+    source_groups: dict[str, list[Application]] = defaultdict(list)
+    resume_groups: dict[tuple[str, str], list[Application]] = defaultdict(list)
+    for application in analyzed:
+        source_groups[(application.source or "").strip() or "Unspecified"].append(application)
         if application.resume_version_id is None:
-            resume_key = ("unassigned", "Unassigned")
+            key = ("unassigned", "Unassigned")
         else:
             version = versions.get(application.resume_version_id)
-            label = version.name if version else f"Resume #{application.resume_version_id}"
-            resume_key = (str(application.resume_version_id), label)
-        _add_rank(resume_counts[resume_key], rank)
+            key = (str(application.resume_version_id), version.name if version else f"Resume #{application.resume_version_id}")
+        resume_groups[key].append(application)
+    ordered_sources = [source for source in SOURCE_ORDER if source in source_groups] + sorted(source for source in source_groups if source not in SOURCE_ORDER)
+    return {"scope": scope, "summary": summary, "funnel": funnel, "source_performance": [group_row(source, source, source_groups[source]) for source in ordered_sources], "resume_version_performance": sorted((group_row(key, label, apps) for (key, label), apps in resume_groups.items()), key=lambda item: (-item["analyzed"], item["label"]))}
 
-    labels = (("submitted", "Submitted"), ("progressed", "Progressed"), ("human_responses", "Human response"), ("interviews", "Interview reached"), ("offers", "Offer received"))
-    summary = [{"key": key, "label": label, "count": counts[key], "denominator": None if key == "submitted" else counts["submitted"], "rate": None if key == "submitted" else _rate(counts[key], counts["submitted"])} for key, label in labels]
-    funnel = [{"key": stage.lower().replace(" ", "_"), "label": stage, "stage": stage, "count": funnel_counts[index - 1], "denominator": counts["submitted"], "rate": _rate(funnel_counts[index - 1], counts["submitted"])} for index, stage in enumerate(PROGRESSION_STAGES[1:], 1)]
-    ordered_sources = [*filter(lambda source: source in source_counts, SOURCE_ORDER), *sorted(source for source in source_counts if source not in SOURCE_ORDER)]
-    resume_rows = (_group(key, label, row_counts) for (key, label), row_counts in resume_counts.items())
-    return {"total_applications": len(applications), "summary": summary, "funnel": funnel, "source_performance": [_group(source, source, source_counts[source]) for source in ordered_sources], "resume_version_performance": sorted(resume_rows, key=lambda row: (-row["submitted"], row["label"]))}
+
+@router.get("/outcomes/contributors", response_model=OutcomeContributorsRead)
+def get_outcome_contributors(metric: str = Query(), group_type: str = Query("global"), group_id: str | None = Query(None), db: Session = Depends(get_db)) -> dict:
+    if metric not in {key for key, _label, _threshold in METRICS} or group_type not in {"global", "source", "resume"}:
+        raise HTTPException(status_code=422, detail="Unsupported outcome contributor request.")
+    analyzed, versions, _scope = outcome_population(db)
+    selected = [application for application in analyzed if metric_matches(application, metric)]
+    if group_type == "source":
+        selected = [application for application in selected if ((application.source or "").strip() or "Unspecified") == group_id]
+    elif group_type == "resume":
+        selected = [application for application in selected if ("unassigned" if application.resume_version_id is None else str(application.resume_version_id)) == group_id]
+    selected.sort(key=lambda application: ((application.company_name or "").lower(), (application.role_title or "").lower(), application.id))
+    return {"metric": metric, "group_type": group_type, "group_id": group_id, "contributors": [{"application_id": application.id, "company_name": application.company_name, "role_title": application.role_title, "status": application.status, "furthest_stage": application.furthest_stage, "source": application.source, "resume_version_id": application.resume_version_id, "resume_version_label": versions.get(application.resume_version_id).name if application.resume_version_id in versions else ("Unassigned" if application.resume_version_id is None else f"Resume #{application.resume_version_id}")} for application in selected]}

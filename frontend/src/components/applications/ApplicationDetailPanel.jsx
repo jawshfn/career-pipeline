@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { deleteApplicationAiBrief, getApplication, getApplicationAiBrief, saveApplicationAiBrief } from "../../services/applicationsService.js";
 import {
   APPLIED_OR_LATER_APPLICATION_STATUSES,
+  CLOSED_APPLICATION_STATUSES,
   DEFAULT_APPLICATION_SOURCE,
   EMPLOYMENT_TYPE_OPTIONS,
   RED_FLAG_OPTIONS,
@@ -64,6 +65,7 @@ const initialFormState = {
   company_mismatch: false,
   too_good_to_be_true: false,
   red_flags_notes: "",
+  furthest_stage: SAVED_APPLICATION_STATUS,
 };
 
 export const detailTabs = [
@@ -114,6 +116,7 @@ function toFormState(application) {
     company_mismatch: Boolean(application.company_mismatch),
     too_good_to_be_true: Boolean(application.too_good_to_be_true),
     red_flags_notes: application.red_flags_notes || "",
+    furthest_stage: application.furthest_stage || SAVED_APPLICATION_STATUS,
   };
 }
 
@@ -217,6 +220,9 @@ function getCloseConfirmation(hasUnsavedApplicationChanges, hasUnsavedActivityDr
   return { title: "Close without saving?", description: "You have unsaved application changes. Closing will discard them.", confirmLabel: "Close without saving" };
 }
 
+const outcomeStages = ["Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"];
+const stageRank = (stage) => outcomeStages.indexOf(stage);
+
 export function shouldRefreshActivitiesAfterApplicationSave(previousStatus, nextStatus) {
   return Boolean(previousStatus && nextStatus && previousStatus !== nextStatus);
 }
@@ -228,7 +234,9 @@ export default function ApplicationDetailPanel({
   onClose,
   onDeleteApplication,
   onLoadApplication,
+  onCorrectApplicationOutcomeHistory,
   onSaveApplication,
+  onTransitionApplicationStatus,
   onUnsavedChangesChange,
   resumeVersions,
 }) {
@@ -248,6 +256,13 @@ export default function ApplicationDetailPanel({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState(null);
+  const [terminalSubmissionIntent, setTerminalSubmissionIntent] = useState("not_submitted");
+  const [backwardHistoryIntent, setBackwardHistoryIntent] = useState("preserve");
+  const [confirmedStage, setConfirmedStage] = useState("Applied");
+  const [isTransitioningStatus, setIsTransitioningStatus] = useState(false);
+  const [isCorrectionDialogOpen, setIsCorrectionDialogOpen] = useState(false);
+  const [isCorrectingHistory, setIsCorrectingHistory] = useState(false);
   const deleteTriggerRef = useRef(null);
   const briefAbortControllerRef = useRef(null);
   const briefStatusRequestRef = useRef(0);
@@ -372,16 +387,19 @@ export default function ApplicationDetailPanel({
 
   function updateField(event) {
     const { checked, name, type, value } = event.target;
+    if (name === "status" && value !== savedFormData.status) {
+      const terminalFromUnconfirmedSaved =
+        CLOSED_APPLICATION_STATUSES.has(value) &&
+        savedFormData.furthest_stage === SAVED_APPLICATION_STATUS &&
+        !savedFormData.date_applied;
+      const movingBackward = stageRank(value) >= 0 && stageRank(value) < stageRank(savedFormData.furthest_stage);
+      setTerminalSubmissionIntent("not_submitted");
+      setBackwardHistoryIntent("preserve");
+      setConfirmedStage(movingBackward ? value : "Applied");
+      setPendingStatus({ value, terminalFromUnconfirmedSaved, movingBackward });
+      return;
+    }
     setFormData((current) => {
-      if (
-        name === "status" &&
-        current.status === SAVED_APPLICATION_STATUS &&
-        isAppliedOrLater(value) &&
-        !current.date_applied
-      ) {
-        return { ...current, status: value, date_applied: getTodayValue() };
-      }
-
       return { ...current, [name]: type === "checkbox" ? checked : value };
     });
     setSaveMessage("");
@@ -390,6 +408,55 @@ export default function ApplicationDetailPanel({
   function setFollowUpDate(value) {
     setFormData((current) => ({ ...current, follow_up_date: value }));
     setSaveMessage("");
+  }
+
+  async function confirmStatusTransition() {
+    if (!pendingStatus || isTransitioningStatus) return;
+    setIsTransitioningStatus(true);
+    setSaveError("");
+    try {
+      const payload = { status: pendingStatus.value };
+      if (pendingStatus.terminalFromUnconfirmedSaved) {
+        payload.terminal_submission_intent = terminalSubmissionIntent;
+        if (terminalSubmissionIntent === "submitted") payload.confirmed_stage = confirmedStage;
+      }
+      if (pendingStatus.movingBackward) {
+        payload.backward_history_intent = backwardHistoryIntent;
+        if (backwardHistoryIntent === "correct") payload.confirmed_stage = confirmedStage;
+      }
+      const updatedApplication = await onTransitionApplicationStatus({ id: applicationId, ...savedFormData }, payload);
+      const nextFormState = toFormState(updatedApplication);
+      setFormData((current) => ({ ...current, status: nextFormState.status, date_applied: nextFormState.date_applied, furthest_stage: nextFormState.furthest_stage }));
+      setSavedFormData((current) => ({ ...current, status: nextFormState.status, date_applied: nextFormState.date_applied, furthest_stage: nextFormState.furthest_stage }));
+      onLoadApplication?.(updatedApplication);
+      setActivityRefreshVersion((currentVersion) => currentVersion + 1);
+      setPendingStatus(null);
+      setSaveMessage("Status updated.");
+    } catch (error) {
+      setSaveError(error.message || "Could not update status.");
+    } finally {
+      setIsTransitioningStatus(false);
+    }
+  }
+
+  async function confirmOutcomeHistoryCorrection() {
+    if (isCorrectingHistory || confirmedStage === savedFormData.furthest_stage) return;
+    setIsCorrectingHistory(true);
+    setSaveError("");
+    try {
+      const updatedApplication = await onCorrectApplicationOutcomeHistory({ id: applicationId, ...savedFormData }, { confirmed_stage: confirmedStage });
+      const nextFormState = toFormState(updatedApplication);
+      setFormData((current) => ({ ...current, furthest_stage: nextFormState.furthest_stage }));
+      setSavedFormData((current) => ({ ...current, furthest_stage: nextFormState.furthest_stage }));
+      onLoadApplication?.(updatedApplication);
+      setActivityRefreshVersion((currentVersion) => currentVersion + 1);
+      setIsCorrectionDialogOpen(false);
+      setSaveMessage("Outcome history corrected.");
+    } catch (error) {
+      setSaveError(error.message || "Could not correct outcome history.");
+    } finally {
+      setIsCorrectingHistory(false);
+    }
   }
 
   function applyJobPostingSnapshot(value) {
@@ -483,7 +550,6 @@ export default function ApplicationDetailPanel({
     setIsSaving(true);
     setSaveError("");
     setSaveMessage("");
-    const previousSavedStatus = savedFormData.status;
     const hadUnsavedAiSourceChanges = hasUnsavedAiSourceChanges;
 
     const payload = {
@@ -491,7 +557,6 @@ export default function ApplicationDetailPanel({
       role_title: normalizeRequiredText(formData.role_title),
       job_link: normalizeOptionalJobLink(formData.job_link),
       source: formData.source,
-      status: formData.status,
       location: normalizeOptionalText(formData.location),
       compensation: normalizeOptionalText(formData.compensation),
       employment_type: normalizeOptionalText(formData.employment_type),
@@ -520,9 +585,6 @@ export default function ApplicationDetailPanel({
       setFormData(nextFormState);
       setSavedFormData(nextFormState);
       onLoadApplication?.(updatedApplication);
-      if (shouldRefreshActivitiesAfterApplicationSave(previousSavedStatus, nextFormState.status)) {
-        setActivityRefreshVersion((currentVersion) => currentVersion + 1);
-      }
       setSaveMessage("Changes saved.");
       if (brief && hadUnsavedAiSourceChanges) setIsStoredBriefStale(true);
       setIsSaving(false);
@@ -685,6 +747,12 @@ export default function ApplicationDetailPanel({
             {activeTab === "overview" ? (
               <ApplicationDetailOverview
                 attentionItems={attentionItems}
+                canCorrectOutcomeHistory={savedFormData.status !== "Archived"}
+                furthestStage={savedFormData.furthest_stage}
+                onCorrectOutcomeHistory={() => {
+                  setConfirmedStage(savedFormData.furthest_stage);
+                  setIsCorrectionDialogOpen(true);
+                }}
                 onOpenTab={setActiveTab}
                 overviewSnapshotItems={overviewSnapshotItems}
               />
@@ -775,6 +843,8 @@ export default function ApplicationDetailPanel({
       {isDeleteDialogOpen ? (
         <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Delete permanently" confirmTone="danger" description={<><p>This will delete the application, notes, job posting, preparation details, red flags, and activity history. This action cannot be undone.</p>{hasUnsavedChanges ? <p>Any unsaved changes or activity draft will also be discarded.</p> : null}</>} errorMessage={deleteError} isOpen={isDeleteDialogOpen} isProcessing={isDeleting} processingLabel="Deleting..." title={`Permanently delete ${roleTitle} at ${companyName}?`} onCancel={closeDeleteDialog} onConfirm={confirmDeleteApplication} />
       ) : null}
+      {pendingStatus ? <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Update status" confirmDisabled={isTransitioningStatus} description={<div>{pendingStatus.terminalFromUnconfirmedSaved ? <fieldset><legend>Was this application submitted before it closed?</legend><label><input checked={terminalSubmissionIntent === "not_submitted"} name="submission-intent" type="radio" value="not_submitted" onChange={() => setTerminalSubmissionIntent("not_submitted")} /> Not submitted</label><label><input checked={terminalSubmissionIntent === "submitted"} name="submission-intent" type="radio" value="submitted" onChange={() => setTerminalSubmissionIntent("submitted")} /> Submitted</label>{terminalSubmissionIntent === "submitted" ? <label>Highest confirmed stage<select value={confirmedStage} onChange={(event) => setConfirmedStage(event.target.value)}>{outcomeStages.slice(1).map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select></label> : null}</fieldset> : null}{pendingStatus.movingBackward ? <fieldset><legend>Keep the recorded highest confirmed stage?</legend><label><input checked={backwardHistoryIntent === "preserve"} name="history-intent" type="radio" value="preserve" onChange={() => setBackwardHistoryIntent("preserve")} /> Keep it</label><label><input checked={backwardHistoryIntent === "correct"} name="history-intent" type="radio" value="correct" onChange={() => setBackwardHistoryIntent("correct")} /> Correct it</label>{backwardHistoryIntent === "correct" ? <label>Highest confirmed stage<select value={confirmedStage} onChange={(event) => setConfirmedStage(event.target.value)}>{outcomeStages.filter((stage) => stageRank(stage) >= Math.max(0, stageRank(pendingStatus.value))).map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select></label> : null}</fieldset> : null}{!pendingStatus.terminalFromUnconfirmedSaved && !pendingStatus.movingBackward ? <p>This records the new current status and preserves the existing confirmed history.</p> : null}</div>} isOpen isProcessing={isTransitioningStatus} processingLabel="Updating..." title={`Change status to ${pendingStatus.value}?`} onCancel={() => !isTransitioningStatus && setPendingStatus(null)} onConfirm={confirmStatusTransition} /> : null}
+      {isCorrectionDialogOpen ? <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Correct history" confirmDisabled={confirmedStage === savedFormData.furthest_stage} description={<div><p>Current status: <strong>{savedFormData.status}</strong>. Current highest confirmed stage: <strong>{savedFormData.furthest_stage}</strong>.</p><p>This changes historical outcome reporting only; it does not change the current status.</p><label>Highest confirmed stage<select value={confirmedStage} onChange={(event) => setConfirmedStage(event.target.value)}>{outcomeStages.filter((stage) => stageRank(stage) >= Math.max(0, stageRank(savedFormData.status))).map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select></label><p>Confirm to record this correction in the application activity timeline.</p></div>} isOpen isProcessing={isCorrectingHistory} processingLabel="Correcting..." title="Correct outcome history" onCancel={() => !isCorrectingHistory && setIsCorrectionDialogOpen(false)} onConfirm={confirmOutcomeHistoryCorrection} /> : null}
       {isRemoveBriefDialogOpen ? <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Remove brief" confirmTone="danger" description="This removes the locally saved analysis from this application. You can generate a new brief later." errorMessage={briefRemovalError} isOpen={isRemoveBriefDialogOpen} isProcessing={isRemovingBrief} processingLabel="Removing..." title="Remove saved AI brief?" onCancel={closeRemoveBriefDialog} onConfirm={confirmRemoveBrief} /> : null}
       {isCloseDialogOpen ? <ConfirmationDialog cancelLabel="Keep editing" confirmTone="warning" isOpen={isCloseDialogOpen} {...getCloseConfirmation(hasUnsavedApplicationChanges, hasUnsavedActivityDraft)} onCancel={() => setIsCloseDialogOpen(false)} onConfirm={onClose} /> : null}
     </section>
