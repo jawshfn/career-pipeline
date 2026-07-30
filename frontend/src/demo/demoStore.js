@@ -1,16 +1,16 @@
 import {
-  ACTIVE_APPLICATION_STATUSES,
-  CLOSED_APPLICATION_STATUSES,
   DEFAULT_APPLICATION_SOURCE,
   FOLLOW_UP_EXCLUDED_STATUSES,
   PROGRESSION_STAGES,
-  RED_FLAG_OPTIONS,
   STALE_EXCLUDED_STATUSES,
-  USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../constants/applicationConstants.js";
-import { OUTCOME_METRICS } from "../constants/outcomeMetrics.js";
 import { createDemoState } from "./demoData.js";
 import { createCanonicalJobBriefSource, createJobBriefPayload, createJobBriefSourceFingerprint } from "../services/jobBriefService.js";
+import {
+  selectDemoDashboardSummary,
+  selectDemoOutcomeContributors,
+  selectDemoOutcomeInsights,
+} from "./demoSelectors.js";
 
 let demoState = createDemoState();
 
@@ -71,14 +71,6 @@ function isArchived(application) {
 
 function getActiveApplications() {
   return demoState.applications.filter((application) => !isArchived(application));
-}
-
-function getRedFlagCount(application) {
-  return RED_FLAG_OPTIONS.filter((option) => application[option.name]).length;
-}
-
-function getSourceLabel(source) {
-  return String(source || "").trim() || "Unspecified";
 }
 
 function sortByUpdatedAt(applications) {
@@ -625,85 +617,25 @@ export function deleteDemoActivity(applicationId, activityId) {
 }
 
 export function getDemoDashboardSummary() {
-  const applications = getActiveApplications();
   const today = getTodayValue();
   const upcomingCutoff = formatLocalDate(addDays(new Date(`${today}T12:00:00`), 3));
-  const statusCounts = new Map(USER_SELECTABLE_APPLICATION_STATUSES.map((status) => [status, 0]));
-  const sourceCounts = new Map();
-
-  for (const application of applications) {
-    statusCounts.set(application.status, (statusCounts.get(application.status) || 0) + 1);
-
-    const source = getSourceLabel(application.source);
-    sourceCounts.set(source, (sourceCounts.get(source) || 0) + 1);
-  }
-
-  const activeApplicationCount = applications.filter((application) =>
-    ACTIVE_APPLICATION_STATUSES.has(application.status),
-  ).length;
-  const followUpApplications = applications.filter(
-    (application) => !FOLLOW_UP_EXCLUDED_STATUSES.has(application.status),
-  );
-  const overdueFollowupCount = followUpApplications.filter(
-    (application) => application.follow_up_date && application.follow_up_date < today,
-  ).length;
-  const upcomingFollowupCount = followUpApplications.filter(
-    (application) =>
-      application.follow_up_date &&
-      application.follow_up_date >= today &&
-      application.follow_up_date <= upcomingCutoff,
-  ).length;
-  const redFlaggedCount = applications.filter((application) => getRedFlagCount(application) > 0).length;
-  const closedApplicationCount = applications.filter((application) =>
-    CLOSED_APPLICATION_STATUSES.has(application.status),
-  ).length;
-
-  return clone({
-    summary_cards: [
-      { key: "total_applications", label: "Total applications", tone: "total", value: applications.length },
-      { key: "active_applications", label: "Active applications", tone: "active", value: activeApplicationCount },
-      { key: "closed_applications", label: "Closed applications", tone: "closed", value: closedApplicationCount },
-      { key: "overdue_followups", label: "Overdue follow-ups", tone: "overdue", value: overdueFollowupCount },
-      { key: "upcoming_followups", label: "Upcoming follow-ups", tone: "upcoming", value: upcomingFollowupCount },
-      { key: "red_flagged_applications", label: "Red-flagged applications", tone: "flags", value: redFlaggedCount },
-    ],
-    status_breakdown: USER_SELECTABLE_APPLICATION_STATUSES.map((status) => ({
-      label: status,
-      count: statusCounts.get(status) || 0,
-    })),
-    source_breakdown: [...sourceCounts.entries()]
-      .map(([label, count]) => ({ label, count }))
-      .sort((first, second) => second.count - first.count || first.label.localeCompare(second.label)),
-    red_flag_snapshot: {
-      flagged_count: redFlaggedCount,
-      items: RED_FLAG_OPTIONS.map((option) => ({
-        label: option.label,
-        count: applications.filter((application) => Boolean(application[option.name])).length,
-      })).filter((item) => item.count > 0),
-    },
-  });
+  return clone(selectDemoDashboardSummary({
+    applications: demoState.applications,
+    today,
+    upcomingCutoff,
+  }));
 }
 
 export function getDemoOutcomeInsights() {
-  const rank = (application) => Math.max(0, PROGRESSION_STAGES.indexOf(application.furthest_stage));
-  const visible = demoState.applications.filter((application) => !isArchived(application));
-  const analyzed = visible.filter((application) => rank(application) >= 1);
-  const group = (id, label, rows) => {
-    const result = { id, label, analyzed: rows.length };
-    OUTCOME_METRICS.slice(1).forEach(({ key, threshold }) => { const count = rows.filter((application) => rank(application) >= threshold).length; result[key] = count; result[`${key}_rate`] = rows.length ? count / rows.length : null; });
-    return result;
-  };
-  const bySource = new Map(); const byResume = new Map();
-  analyzed.forEach((application) => { const source = (application.source || "").trim() || "Unspecified"; bySource.set(source, [...(bySource.get(source) || []), application]); const version = demoState.resumeVersions.find((item) => item.id === application.resume_version_id); const id = version ? String(version.id) : "unassigned"; byResume.set(id, { label: version ? version.name : "Unassigned", rows: [...(byResume.get(id)?.rows || []), application] }); });
-  const summary = OUTCOME_METRICS.map(({ key, label, threshold }) => { const count = analyzed.filter((application) => rank(application) >= threshold).length; const currentCount = analyzed.filter((application) => PROGRESSION_STAGES.indexOf(application.status) >= threshold).length; return { key, label, count, denominator: analyzed.length, rate: analyzed.length ? count / analyzed.length : null, current_at_or_beyond_count: currentCount, currently_elsewhere_count: count - currentCount }; });
-  const sourceOrder = ["LinkedIn", "Indeed", "ZipRecruiter", "Company Website", "Referral", "Other"];
-  return clone({ scope: { visible_applications: visible.length, analyzed_applications: analyzed.length, saved_applications_excluded: visible.filter((application) => application.status === "Saved" && rank(application) === 0).length, closed_without_confirmed_submission_excluded: visible.filter((application) => ["Rejected", "Withdrawn"].includes(application.status) && rank(application) === 0).length, archived_applications_excluded: demoState.applications.length - visible.length }, summary, source_performance: [...bySource.entries()].sort((a, b) => (sourceOrder.indexOf(a[0]) + 99) % 99 - (sourceOrder.indexOf(b[0]) + 99) % 99 || a[0].localeCompare(b[0])).map(([id, rows]) => group(id, id, rows)), resume_version_performance: [...byResume.entries()].map(([id, value]) => group(id, value.label, value.rows)).sort((a, b) => b.analyzed - a.analyzed || a.label.localeCompare(b.label)) });
+  return clone(selectDemoOutcomeInsights({
+    applications: demoState.applications,
+    resumeVersions: demoState.resumeVersions,
+  }));
 }
 
 export function getDemoOutcomeContributors({ metric, group_type = "global", group_id = null }) {
-  const outcomeMetric = OUTCOME_METRICS.find((item) => item.key === metric);
-  if (!outcomeMetric) throw new Error("Unsupported outcome contributor request.");
-  const selected = demoState.applications.filter((application) => !isArchived(application) && PROGRESSION_STAGES.indexOf(application.furthest_stage) >= outcomeMetric.threshold).filter((application) => group_type !== "source" || ((application.source || "").trim() || "Unspecified") === group_id).filter((application) => group_type !== "resume" || (application.resume_version_id == null ? "unassigned" : String(application.resume_version_id)) === group_id).sort((first, second) => first.company_name.localeCompare(second.company_name) || first.role_title.localeCompare(second.role_title) || first.id - second.id);
-  if (!["global", "source", "resume"].includes(group_type)) throw new Error("Choose a valid contributor group.");
-  return clone({ metric, group_type, group_id, contributors: selected.map((application) => ({ application_id: application.id, company_name: application.company_name, role_title: application.role_title, status: application.status, furthest_stage: application.furthest_stage, source: application.source, resume_version_id: application.resume_version_id, resume_version_label: application.resume_version_id == null ? "Unassigned" : (demoState.resumeVersions.find((item) => item.id === application.resume_version_id)?.name || `Resume #${application.resume_version_id}`) })) });
+  return clone(selectDemoOutcomeContributors(
+    { applications: demoState.applications, resumeVersions: demoState.resumeVersions },
+    { metric, group_type, group_id },
+  ));
 }
