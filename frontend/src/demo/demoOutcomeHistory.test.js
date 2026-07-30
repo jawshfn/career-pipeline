@@ -5,6 +5,7 @@ import {
   createDemoApplication,
   getDemoOutcomeContributors,
   getDemoOutcomeInsights,
+  getDemoApplication,
   resetDemoState,
   transitionDemoApplicationStatus,
 } from "./demoStore.js";
@@ -46,5 +47,40 @@ describe("demo outcome history corrections", () => {
     const rejected = transitionDemoApplicationStatus(application.id, { status: "Rejected", expected_status: "Applied", expected_furthest_stage: "Applied" });
     const corrected = correctDemoApplicationOutcomeHistory(application.id, { expected_furthest_stage: rejected.furthest_stage, confirmed_stage: "Saved" });
     expect(corrected).toMatchObject({ status: "Rejected", furthest_stage: "Saved", date_applied: null });
+  });
+
+  it("provides meaningful outcome insights from the seeded records without a mutation", () => {
+    const report = getDemoOutcomeInsights();
+
+    expect(report.scope).toMatchObject({ visible_applications: 12, analyzed_applications: 9, saved_applications_excluded: 3 });
+    expect(Object.fromEntries(report.summary.map((metric) => [metric.key, metric.count]))).toEqual({ analyzed: 9, progressed_beyond_applied: 4, human_responses: 3, reached_interview: 2, reached_offer: 1 });
+    expect(report.source_performance).not.toEqual([]);
+    expect(report.resume_version_performance).not.toEqual([]);
+    expect(getDemoOutcomeContributors({ metric: "analyzed", group_type: "source", group_id: "LinkedIn" }).contributors.map((item) => item.application_id)).toEqual([1]);
+    expect(getDemoOutcomeContributors({ metric: "analyzed", group_type: "resume", group_id: "1" }).contributors.map((item) => item.application_id)).toEqual([11, 2, 3, 6]);
+  });
+
+  it("uses protected transitions for seeded records and resets their original history", () => {
+    const original = getDemoApplication(1);
+    const forward = transitionDemoApplicationStatus(1, { status: "Assessment", expected_status: "Applied", expected_furthest_stage: "Applied" });
+    expect(forward).toMatchObject({ status: "Assessment", furthest_stage: "Assessment" });
+
+    const backward = transitionDemoApplicationStatus(3, { status: "Applied", expected_status: "Interview", expected_furthest_stage: "Interview", confirm_backward_change: true });
+    expect(backward).toMatchObject({ status: "Applied", furthest_stage: "Applied" });
+    expect(backward.date_applied).toBeTruthy();
+
+    const submitted = transitionDemoApplicationStatus(4, { status: "Applied", expected_status: "Saved", expected_furthest_stage: "Saved" });
+    expect(submitted).toMatchObject({ status: "Applied", furthest_stage: "Applied" });
+    expect(submitted.date_applied).toBeTruthy();
+
+    const rejected = transitionDemoApplicationStatus(12, { status: "Rejected", expected_status: "Applied", expected_furthest_stage: "Applied" });
+    expect(rejected).toMatchObject({ status: "Rejected", furthest_stage: "Applied" });
+
+    const reset = transitionDemoApplicationStatus(11, { status: "Saved", expected_status: "Applied", expected_furthest_stage: "Applied", confirm_not_submitted: true });
+    expect(reset).toMatchObject({ status: "Saved", furthest_stage: "Saved", date_applied: null });
+
+    resetDemoState();
+    expect(getDemoApplication(1)).toMatchObject({ status: original.status, furthest_stage: original.furthest_stage });
+    expect(getDemoOutcomeInsights().scope.analyzed_applications).toBe(9);
   });
 });

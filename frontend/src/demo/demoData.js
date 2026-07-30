@@ -1,5 +1,19 @@
 import { DEMO_JOB_POSTING_SNAPSHOTS } from "./demoJobPostingSnapshots.js";
 
+const CONFIRMED_STAGES = ["Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"];
+
+function confirmedStageFor(applicationRecord) {
+  if (CONFIRMED_STAGES.includes(applicationRecord.furthest_stage)) {
+    return applicationRecord.furthest_stage;
+  }
+
+  if (CONFIRMED_STAGES.includes(applicationRecord.status)) {
+    return applicationRecord.status;
+  }
+
+  return applicationRecord.date_applied ? "Applied" : "Saved";
+}
+
 function formatLocalDate(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -22,7 +36,7 @@ function timestamp(daysAgo = 0) {
 }
 
 function application(overrides) {
-  return {
+  const applicationRecord = {
     id: overrides.id,
     company_name: "",
     role_title: "",
@@ -53,6 +67,11 @@ function application(overrides) {
     created_at: timestamp(14),
     updated_at: timestamp(3),
     ...overrides,
+  };
+
+  return {
+    ...applicationRecord,
+    furthest_stage: confirmedStageFor(applicationRecord),
   };
 }
 
