@@ -54,11 +54,17 @@ describe("demo outcome history corrections", () => {
 
     expect(report.scope).toMatchObject({ visible_applications: 12, analyzed_applications: 9, saved_applications_excluded: 3 });
     expect(Object.fromEntries(report.summary.map((metric) => [metric.key, metric.count]))).toEqual({ analyzed: 9, progressed_beyond_applied: 4, human_responses: 3, reached_interview: 2, reached_offer: 1 });
+    expect(report.summary.map(({ key, label }) => [key, label])).toEqual([[
+      "analyzed", "Applications analyzed"], ["progressed_beyond_applied", "Progressed beyond Applied"], ["human_responses", "Human response"], ["reached_interview", "Interview stage or later"], ["reached_offer", "Offer received"],
+    ]);
+    expect(report.source_performance.find((row) => row.id === "LinkedIn")).toMatchObject({ analyzed: 1, progressed_beyond_applied_rate: 0, human_responses_rate: 0, reached_interview_rate: 0, reached_offer_rate: 0 });
     expect(report).not.toHaveProperty("funnel");
     expect(report.source_performance).not.toEqual([]);
     expect(report.resume_version_performance).not.toEqual([]);
     expect(getDemoOutcomeContributors({ metric: "analyzed", group_type: "source", group_id: "LinkedIn" }).contributors.map((item) => item.application_id)).toEqual([1]);
     expect(getDemoOutcomeContributors({ metric: "analyzed", group_type: "resume", group_id: "1" }).contributors.map((item) => item.application_id)).toEqual([11, 2, 3, 6]);
+    expect(Object.fromEntries(["analyzed", "progressed_beyond_applied", "human_responses", "reached_interview", "reached_offer"].map((metric) => [metric, getDemoOutcomeContributors({ metric }).contributors.length]))).toEqual({ analyzed: 9, progressed_beyond_applied: 4, human_responses: 3, reached_interview: 2, reached_offer: 1 });
+    expect(() => getDemoOutcomeContributors({ metric: "unsupported" })).toThrow("Unsupported outcome contributor request.");
   });
 
   it("uses protected transitions for seeded records and resets their original history", () => {

@@ -5,10 +5,10 @@ import ConfirmationDialog from "../components/ui/ConfirmationDialog.jsx";
 import ScrollableTable from "../components/ui/ScrollableTable.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
+import { OUTCOME_METRICS } from "../constants/outcomeMetrics.js";
 import { getOutcomeContributors, getOutcomeInsights } from "../services/insightsService.js";
 import { fetchResource, getCachedResource, subscribeToResourceInvalidation } from "../services/staleResource.js";
 
-const METRIC_LABELS = { analyzed: "Applications analyzed", progressed_beyond_applied: "Progressed beyond Applied", human_responses: "Human response", reached_interview: "Interview stage or later", reached_offer: "Offer received" };
 function percent(value) { return value == null ? "—" : `${Math.round(value * 100)}%`; }
 function caution(count) { return count < 5 ? "Very limited data" : count < 10 ? "Limited data" : ""; }
 
@@ -43,7 +43,7 @@ function ContributorsDialog({ request, onClose, onOpenApplication }) {
 }
 
 function OutcomeTable({ firstLabel, groupType, onContributors, rows, title }) {
-  return <section className="panel insights-panel"><h3>{title}</h3><p className="insights-helper">Select any metric to review the contributing applications.</p>{rows.length ? <ScrollableTable accessibleLabel={`${title} metrics table. Scroll horizontally to view all columns.`}><table><thead><tr><th>{firstLabel}</th>{Object.entries(METRIC_LABELS).map(([key, label]) => <th key={key}>{label}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.id}><th scope="row">{row.label}{caution(row.analyzed) ? <small className="insights-caution">{caution(row.analyzed)}</small> : null}</th>{Object.entries(METRIC_LABELS).map(([key, label]) => <td key={key}><MetricButton groupId={row.id} groupType={groupType} label={`${label} — ${row.label}`} metric={key} onContributors={onContributors}>{key === "analyzed" ? `${row.analyzed} →` : `${row[key]} of ${row.analyzed} · ${percent(row[`${key}_rate`])} →`}</MetricButton></td>)}</tr>)}</tbody></table></ScrollableTable> : <p>No analyzed applications in this group yet.</p>}</section>;
+  return <section className="panel insights-panel"><h3>{title}</h3><p className="insights-helper">Select any metric to review the contributing applications.</p>{rows.length ? <ScrollableTable accessibleLabel={`${title} metrics table. Scroll horizontally to view all columns.`}><table><thead><tr><th>{firstLabel}</th>{OUTCOME_METRICS.map(({ key, label }) => <th key={key}>{label}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.id}><th scope="row">{row.label}{caution(row.analyzed) ? <small className="insights-caution">{caution(row.analyzed)}</small> : null}</th>{OUTCOME_METRICS.map(({ key, label }) => <td key={key}><MetricButton groupId={row.id} groupType={groupType} label={`${label} — ${row.label}`} metric={key} onContributors={onContributors}>{key === "analyzed" ? `${row.analyzed} →` : `${row[key]} of ${row.analyzed} · ${percent(row[`${key}_rate`])} →`}</MetricButton></td>)}</tr>)}</tbody></table></ScrollableTable> : <p>No analyzed applications in this group yet.</p>}</section>;
 }
 
 export default function InsightsPage({ onOpenApplication }) {

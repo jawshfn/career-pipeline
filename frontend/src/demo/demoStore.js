@@ -8,6 +8,7 @@ import {
   STALE_EXCLUDED_STATUSES,
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../constants/applicationConstants.js";
+import { OUTCOME_METRICS } from "../constants/outcomeMetrics.js";
 import { createDemoState } from "./demoData.js";
 import { createCanonicalJobBriefSource, createJobBriefPayload, createJobBriefSourceFingerprint } from "../services/jobBriefService.js";
 
@@ -687,23 +688,22 @@ export function getDemoOutcomeInsights() {
   const rank = (application) => Math.max(0, PROGRESSION_STAGES.indexOf(application.furthest_stage));
   const visible = demoState.applications.filter((application) => !isArchived(application));
   const analyzed = visible.filter((application) => rank(application) >= 1);
-  const metrics = [["analyzed", "Applications analyzed", 1], ["progressed_beyond_applied", "Progressed beyond Applied", 2], ["human_responses", "Human response", 3], ["reached_interview", "Interview stage or later", 4], ["reached_offer", "Offer received", 5]];
   const group = (id, label, rows) => {
     const result = { id, label, analyzed: rows.length };
-    metrics.slice(1).forEach(([key, _label, threshold]) => { const count = rows.filter((application) => rank(application) >= threshold).length; result[key] = count; result[`${key}_rate`] = rows.length ? count / rows.length : null; });
+    OUTCOME_METRICS.slice(1).forEach(({ key, threshold }) => { const count = rows.filter((application) => rank(application) >= threshold).length; result[key] = count; result[`${key}_rate`] = rows.length ? count / rows.length : null; });
     return result;
   };
   const bySource = new Map(); const byResume = new Map();
   analyzed.forEach((application) => { const source = (application.source || "").trim() || "Unspecified"; bySource.set(source, [...(bySource.get(source) || []), application]); const version = demoState.resumeVersions.find((item) => item.id === application.resume_version_id); const id = version ? String(version.id) : "unassigned"; byResume.set(id, { label: version ? version.name : "Unassigned", rows: [...(byResume.get(id)?.rows || []), application] }); });
-  const summary = metrics.map(([key, label, threshold]) => { const count = analyzed.filter((application) => rank(application) >= threshold).length; const currentCount = analyzed.filter((application) => PROGRESSION_STAGES.indexOf(application.status) >= threshold).length; return { key, label, count, denominator: analyzed.length, rate: analyzed.length ? count / analyzed.length : null, current_at_or_beyond_count: currentCount, currently_elsewhere_count: count - currentCount }; });
+  const summary = OUTCOME_METRICS.map(({ key, label, threshold }) => { const count = analyzed.filter((application) => rank(application) >= threshold).length; const currentCount = analyzed.filter((application) => PROGRESSION_STAGES.indexOf(application.status) >= threshold).length; return { key, label, count, denominator: analyzed.length, rate: analyzed.length ? count / analyzed.length : null, current_at_or_beyond_count: currentCount, currently_elsewhere_count: count - currentCount }; });
   const sourceOrder = ["LinkedIn", "Indeed", "ZipRecruiter", "Company Website", "Referral", "Other"];
   return clone({ scope: { visible_applications: visible.length, analyzed_applications: analyzed.length, saved_applications_excluded: visible.filter((application) => application.status === "Saved" && rank(application) === 0).length, closed_without_confirmed_submission_excluded: visible.filter((application) => ["Rejected", "Withdrawn"].includes(application.status) && rank(application) === 0).length, archived_applications_excluded: demoState.applications.length - visible.length }, summary, source_performance: [...bySource.entries()].sort((a, b) => (sourceOrder.indexOf(a[0]) + 99) % 99 - (sourceOrder.indexOf(b[0]) + 99) % 99 || a[0].localeCompare(b[0])).map(([id, rows]) => group(id, id, rows)), resume_version_performance: [...byResume.entries()].map(([id, value]) => group(id, value.label, value.rows)).sort((a, b) => b.analyzed - a.analyzed || a.label.localeCompare(b.label)) });
 }
 
 export function getDemoOutcomeContributors({ metric, group_type = "global", group_id = null }) {
-  const thresholds = { analyzed: 1, progressed_beyond_applied: 2, human_responses: 3, reached_interview: 4, reached_offer: 5 };
-  if (!(metric in thresholds)) throw new Error("Unsupported outcome contributor request.");
-  const selected = demoState.applications.filter((application) => !isArchived(application) && PROGRESSION_STAGES.indexOf(application.furthest_stage) >= thresholds[metric]).filter((application) => group_type !== "source" || ((application.source || "").trim() || "Unspecified") === group_id).filter((application) => group_type !== "resume" || (application.resume_version_id == null ? "unassigned" : String(application.resume_version_id)) === group_id).sort((first, second) => first.company_name.localeCompare(second.company_name) || first.role_title.localeCompare(second.role_title) || first.id - second.id);
+  const outcomeMetric = OUTCOME_METRICS.find((item) => item.key === metric);
+  if (!outcomeMetric) throw new Error("Unsupported outcome contributor request.");
+  const selected = demoState.applications.filter((application) => !isArchived(application) && PROGRESSION_STAGES.indexOf(application.furthest_stage) >= outcomeMetric.threshold).filter((application) => group_type !== "source" || ((application.source || "").trim() || "Unspecified") === group_id).filter((application) => group_type !== "resume" || (application.resume_version_id == null ? "unassigned" : String(application.resume_version_id)) === group_id).sort((first, second) => first.company_name.localeCompare(second.company_name) || first.role_title.localeCompare(second.role_title) || first.id - second.id);
   if (!["global", "source", "resume"].includes(group_type)) throw new Error("Choose a valid contributor group.");
   return clone({ metric, group_type, group_id, contributors: selected.map((application) => ({ application_id: application.id, company_name: application.company_name, role_title: application.role_title, status: application.status, furthest_stage: application.furthest_stage, source: application.source, resume_version_id: application.resume_version_id, resume_version_label: application.resume_version_id == null ? "Unassigned" : (demoState.resumeVersions.find((item) => item.id === application.resume_version_id)?.name || `Resume #${application.resume_version_id}`) })) });
 }
