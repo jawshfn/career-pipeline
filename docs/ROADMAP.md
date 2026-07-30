@@ -156,6 +156,7 @@ Insights excludes archived records and reports applications analyzed, progressio
 - Remove only items proven unnecessary, in small reviewable batches.
 - Preserve product behavior and test after each batch.
 - Phase 28.0b-3 retired the duplicate, unrendered Outcome Insights funnel response while retaining the five-metric summary.
+- Phase 28.0b-4 retired the unused Dashboard resume-usage response and duplicate backend/demo calculations.
 
 Possible audit candidates include legacy archive infrastructure, duplicate compatibility paths, and stale documentation or tests. Archive handling remains an explicit product decision, not an automatic cleanup.
 

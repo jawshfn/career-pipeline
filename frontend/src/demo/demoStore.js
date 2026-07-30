@@ -632,20 +632,16 @@ export function deleteDemoActivity(applicationId, activityId) {
 
 export function getDemoDashboardSummary() {
   const applications = getActiveApplications();
-  const resumeVersionsById = new Map(demoState.resumeVersions.map((resumeVersion) => [resumeVersion.id, resumeVersion]));
   const today = getTodayValue();
   const upcomingCutoff = formatLocalDate(addDays(new Date(`${today}T12:00:00`), 3));
   const statusCounts = new Map(USER_SELECTABLE_APPLICATION_STATUSES.map((status) => [status, 0]));
   const sourceCounts = new Map();
-  const resumeCounts = new Map();
 
   for (const application of applications) {
     statusCounts.set(application.status, (statusCounts.get(application.status) || 0) + 1);
 
     const source = getSourceLabel(application.source);
     sourceCounts.set(source, (sourceCounts.get(source) || 0) + 1);
-    const resumeKey = application.resume_version_id || "unassigned";
-    resumeCounts.set(resumeKey, (resumeCounts.get(resumeKey) || 0) + 1);
   }
 
   const activeApplicationCount = applications.filter((application) =>
@@ -668,17 +664,6 @@ export function getDemoDashboardSummary() {
     CLOSED_APPLICATION_STATUSES.has(application.status),
   ).length;
 
-  const resumeUsage = [...resumeCounts.entries()].map(([resumeKey, count]) => {
-    if (resumeKey === "unassigned") {
-      return { label: "No resume version", count };
-    }
-
-    return {
-      label: resumeVersionsById.get(resumeKey)?.name || `Resume #${resumeKey}`,
-      count,
-    };
-  });
-
   return clone({
     summary_cards: [
       { key: "total_applications", label: "Total applications", tone: "total", value: applications.length },
@@ -695,7 +680,6 @@ export function getDemoDashboardSummary() {
     source_breakdown: [...sourceCounts.entries()]
       .map(([label, count]) => ({ label, count }))
       .sort((first, second) => second.count - first.count || first.label.localeCompare(second.label)),
-    resume_usage: resumeUsage.sort((first, second) => first.label.localeCompare(second.label)),
     red_flag_snapshot: {
       flagged_count: redFlaggedCount,
       items: RED_FLAG_OPTIONS.map((option) => ({

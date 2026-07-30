@@ -9,7 +9,6 @@ const emptyDashboardSummary = {
   summary_cards: [],
   status_breakdown: [],
   source_breakdown: [],
-  resume_usage: [],
   red_flag_snapshot: {
     flagged_count: 0,
     items: [],
@@ -82,7 +81,6 @@ function normalizeDashboardSummary(summary) {
     summary_cards: summary.summary_cards || [],
     status_breakdown: summary.status_breakdown || [],
     source_breakdown: summary.source_breakdown || [],
-    resume_usage: summary.resume_usage || [],
     red_flag_snapshot: summary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
   };
 }

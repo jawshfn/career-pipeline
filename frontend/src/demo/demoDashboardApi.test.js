@@ -31,6 +31,11 @@ describe("demo dashboard follow-up metrics", () => {
 
   it("counts only actionable overdue and upcoming follow-ups", () => {
     const baseline = getDemoDashboardSummary();
+    expect(baseline).not.toHaveProperty("resume_usage");
+    expect(baseline.summary_cards).toHaveLength(6);
+    expect(baseline.status_breakdown.length).toBeGreaterThan(0);
+    expect(Array.isArray(baseline.source_breakdown)).toBe(true);
+    expect(baseline.red_flag_snapshot).toEqual(expect.objectContaining({ flagged_count: expect.any(Number) }));
     const baselineOverdue = getCard(baseline, "overdue_followups").value;
     const baselineUpcoming = getCard(baseline, "upcoming_followups").value;
     const baselineClosed = getCard(baseline, "closed_applications").value;

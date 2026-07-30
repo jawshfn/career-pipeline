@@ -33,10 +33,6 @@ const dashboardSummary = {
       { count: 1, label: "Role requirements changed" },
     ],
   },
-  resume_usage: [
-    { count: 8, label: "Platform resume" },
-    { count: 1, label: "No resume version" },
-  ],
   source_breakdown: [
     { count: 7, label: "Company Website" },
     { count: 4, label: "Referral" },
@@ -137,7 +133,6 @@ describe("DashboardPage", () => {
       summary: {
         ...dashboardSummary,
         red_flag_snapshot: { flagged_count: 0, items: [] },
-        resume_usage: [],
         source_breakdown: [],
         status_breakdown: [],
         summary_cards: summaryCards.map((metric) => ({ ...metric, value: 0 })),
@@ -153,7 +148,6 @@ describe("DashboardPage", () => {
       summary: {
         ...dashboardSummary,
         red_flag_snapshot: { flagged_count: 0, items: [] },
-        resume_usage: [],
         source_breakdown: [],
         status_breakdown: [{ count: 1, label: "Saved" }],
       },

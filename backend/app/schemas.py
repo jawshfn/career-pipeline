@@ -221,7 +221,6 @@ class DashboardSummaryRead(BaseModel):
     summary_cards: list[DashboardSummaryCardRead]
     status_breakdown: list[DashboardBreakdownItemRead]
     source_breakdown: list[DashboardBreakdownItemRead]
-    resume_usage: list[DashboardBreakdownItemRead]
     red_flag_snapshot: DashboardRedFlagSnapshotRead
 
 
