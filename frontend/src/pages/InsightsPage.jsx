@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 
+import useStaleResource from "../hooks/useStaleResource.js";
 import StatusBadge from "../components/applications/StatusBadge.jsx";
 import ConfirmationDialog from "../components/ui/ConfirmationDialog.jsx";
 import ScrollableTable from "../components/ui/ScrollableTable.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
+import { OUTCOME_METRICS } from "../constants/outcomeMetrics.js";
 import { getOutcomeContributors, getOutcomeInsights } from "../services/insightsService.js";
-import { fetchResource, getCachedResource, subscribeToResourceInvalidation } from "../services/staleResource.js";
 
-const METRIC_LABELS = { analyzed: "Applications analyzed", progressed_beyond_applied: "Progressed beyond Applied", human_responses: "Human response", reached_interview: "Interview stage or later", reached_offer: "Offer received" };
 function percent(value) { return value == null ? "—" : `${Math.round(value * 100)}%`; }
 function caution(count) { return count < 5 ? "Very limited data" : count < 10 ? "Limited data" : ""; }
 
@@ -43,19 +43,15 @@ function ContributorsDialog({ request, onClose, onOpenApplication }) {
 }
 
 function OutcomeTable({ firstLabel, groupType, onContributors, rows, title }) {
-  return <section className="panel insights-panel"><h3>{title}</h3><p className="insights-helper">Select any metric to review the contributing applications.</p>{rows.length ? <ScrollableTable accessibleLabel={`${title} metrics table. Scroll horizontally to view all columns.`}><table><thead><tr><th>{firstLabel}</th>{Object.entries(METRIC_LABELS).map(([key, label]) => <th key={key}>{label}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.id}><th scope="row">{row.label}{caution(row.analyzed) ? <small className="insights-caution">{caution(row.analyzed)}</small> : null}</th>{Object.entries(METRIC_LABELS).map(([key, label]) => <td key={key}><MetricButton groupId={row.id} groupType={groupType} label={`${label} — ${row.label}`} metric={key} onContributors={onContributors}>{key === "analyzed" ? `${row.analyzed} →` : `${row[key]} of ${row.analyzed} · ${percent(row[`${key}_rate`])} →`}</MetricButton></td>)}</tr>)}</tbody></table></ScrollableTable> : <p>No analyzed applications in this group yet.</p>}</section>;
+  return <section className="panel insights-panel"><h3>{title}</h3><p className="insights-helper">Select any metric to review the contributing applications.</p>{rows.length ? <ScrollableTable accessibleLabel={`${title} metrics table. Scroll horizontally to view all columns.`}><table><thead><tr><th>{firstLabel}</th>{OUTCOME_METRICS.map(({ key, label }) => <th key={key}>{label}</th>)}</tr></thead><tbody>{rows.map((row) => <tr key={row.id}><th scope="row">{row.label}{caution(row.analyzed) ? <small className="insights-caution">{caution(row.analyzed)}</small> : null}</th>{OUTCOME_METRICS.map(({ key, label }) => <td key={key}><MetricButton groupId={row.id} groupType={groupType} label={`${label} — ${row.label}`} metric={key} onContributors={onContributors}>{key === "analyzed" ? `${row.analyzed} →` : `${row[key]} of ${row.analyzed} · ${percent(row[`${key}_rate`])} →`}</MetricButton></td>)}</tr>)}</tbody></table></ScrollableTable> : <p>No analyzed applications in this group yet.</p>}</section>;
 }
 
 export default function InsightsPage({ onOpenApplication }) {
-  const [data, setData] = useState(() => getCachedResource("outcome-insights"));
-  const [error, setError] = useState("");
-  const [refreshError, setRefreshError] = useState("");
+  const { data, error, refreshError } = useStaleResource("outcome-insights", getOutcomeInsights, {
+    initialErrorMessage: "Could not load outcome insights.",
+    refreshErrorMessage: "Could not refresh outcome insights. Showing the previous report.",
+  });
   const [contributorRequest, setContributorRequest] = useState(null);
-  useEffect(() => {
-    let active = true;
-    function refresh() { const cached = Boolean(getCachedResource("outcome-insights")); setError(""); setRefreshError(""); return fetchResource("outcome-insights", getOutcomeInsights).then(() => active && setData(getCachedResource("outcome-insights"))).catch((reason) => { if (!active) return; if (cached) setRefreshError("Could not refresh outcome insights. Showing the previous report."); else setError(reason.message || "Could not load outcome insights."); }); }
-    refresh(); return subscribeToResourceInvalidation("outcome-insights", refresh);
-  }, []);
   if (error) return <div className="insights-page"><ErrorMessage message={error} /></div>;
   if (!data) return <LoadingState message="Loading outcome insights..." />;
   const noApplications = data.scope.visible_applications === 0;

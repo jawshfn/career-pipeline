@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 
+import useStaleResource from "../hooks/useStaleResource.js";
 import { getDashboardSummary } from "../services/dashboardService.js";
-import { fetchResource, getCachedResource } from "../services/staleResource.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
@@ -9,7 +9,6 @@ const emptyDashboardSummary = {
   summary_cards: [],
   status_breakdown: [],
   source_breakdown: [],
-  resume_usage: [],
   red_flag_snapshot: {
     flagged_count: 0,
     items: [],
@@ -24,7 +23,6 @@ function MetricCard({ label, tone, value }) {
     </article>
   );
 }
-
 const statusCountClasses = {
   Applied: "status-applied",
   Assessment: "status-assessment",
@@ -78,62 +76,21 @@ function summarizeBreakdown(items, singularLabel, pluralLabel = `${singularLabel
   return `${total} applications across ${items.length} ${label}`;
 }
 
-function getResumeCoverageSummary(resumeUsage, resumeEffectiveness) {
-  const unassignedCount = resumeUsage.find((item) => item.label === "No resume version")?.count || 0;
-  const assignedCount = resumeUsage.reduce((total, item) => {
-    if (item.label === "No resume version") {
-      return total;
-    }
-
-    return total + item.count;
-  }, 0);
-  const comparedCount = resumeEffectiveness.filter((item) => item.label !== "Unassigned").length;
-  const versionLabel = comparedCount === 1 ? "resume version" : "resume versions";
-
-  return `${comparedCount} ${versionLabel} compared • ${assignedCount} assigned / ${unassignedCount} unassigned`;
-}
-
 function normalizeDashboardSummary(summary) {
   return {
     summary_cards: summary.summary_cards || [],
     status_breakdown: summary.status_breakdown || [],
     source_breakdown: summary.source_breakdown || [],
-    resume_usage: summary.resume_usage || [],
     red_flag_snapshot: summary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
   };
 }
 
 export default function DashboardPage({ onOpenStatusBoard, onOpenInsights }) {
-  const cachedSummary = getCachedResource("dashboard");
-  const [dashboardSummary, setDashboardSummary] = useState(() => cachedSummary ? normalizeDashboardSummary(cachedSummary) : emptyDashboardSummary);
-  const [error, setError] = useState("");
-  const [refreshError, setRefreshError] = useState("");
-  const [isLoading, setIsLoading] = useState(() => !cachedSummary);
-
-  useEffect(() => {
-    const hasCachedSummary = Boolean(getCachedResource("dashboard"));
-    let isActive = true;
-    async function loadDashboardSummary() {
-      if (!hasCachedSummary) setIsLoading(true);
-      setError("");
-      setRefreshError("");
-
-      try {
-        const nextSummary = await fetchResource("dashboard", getDashboardSummary);
-        if (isActive) setDashboardSummary(normalizeDashboardSummary(nextSummary));
-      } catch (loadError) {
-        if (!hasCachedSummary && isActive) {
-          setDashboardSummary(emptyDashboardSummary);
-          setError(loadError.message || "Could not load dashboard summary.");
-        } else if (isActive) setRefreshError("Could not refresh dashboard. Showing the previous summary.");
-      } finally {
-        if (isActive && !hasCachedSummary) setIsLoading(false);
-      }
-    }
-
-    loadDashboardSummary();
-    return () => { isActive = false; };
-  }, []);
+  const { data, error, refreshError, isInitialLoading: isLoading } = useStaleResource("dashboard", getDashboardSummary, {
+    initialErrorMessage: "Could not load dashboard summary.",
+    refreshErrorMessage: "Could not refresh dashboard. Showing the previous summary.",
+  });
+  const dashboardSummary = normalizeDashboardSummary(data || emptyDashboardSummary);
 
   const totalApplications = dashboardSummary.status_breakdown.reduce((total, item) => total + item.count, 0);
   const redFlaggedCount = dashboardSummary.red_flag_snapshot.flagged_count;

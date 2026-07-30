@@ -1,8 +1,9 @@
+import { RED_FLAG_FIELD_NAMES } from "../constants/applicationConstants.js";
+
 export const APPLICATIONS_REVIEW_HEADERS = [
   "Company", "Role", "Status", "Source", "Location", "Compensation", "Employment Type", "Date Saved", "Date Applied", "Follow-up Date", "Next Action", "Resume Version", "Job Link", "Notes Preview", "Preparation Notes Preview", "Job Description Saved", "Red Flags", "Red Flag Notes Preview", "Updated At",
 ];
 
-const RED_FLAG_FIELDS = ["vague_job_description", "unrealistic_salary", "asks_for_payment", "suspicious_contact", "company_mismatch", "too_good_to_be_true"];
 function text(value) { return value == null ? "" : String(value); }
 export function normalizePreview(value) {
   if (value == null || !String(value).trim()) return "";
@@ -11,7 +12,7 @@ export function normalizePreview(value) {
   return characters.length > 500 ? `${characters.slice(0, 500).join("")}…` : normalized;
 }
 export function isArchivedApplication(application) { return application.is_archived || application.status === "Archived"; }
-export function getRedFlagCount(application) { return RED_FLAG_FIELDS.filter((field) => Boolean(application[field])).length; }
+export function getRedFlagCount(application) { return RED_FLAG_FIELD_NAMES.filter((field) => Boolean(application[field])).length; }
 export function createApplicationReviewRows(applications = [], resumeVersions = []) {
   const resumesById = new Map(resumeVersions.map((resume) => [resume.id, resume.name]));
   return applications.filter((application) => !isArchivedApplication(application)).sort((first, second) => String(second.date_saved || "").localeCompare(String(first.date_saved || "")) || Number(second.id) - Number(first.id)).map((application) => ({

@@ -63,14 +63,11 @@ def outcome_population(db: Session) -> tuple[list[Application], dict[int, Resume
 def get_outcomes(db: Session = Depends(get_db)) -> dict:
     analyzed, versions, scope = outcome_population(db)
     summary = []
-    funnel = []
     for metric, label, threshold in METRICS:
         count = sum(progression_rank(application.furthest_stage) >= threshold for application in analyzed)
         current_count = sum(current_at_or_beyond(application, threshold) for application in analyzed)
         item = {"key": metric, "label": label, "count": count, "denominator": len(analyzed), "rate": rate(count, len(analyzed)), "current_at_or_beyond_count": current_count, "currently_elsewhere_count": count - current_count}
         summary.append(item)
-        if metric != "analyzed":
-            funnel.append({**item, "stage": label})
     source_groups: dict[str, list[Application]] = defaultdict(list)
     resume_groups: dict[tuple[str, str], list[Application]] = defaultdict(list)
     for application in analyzed:
@@ -82,7 +79,7 @@ def get_outcomes(db: Session = Depends(get_db)) -> dict:
             key = (str(application.resume_version_id), version.name if version else f"Resume #{application.resume_version_id}")
         resume_groups[key].append(application)
     ordered_sources = [source for source in SOURCE_ORDER if source in source_groups] + sorted(source for source in source_groups if source not in SOURCE_ORDER)
-    return {"scope": scope, "summary": summary, "funnel": funnel, "source_performance": [group_row(source, source, source_groups[source]) for source in ordered_sources], "resume_version_performance": sorted((group_row(key, label, apps) for (key, label), apps in resume_groups.items()), key=lambda item: (-item["analyzed"], item["label"]))}
+    return {"scope": scope, "summary": summary, "source_performance": [group_row(source, source, source_groups[source]) for source in ordered_sources], "resume_version_performance": sorted((group_row(key, label, apps) for (key, label), apps in resume_groups.items()), key=lambda item: (-item["analyzed"], item["label"]))}
 
 
 @router.get("/outcomes/contributors", response_model=OutcomeContributorsRead)

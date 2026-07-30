@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export function getLocalGreeting(date) {
   const hour = date.getHours();

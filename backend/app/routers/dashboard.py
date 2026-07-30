@@ -14,7 +14,7 @@ from ..domain import (
     SOURCE_ORDER,
     USER_SELECTABLE_APPLICATION_STATUSES,
 )
-from ..models import Application, ResumeVersion
+from ..models import Application
 from ..schemas import DashboardSummaryRead
 
 
@@ -24,14 +24,6 @@ router = APIRouter(prefix="/api/dashboard", tags=["dashboard"])
 def get_source_label(source: str | None) -> str:
     normalized_source = (source or "").strip()
     return normalized_source or "Unspecified"
-
-
-def get_resume_version_label(resume_version: ResumeVersion) -> str:
-    return (
-        f"{resume_version.name} ({resume_version.target_role})"
-        if resume_version.target_role
-        else resume_version.name
-    )
 
 
 def has_red_flag(application: Application) -> bool:
@@ -47,30 +39,6 @@ def get_ordered_source_breakdown(applications: list[Application]) -> list[dict[s
     return [{"label": source, "count": source_counts[source]} for source in ordered_sources]
 
 
-def get_resume_usage(
-    applications: list[Application],
-    resume_versions_by_id: dict[int, ResumeVersion],
-) -> list[dict[str, int | str]]:
-    resume_counts = Counter(application.resume_version_id for application in applications)
-    usage_items: list[dict[str, int | str]] = []
-
-    for resume_id, count in resume_counts.items():
-        if resume_id is None:
-            continue
-
-        resume_version = resume_versions_by_id.get(resume_id)
-        label = resume_version.name if resume_version else f"Resume #{resume_id}"
-        usage_items.append({"label": label, "count": count})
-
-    usage_items.sort(key=lambda item: str(item["label"]))
-
-    unassigned_count = resume_counts.get(None, 0)
-    if unassigned_count:
-        usage_items.append({"label": "No resume version", "count": unassigned_count})
-
-    return usage_items
-
-
 @router.get("/summary", response_model=DashboardSummaryRead)
 def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
     applications = (
@@ -79,9 +47,6 @@ def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
         .order_by(Application.updated_at.desc())
         .all()
     )
-    resume_versions = db.query(ResumeVersion).all()
-    resume_versions_by_id = {resume_version.id: resume_version for resume_version in resume_versions}
-
     today = date.today()
     upcoming_cutoff = today + timedelta(days=3)
     follow_up_applications = [
@@ -155,7 +120,6 @@ def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
             for status in USER_SELECTABLE_APPLICATION_STATUSES
         ],
         "source_breakdown": get_ordered_source_breakdown(applications),
-        "resume_usage": get_resume_usage(applications, resume_versions_by_id),
         "red_flag_snapshot": {
             "flagged_count": red_flagged_count,
             "items": [item for item in red_flag_items if item["count"] > 0],

@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_v
 from .domain import (
     ALLOWED_APPLICATION_STATUSES,
     ARCHIVED_APPLICATION_STATUS,
+    PROGRESSION_STAGES,
     SAVED_APPLICATION_STATUS,
 )
 
@@ -177,7 +178,7 @@ class ApplicationStatusTransitionRequest(BaseModel):
     @field_validator("expected_furthest_stage", "confirmed_stage")
     @classmethod
     def confirmed_stages(cls, value: str | None) -> str | None:
-        if value is not None and value not in ("Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"):
+        if value is not None and value not in PROGRESSION_STAGES:
             raise ValueError("confirmed stage must be a progression stage")
         return value
 
@@ -191,7 +192,7 @@ class OutcomeHistoryCorrectionRequest(BaseModel):
     @field_validator("expected_furthest_stage", "confirmed_stage")
     @classmethod
     def correction_stages(cls, value: str) -> str:
-        if value not in ("Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"):
+        if value not in PROGRESSION_STAGES:
             raise ValueError("confirmed stage must be a progression stage")
         return value
 
@@ -221,7 +222,6 @@ class DashboardSummaryRead(BaseModel):
     summary_cards: list[DashboardSummaryCardRead]
     status_breakdown: list[DashboardBreakdownItemRead]
     source_breakdown: list[DashboardBreakdownItemRead]
-    resume_usage: list[DashboardBreakdownItemRead]
     red_flag_snapshot: DashboardRedFlagSnapshotRead
 
 
@@ -229,7 +229,6 @@ class OutcomeMetricRead(BaseModel):
     key: str
     label: str
     count: int
-    stage: str | None = None
     denominator: int | None = None
     rate: float | None = None
     current_at_or_beyond_count: int | None = None
@@ -279,7 +278,6 @@ class OutcomeContributorsRead(BaseModel):
 class OutcomesInsightsRead(BaseModel):
     scope: OutcomeScopeRead
     summary: list[OutcomeMetricRead]
-    funnel: list[OutcomeMetricRead]
     source_performance: list[OutcomeGroupRead]
     resume_version_performance: list[OutcomeGroupRead]
 

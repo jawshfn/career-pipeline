@@ -11,12 +11,6 @@ def create_application(client, **overrides):
     return client.post("/api/applications", json=payload)
 
 
-def create_resume_version(client, **overrides):
-    payload = {"name": "Software Resume"}
-    payload.update(overrides)
-    return client.post("/api/resume-versions", json=payload)
-
-
 def get_summary(client):
     response = client.get("/api/dashboard/summary")
     assert response.status_code == 200
@@ -39,8 +33,8 @@ def test_empty_dashboard_summary(client):
     assert get_card(summary, "closed_applications")["value"] == 0
     assert all(item["count"] == 0 for item in summary["status_breakdown"])
     assert summary["source_breakdown"] == []
-    assert summary["resume_usage"] == []
     assert summary["red_flag_snapshot"] == {"flagged_count": 0, "items": []}
+    assert "resume_usage" not in summary
     assert "source_effectiveness" not in summary
     assert "resume_version_effectiveness" not in summary
 
@@ -154,24 +148,3 @@ def test_dashboard_source_breakdown(client):
     assert get_count(summary["source_breakdown"], "Unspecified") == 1
 
     assert "source_effectiveness" not in summary
-
-
-def test_dashboard_resume_usage(client):
-    software_resume = create_resume_version(
-        client,
-        name="Software Resume",
-        target_role="Full stack engineer",
-    ).json()
-    analyst_resume = create_resume_version(client, name="Analyst Resume").json()
-    create_application(client, resume_version_id=software_resume["id"], status="Interview")
-    create_application(client, resume_version_id=software_resume["id"], status="Offer")
-    create_application(client, resume_version_id=analyst_resume["id"], status="Withdrawn")
-    create_application(client, resume_version_id=None, status="Applied")
-
-    summary = get_summary(client)
-
-    assert get_count(summary["resume_usage"], "Software Resume") == 2
-    assert get_count(summary["resume_usage"], "Analyst Resume") == 1
-    assert get_count(summary["resume_usage"], "No resume version") == 1
-
-    assert "resume_version_effectiveness" not in summary

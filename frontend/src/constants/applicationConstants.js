@@ -10,6 +10,15 @@ export const APPLICATION_STATUSES = [
   "Archived",
 ];
 
+export const PROGRESSION_STAGES = [
+  "Saved",
+  "Applied",
+  "Assessment",
+  "Recruiter Screen",
+  "Interview",
+  "Offer",
+];
+
 export const ARCHIVED_APPLICATION_STATUS = "Archived";
 export const SAVED_APPLICATION_STATUS = "Saved";
 export const DEFAULT_APPLICATION_SOURCE = "Other";
@@ -22,16 +31,20 @@ export const APPLIED_OR_LATER_APPLICATION_STATUSES = USER_SELECTABLE_APPLICATION
   (status) => status !== SAVED_APPLICATION_STATUS,
 );
 
-export const ACTIVE_APPLICATION_STATUSES = new Set([
-  "Saved",
-  "Applied",
-  "Assessment",
-  "Recruiter Screen",
-  "Interview",
-  "Offer",
-]);
+export const ACTIVE_APPLICATION_STATUSES = new Set(PROGRESSION_STAGES);
 
 export const CLOSED_APPLICATION_STATUSES = new Set(["Rejected", "Withdrawn"]);
+
+export const FOLLOW_UP_EXCLUDED_STATUSES = new Set([
+  ...CLOSED_APPLICATION_STATUSES,
+  ARCHIVED_APPLICATION_STATUS,
+]);
+
+export const STALE_EXCLUDED_STATUSES = new Set([
+  "Offer",
+  ...CLOSED_APPLICATION_STATUSES,
+  ARCHIVED_APPLICATION_STATUS,
+]);
 
 export const SOURCE_OPTIONS = [
   "LinkedIn",
