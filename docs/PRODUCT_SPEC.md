@@ -27,12 +27,16 @@ PursuitHQ is a local-first job-search workspace for people who want to move from
 5. **Generate an AI Brief.** From Application Detail, explicitly analyze the current approved company, role, optional job details, and snapshot. Local mode saves the latest brief; demo mode keeps it in memory until reload.
 6. **Follow through.** Manage reminders with Complete, Complete and schedule next, Reschedule, or Clear; review the resulting activity history.
 7. **Prepare and assess.** Assign a resume variant, add preparation notes, and record red flags.
-8. **Review progress.** Use Dashboard and Status Board to inspect the current workspace.
+8. **Review progress.** Use Dashboard and Status Board for current workspace status, then use Outcome Insights to compare confirmed progression by source and resume version and inspect contributing applications.
 9. **Protect the workspace.** Export JSON backups and CSV/XLSX review exports; validate and explicitly replace a local workspace from a compatible JSON backup.
 
 ## Application Detail
 
 Application Detail is organized into **Overview**, **Follow-up**, **Job Details**, **Job Posting**, **AI Brief**, **Resume & Prep**, **Red Flags**, and **Activity**. The AI Brief is distinct from capture: it does not create or silently overwrite application fields, and reopening it does not call Google.
+
+## Outcome reporting
+
+Each application keeps a highest confirmed stage separate from its current status. **Saved** means not submitted. Rejected and Withdrawn applications retain confirmed reach while closed; changing an active application backward corrects its confirmed history, and a separate correction action can repair historical reach without changing current status. Outcome Insights excludes archived records, counts confirmed progression only, and presents source and resume comparisons with contributor transparency and small-sample context.
 
 ## Boundaries and non-goals
 

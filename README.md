@@ -14,6 +14,7 @@ PursuitHQ helps job seekers capture opportunities, track application status and 
 - Assign resume variants, record preparation notes, red flags, and activity.
 - Back up a complete workspace as JSON; export applications as CSV or XLSX.
 - Generate an explicit, review-only AI Brief without changing saved application fields; local mode stores the latest brief in SQLite.
+- Compare confirmed progression by source and resume version, then inspect the applications contributing to each Outcome Insights metric.
 
 ## Runtime architecture
 
@@ -77,7 +78,7 @@ cd ai-gateway; npm run check
 - No authentication, multi-user workspace, or multi-device synchronization.
 - No hosted FastAPI backend or automatic application submission.
 - No generic job-board scraping; the browser companion is experimental and locally loaded.
-- AI output requires review, is never persisted, and is not AI extraction.
+- AI output requires review and is not AI extraction; local briefs are persisted with their application while demo briefs last only for the browser session.
 - The demo workspace resets after reload.
 
 ## Documentation
