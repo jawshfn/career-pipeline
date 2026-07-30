@@ -1,6 +1,11 @@
 from datetime import date
 
+import pytest
+from pydantic import ValidationError
+
+from app.domain import ACTIVE_APPLICATION_STATUSES, PROGRESSION_STAGES
 from app.routers.applications import ai_source_fingerprint
+from app.schemas import ApplicationStatusTransitionRequest, OutcomeHistoryCorrectionRequest
 
 
 def create_application(client, **overrides):
@@ -586,6 +591,20 @@ def test_invalid_status_validation(client):
     assert response.status_code == 422
     assert update_response.status_code == 422
     assert get_activities(client, created["id"]) == []
+
+
+def test_progression_stages_define_active_statuses_and_confirmed_stage_validation():
+    assert PROGRESSION_STAGES == ("Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer")
+    assert ACTIVE_APPLICATION_STATUSES == frozenset(PROGRESSION_STAGES)
+
+    for stage in PROGRESSION_STAGES:
+        assert ApplicationStatusTransitionRequest(status="Applied", expected_status="Saved", expected_furthest_stage=stage, confirmed_stage=stage)
+        assert OutcomeHistoryCorrectionRequest(expected_furthest_stage=stage, confirmed_stage=stage)
+
+    with pytest.raises(ValidationError, match="confirmed stage must be a progression stage"):
+        ApplicationStatusTransitionRequest(status="Applied", expected_status="Saved", expected_furthest_stage="Unknown")
+    with pytest.raises(ValidationError, match="confirmed stage must be a progression stage"):
+        OutcomeHistoryCorrectionRequest(expected_furthest_stage="Saved", confirmed_stage="Unknown")
 
 
 def test_create_application_rejects_archived_status(client):
