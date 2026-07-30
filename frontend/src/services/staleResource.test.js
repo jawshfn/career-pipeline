@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fetchResource,
   getCachedResource,
+  invalidateResource,
   resetStaleResourcesForTests,
   updateCachedResource,
 } from "./staleResource.js";
@@ -60,5 +61,23 @@ describe("staleResource", () => {
     resolveRequest({ stale: true });
     await expect(retry).resolves.toEqual({ fresh: true });
     await pending;
+  });
+
+  it("prevents an invalidated pending request from restoring stale data and starts a replacement", async () => {
+    let resolveOld;
+    const old = fetchResource("outcome-insights", () => new Promise((resolve) => { resolveOld = resolve; }), "local");
+    await Promise.resolve();
+    invalidateResource("outcome-insights", "local");
+    const fresh = fetchResource("outcome-insights", () => Promise.resolve({ version: "fresh" }), "local");
+    resolveOld({ version: "stale" });
+    await Promise.all([old, fresh]);
+    expect(getCachedResource("outcome-insights", "local")).toEqual({ version: "fresh" });
+  });
+
+  it("isolates invalidation by runtime", () => {
+    updateCachedResource("outcome-insights", { runtime: "local" }, "local");
+    updateCachedResource("outcome-insights", { runtime: "demo" }, "demo");
+    invalidateResource("outcome-insights", "local");
+    expect(getCachedResource("outcome-insights", "demo")).toEqual({ runtime: "demo" });
   });
 });

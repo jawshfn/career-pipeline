@@ -2120,6 +2120,32 @@ a {
 .confirmation-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 20px; }
 .confirmation-dialog-actions button { max-width: 100%; }
 .confirmation-dialog button:focus-visible { outline: 3px solid var(--color-focus, #3b82f6); outline-offset: 2px; }
+.status-transition-dialog { display: grid; gap: 14px; }
+.status-transition-dialog fieldset { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
+.status-transition-dialog legend { margin-bottom: 4px; font-weight: 750; }
+.status-transition-option { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; }
+.status-transition-option input { margin-top: 4px; }
+.status-transition-option span, .status-transition-stage { display: grid; gap: 4px; }
+.status-transition-option small, .status-transition-stage small { color: var(--color-text-muted); }
+.status-transition-stage { margin-top: 2px; font-weight: 700; }
+.status-transition-stage select { width: 100%; margin-top: 3px; }
+.insight-contributor-trigger { display: inline; min-width: 0; padding: 0; border: 0; border-radius: 3px; background: transparent; color: inherit; font: inherit; font-weight: inherit; text-align: inherit; text-decoration: underline; text-decoration-color: transparent; cursor: pointer; }
+.insight-contributor-trigger:hover, .insight-contributor-trigger:focus-visible { color: var(--color-primary); text-decoration-color: currentColor; outline: none; }
+.insight-contributor-trigger:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent); }
+.insight-summary-card { display: grid; gap: 6px; align-content: start; }
+.insight-summary-card .insight-contributor-trigger { justify-self: start; font-size: 2rem; line-height: 1; }
+.insight-summary-card small { display: block; }
+.contributors-dialog-body { display: grid; gap: 14px; }
+.contributors-list { display: grid; gap: 0; max-height: min(55vh, 560px); overflow-y: auto; border-top: 1px solid var(--color-border); }
+.insight-contributor { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 14px 2px; border-bottom: 1px solid var(--color-border); }
+.insight-contributor-main { display: grid; gap: 4px; min-width: 0; }
+.insight-contributor-main strong, .insight-contributor-main > span { overflow-wrap: anywhere; }
+.insight-contributor-status { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--color-text-muted); font-size: .9rem; }
+.insights-scope > p { margin-bottom: 14px; }
+.insights-scope dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.insights-scope dl > div { padding: 10px; border-radius: var(--radius-md); background: var(--color-surface-subtle); }
+.insights-scope dt { font-size: .85rem; color: var(--color-text-muted); }
+.insights-scope dd { margin: 4px 0 0; font-size: 1.25rem; font-weight: 750; }
 
 .follow-up-action-dialog-content, .follow-up-action-fieldset, .follow-up-action-fields { display: grid; gap: 12px; min-width: 0; }
 .follow-up-action-dialog-content { margin-top: 16px; }
@@ -2175,6 +2201,9 @@ a {
   .confirmation-dialog { padding: 18px; }
   .confirmation-dialog-actions { align-items: stretch; flex-direction: column; }
   .confirmation-dialog-actions button { width: 100%; }
+  .insight-contributor { align-items: stretch; flex-direction: column; }
+  .insight-contributor .secondary-button { align-self: start; }
+  .insights-scope dl { grid-template-columns: 1fr; }
 }
 
 .resume-version-form,

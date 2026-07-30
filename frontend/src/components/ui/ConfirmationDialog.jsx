@@ -11,6 +11,7 @@ export default function ConfirmationDialog({
   errorMessage = "",
   isOpen,
   isProcessing = false,
+  hideConfirm = false,
   onCancel,
   onConfirm,
   processingLabel = "Working...",
@@ -82,9 +83,9 @@ export default function ConfirmationDialog({
         {errorMessage ? <div role="alert"><ErrorMessage message={errorMessage} /></div> : null}
         <div className="confirmation-dialog-actions">
           <button className="secondary-button" disabled={isProcessing} ref={cancelButtonRef} type="button" onClick={onCancel}>{cancelLabel}</button>
-          <button className={confirmTone === "danger" ? "delete-application-confirm-button" : "primary-small-button"} disabled={isProcessing || confirmDisabled} type="button" onClick={onConfirm}>
+          {!hideConfirm ? <button className={confirmTone === "danger" ? "delete-application-confirm-button" : "primary-small-button"} disabled={isProcessing || confirmDisabled} type="button" onClick={onConfirm}>
             {isProcessing ? processingLabel : confirmLabel}
-          </button>
+          </button> : null}
         </div>
       </section>
     </div>

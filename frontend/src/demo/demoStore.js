@@ -216,7 +216,7 @@ export function updateDemoApplication(applicationId, payload) {
   return updateDemoApplicationRecord(applicationId, payload);
 }
 
-function updateDemoApplicationRecord(applicationId, payload) {
+function updateDemoApplicationRecord(applicationId, payload, { preserveConfirmedStage = false } = {}) {
   let updatedApplication = null;
   let previousStatus = null;
   const timestamp = nowIso();
@@ -235,10 +235,12 @@ function updateDemoApplicationRecord(applicationId, payload) {
         is_archived: payload.status === "Archived" ? true : application.is_archived,
         updated_at: timestamp,
       };
-      updatedApplication.furthest_stage = furthestStageFor({
-        ...updatedApplication,
-        furthest_stage: payload.furthest_stage ?? application.furthest_stage,
-      });
+      updatedApplication.furthest_stage = preserveConfirmedStage
+        ? payload.furthest_stage
+        : furthestStageFor({
+          ...updatedApplication,
+          furthest_stage: payload.furthest_stage ?? application.furthest_stage,
+        });
       return updatedApplication;
     }),
   };
@@ -295,8 +297,9 @@ export function transitionDemoApplicationStatus(applicationId, payload) {
     const stage = payload.confirmed_stage || payload.status;
     if (PROGRESSION_STAGES.indexOf(stage) < targetRank) throw new Error("Highest confirmed stage cannot be below the current active status.");
     patch.furthest_stage = stage;
+    if (stage === "Saved") patch.date_applied = null;
   }
-  return updateDemoApplicationRecord(applicationId, patch);
+  return updateDemoApplicationRecord(applicationId, patch, { preserveConfirmedStage: patch.furthest_stage === "Saved" });
 }
 
 export function correctDemoApplicationOutcomeHistory(applicationId, payload) {
@@ -308,7 +311,11 @@ export function correctDemoApplicationOutcomeHistory(applicationId, payload) {
   if (statusRank >= 0 && PROGRESSION_STAGES.indexOf(payload.confirmed_stage) < statusRank) throw new Error("Highest confirmed stage cannot be below the current active status.");
   const previous = application.furthest_stage;
   if (PROGRESSION_STAGES.indexOf(payload.confirmed_stage) < 0) throw new Error("Choose a valid confirmed stage.");
-  const updated = updateDemoApplicationRecord(applicationId, { furthest_stage: payload.confirmed_stage });
+  const updated = updateDemoApplicationRecord(
+    applicationId,
+    { furthest_stage: payload.confirmed_stage, ...(payload.confirmed_stage === "Saved" ? { date_applied: null } : {}) },
+    { preserveConfirmedStage: payload.confirmed_stage === "Saved" },
+  );
   const timestamp = nowIso();
   demoState = { ...demoState, activities: [{ id: demoState.nextActivityId, application_id: Number(applicationId), activity_date: getTodayValue(), activity_type: "Outcome History Correction", note: `Highest confirmed stage corrected from ${previous} to ${payload.confirmed_stage}.`, created_at: timestamp, updated_at: timestamp }, ...demoState.activities], nextActivityId: demoState.nextActivityId + 1 };
   return updated;

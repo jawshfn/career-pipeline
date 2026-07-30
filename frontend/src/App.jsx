@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 
 import { applyApplicationFollowUpAction, correctApplicationOutcomeHistory, createApplication, deleteApplication, getApplications, transitionApplicationStatus, updateApplication } from "./services/applicationsService.js";
-import { updateCachedResource } from "./services/staleResource.js";
+import { invalidateResource } from "./services/staleResource.js";
 import {
   createResumeVersion,
   deleteResumeVersion,
@@ -189,7 +189,9 @@ export default function App() {
     setRequestedApplicationId(null);
     setActivePageHasUnsavedChanges(false);
     setPendingNavigation(null);
-    return loadWorkspaceData();
+    const restored = await loadWorkspaceData();
+    if (restored) invalidateResource("outcome-insights");
+    return restored;
   }, [loadWorkspaceData]);
 
   const completeNavigation = useCallback((targetPage, applicationId = null) => {
@@ -225,6 +227,7 @@ export default function App() {
   async function handleCreateApplication(applicationData) {
     const createdApplication = await createApplication(applicationData);
     setApplications((currentApplications) => [createdApplication, ...currentApplications]);
+    invalidateResource("outcome-insights");
     return createdApplication;
   }
 
@@ -235,6 +238,7 @@ export default function App() {
         application.id === updatedApplication.id ? updatedApplication : application,
       ),
     );
+    invalidateResource("outcome-insights");
     return updatedApplication;
   }
 
@@ -245,7 +249,7 @@ export default function App() {
       expected_furthest_stage: application.furthest_stage,
     });
     setApplications((currentApplications) => currentApplications.map((item) => item.id === updatedApplication.id ? updatedApplication : item));
-    updateCachedResource("outcome-insights", undefined);
+    invalidateResource("outcome-insights");
     return updatedApplication;
   }
 
@@ -255,7 +259,7 @@ export default function App() {
       expected_furthest_stage: application.furthest_stage,
     });
     setApplications((currentApplications) => currentApplications.map((item) => item.id === updatedApplication.id ? updatedApplication : item));
-    updateCachedResource("outcome-insights", undefined);
+    invalidateResource("outcome-insights");
     return updatedApplication;
   }
 
@@ -263,6 +267,7 @@ export default function App() {
     const createdResumeVersion = await createResumeVersion(payload);
     setResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, createdResumeVersion));
     setAllResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, createdResumeVersion));
+    invalidateResource("outcome-insights");
     return createdResumeVersion;
   }
 
@@ -273,12 +278,14 @@ export default function App() {
         application.id === result.application.id ? result.application : application,
       ),
     );
+    invalidateResource("outcome-insights");
     return result;
   }
 
   async function handleDeleteApplication(applicationId) {
     await deleteApplication(applicationId);
     setApplications((currentApplications) => removeApplicationById(currentApplications, applicationId));
+    invalidateResource("outcome-insights");
   }
 
   async function handleUpdateResumeVersion(resumeVersionId, payload) {
@@ -287,6 +294,7 @@ export default function App() {
       updateActiveResumeVersions(currentResumeVersions, updatedResumeVersion),
     );
     setAllResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, updatedResumeVersion));
+    invalidateResource("outcome-insights");
     return updatedResumeVersion;
   }
 
@@ -303,6 +311,7 @@ export default function App() {
     }
     setResumeVersions((currentResumeVersions) => removeResumeVersionById(currentResumeVersions, resumeVersionId));
     setAllResumeVersions((currentResumeVersions) => removeResumeVersionById(currentResumeVersions, resumeVersionId));
+    invalidateResource("outcome-insights");
     return deleted;
   }
 

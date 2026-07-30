@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { deleteApplicationAiBrief, getApplication, getApplicationAiBrief, saveApplicationAiBrief } from "../../services/applicationsService.js";
 import {
   APPLIED_OR_LATER_APPLICATION_STATUSES,
-  CLOSED_APPLICATION_STATUSES,
   DEFAULT_APPLICATION_SOURCE,
   EMPLOYMENT_TYPE_OPTIONS,
   RED_FLAG_OPTIONS,
@@ -32,6 +31,8 @@ import StatusFollowUpTab from "./StatusFollowUpTab.jsx";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
 import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
+import StatusTransitionDialog from "./StatusTransitionDialog.jsx";
+import { analyzeStatusTransition, CONFIRMED_STAGES, confirmedStageRank, transitionPayloadForDecision } from "../../utils/statusTransition.js";
 import {
   JobBriefServiceError,
   createJobBriefPayload,
@@ -220,8 +221,8 @@ function getCloseConfirmation(hasUnsavedApplicationChanges, hasUnsavedActivityDr
   return { title: "Close without saving?", description: "You have unsaved application changes. Closing will discard them.", confirmLabel: "Close without saving" };
 }
 
-const outcomeStages = ["Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer"];
-const stageRank = (stage) => outcomeStages.indexOf(stage);
+const outcomeStages = CONFIRMED_STAGES;
+const stageRank = confirmedStageRank;
 
 export function shouldRefreshActivitiesAfterApplicationSave(previousStatus, nextStatus) {
   return Boolean(previousStatus && nextStatus && previousStatus !== nextStatus);
@@ -257,8 +258,6 @@ export default function ApplicationDetailPanel({
   const [deleteError, setDeleteError] = useState("");
   const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
-  const [terminalSubmissionIntent, setTerminalSubmissionIntent] = useState("not_submitted");
-  const [backwardHistoryIntent, setBackwardHistoryIntent] = useState("preserve");
   const [confirmedStage, setConfirmedStage] = useState("Applied");
   const [isTransitioningStatus, setIsTransitioningStatus] = useState(false);
   const [isCorrectionDialogOpen, setIsCorrectionDialogOpen] = useState(false);
@@ -388,15 +387,13 @@ export default function ApplicationDetailPanel({
   function updateField(event) {
     const { checked, name, type, value } = event.target;
     if (name === "status" && value !== savedFormData.status) {
-      const terminalFromUnconfirmedSaved =
-        CLOSED_APPLICATION_STATUSES.has(value) &&
-        savedFormData.furthest_stage === SAVED_APPLICATION_STATUS &&
-        !savedFormData.date_applied;
-      const movingBackward = stageRank(value) >= 0 && stageRank(value) < stageRank(savedFormData.furthest_stage);
-      setTerminalSubmissionIntent("not_submitted");
-      setBackwardHistoryIntent("preserve");
-      setConfirmedStage(movingBackward ? value : "Applied");
-      setPendingStatus({ value, terminalFromUnconfirmedSaved, movingBackward });
+      const decision = analyzeStatusTransition(savedFormData, value);
+      if (decision.requiresIntent) {
+        setConfirmedStage(decision.defaultConfirmedStage);
+        setPendingStatus(decision);
+      } else {
+        submitStatusTransition(decision, {});
+      }
       return;
     }
     setFormData((current) => {
@@ -410,21 +407,12 @@ export default function ApplicationDetailPanel({
     setSaveMessage("");
   }
 
-  async function confirmStatusTransition() {
-    if (!pendingStatus || isTransitioningStatus) return;
+  async function submitStatusTransition(decision, transitionPayload) {
+    if (isTransitioningStatus) return;
     setIsTransitioningStatus(true);
     setSaveError("");
     try {
-      const payload = { status: pendingStatus.value };
-      if (pendingStatus.terminalFromUnconfirmedSaved) {
-        payload.terminal_submission_intent = terminalSubmissionIntent;
-        if (terminalSubmissionIntent === "submitted") payload.confirmed_stage = confirmedStage;
-      }
-      if (pendingStatus.movingBackward) {
-        payload.backward_history_intent = backwardHistoryIntent;
-        if (backwardHistoryIntent === "correct") payload.confirmed_stage = confirmedStage;
-      }
-      const updatedApplication = await onTransitionApplicationStatus({ id: applicationId, ...savedFormData }, payload);
+      const updatedApplication = await onTransitionApplicationStatus({ id: applicationId, ...savedFormData }, { status: decision.nextStatus, ...transitionPayload });
       const nextFormState = toFormState(updatedApplication);
       setFormData((current) => ({ ...current, status: nextFormState.status, date_applied: nextFormState.date_applied, furthest_stage: nextFormState.furthest_stage }));
       setSavedFormData((current) => ({ ...current, status: nextFormState.status, date_applied: nextFormState.date_applied, furthest_stage: nextFormState.furthest_stage }));
@@ -446,8 +434,8 @@ export default function ApplicationDetailPanel({
     try {
       const updatedApplication = await onCorrectApplicationOutcomeHistory({ id: applicationId, ...savedFormData }, { confirmed_stage: confirmedStage });
       const nextFormState = toFormState(updatedApplication);
-      setFormData((current) => ({ ...current, furthest_stage: nextFormState.furthest_stage }));
-      setSavedFormData((current) => ({ ...current, furthest_stage: nextFormState.furthest_stage }));
+      setFormData((current) => ({ ...current, furthest_stage: nextFormState.furthest_stage, date_applied: nextFormState.date_applied }));
+      setSavedFormData((current) => ({ ...current, furthest_stage: nextFormState.furthest_stage, date_applied: nextFormState.date_applied }));
       onLoadApplication?.(updatedApplication);
       setActivityRefreshVersion((currentVersion) => currentVersion + 1);
       setIsCorrectionDialogOpen(false);
@@ -843,7 +831,7 @@ export default function ApplicationDetailPanel({
       {isDeleteDialogOpen ? (
         <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Delete permanently" confirmTone="danger" description={<><p>This will delete the application, notes, job posting, preparation details, red flags, and activity history. This action cannot be undone.</p>{hasUnsavedChanges ? <p>Any unsaved changes or activity draft will also be discarded.</p> : null}</>} errorMessage={deleteError} isOpen={isDeleteDialogOpen} isProcessing={isDeleting} processingLabel="Deleting..." title={`Permanently delete ${roleTitle} at ${companyName}?`} onCancel={closeDeleteDialog} onConfirm={confirmDeleteApplication} />
       ) : null}
-      {pendingStatus ? <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Update status" confirmDisabled={isTransitioningStatus} description={<div>{pendingStatus.terminalFromUnconfirmedSaved ? <fieldset><legend>Was this application submitted before it closed?</legend><label><input checked={terminalSubmissionIntent === "not_submitted"} name="submission-intent" type="radio" value="not_submitted" onChange={() => setTerminalSubmissionIntent("not_submitted")} /> Not submitted</label><label><input checked={terminalSubmissionIntent === "submitted"} name="submission-intent" type="radio" value="submitted" onChange={() => setTerminalSubmissionIntent("submitted")} /> Submitted</label>{terminalSubmissionIntent === "submitted" ? <label>Highest confirmed stage<select value={confirmedStage} onChange={(event) => setConfirmedStage(event.target.value)}>{outcomeStages.slice(1).map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select></label> : null}</fieldset> : null}{pendingStatus.movingBackward ? <fieldset><legend>Keep the recorded highest confirmed stage?</legend><label><input checked={backwardHistoryIntent === "preserve"} name="history-intent" type="radio" value="preserve" onChange={() => setBackwardHistoryIntent("preserve")} /> Keep it</label><label><input checked={backwardHistoryIntent === "correct"} name="history-intent" type="radio" value="correct" onChange={() => setBackwardHistoryIntent("correct")} /> Correct it</label>{backwardHistoryIntent === "correct" ? <label>Highest confirmed stage<select value={confirmedStage} onChange={(event) => setConfirmedStage(event.target.value)}>{outcomeStages.filter((stage) => stageRank(stage) >= Math.max(0, stageRank(pendingStatus.value))).map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select></label> : null}</fieldset> : null}{!pendingStatus.terminalFromUnconfirmedSaved && !pendingStatus.movingBackward ? <p>This records the new current status and preserves the existing confirmed history.</p> : null}</div>} isOpen isProcessing={isTransitioningStatus} processingLabel="Updating..." title={`Change status to ${pendingStatus.value}?`} onCancel={() => !isTransitioningStatus && setPendingStatus(null)} onConfirm={confirmStatusTransition} /> : null}
+      {pendingStatus ? <StatusTransitionDialog decision={pendingStatus} errorMessage={saveError} isProcessing={isTransitioningStatus} onCancel={() => !isTransitioningStatus && setPendingStatus(null)} onConfirm={(intent, selectedStage) => submitStatusTransition(pendingStatus, transitionPayloadForDecision(pendingStatus, intent, selectedStage))} /> : null}
       {isCorrectionDialogOpen ? <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Correct history" confirmDisabled={confirmedStage === savedFormData.furthest_stage} description={<div><p>Current status: <strong>{savedFormData.status}</strong>. Current highest confirmed stage: <strong>{savedFormData.furthest_stage}</strong>.</p><p>This changes historical outcome reporting only; it does not change the current status.</p><label>Highest confirmed stage<select value={confirmedStage} onChange={(event) => setConfirmedStage(event.target.value)}>{outcomeStages.filter((stage) => stageRank(stage) >= Math.max(0, stageRank(savedFormData.status))).map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select></label><p>Confirm to record this correction in the application activity timeline.</p></div>} isOpen isProcessing={isCorrectingHistory} processingLabel="Correcting..." title="Correct outcome history" onCancel={() => !isCorrectingHistory && setIsCorrectionDialogOpen(false)} onConfirm={confirmOutcomeHistoryCorrection} /> : null}
       {isRemoveBriefDialogOpen ? <ConfirmationDialog cancelLabel="Cancel" confirmLabel="Remove brief" confirmTone="danger" description="This removes the locally saved analysis from this application. You can generate a new brief later." errorMessage={briefRemovalError} isOpen={isRemoveBriefDialogOpen} isProcessing={isRemovingBrief} processingLabel="Removing..." title="Remove saved AI brief?" onCancel={closeRemoveBriefDialog} onConfirm={confirmRemoveBrief} /> : null}
       {isCloseDialogOpen ? <ConfirmationDialog cancelLabel="Keep editing" confirmTone="warning" isOpen={isCloseDialogOpen} {...getCloseConfirmation(hasUnsavedApplicationChanges, hasUnsavedActivityDraft)} onCancel={() => setIsCloseDialogOpen(false)} onConfirm={onClose} /> : null}

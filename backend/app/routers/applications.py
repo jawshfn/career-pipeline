@@ -175,6 +175,7 @@ def apply_status_transition(application: Application, payload: ApplicationStatus
     current_rank = progression_rank(application.furthest_stage)
     next_rank = progression_rank(next_status)
     closing_unconfirmed = previous_status == "Saved" and next_status in CLOSED_APPLICATION_STATUSES and current_rank == 0 and application.date_applied is None
+    corrected_to_saved = False
     if closing_unconfirmed:
         if payload.terminal_submission_intent not in {"not_submitted", "submitted"}:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Choose whether this application was submitted before it was closed.")
@@ -190,14 +191,21 @@ def apply_status_transition(application: Application, payload: ApplicationStatus
             stage = payload.confirmed_stage or next_status
             _validate_confirmed_stage(stage, next_status)
             application.furthest_stage = stage
+            corrected_to_saved = stage == "Saved"
     elif next_status in ACTIVE_APPLICATION_STATUSES:
         application.furthest_stage = furthest_stage_for(next_status, application.date_applied, application.furthest_stage)
 
     application.status = next_status
-    if should_default_date_applied(next_status) and application.date_applied is None:
+    if corrected_to_saved:
+        # An explicit Saved correction is authoritative: Saved means this was
+        # never submitted, so a historical application date must not re-promote
+        # the confirmed stage during ordinary derivation below.
+        application.date_applied = None
+    elif should_default_date_applied(next_status) and application.date_applied is None:
         application.date_applied = date.today()
-    # Derivation only raises ordinary evidence and never turns a terminal state into Applied.
-    application.furthest_stage = furthest_stage_for(application.status, application.date_applied, application.furthest_stage)
+    if not corrected_to_saved:
+        # Derivation only raises ordinary evidence and never turns a terminal state into Applied.
+        application.furthest_stage = furthest_stage_for(application.status, application.date_applied, application.furthest_stage)
     create_status_change_activity(application, previous_status, next_status, db)
 
 
@@ -230,6 +238,10 @@ def correct_outcome_history(application_id: int, payload: OutcomeHistoryCorrecti
         _validate_confirmed_stage(payload.confirmed_stage, application.status)
     previous_stage = application.furthest_stage
     application.furthest_stage = payload.confirmed_stage
+    if payload.confirmed_stage == "Saved":
+        # A confirmed Saved history explicitly means the application was never
+        # submitted, regardless of a previously recorded application date.
+        application.date_applied = None
     db.add(ApplicationActivity(application_id=application.id, activity_date=date.today(), activity_type=OUTCOME_HISTORY_CORRECTION_ACTIVITY_TYPE, note=f"Highest confirmed stage corrected from {previous_stage} to {payload.confirmed_stage}."))
     try:
         db.commit()

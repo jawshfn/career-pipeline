@@ -656,3 +656,52 @@ def test_outcome_history_correction_is_conflict_protected_and_does_not_change_st
     assert corrected.json()["status"] == "Rejected"
     assert corrected.json()["furthest_stage"] == "Recruiter Screen"
     assert [activity["activity_type"] for activity in get_activities(client, created["id"])] == ["Outcome History Correction", "Status Change"]
+
+
+def test_backward_correction_to_saved_clears_application_date_without_repromotion(client):
+    created = create_application(client, status="Applied").json()
+
+    response = client.post(
+        f"/api/applications/{created['id']}/status-transition",
+        json={
+            "status": "Saved", "expected_status": "Applied", "expected_furthest_stage": "Applied",
+            "backward_history_intent": "correct", "confirmed_stage": "Saved",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "Saved"
+    assert response.json()["furthest_stage"] == "Saved"
+    assert response.json()["date_applied"] is None
+
+
+def test_preserved_history_keeps_application_date_and_permanent_saved_correction_clears_it(client):
+    preserved = create_application(client, status="Assessment").json()
+    preserved_response = client.post(
+        f"/api/applications/{preserved['id']}/status-transition",
+        json={"status": "Saved", "expected_status": "Assessment", "expected_furthest_stage": "Assessment", "backward_history_intent": "preserve"},
+    )
+    assert preserved_response.status_code == 200
+    assert preserved_response.json()["furthest_stage"] == "Assessment"
+    assert preserved_response.json()["date_applied"] is not None
+
+    closed = create_application(client, status="Applied").json()
+    rejected = client.post(f"/api/applications/{closed['id']}/status-transition", json={"status": "Rejected", "expected_status": "Applied", "expected_furthest_stage": "Applied"})
+    assert rejected.status_code == 200
+    corrected = client.post(f"/api/applications/{closed['id']}/outcome-history-correction", json={"expected_furthest_stage": "Applied", "confirmed_stage": "Saved"})
+    assert corrected.status_code == 200
+    assert corrected.json()["status"] == "Rejected"
+    assert corrected.json()["furthest_stage"] == "Saved"
+    assert corrected.json()["date_applied"] is None
+    assert [activity["activity_type"] for activity in get_activities(client, closed["id"])].count("Outcome History Correction") == 1
+
+
+def test_outcome_history_correction_rejects_active_applications(client):
+    active = create_application(client, status="Assessment").json()
+
+    response = client.post(
+        f"/api/applications/{active['id']}/outcome-history-correction",
+        json={"expected_furthest_stage": "Assessment", "confirmed_stage": "Saved"},
+    )
+
+    assert response.status_code == 422

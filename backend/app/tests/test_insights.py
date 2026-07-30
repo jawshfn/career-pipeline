@@ -39,3 +39,24 @@ def test_outcomes_use_confirmed_history_and_exclude_archived(client):
     contributors = client.get("/api/insights/outcomes/contributors?metric=reached_interview&group_type=global")
     assert contributors.status_code == 200
     assert [item["application_id"] for item in contributors.json()["contributors"]] == [rejected["id"]]
+
+
+def test_correcting_history_to_saved_removes_an_application_from_outcomes(client):
+    application = create_application(client, status="Applied", source="LinkedIn")
+    transition(client, application, "Rejected")
+
+    corrected = client.post(
+        f"/api/applications/{application['id']}/outcome-history-correction",
+        json={"expected_furthest_stage": "Applied", "confirmed_stage": "Saved"},
+    )
+    assert corrected.status_code == 200
+
+    outcomes = client.get("/api/insights/outcomes")
+    contributors = client.get("/api/insights/outcomes/contributors?metric=analyzed&group_type=global")
+
+    assert outcomes.status_code == 200
+    assert outcomes.json()["scope"]["analyzed_applications"] == 0
+    assert outcomes.json()["scope"]["closed_without_confirmed_submission_excluded"] == 1
+    assert outcomes.json()["source_performance"] == []
+    assert contributors.status_code == 200
+    assert contributors.json()["contributors"] == []
