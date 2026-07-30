@@ -57,5 +57,5 @@ The frontend generates XLSX directly; it is not a backend endpoint.
 
 | Method | Path | Purpose | Important behavior |
 | --- | --- | --- | --- |
-| GET | `/api/insights/outcomes` | Read confirmed historical outcomes | Excludes archived and unconfirmed records, returns scope counts, historical funnel metrics, source/resume groups, and current-versus-historical context. |
+| GET | `/api/insights/outcomes` | Read confirmed historical outcomes | Excludes archived and unconfirmed records, returns scope counts, progression milestones, source/resume groups, and current-versus-historical context. Assessment is optional; `progressed_beyond_applied` means any confirmed stage beyond Applied. |
 | GET | `/api/insights/outcomes/contributors` | Inspect applications behind one outcome cell | Filters by metric and optional source/resume group; returns deterministic application identity, current status, confirmed stage, source, and resume identity. |

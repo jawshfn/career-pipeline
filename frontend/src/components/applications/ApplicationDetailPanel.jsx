@@ -388,8 +388,8 @@ export default function ApplicationDetailPanel({
     const { checked, name, type, value } = event.target;
     if (name === "status" && value !== savedFormData.status) {
       const decision = analyzeStatusTransition(savedFormData, value);
-      if (decision.requiresIntent) {
-        setConfirmedStage(decision.defaultConfirmedStage);
+      if (decision.requiresConfirmation) {
+        setConfirmedStage(decision.defaultConfirmedStage || "Applied");
         setPendingStatus(decision);
       } else {
         submitStatusTransition(decision, {});

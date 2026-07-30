@@ -209,7 +209,6 @@ export function updateDemoApplication(applicationId, payload) {
       status,
       expected_status: application.status,
       expected_furthest_stage: application.furthest_stage,
-      backward_history_intent: "preserve",
     });
     return Object.keys(remainingPatch).length ? updateDemoApplication(applicationId, remainingPatch) : transitioned;
   }
@@ -285,21 +284,20 @@ export function transitionDemoApplicationStatus(applicationId, payload) {
   const currentRank = PROGRESSION_STAGES.indexOf(application.furthest_stage);
   const terminalFromUnconfirmed = application.status === "Saved" && ["Rejected", "Withdrawn"].includes(payload.status) && currentRank === 0 && !application.date_applied;
   if (terminalFromUnconfirmed && !["not_submitted", "submitted"].includes(payload.terminal_submission_intent)) throw new Error("Choose whether this application was submitted before it was closed.");
-  if (targetRank >= 0 && targetRank < currentRank && !["preserve", "correct"].includes(payload.backward_history_intent)) throw new Error("Choose whether to preserve or correct highest confirmed stage.");
+  const resetToSaved = payload.status === "Saved" && application.status !== "Saved";
+  const backwardCorrection = (PROGRESSION_STAGES.includes(application.status) || ["Rejected", "Withdrawn"].includes(application.status)) && payload.status !== "Saved" && targetRank >= 0 && targetRank < currentRank;
+  if (resetToSaved && !payload.confirm_not_submitted) throw new Error("Confirm that this application was not submitted before marking it Saved.");
+  if (backwardCorrection && !payload.confirm_backward_change) throw new Error("Confirm changing the highest confirmed stage when moving backward.");
   const patch = { status: payload.status };
-  if (targetRank >= 1 && !application.date_applied) patch.date_applied = getTodayValue();
+  if (resetToSaved) { patch.furthest_stage = "Saved"; patch.date_applied = null; }
+  else if (targetRank >= 1 && !application.date_applied) patch.date_applied = getTodayValue();
   if (terminalFromUnconfirmed && payload.terminal_submission_intent === "submitted") {
     const stage = payload.confirmed_stage || "Applied";
     if (PROGRESSION_STAGES.indexOf(stage) < 1) throw new Error("Submitted applications must confirm Applied or a later stage.");
     patch.furthest_stage = stage;
   }
-  if (targetRank >= 0 && targetRank < currentRank && payload.backward_history_intent === "correct") {
-    const stage = payload.confirmed_stage || payload.status;
-    if (PROGRESSION_STAGES.indexOf(stage) < targetRank) throw new Error("Highest confirmed stage cannot be below the current active status.");
-    patch.furthest_stage = stage;
-    if (stage === "Saved") patch.date_applied = null;
-  }
-  return updateDemoApplicationRecord(applicationId, patch, { preserveConfirmedStage: patch.furthest_stage === "Saved" });
+  if (backwardCorrection) patch.furthest_stage = payload.status;
+  return updateDemoApplicationRecord(applicationId, patch, { preserveConfirmedStage: Boolean(patch.furthest_stage) });
 }
 
 export function correctDemoApplicationOutcomeHistory(applicationId, payload) {
@@ -712,7 +710,7 @@ export function getDemoOutcomeInsights() {
   const rank = (application) => Math.max(0, PROGRESSION_STAGES.indexOf(application.furthest_stage));
   const visible = demoState.applications.filter((application) => !isArchived(application));
   const analyzed = visible.filter((application) => rank(application) >= 1);
-  const metrics = [["analyzed", "Applications analyzed", 1], ["reached_assessment", "Reached Assessment", 2], ["human_responses", "Human response", 3], ["reached_interview", "Reached Interview", 4], ["reached_offer", "Reached Offer", 5]];
+  const metrics = [["analyzed", "Applications analyzed", 1], ["progressed_beyond_applied", "Progressed beyond Applied", 2], ["human_responses", "Human response", 3], ["reached_interview", "Interview stage or later", 4], ["reached_offer", "Offer received", 5]];
   const group = (id, label, rows) => {
     const result = { id, label, analyzed: rows.length };
     metrics.slice(1).forEach(([key, _label, threshold]) => { const count = rows.filter((application) => rank(application) >= threshold).length; result[key] = count; result[`${key}_rate`] = rows.length ? count / rows.length : null; });
@@ -720,13 +718,13 @@ export function getDemoOutcomeInsights() {
   };
   const bySource = new Map(); const byResume = new Map();
   analyzed.forEach((application) => { const source = (application.source || "").trim() || "Unspecified"; bySource.set(source, [...(bySource.get(source) || []), application]); const version = demoState.resumeVersions.find((item) => item.id === application.resume_version_id); const id = version ? String(version.id) : "unassigned"; byResume.set(id, { label: version ? version.name : "Unassigned", rows: [...(byResume.get(id)?.rows || []), application] }); });
-  const summary = metrics.map(([key, label, threshold]) => { const count = analyzed.filter((application) => rank(application) >= threshold).length; const currentCount = analyzed.filter((application) => PROGRESSION_STAGES.indexOf(application.status) === threshold).length; return { key, label, count, denominator: analyzed.length, rate: analyzed.length ? count / analyzed.length : null, current_count: currentCount, currently_elsewhere_count: count - currentCount }; });
+  const summary = metrics.map(([key, label, threshold]) => { const count = analyzed.filter((application) => rank(application) >= threshold).length; const currentCount = analyzed.filter((application) => PROGRESSION_STAGES.indexOf(application.status) >= threshold).length; return { key, label, count, denominator: analyzed.length, rate: analyzed.length ? count / analyzed.length : null, current_at_or_beyond_count: currentCount, currently_elsewhere_count: count - currentCount }; });
   const sourceOrder = ["LinkedIn", "Indeed", "ZipRecruiter", "Company Website", "Referral", "Other"];
-  return clone({ scope: { visible_applications: visible.length, analyzed_applications: analyzed.length, saved_applications_excluded: visible.filter((application) => application.status === "Saved" && rank(application) === 0).length, closed_without_confirmed_submission_excluded: visible.filter((application) => ["Rejected", "Withdrawn"].includes(application.status) && rank(application) === 0).length, archived_applications_excluded: demoState.applications.length - visible.length }, summary, funnel: summary.slice(1).map((item) => ({ ...item, stage: item.label.replace("Reached ", "") })), source_performance: [...bySource.entries()].sort((a, b) => (sourceOrder.indexOf(a[0]) + 99) % 99 - (sourceOrder.indexOf(b[0]) + 99) % 99 || a[0].localeCompare(b[0])).map(([id, rows]) => group(id, id, rows)), resume_version_performance: [...byResume.entries()].map(([id, value]) => group(id, value.label, value.rows)).sort((a, b) => b.analyzed - a.analyzed || a.label.localeCompare(b.label)) });
+  return clone({ scope: { visible_applications: visible.length, analyzed_applications: analyzed.length, saved_applications_excluded: visible.filter((application) => application.status === "Saved" && rank(application) === 0).length, closed_without_confirmed_submission_excluded: visible.filter((application) => ["Rejected", "Withdrawn"].includes(application.status) && rank(application) === 0).length, archived_applications_excluded: demoState.applications.length - visible.length }, summary, funnel: summary.slice(1).map((item) => ({ ...item, stage: item.label })), source_performance: [...bySource.entries()].sort((a, b) => (sourceOrder.indexOf(a[0]) + 99) % 99 - (sourceOrder.indexOf(b[0]) + 99) % 99 || a[0].localeCompare(b[0])).map(([id, rows]) => group(id, id, rows)), resume_version_performance: [...byResume.entries()].map(([id, value]) => group(id, value.label, value.rows)).sort((a, b) => b.analyzed - a.analyzed || a.label.localeCompare(b.label)) });
 }
 
 export function getDemoOutcomeContributors({ metric, group_type = "global", group_id = null }) {
-  const thresholds = { analyzed: 1, reached_assessment: 2, human_responses: 3, reached_interview: 4, reached_offer: 5 };
+  const thresholds = { analyzed: 1, progressed_beyond_applied: 2, human_responses: 3, reached_interview: 4, reached_offer: 5 };
   if (!(metric in thresholds)) throw new Error("Unsupported outcome contributor request.");
   const selected = demoState.applications.filter((application) => !isArchived(application) && PROGRESSION_STAGES.indexOf(application.furthest_stage) >= thresholds[metric]).filter((application) => group_type !== "source" || ((application.source || "").trim() || "Unspecified") === group_id).filter((application) => group_type !== "resume" || (application.resume_version_id == null ? "unassigned" : String(application.resume_version_id)) === group_id).sort((first, second) => first.company_name.localeCompare(second.company_name) || first.role_title.localeCompare(second.role_title) || first.id - second.id);
   if (!["global", "source", "resume"].includes(group_type)) throw new Error("Choose a valid contributor group.");

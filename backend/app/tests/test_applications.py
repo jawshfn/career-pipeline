@@ -177,13 +177,12 @@ def test_update_to_applied_preserves_explicit_cleared_date_applied(client):
     assert response.json()["date_applied"] is None
 
 
-def test_update_back_to_saved_does_not_clear_date_applied(client):
+def test_generic_patch_cannot_bypass_saved_reset_confirmation(client):
     created = create_application(client, status="Applied").json()
 
     response = client.patch(f"/api/applications/{created['id']}", json={"status": "Saved"})
 
-    assert response.status_code == 200
-    assert response.json()["date_applied"] == date.today().isoformat()
+    assert response.status_code == 422
 
 
 def test_status_change_creates_activity(client):
@@ -595,7 +594,7 @@ def test_create_application_rejects_archived_status(client):
     assert response.status_code == 422
 
 
-def test_status_transition_preserves_confirmed_history_when_reopening(client):
+def test_status_transition_corrects_confirmed_history_when_moving_backward(client):
     created = create_application(client, status="Interview").json()
 
     response = client.post(
@@ -604,15 +603,37 @@ def test_status_transition_preserves_confirmed_history_when_reopening(client):
             "status": "Applied",
             "expected_status": "Interview",
             "expected_furthest_stage": "Interview",
-            "backward_history_intent": "preserve",
+            "confirm_backward_change": True,
         },
     )
 
     assert response.status_code == 200
     assert response.json()["status"] == "Applied"
-    assert response.json()["furthest_stage"] == "Interview"
+    assert response.json()["furthest_stage"] == "Applied"
     activities = get_activities(client, created["id"])
     assert activities[0]["note"] == "Status changed from Interview to Applied."
+
+
+def test_terminal_reopen_below_confirmed_stage_requires_and_applies_backward_correction(client):
+    created = create_application(client, status="Offer").json()
+    closed = client.post(
+        f"/api/applications/{created['id']}/status-transition",
+        json={"status": "Rejected", "expected_status": "Offer", "expected_furthest_stage": "Offer"},
+    ).json()
+    base_payload = {"status": "Applied", "expected_status": "Rejected", "expected_furthest_stage": "Offer"}
+
+    missing_confirmation = client.post(f"/api/applications/{created['id']}/status-transition", json=base_payload)
+    reopened = client.post(
+        f"/api/applications/{created['id']}/status-transition",
+        json={**base_payload, "confirm_backward_change": True},
+    )
+
+    assert closed["furthest_stage"] == "Offer"
+    assert missing_confirmation.status_code == 422
+    assert reopened.status_code == 200
+    assert reopened.json()["status"] == "Applied"
+    assert reopened.json()["furthest_stage"] == "Applied"
+    assert reopened.json()["date_applied"] == created["date_applied"]
 
 
 def test_first_time_terminal_transition_requires_explicit_submission_intent(client):
@@ -665,7 +686,7 @@ def test_backward_correction_to_saved_clears_application_date_without_repromotio
         f"/api/applications/{created['id']}/status-transition",
         json={
             "status": "Saved", "expected_status": "Applied", "expected_furthest_stage": "Applied",
-            "backward_history_intent": "correct", "confirmed_stage": "Saved",
+            "confirm_not_submitted": True,
         },
     )
 
@@ -675,16 +696,7 @@ def test_backward_correction_to_saved_clears_application_date_without_repromotio
     assert response.json()["date_applied"] is None
 
 
-def test_preserved_history_keeps_application_date_and_permanent_saved_correction_clears_it(client):
-    preserved = create_application(client, status="Assessment").json()
-    preserved_response = client.post(
-        f"/api/applications/{preserved['id']}/status-transition",
-        json={"status": "Saved", "expected_status": "Assessment", "expected_furthest_stage": "Assessment", "backward_history_intent": "preserve"},
-    )
-    assert preserved_response.status_code == 200
-    assert preserved_response.json()["furthest_stage"] == "Assessment"
-    assert preserved_response.json()["date_applied"] is not None
-
+def test_permanent_saved_correction_clears_it(client):
     closed = create_application(client, status="Applied").json()
     rejected = client.post(f"/api/applications/{closed['id']}/status-transition", json={"status": "Rejected", "expected_status": "Applied", "expected_furthest_stage": "Applied"})
     assert rejected.status_code == 200

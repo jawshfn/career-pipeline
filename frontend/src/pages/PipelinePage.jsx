@@ -27,7 +27,7 @@ export default function PipelinePage({ applications, error, isLoading, onOpenDet
   async function handleStatusChange(application, nextStatus) {
     if (application.status === nextStatus) return;
     const decision = analyzeStatusTransition(application, nextStatus);
-    if (decision.requiresIntent) {
+    if (decision.requiresConfirmation) {
       setStatusUpdateError("");
       setPendingTransition({ application, decision });
       return;

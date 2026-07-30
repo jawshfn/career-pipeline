@@ -175,8 +175,15 @@ def apply_status_transition(application: Application, payload: ApplicationStatus
     current_rank = progression_rank(application.furthest_stage)
     next_rank = progression_rank(next_status)
     closing_unconfirmed = previous_status == "Saved" and next_status in CLOSED_APPLICATION_STATUSES and current_rank == 0 and application.date_applied is None
-    corrected_to_saved = False
-    if closing_unconfirmed:
+    backward_correction = (previous_status in ACTIVE_APPLICATION_STATUSES or previous_status in CLOSED_APPLICATION_STATUSES) and next_status in ACTIVE_APPLICATION_STATUSES and next_status != "Saved" and next_rank < current_rank
+    reset_to_saved = next_status == "Saved" and previous_status != "Saved"
+    if reset_to_saved:
+        if not payload.confirm_not_submitted:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Confirm that this application was not submitted before marking it Saved.")
+        application.status = "Saved"
+        application.furthest_stage = "Saved"
+        application.date_applied = None
+    elif closing_unconfirmed:
         if payload.terminal_submission_intent not in {"not_submitted", "submitted"}:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Choose whether this application was submitted before it was closed.")
         if payload.terminal_submission_intent == "submitted":
@@ -184,26 +191,18 @@ def apply_status_transition(application: Application, payload: ApplicationStatus
             if progression_rank(stage) < 1:
                 raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="A submitted application must have at least Applied as its highest confirmed stage.")
             application.furthest_stage = stage
-    elif next_status in ACTIVE_APPLICATION_STATUSES and next_rank < current_rank:
-        if payload.backward_history_intent not in {"preserve", "correct"}:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Choose whether to preserve or correct highest confirmed stage.")
-        if payload.backward_history_intent == "correct":
-            stage = payload.confirmed_stage or next_status
-            _validate_confirmed_stage(stage, next_status)
-            application.furthest_stage = stage
-            corrected_to_saved = stage == "Saved"
+    elif backward_correction:
+        if not payload.confirm_backward_change:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Confirm changing the highest confirmed stage when moving backward.")
+        application.furthest_stage = next_status
     elif next_status in ACTIVE_APPLICATION_STATUSES:
         application.furthest_stage = furthest_stage_for(next_status, application.date_applied, application.furthest_stage)
 
-    application.status = next_status
-    if corrected_to_saved:
-        # An explicit Saved correction is authoritative: Saved means this was
-        # never submitted, so a historical application date must not re-promote
-        # the confirmed stage during ordinary derivation below.
-        application.date_applied = None
-    elif should_default_date_applied(next_status) and application.date_applied is None:
+    if not reset_to_saved:
+        application.status = next_status
+    if not reset_to_saved and should_default_date_applied(next_status) and application.date_applied is None:
         application.date_applied = date.today()
-    if not corrected_to_saved:
+    if not reset_to_saved and not backward_correction:
         # Derivation only raises ordinary evidence and never turns a terminal state into Applied.
         application.furthest_stage = furthest_stage_for(application.status, application.date_applied, application.furthest_stage)
     create_status_change_activity(application, previous_status, next_status, db)
@@ -517,11 +516,13 @@ def update_application(
     elif next_status is not None and next_status != application.status:
         # Compatibility-only PATCH calls still use the authoritative transition
         # rules; the user-facing clients call the dedicated endpoint with guards.
+        protected = (next_status == "Saved" or (application.status == "Saved" and next_status in CLOSED_APPLICATION_STATUSES) or (application.status in CLOSED_APPLICATION_STATUSES and next_status in ACTIVE_APPLICATION_STATUSES) or (application.status in ACTIVE_APPLICATION_STATUSES and next_status in ACTIVE_APPLICATION_STATUSES and progression_rank(next_status) < progression_rank(application.furthest_stage)))
+        if protected:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Use the status transition endpoint for this protected status change.")
         transition_payload = ApplicationStatusTransitionRequest(
             status=next_status,
             expected_status=application.status,
             expected_furthest_stage=application.furthest_stage,
-            backward_history_intent="preserve",
         )
         apply_status_transition(application, transition_payload, db)
         updates.pop("status")

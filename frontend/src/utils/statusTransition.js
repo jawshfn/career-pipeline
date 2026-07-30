@@ -15,27 +15,26 @@ export function analyzeStatusTransition(application, nextStatus) {
     && CLOSED_APPLICATION_STATUSES.has(nextStatus)
     && existingConfirmedStage === "Saved"
     && !application.date_applied;
-  const backward = ACTIVE_APPLICATION_STATUSES.has(nextStatus) && nextRank >= 0 && nextRank < confirmedRank;
+  const resetToSaved = nextStatus === "Saved" && previousStatus !== "Saved";
+  const backward = (ACTIVE_APPLICATION_STATUSES.has(previousStatus) || CLOSED_APPLICATION_STATUSES.has(previousStatus)) && ACTIVE_APPLICATION_STATUSES.has(nextStatus) && nextStatus !== "Saved" && nextRank >= 0 && nextRank < confirmedRank;
 
   if (terminalUnconfirmed) {
     return {
       type: "terminal_submission", previousStatus, nextStatus, existingConfirmedStage,
       defaultIntent: "not_submitted", defaultConfirmedStage: "Applied",
-      validConfirmedStages: CONFIRMED_STAGES.slice(1), requiresIntent: true,
+      validConfirmedStages: CONFIRMED_STAGES.slice(1), requiresConfirmation: true,
     };
   }
-  if (backward) {
+  if (resetToSaved) {
     return {
-      type: "backward_history", previousStatus, nextStatus, existingConfirmedStage,
-      defaultIntent: "preserve", defaultConfirmedStage: nextStatus,
-      validConfirmedStages: CONFIRMED_STAGES.filter((stage) => confirmedStageRank(stage) >= nextRank),
-      requiresIntent: true,
+      type: "reset_to_saved", previousStatus, nextStatus, existingConfirmedStage, requiresConfirmation: true,
     };
   }
+  if (backward) return { type: "backward_active_correction", previousStatus, nextStatus, existingConfirmedStage, requiresConfirmation: true };
+  if (CLOSED_APPLICATION_STATUSES.has(previousStatus) && ACTIVE_APPLICATION_STATUSES.has(nextStatus) && nextStatus !== "Saved") return { type: "reopen_terminal", previousStatus, nextStatus, existingConfirmedStage, requiresConfirmation: false };
   return {
     type: "direct", previousStatus, nextStatus, existingConfirmedStage,
-    defaultIntent: null, defaultConfirmedStage: existingConfirmedStage,
-    validConfirmedStages: [], requiresIntent: false,
+    requiresConfirmation: false,
   };
 }
 
@@ -43,8 +42,7 @@ export function transitionPayloadForDecision(decision, intent, confirmedStage) {
   if (decision.type === "terminal_submission") {
     return { terminal_submission_intent: intent, ...(intent === "submitted" ? { confirmed_stage: confirmedStage } : {}) };
   }
-  if (decision.type === "backward_history") {
-    return { backward_history_intent: intent, ...(intent === "correct" ? { confirmed_stage: confirmedStage } : {}) };
-  }
+  if (decision.type === "reset_to_saved") return { confirm_not_submitted: true };
+  if (decision.type === "backward_active_correction") return { confirm_backward_change: true };
   return {};
 }

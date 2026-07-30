@@ -9,7 +9,7 @@ from ..models import Application, ResumeVersion
 from ..schemas import OutcomeContributorsRead, OutcomesInsightsRead
 
 router = APIRouter(prefix="/api/insights", tags=["insights"])
-METRICS = (("analyzed", "Applications analyzed", 1), ("reached_assessment", "Reached Assessment", 2), ("human_responses", "Human response", 3), ("reached_interview", "Reached Interview", 4), ("reached_offer", "Reached Offer", 5))
+METRICS = (("analyzed", "Applications analyzed", 1), ("progressed_beyond_applied", "Progressed beyond Applied", 2), ("human_responses", "Human response", 3), ("reached_interview", "Interview stage or later", 4), ("reached_offer", "Offer received", 5))
 
 
 def is_archived(application: Application) -> bool:
@@ -31,8 +31,8 @@ def rate(count: int, analyzed: int) -> float | None:
     return count / analyzed if analyzed else None
 
 
-def current_at(application: Application, threshold: int) -> bool:
-    return application.status in PROGRESSION_STAGES and progression_rank(application.status) == threshold
+def current_at_or_beyond(application: Application, threshold: int) -> bool:
+    return application.status in PROGRESSION_STAGES and progression_rank(application.status) >= threshold
 
 
 def group_row(key: str, label: str, applications: list[Application]) -> dict:
@@ -66,11 +66,11 @@ def get_outcomes(db: Session = Depends(get_db)) -> dict:
     funnel = []
     for metric, label, threshold in METRICS:
         count = sum(progression_rank(application.furthest_stage) >= threshold for application in analyzed)
-        current_count = sum(current_at(application, threshold) for application in analyzed)
-        item = {"key": metric, "label": label, "count": count, "denominator": len(analyzed), "rate": rate(count, len(analyzed)), "current_count": current_count, "currently_elsewhere_count": count - current_count}
+        current_count = sum(current_at_or_beyond(application, threshold) for application in analyzed)
+        item = {"key": metric, "label": label, "count": count, "denominator": len(analyzed), "rate": rate(count, len(analyzed)), "current_at_or_beyond_count": current_count, "currently_elsewhere_count": count - current_count}
         summary.append(item)
         if metric != "analyzed":
-            funnel.append({**item, "stage": label.replace("Reached ", "")})
+            funnel.append({**item, "stage": label})
     source_groups: dict[str, list[Application]] = defaultdict(list)
     resume_groups: dict[tuple[str, str], list[Application]] = defaultdict(list)
     for application in analyzed:

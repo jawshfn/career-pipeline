@@ -164,7 +164,8 @@ class ApplicationStatusTransitionRequest(BaseModel):
     expected_furthest_stage: str
     terminal_submission_intent: Literal["not_submitted", "submitted"] | None = None
     confirmed_stage: str | None = None
-    backward_history_intent: Literal["preserve", "correct"] | None = None
+    confirm_not_submitted: bool = False
+    confirm_backward_change: bool = False
 
     @field_validator("status", "expected_status")
     @classmethod
@@ -231,7 +232,7 @@ class OutcomeMetricRead(BaseModel):
     stage: str | None = None
     denominator: int | None = None
     rate: float | None = None
-    current_count: int | None = None
+    current_at_or_beyond_count: int | None = None
     currently_elsewhere_count: int | None = None
 
 
@@ -239,11 +240,11 @@ class OutcomeGroupRead(BaseModel):
     id: str
     label: str
     analyzed: int
-    reached_assessment: int
+    progressed_beyond_applied: int
     human_responses: int
     reached_interview: int
     reached_offer: int
-    reached_assessment_rate: float | None
+    progressed_beyond_applied_rate: float | None
     human_responses_rate: float | None
     reached_interview_rate: float | None
     reached_offer_rate: float | None
