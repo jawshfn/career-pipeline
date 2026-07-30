@@ -19,6 +19,7 @@ It is not a production SaaS platform: workspace data remains local, there is no 
 | 21–24 | Browser Capture, record management, and portability | Bounded capture coverage, safer record management, exports, backup/restore, and reminders matured. |
 | 25–26 | AI Job Intelligence and persistence | A privacy-bounded, user-initiated Brief moved from gateway integration to a persisted local lifecycle. |
 | 27 | Trusted Outcome Insights | Confirmed-history reporting added transparent, drill-down outcome comparisons. |
+| 28 | Repository audit and maintainability cleanup | Removed verified remnants and consolidated active domain, demo read-model, and cached-resource responsibilities without changing product behavior. |
 
 ## Phase 0 — Product Planning
 
@@ -144,21 +145,31 @@ Implemented trusted Outcome Insights with a persistent highest confirmed stage a
 
 Insights excludes archived records and reports applications analyzed, progression beyond Applied, human response, interview stage or later, and offer received. It compares source and resume outcomes with small-sample cautions and contributor drill-downs, explains current status versus confirmed history, refreshes stale reports in the background, and keeps responsive, accessible local and demo behavior aligned. Assessment is an optional stage, not a required milestone, and the duplicate funnel panel was not retained.
 
-## Phase 28 — Repository audit and legacy cleanup
+## Phase 28 — Repository Audit And Maintainability Cleanup
 
-### Phase 28.0a — Read-only audit
+### Phase 28.0a — Read-only Repository Audit
 
-- Identify likely dead, obsolete, duplicated, or legacy code and gather evidence.
-- Make no removals; review findings before any change.
+Inspected dead, obsolete, duplicated, legacy, and newly orphaned code across frontend, backend, static-demo, schema, test, and local/demo-parity boundaries. The audit required repository-wide caller evidence before removal, distinguished line-count reduction from cognitive-complexity reduction, and made no code changes during the audit itself.
 
-### Phase 28.0b — Confirmed cleanup
+### Phase 28.0b — Confirmed Dead And Obsolete Cleanup
 
-- Remove only items proven unnecessary, in small reviewable batches.
-- Preserve product behavior and test after each batch.
-- Phase 28.0b-3 retired the duplicate, unrendered Outcome Insights funnel response while retaining the five-metric summary.
-- Phase 28.0b-4 retired the unused Dashboard resume-usage response and duplicate backend/demo calculations.
+Removed obsolete Dashboard effectiveness UI remnants; the unreachable archived Pipeline-card selector; the duplicate, unrendered Outcome Insights funnel response; the unused Dashboard resume-usage response and calculations; the unused private demo resume-label helper; obsolete Dashboard effectiveness CSS, including responsive rules; the unused Outcome summary `stage` response property while retaining contributor `furthest_stage`; and the unused stale-resource refresh-error accessor. Restored the Daily Reminders frontend test baseline through the required explicit React import.
 
-Possible audit candidates include legacy archive infrastructure, duplicate compatibility paths, and stale documentation or tests. Archive handling remains an explicit product decision, not an automatic cleanup.
+### Phase 28.1a — Active-Code Simplification Audit
+
+Identified repeated progression-stage definitions; follow-up and stale-status exclusions; red-flag field-name lists; Outcome Insights metric definitions; and Dashboard and Insights cached-resource lifecycle code. The review also identified demo-store responsibility concentration, possible local/demo parity differences requiring product decisions rather than automatic cleanup, and repeated `App.jsx` mutation patterns that were evaluated but not automatically abstracted.
+
+### Phase 28.1b — Maintainability Consolidation
+
+Established one frontend authority for progression stages, active statuses, follow-up exclusions, stale exclusions, and red-flag field names, and used the existing backend domain module as the authority for schema validators. Established one JavaScript authority for Outcome Insights metric keys, labels, ordering, and thresholds. Extracted pure static-demo Dashboard, Outcome Insights, and contributor selectors while retaining `demoStore.js` as the sole mutable-state owner, with focused pure-selector tests. Added a shared React stale-resource hook for Dashboard and Outcome Insights while preserving stale-while-revalidate behavior, invalidation, cached navigation, initial and refresh errors, runtime isolation, and unmount safety. Command Center remained outside the shared hook because its workflow did not justify broadening the abstraction.
+
+### Deliberate Non-Changes
+
+Archive behavior and compatibility infrastructure remained because they are active product behavior, not verified legacy code. `App.jsx` mutation handlers remained explicit because their state consequences and return contracts differ; a generic abstraction would add indirection. Backend and JavaScript retained separate language-native domain definitions rather than sharing a cross-language source file. Local/demo source ordering and red-flag wording differences remained future product/parity decisions. Demo API Promise wrappers remained explicit because a generic wrapper would not materially reduce complexity. No generic request registry, analytics framework, mutation framework, dynamic schema system, or repository-wide abstraction was introduced.
+
+### Final Phase 28 Result
+
+Verified dead and obsolete code was removed, and active definitions with real drift risk were consolidated. Large responsibilities were separated only where the boundary was independently testable. Product behavior remained unchanged, and both local and static-demo workflows passed manual QA. The phase stopped before low-value abstraction work.
 
 ## Later possibilities
 
