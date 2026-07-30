@@ -35,7 +35,7 @@ def test_outcomes_use_confirmed_history_and_exclude_archived(client):
     }
     summary = {item["key"]: item["count"] for item in payload["summary"]}
     assert summary == {"analyzed": 1, "progressed_beyond_applied": 1, "human_responses": 1, "reached_interview": 1, "reached_offer": 0}
-    assert [item["stage"] for item in payload["funnel"]] == ["Progressed beyond Applied", "Human response", "Interview stage or later", "Offer received"]
+    assert "funnel" not in payload
     contributors = client.get("/api/insights/outcomes/contributors?metric=reached_interview&group_type=global")
     assert contributors.status_code == 200
     assert [item["application_id"] for item in contributors.json()["contributors"]] == [rejected["id"]]

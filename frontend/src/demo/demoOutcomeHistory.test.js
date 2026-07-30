@@ -54,6 +54,7 @@ describe("demo outcome history corrections", () => {
 
     expect(report.scope).toMatchObject({ visible_applications: 12, analyzed_applications: 9, saved_applications_excluded: 3 });
     expect(Object.fromEntries(report.summary.map((metric) => [metric.key, metric.count]))).toEqual({ analyzed: 9, progressed_beyond_applied: 4, human_responses: 3, reached_interview: 2, reached_offer: 1 });
+    expect(report).not.toHaveProperty("funnel");
     expect(report.source_performance).not.toEqual([]);
     expect(report.resume_version_performance).not.toEqual([]);
     expect(getDemoOutcomeContributors({ metric: "analyzed", group_type: "source", group_id: "LinkedIn" }).contributors.map((item) => item.application_id)).toEqual([1]);

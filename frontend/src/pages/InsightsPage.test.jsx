@@ -34,13 +34,13 @@ describe("InsightsPage", () => {
   });
 
   it("shows the saved-only empty state after loading", async () => {
-    mocks.getOutcomeInsights.mockResolvedValue({ scope: scope({ analyzed_applications: 0, saved_applications_excluded: 1 }), summary: emptyMetrics, funnel: [], source_performance: [], resume_version_performance: [] });
+    mocks.getOutcomeInsights.mockResolvedValue({ scope: scope({ analyzed_applications: 0, saved_applications_excluded: 1 }), summary: emptyMetrics, source_performance: [], resume_version_performance: [] });
     await act(async () => { root.render(<InsightsPage />); await Promise.resolve(); await Promise.resolve(); });
     expect(container.textContent).toContain("No confirmed submitted applications yet");
   });
 
   it("renders outcome groups and preserves null rates as an em dash", async () => {
-    mocks.getOutcomeInsights.mockResolvedValue({ scope: scope(), summary: [{ key: "analyzed", label: "Applications analyzed", count: 1, denominator: 1, rate: null, current_at_or_beyond_count: 1, currently_elsewhere_count: 0 }, ...emptyMetrics.slice(1)], funnel: [{ key: "progressed_beyond_applied", label: "Progressed beyond Applied", count: 0, denominator: 1, rate: null, current_at_or_beyond_count: 0, currently_elsewhere_count: 0 }], source_performance: [{ id: "LinkedIn", label: "LinkedIn", analyzed: 1, progressed_beyond_applied: 0, progressed_beyond_applied_rate: null, human_responses: 0, human_responses_rate: null, reached_interview: 0, reached_interview_rate: null, reached_offer: 0, reached_offer_rate: null }], resume_version_performance: [{ id: "unassigned", label: "Unassigned", analyzed: 1, progressed_beyond_applied: 0, progressed_beyond_applied_rate: null, human_responses: 0, human_responses_rate: null, reached_interview: 0, reached_interview_rate: null, reached_offer: 0, reached_offer_rate: null }] });
+    mocks.getOutcomeInsights.mockResolvedValue({ scope: scope(), summary: [{ key: "analyzed", label: "Applications analyzed", count: 1, denominator: 1, rate: null, current_at_or_beyond_count: 1, currently_elsewhere_count: 0 }, ...emptyMetrics.slice(1)], source_performance: [{ id: "LinkedIn", label: "LinkedIn", analyzed: 1, progressed_beyond_applied: 0, progressed_beyond_applied_rate: null, human_responses: 0, human_responses_rate: null, reached_interview: 0, reached_interview_rate: null, reached_offer: 0, reached_offer_rate: null }], resume_version_performance: [{ id: "unassigned", label: "Unassigned", analyzed: 1, progressed_beyond_applied: 0, progressed_beyond_applied_rate: null, human_responses: 0, human_responses_rate: null, reached_interview: 0, reached_interview_rate: null, reached_offer: 0, reached_offer_rate: null }] });
     await act(async () => { root.render(<InsightsPage />); await Promise.resolve(); await Promise.resolve(); });
     expect(container.textContent).toContain("Source outcomes");
     expect(container.textContent).toContain("Unassigned");
@@ -60,7 +60,7 @@ describe("InsightsPage", () => {
   });
 
   it("uses five whole-card contributor controls and rate bars only for progression metrics", async () => {
-    mocks.getOutcomeInsights.mockResolvedValue({ scope: scope(), summary: [{ key: "analyzed", label: "Applications analyzed", count: 10, denominator: 10, rate: null, current_at_or_beyond_count: 10, currently_elsewhere_count: 0 }, { key: "progressed_beyond_applied", label: "Progressed beyond Applied", count: 5, denominator: 10, rate: .5, current_at_or_beyond_count: 3, currently_elsewhere_count: 2 }, ...emptyMetrics.slice(2)], funnel: [], source_performance: [], resume_version_performance: [] });
+    mocks.getOutcomeInsights.mockResolvedValue({ scope: scope(), summary: [{ key: "analyzed", label: "Applications analyzed", count: 10, denominator: 10, rate: null, current_at_or_beyond_count: 10, currently_elsewhere_count: 0 }, { key: "progressed_beyond_applied", label: "Progressed beyond Applied", count: 5, denominator: 10, rate: .5, current_at_or_beyond_count: 3, currently_elsewhere_count: 2 }, ...emptyMetrics.slice(2)], source_performance: [], resume_version_performance: [] });
     await act(async () => { root.render(<InsightsPage />); await Promise.resolve(); await Promise.resolve(); });
     const cards = [...container.querySelectorAll(".insight-summary-card")];
     expect(cards).toHaveLength(5);
@@ -76,7 +76,7 @@ describe("InsightsPage", () => {
   });
 
   it("keeps cached insights visible while a revisit refreshes them", async () => {
-    const initial = { scope: scope(), summary: [{ key: "analyzed", label: "Applications analyzed", count: 1, denominator: 1, rate: null, current_at_or_beyond_count: 1, currently_elsewhere_count: 0 }, ...emptyMetrics.slice(1)], funnel: [], source_performance: [], resume_version_performance: [] };
+    const initial = { scope: scope(), summary: [{ key: "analyzed", label: "Applications analyzed", count: 1, denominator: 1, rate: null, current_at_or_beyond_count: 1, currently_elsewhere_count: 0 }, ...emptyMetrics.slice(1)], source_performance: [], resume_version_performance: [] };
     mocks.getOutcomeInsights.mockResolvedValue(initial);
     await act(async () => { root.render(<InsightsPage />); await Promise.resolve(); await Promise.resolve(); });
     await act(async () => root.unmount());
@@ -91,7 +91,7 @@ describe("InsightsPage", () => {
   });
 
   it("refreshes a mounted report after its resource is invalidated", async () => {
-    const initial = { scope: scope(), summary: [{ key: "analyzed", label: "Applications analyzed", count: 1, denominator: 1, rate: null, current_at_or_beyond_count: 1, currently_elsewhere_count: 0 }, ...emptyMetrics.slice(1)], funnel: [], source_performance: [], resume_version_performance: [] };
+    const initial = { scope: scope(), summary: [{ key: "analyzed", label: "Applications analyzed", count: 1, denominator: 1, rate: null, current_at_or_beyond_count: 1, currently_elsewhere_count: 0 }, ...emptyMetrics.slice(1)], source_performance: [], resume_version_performance: [] };
     const replacement = { ...initial, summary: [{ ...initial.summary[0], count: 2 }, ...emptyMetrics.slice(1)] };
     mocks.getOutcomeInsights.mockResolvedValueOnce(initial).mockResolvedValueOnce(replacement);
     await act(async () => { root.render(<InsightsPage />); await Promise.resolve(); await Promise.resolve(); });

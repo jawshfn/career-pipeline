@@ -279,7 +279,6 @@ class OutcomeContributorsRead(BaseModel):
 class OutcomesInsightsRead(BaseModel):
     scope: OutcomeScopeRead
     summary: list[OutcomeMetricRead]
-    funnel: list[OutcomeMetricRead]
     source_performance: list[OutcomeGroupRead]
     resume_version_performance: list[OutcomeGroupRead]
 
