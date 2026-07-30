@@ -223,8 +223,10 @@ export default function ApplicationsPage({
   requestedApplicationId,
   onRequestedApplicationHandled,
   onDeleteApplication,
+  onCorrectApplicationOutcomeHistory,
   onFeaturedApplicationPresented,
   onUpdateApplication,
+  onTransitionApplicationStatus,
   resumeVersions,
 }) {
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
@@ -372,8 +374,10 @@ export default function ApplicationsPage({
             key={selectedApplicationId}
             onClose={closeDetails}
             onDeleteApplication={handleDeleteApplication}
+            onCorrectApplicationOutcomeHistory={onCorrectApplicationOutcomeHistory}
             onLoadApplication={cacheApplicationDetail}
             onSaveApplication={onUpdateApplication}
+            onTransitionApplicationStatus={onTransitionApplicationStatus}
             onUnsavedChangesChange={setHasDetailUnsavedChanges}
             resumeVersions={resumeVersions}
           />

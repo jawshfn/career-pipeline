@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { getApplicationActionItems } from "../services/applicationsService.js";
+import { fetchResource, getCachedResource } from "../services/staleResource.js";
 import CommandCenterSection from "../components/command-center/CommandCenterSection.jsx";
 import DailyRemindersHeader from "../components/command-center/DailyRemindersHeader.jsx";
 import FollowUpActionDialog from "../components/command-center/FollowUpActionDialog.jsx";
@@ -9,30 +10,52 @@ import LoadingState from "../components/ui/LoadingState.jsx";
 
 const emptyActionItems = { overdue_followups: [], upcoming_followups: [], stale_applications: [] };
 
+function normalizeActionItems(actionItems) {
+  return {
+    overdue_followups: actionItems.overdue_followups || [],
+    upcoming_followups: actionItems.upcoming_followups || [],
+    stale_applications: actionItems.stale_applications || [],
+  };
+}
+
 export default function CommandCenterPage({ onApplyFollowUpAction, onOpenApplication }) {
-  const [actionItems, setActionItems] = useState(emptyActionItems);
+  const cachedActionItems = getCachedResource("reminder-action-items");
+  const [actionItems, setActionItems] = useState(() => cachedActionItems ? normalizeActionItems(cachedActionItems) : emptyActionItems);
   const [actionItemsError, setActionItemsError] = useState("");
-  const [isActionItemsLoading, setIsActionItemsLoading] = useState(true);
+  const [refreshError, setRefreshError] = useState("");
+  const [isActionItemsLoading, setIsActionItemsLoading] = useState(() => !cachedActionItems);
   const [actionMessage, setActionMessage] = useState("");
   const [selectedReminderApplication, setSelectedReminderApplication] = useState(null);
   const [isReminderActionProcessing, setIsReminderActionProcessing] = useState(false);
   const [reminderDialogError, setReminderDialogError] = useState("");
   const [hasReminderStateConflict, setHasReminderStateConflict] = useState(false);
   const actionInFlightRef = useRef(new Set());
+  const isMountedRef = useRef(false);
 
-  const loadActionItems = useCallback(async ({ showLoading = true } = {}) => {
-    if (showLoading) setIsActionItemsLoading(true);
-    setActionItemsError("");
+  const loadActionItems = useCallback(async ({ showLoading = true, throwOnError = false } = {}) => {
+    const hasCachedActionItems = Boolean(getCachedResource("reminder-action-items"));
+    if (showLoading && !hasCachedActionItems && isMountedRef.current) setIsActionItemsLoading(true);
+    if (isMountedRef.current) {
+      setActionItemsError("");
+      if (showLoading) setRefreshError("");
+    }
     try {
-      const nextActionItems = await getApplicationActionItems();
-      setActionItems({ overdue_followups: nextActionItems.overdue_followups || [], upcoming_followups: nextActionItems.upcoming_followups || [], stale_applications: nextActionItems.stale_applications || [] });
+      const nextActionItems = await fetchResource("reminder-action-items", getApplicationActionItems);
+      if (isMountedRef.current) setActionItems(normalizeActionItems(nextActionItems));
     } catch (error) {
-      setActionItems(emptyActionItems);
-      setActionItemsError(error.message || "Could not load reminder action items.");
-    } finally { if (showLoading) setIsActionItemsLoading(false); }
+      if (isMountedRef.current && !hasCachedActionItems) {
+        setActionItems(emptyActionItems);
+        setActionItemsError(error.message || "Could not load reminder action items.");
+      } else if (isMountedRef.current && showLoading) setRefreshError("Could not refresh reminder action items. Showing the previous list.");
+      if (throwOnError) throw error;
+    } finally { if (showLoading && !hasCachedActionItems && isMountedRef.current) setIsActionItemsLoading(false); }
   }, []);
 
-  useEffect(() => { loadActionItems(); }, [loadActionItems]);
+  useEffect(() => {
+    isMountedRef.current = true;
+    loadActionItems();
+    return () => { isMountedRef.current = false; };
+  }, [loadActionItems]);
 
   function handleManageReminder(application) {
     setActionMessage(""); setReminderDialogError(""); setHasReminderStateConflict(false); setSelectedReminderApplication(application);
@@ -56,7 +79,7 @@ export default function CommandCenterPage({ onApplyFollowUpAction, onOpenApplica
     setIsReminderActionProcessing(true); setReminderDialogError(""); setActionMessage("");
     try {
       await onApplyFollowUpAction(application.id, payload);
-      await loadActionItems({ showLoading: false });
+      await loadActionItems({ showLoading: false, throwOnError: true });
       setSelectedReminderApplication(null); setHasReminderStateConflict(false); setActionMessage(successMessage);
     } catch (error) {
       const message = error.message || "Could not update this reminder.";
@@ -76,6 +99,7 @@ export default function CommandCenterPage({ onApplyFollowUpAction, onOpenApplica
     {!isActionItemsLoading && actionMessage ? <div className="message command-center-message" role="status">{actionMessage}</div> : null}
     {isActionItemsLoading ? <LoadingState message="Loading action items..." /> : null}
     {!isActionItemsLoading && actionItemsError ? <ErrorMessage message={actionItemsError} /> : null}
+    {!isActionItemsLoading && !actionItemsError && refreshError ? <p className="message command-center-message" role="status">{refreshError}</p> : null}
     {!isActionItemsLoading && !actionItemsError && !hasActionItems ? <div className="empty-state command-center-all-clear"><h3>No urgent follow-ups today</h3><p>Add follow-up dates and next actions to keep your search moving.</p></div> : null}
     {!isActionItemsLoading && !actionItemsError && hasActionItems ? <div className="command-center-layout"><div className="command-center-grid">
       {actionItems.overdue_followups.length > 0 ? <CommandCenterSection accent="overdue" applications={actionItems.overdue_followups} description="Follow-up dates before today." onManageReminder={handleManageReminder} onOpenApplication={handleOpenApplication} title="Overdue Follow-ups" updatingApplicationId={isReminderActionProcessing ? selectedReminderApplication?.id : null} /> : null}

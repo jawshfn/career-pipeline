@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { applyApplicationFollowUpAction, createApplication, deleteApplication, getApplications, updateApplication } from "./services/applicationsService.js";
+import { applyApplicationFollowUpAction, correctApplicationOutcomeHistory, createApplication, deleteApplication, getApplications, transitionApplicationStatus, updateApplication } from "./services/applicationsService.js";
+import { invalidateResource } from "./services/staleResource.js";
 import {
   createResumeVersion,
   deleteResumeVersion,
@@ -18,6 +19,7 @@ import ConfirmationDialog from "./components/ui/ConfirmationDialog.jsx";
 import ApplicationsPage from "./pages/ApplicationsPage.jsx";
 import CommandCenterPage from "./pages/CommandCenterPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
+import InsightsPage from "./pages/InsightsPage.jsx";
 import PipelinePage from "./pages/PipelinePage.jsx";
 import QuickAddPage from "./pages/QuickAddPage.jsx";
 import ResumeVersionsPage from "./pages/ResumeVersionsPage.jsx";
@@ -187,7 +189,9 @@ export default function App() {
     setRequestedApplicationId(null);
     setActivePageHasUnsavedChanges(false);
     setPendingNavigation(null);
-    return loadWorkspaceData();
+    const restored = await loadWorkspaceData();
+    if (restored) invalidateResource("outcome-insights");
+    return restored;
   }, [loadWorkspaceData]);
 
   const completeNavigation = useCallback((targetPage, applicationId = null) => {
@@ -223,6 +227,7 @@ export default function App() {
   async function handleCreateApplication(applicationData) {
     const createdApplication = await createApplication(applicationData);
     setApplications((currentApplications) => [createdApplication, ...currentApplications]);
+    invalidateResource("outcome-insights");
     return createdApplication;
   }
 
@@ -233,6 +238,28 @@ export default function App() {
         application.id === updatedApplication.id ? updatedApplication : application,
       ),
     );
+    invalidateResource("outcome-insights");
+    return updatedApplication;
+  }
+
+  async function handleTransitionApplicationStatus(application, payload) {
+    const updatedApplication = await transitionApplicationStatus(application.id, {
+      ...payload,
+      expected_status: application.status,
+      expected_furthest_stage: application.furthest_stage,
+    });
+    setApplications((currentApplications) => currentApplications.map((item) => item.id === updatedApplication.id ? updatedApplication : item));
+    invalidateResource("outcome-insights");
+    return updatedApplication;
+  }
+
+  async function handleCorrectApplicationOutcomeHistory(application, payload) {
+    const updatedApplication = await correctApplicationOutcomeHistory(application.id, {
+      ...payload,
+      expected_furthest_stage: application.furthest_stage,
+    });
+    setApplications((currentApplications) => currentApplications.map((item) => item.id === updatedApplication.id ? updatedApplication : item));
+    invalidateResource("outcome-insights");
     return updatedApplication;
   }
 
@@ -240,6 +267,7 @@ export default function App() {
     const createdResumeVersion = await createResumeVersion(payload);
     setResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, createdResumeVersion));
     setAllResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, createdResumeVersion));
+    invalidateResource("outcome-insights");
     return createdResumeVersion;
   }
 
@@ -250,12 +278,14 @@ export default function App() {
         application.id === result.application.id ? result.application : application,
       ),
     );
+    invalidateResource("outcome-insights");
     return result;
   }
 
   async function handleDeleteApplication(applicationId) {
     await deleteApplication(applicationId);
     setApplications((currentApplications) => removeApplicationById(currentApplications, applicationId));
+    invalidateResource("outcome-insights");
   }
 
   async function handleUpdateResumeVersion(resumeVersionId, payload) {
@@ -264,6 +294,7 @@ export default function App() {
       updateActiveResumeVersions(currentResumeVersions, updatedResumeVersion),
     );
     setAllResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, updatedResumeVersion));
+    invalidateResource("outcome-insights");
     return updatedResumeVersion;
   }
 
@@ -280,6 +311,7 @@ export default function App() {
     }
     setResumeVersions((currentResumeVersions) => removeResumeVersionById(currentResumeVersions, resumeVersionId));
     setAllResumeVersions((currentResumeVersions) => removeResumeVersionById(currentResumeVersions, resumeVersionId));
+    invalidateResource("outcome-insights");
     return deleted;
   }
 
@@ -296,7 +328,9 @@ export default function App() {
           onOpenApplication={handleOpenApplicationDetails}
         />
       ) : activePage === "dashboard" ? (
-        <DashboardPage onOpenStatusBoard={() => navigateToPage("pipeline")} />
+        <DashboardPage onOpenStatusBoard={() => navigateToPage("pipeline")} onOpenInsights={() => navigateToPage("insights")} />
+      ) : activePage === "insights" ? (
+        <InsightsPage onOpenApplication={handleOpenApplicationDetails} />
       ) : activePage === "quick-add" ? (
         <QuickAddPage
           browserCaptureError={incomingBrowserCaptureError}
@@ -332,7 +366,7 @@ export default function App() {
           error={loadError}
           isLoading={isLoading}
           onOpenDetails={handleOpenApplicationDetails}
-          onUpdateApplication={handleUpdateApplication}
+          onTransitionApplicationStatus={handleTransitionApplicationStatus}
         />
       ) : activePage === "support" ? (
         <SupportPage
@@ -353,6 +387,8 @@ export default function App() {
           onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onRequestedApplicationHandled={() => setRequestedApplicationId(null)}
           onDeleteApplication={handleDeleteApplication}
+          onCorrectApplicationOutcomeHistory={handleCorrectApplicationOutcomeHistory}
+          onTransitionApplicationStatus={handleTransitionApplicationStatus}
           onUpdateApplication={handleUpdateApplication}
           requestedApplicationId={requestedApplicationId}
           resumeVersions={allResumeVersions}

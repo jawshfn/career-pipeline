@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import { getDashboardSummary } from "../services/dashboardService.js";
+import { fetchResource, getCachedResource } from "../services/staleResource.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
@@ -13,8 +14,6 @@ const emptyDashboardSummary = {
     flagged_count: 0,
     items: [],
   },
-  source_effectiveness: [],
-  resume_version_effectiveness: [],
 };
 
 function MetricCard({ label, tone, value }) {
@@ -56,31 +55,6 @@ function BreakdownList({ emptyMessage, items, tone = "neutral" }) {
   );
 }
 
-export function EffectivenessGrid({ ariaLabel, firstColumnLabel, items }) {
-  return (
-    <div className="effectiveness-grid" role="table" aria-label={ariaLabel}>
-      <div className="effectiveness-row effectiveness-header" role="row">
-        <span role="columnheader">{firstColumnLabel}</span>
-        <span role="columnheader">Applications</span>
-        <span role="columnheader">Active</span>
-        <span role="columnheader">Interviews</span>
-        <span role="columnheader">Offers</span>
-        <span role="columnheader">Closed</span>
-      </div>
-      {items.map((item) => (
-        <div className="effectiveness-row" role="row" key={item.id || item.source}>
-          <strong role="cell">{item.label || item.source}</strong>
-          <span role="cell" data-label="Applications">{item.applications}</span>
-          <span role="cell" data-label="Active">{item.active}</span>
-          <span role="cell" data-label="Interviews">{item.interviews}</span>
-          <span role="cell" data-label="Offers">{item.offers}</span>
-          <span role="cell" data-label="Closed">{item.closed}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 function DashboardDisclosureSection({ children, defaultOpen = true, id, summary, title, tone }) {
   return (
     <details className={`panel dashboard-panel dashboard-disclosure dashboard-panel-${tone}`} open={defaultOpen}>
@@ -119,45 +93,51 @@ function getResumeCoverageSummary(resumeUsage, resumeEffectiveness) {
   return `${comparedCount} ${versionLabel} compared • ${assignedCount} assigned / ${unassignedCount} unassigned`;
 }
 
-export default function DashboardPage({ onOpenStatusBoard }) {
-  const [dashboardSummary, setDashboardSummary] = useState(emptyDashboardSummary);
+function normalizeDashboardSummary(summary) {
+  return {
+    summary_cards: summary.summary_cards || [],
+    status_breakdown: summary.status_breakdown || [],
+    source_breakdown: summary.source_breakdown || [],
+    resume_usage: summary.resume_usage || [],
+    red_flag_snapshot: summary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
+  };
+}
+
+export default function DashboardPage({ onOpenStatusBoard, onOpenInsights }) {
+  const cachedSummary = getCachedResource("dashboard");
+  const [dashboardSummary, setDashboardSummary] = useState(() => cachedSummary ? normalizeDashboardSummary(cachedSummary) : emptyDashboardSummary);
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [refreshError, setRefreshError] = useState("");
+  const [isLoading, setIsLoading] = useState(() => !cachedSummary);
 
   useEffect(() => {
+    const hasCachedSummary = Boolean(getCachedResource("dashboard"));
+    let isActive = true;
     async function loadDashboardSummary() {
-      setIsLoading(true);
+      if (!hasCachedSummary) setIsLoading(true);
       setError("");
+      setRefreshError("");
 
       try {
-        const nextSummary = await getDashboardSummary();
-        setDashboardSummary({
-          summary_cards: nextSummary.summary_cards || [],
-          status_breakdown: nextSummary.status_breakdown || [],
-          source_breakdown: nextSummary.source_breakdown || [],
-          resume_usage: nextSummary.resume_usage || [],
-          red_flag_snapshot: nextSummary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
-          source_effectiveness: nextSummary.source_effectiveness || [],
-          resume_version_effectiveness: nextSummary.resume_version_effectiveness || [],
-        });
+        const nextSummary = await fetchResource("dashboard", getDashboardSummary);
+        if (isActive) setDashboardSummary(normalizeDashboardSummary(nextSummary));
       } catch (loadError) {
-        setDashboardSummary(emptyDashboardSummary);
-        setError(loadError.message || "Could not load dashboard summary.");
+        if (!hasCachedSummary && isActive) {
+          setDashboardSummary(emptyDashboardSummary);
+          setError(loadError.message || "Could not load dashboard summary.");
+        } else if (isActive) setRefreshError("Could not refresh dashboard. Showing the previous summary.");
       } finally {
-        setIsLoading(false);
+        if (isActive && !hasCachedSummary) setIsLoading(false);
       }
     }
 
     loadDashboardSummary();
+    return () => { isActive = false; };
   }, []);
 
   const totalApplications = dashboardSummary.status_breakdown.reduce((total, item) => total + item.count, 0);
   const redFlaggedCount = dashboardSummary.red_flag_snapshot.flagged_count;
   const sourceTotal = dashboardSummary.source_breakdown.reduce((total, item) => total + item.count, 0);
-  const resumeCoverageSummary = getResumeCoverageSummary(
-    dashboardSummary.resume_usage,
-    dashboardSummary.resume_version_effectiveness,
-  );
 
   return (
     <div className="dashboard-page">
@@ -165,12 +145,13 @@ export default function DashboardPage({ onOpenStatusBoard }) {
         <div>
           <p className="eyebrow">Job search snapshot</p>
           <h2>Dashboard</h2>
-          <p>Scan your job search progress, follow-ups, sources, and resume results.</p>
+          <p>Scan your current job search snapshot, follow-ups, sources, and red flags.</p>
         </div>
       </header>
 
       {isLoading ? <LoadingState message="Loading dashboard..." /> : null}
       {!isLoading && error ? <ErrorMessage message={error} /> : null}
+      {!isLoading && !error && refreshError ? <p className="message" role="status">{refreshError}</p> : null}
 
       {!isLoading && !error ? (
         <section className="dashboard-metric-grid" aria-label="Summary metrics">
@@ -191,6 +172,7 @@ export default function DashboardPage({ onOpenStatusBoard }) {
           </button>
         </section>
       ) : null}
+      {!isLoading && !error ? <section className="dashboard-status-board-cta" aria-labelledby="dashboard-insights-cta-title"><div><h3 id="dashboard-insights-cta-title">Outcome Insights</h3><p>See how applications progress and compare source and resume outcomes.</p></div><button className="secondary-button" type="button" onClick={onOpenInsights}>View Insights</button></section> : null}
 
       {!isLoading && !error && totalApplications === 0 ? (
         <div className="empty-state">
@@ -234,41 +216,6 @@ export default function DashboardPage({ onOpenStatusBoard }) {
             </DashboardDisclosureSection>
           </div>
 
-          <div className="dashboard-results-grid">
-            <DashboardDisclosureSection
-              id="dashboard-source-results-panel"
-              summary={`${dashboardSummary.source_effectiveness.length} sources compared`}
-              title="Source Results"
-              tone="source-results"
-            >
-              {dashboardSummary.source_effectiveness.length === 0 ? (
-                <p className="dashboard-empty-panel">No source data yet.</p>
-              ) : (
-                <EffectivenessGrid
-                  ariaLabel="Source effectiveness metrics"
-                  firstColumnLabel="Source"
-                  items={dashboardSummary.source_effectiveness}
-                />
-              )}
-            </DashboardDisclosureSection>
-
-            <DashboardDisclosureSection
-              id="dashboard-resume-results-panel"
-              summary={resumeCoverageSummary}
-              title="Resume Results"
-              tone="resume-results"
-            >
-              {dashboardSummary.resume_version_effectiveness.length === 0 ? (
-                <p className="dashboard-empty-panel">No resume-version data yet.</p>
-              ) : (
-                <EffectivenessGrid
-                  ariaLabel="Resume version effectiveness metrics"
-                  firstColumnLabel="Resume Version"
-                  items={dashboardSummary.resume_version_effectiveness}
-                />
-              )}
-            </DashboardDisclosureSection>
-          </div>
         </div>
       ) : null}
     </div>

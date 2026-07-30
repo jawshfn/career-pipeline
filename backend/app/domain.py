@@ -12,9 +12,11 @@ ALLOWED_APPLICATION_STATUSES: tuple[str, ...] = (
 
 ARCHIVED_APPLICATION_STATUS = "Archived"
 SAVED_APPLICATION_STATUS = "Saved"
+PROGRESSION_STAGES: tuple[str, ...] = ("Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer")
 INTERVIEW_APPLICATION_STATUS = "Interview"
 OFFER_APPLICATION_STATUS = "Offer"
 STATUS_CHANGE_ACTIVITY_TYPE = "Status Change"
+OUTCOME_HISTORY_CORRECTION_ACTIVITY_TYPE = "Outcome History Correction"
 
 USER_SELECTABLE_APPLICATION_STATUSES: tuple[str, ...] = tuple(
     status for status in ALLOWED_APPLICATION_STATUSES if status != ARCHIVED_APPLICATION_STATUS
@@ -49,3 +51,19 @@ RED_FLAG_FIELDS: tuple[tuple[str, str], ...] = (
 
 def should_default_date_applied(status: str | None) -> bool:
     return status in APPLIED_OR_LATER_APPLICATION_STATUSES
+
+
+def progression_rank(status: str | None) -> int:
+    try:
+        return PROGRESSION_STAGES.index(status or SAVED_APPLICATION_STATUS)
+    except ValueError:
+        return 0
+
+
+def furthest_stage_for(status: str | None, date_applied=None, existing: str | None = None) -> str:
+    """Conservatively derive the durable progression value; never regress valid evidence."""
+    rank = progression_rank(existing)
+    rank = max(rank, progression_rank(status))
+    if date_applied is not None:
+        rank = max(rank, progression_rank("Applied"))
+    return PROGRESSION_STAGES[rank]

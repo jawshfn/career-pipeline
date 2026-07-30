@@ -41,8 +41,8 @@ def test_empty_dashboard_summary(client):
     assert summary["source_breakdown"] == []
     assert summary["resume_usage"] == []
     assert summary["red_flag_snapshot"] == {"flagged_count": 0, "items": []}
-    assert summary["source_effectiveness"] == []
-    assert summary["resume_version_effectiveness"] == []
+    assert "source_effectiveness" not in summary
+    assert "resume_version_effectiveness" not in summary
 
 
 def test_dashboard_excludes_archived_applications(client):
@@ -54,7 +54,7 @@ def test_dashboard_excludes_archived_applications(client):
     assert get_card(summary, "total_applications")["value"] == 0
     assert get_card(summary, "active_applications")["value"] == 0
     assert summary["source_breakdown"] == []
-    assert summary["source_effectiveness"] == []
+    assert "source_effectiveness" not in summary
 
 
 def test_dashboard_status_and_closed_counts(client):
@@ -76,7 +76,7 @@ def test_dashboard_status_and_closed_counts(client):
     assert get_count(summary["status_breakdown"], "Offer") == 1
     assert get_count(summary["status_breakdown"], "Rejected") == 1
     assert get_count(summary["status_breakdown"], "Withdrawn") == 1
-    assert summary["source_effectiveness"][0]["closed"] == 2
+    assert "source_effectiveness" not in summary
 
 
 def test_dashboard_follow_up_counts(client):
@@ -125,7 +125,7 @@ def test_dashboard_follow_up_counts(client):
     assert get_card(summary, "closed_applications")["value"] == 4
     assert get_count(summary["status_breakdown"], "Rejected") == 2
     assert get_count(summary["status_breakdown"], "Withdrawn") == 2
-    assert sum(item["closed"] for item in summary["source_effectiveness"]) == 4
+    assert "source_effectiveness" not in summary
 
 
 def test_dashboard_red_flag_counts(client):
@@ -141,7 +141,7 @@ def test_dashboard_red_flag_counts(client):
     assert get_count(summary["red_flag_snapshot"]["items"], "Suspicious contact") == 1
 
 
-def test_dashboard_source_breakdown_and_effectiveness(client):
+def test_dashboard_source_breakdown(client):
     create_application(client, source="LinkedIn", status="Interview")
     create_application(client, source="LinkedIn", status="Offer")
     create_application(client, source="Referral", status="Rejected")
@@ -153,18 +153,10 @@ def test_dashboard_source_breakdown_and_effectiveness(client):
     assert get_count(summary["source_breakdown"], "Referral") == 1
     assert get_count(summary["source_breakdown"], "Unspecified") == 1
 
-    linked_in = next(item for item in summary["source_effectiveness"] if item["source"] == "LinkedIn")
-    assert linked_in["applications"] == 2
-    assert linked_in["active"] == 2
-    assert linked_in["interviews"] == 1
-    assert linked_in["offers"] == 1
-    assert linked_in["closed"] == 0
-
-    referral = next(item for item in summary["source_effectiveness"] if item["source"] == "Referral")
-    assert referral["closed"] == 1
+    assert "source_effectiveness" not in summary
 
 
-def test_dashboard_resume_usage_and_effectiveness(client):
+def test_dashboard_resume_usage(client):
     software_resume = create_resume_version(
         client,
         name="Software Resume",
@@ -182,19 +174,4 @@ def test_dashboard_resume_usage_and_effectiveness(client):
     assert get_count(summary["resume_usage"], "Analyst Resume") == 1
     assert get_count(summary["resume_usage"], "No resume version") == 1
 
-    software_effectiveness = next(
-        item
-        for item in summary["resume_version_effectiveness"]
-        if item["id"] == str(software_resume["id"])
-    )
-    assert software_effectiveness["label"] == "Software Resume (Full stack engineer)"
-    assert software_effectiveness["applications"] == 2
-    assert software_effectiveness["active"] == 2
-    assert software_effectiveness["interviews"] == 1
-    assert software_effectiveness["offers"] == 1
-
-    unassigned_effectiveness = next(
-        item for item in summary["resume_version_effectiveness"] if item["id"] == "unassigned"
-    )
-    assert unassigned_effectiveness["label"] == "Unassigned"
-    assert unassigned_effectiveness["applications"] == 1
+    assert "resume_version_effectiveness" not in summary

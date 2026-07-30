@@ -10,9 +10,10 @@ The React/Vite frontend provides the local workspace and the static GitHub Pages
 - Applications
 - Status Board
 - Resumes
+- Insights
 - Help
 
-Application Detail includes Overview, Follow-up, Job Details, Job Posting, AI Brief, Resume & Prep, Red Flags, and Activity.
+Application Detail includes Overview, Follow-up, Job Details, Job Posting, AI Brief, Resume & Prep, Red Flags, and Activity. Insights provides current-versus-confirmed-history reporting, contributor drill-down, responsive tables, and summary cards.
 
 ## Runtime modes
 
@@ -22,7 +23,7 @@ Local mode talks to FastAPI, uses persisted local workspace data, and supports B
 
 ### Demo mode
 
-Demo mode uses fictional in-memory data, resets on reload, and does not call FastAPI. Browser Capture and restore are unavailable. It also uses the deployed AI gateway, includes five AI-ready fictional applications, and never generates a brief automatically.
+Demo mode uses fictional in-memory data, resets on reload, and does not call FastAPI. Browser Capture and restore are unavailable. It also uses the deployed AI gateway, includes five AI-ready fictional applications, Outcome Insights parity, and never generates a brief automatically.
 
 ## Environment
 

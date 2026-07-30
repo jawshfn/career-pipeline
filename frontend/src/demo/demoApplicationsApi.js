@@ -6,6 +6,8 @@ import {
   getDemoApplication,
   getDemoApplications,
   updateDemoApplication,
+  transitionDemoApplicationStatus,
+  correctDemoApplicationOutcomeHistory,
   getDemoApplicationAiBrief,
   saveDemoApplicationAiBrief,
   deleteDemoApplicationAiBrief,
@@ -30,6 +32,9 @@ export function createApplication(applicationData) {
 export function updateApplication(applicationId, applicationData) {
   return asAsync(updateDemoApplication(applicationId, applicationData));
 }
+
+export function transitionApplicationStatus(applicationId, payload) { return asAsync(transitionDemoApplicationStatus(applicationId, payload)); }
+export function correctApplicationOutcomeHistory(applicationId, payload) { return asAsync(correctDemoApplicationOutcomeHistory(applicationId, payload)); }
 
 export function applyApplicationFollowUpAction(applicationId, payload) {
   return asAsync(applyDemoFollowUpAction(applicationId, payload));

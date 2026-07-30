@@ -40,6 +40,7 @@ describe("SupportPage", () => {
     expect(navigationItems.map((item) => item.label)).toEqual([
       "Reminders",
       "Dashboard",
+      "Insights",
       "Add Job",
       "Applications",
       "Status Board",

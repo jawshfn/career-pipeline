@@ -2,6 +2,9 @@ import React from "react";
 
 export default function ApplicationDetailOverview({
   attentionItems,
+  canCorrectOutcomeHistory = true,
+  furthestStage,
+  onCorrectOutcomeHistory,
   onOpenTab,
   overviewSnapshotItems,
 }) {
@@ -19,6 +22,16 @@ export default function ApplicationDetailOverview({
             <strong>{value}</strong>
           </div>
         ))}
+      </div>
+
+      <div className="detail-overview-section">
+        <div className="detail-overview-section-heading">
+          <h4>Outcome history</h4>
+        </div>
+        <p>Highest confirmed stage: <strong>{furthestStage}</strong></p>
+        {canCorrectOutcomeHistory ? <button className="secondary-button" type="button" onClick={onCorrectOutcomeHistory}>
+          Correct outcome history
+        </button> : null}
       </div>
 
       <div className="detail-overview-section">

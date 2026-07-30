@@ -1,10 +1,10 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text, event, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
-from .domain import SAVED_APPLICATION_STATUS
+from .domain import SAVED_APPLICATION_STATUS, furthest_stage_for
 
 
 def utc_now() -> datetime:
@@ -39,6 +39,7 @@ class Application(Base):
     job_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
     source: Mapped[str] = mapped_column(String(80), default="Other", nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(40), default=SAVED_APPLICATION_STATUS, nullable=False, index=True)
+    furthest_stage: Mapped[str] = mapped_column(String(40), default=SAVED_APPLICATION_STATUS, server_default=text("'Saved'"), nullable=False)
     location: Mapped[str | None] = mapped_column(String(160), nullable=True)
     compensation: Mapped[str | None] = mapped_column(String(160), nullable=True)
     employment_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
@@ -108,3 +109,12 @@ class ApplicationActivity(Base):
     )
 
     application: Mapped[Application] = relationship(back_populates="activities")
+
+
+@event.listens_for(Application, "before_insert")
+def initialize_application_furthest_stage(_mapper, _connection, target: Application) -> None:
+    target.furthest_stage = furthest_stage_for(
+        target.status,
+        target.date_applied,
+        target.furthest_stage,
+    )

@@ -10,9 +10,10 @@ The local FastAPI/SQLAlchemy backend persists the PursuitHQ workspace in SQLite 
 - Hosted Greenhouse, custom Greenhouse discovery, and canonical Lever imports.
 - One-time browser text-capture transfer for the local companion.
 - JSON workspace export, applications CSV export, read-only validation, and transactional replace restore.
+- Confirmed-history status transitions, outcome-history corrections, and Outcome Insights with contributor drill-down.
 - `GET /api/health`.
 
-Legacy archive fields remain compatible with older records and backups; normal application removal is permanent. See the [API reference](../docs/API_REFERENCE.md) for endpoint inventory.
+Legacy archive fields remain compatible with older records; normal application removal is permanent. See the [API reference](../docs/API_REFERENCE.md) for endpoint inventory.
 
 ## AI boundary
 

@@ -69,7 +69,6 @@ def workspace_backup_payload(db: Session, now: datetime | None = None) -> dict:
     content = workspace_content_payload(db)
     return {
         "format": content["format"],
-        "version": content["version"],
         "exported_at": export_timestamp(now).isoformat().replace("+00:00", "Z"),
         "counts": content["counts"],
         "data": content["data"],

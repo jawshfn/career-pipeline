@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ getApplicationActionItems: vi.fn() }));
 vi.mock("../services/applicationsService.js", () => ({ getApplicationActionItems: mocks.getApplicationActionItems }));
 import CommandCenterPage from "./CommandCenterPage.jsx";
+import { resetStaleResourcesForTests } from "../services/staleResource.js";
 
 const overdueApplication = { company_name: "Northstar Analytics", follow_up_date: "2026-07-10", id: 1, next_action: "Send a concise follow-up.", role_title: "Platform Engineer", status: "Interview", updated_at: "2026-07-01" };
 const upcomingApplication = { ...overdueApplication, company_name: "Cedar Labs", follow_up_date: "2026-07-17", id: 2 };
@@ -15,8 +16,8 @@ const actionItems = ({ overdue = [], upcoming = [], stale = [] } = {}) => ({ ove
 
 describe("CommandCenterPage", () => {
   let container; let root;
-  beforeEach(() => { globalThis.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); });
-  afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.clearAllMocks(); });
+  beforeEach(() => { resetStaleResourcesForTests(); globalThis.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); });
+  afterEach(async () => { await act(async () => root.unmount()); container.remove(); resetStaleResourcesForTests(); vi.clearAllMocks(); });
   async function renderPage(items, onApplyFollowUpAction = vi.fn().mockResolvedValue({}), onOpenApplication = vi.fn()) { mocks.getApplicationActionItems.mockResolvedValue(items); await act(async () => { root.render(<CommandCenterPage onApplyFollowUpAction={onApplyFollowUpAction} onOpenApplication={onOpenApplication} />); await Promise.resolve(); await Promise.resolve(); }); return { onApplyFollowUpAction, onOpenApplication }; }
 
   it("keeps populated sections in urgency order and preserves the daily header", async () => {
@@ -65,5 +66,18 @@ describe("CommandCenterPage", () => {
     expect(container.querySelector('[role="dialog"]')).toBeNull();
     expect(mocks.getApplicationActionItems).toHaveBeenCalledTimes(1);
     expect(container.querySelector(".command-center-section-stale .command-center-application-link")).not.toBeNull();
+  });
+
+  it("keeps cached reminders visible while a revisit refreshes them", async () => {
+    await renderPage(actionItems({ overdue: [overdueApplication] }));
+    await act(async () => root.unmount());
+    root = createRoot(container);
+    let resolveRefresh;
+    mocks.getApplicationActionItems.mockReturnValue(new Promise((resolve) => { resolveRefresh = resolve; }));
+    await act(async () => { root.render(<CommandCenterPage onApplyFollowUpAction={vi.fn()} onOpenApplication={vi.fn()} />); });
+    expect(container.textContent).toContain(overdueApplication.company_name);
+    expect(container.textContent).not.toContain("Loading action items...");
+    await act(async () => { resolveRefresh(actionItems({ upcoming: [upcomingApplication] })); await Promise.resolve(); });
+    expect(container.textContent).toContain(upcomingApplication.company_name);
   });
 });

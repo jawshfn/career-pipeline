@@ -9,6 +9,7 @@ from sqlalchemy import delete, text
 from sqlalchemy.orm import Session
 
 from ..models import Application, ApplicationActivity, ApplicationAiBrief, ResumeVersion
+from ..domain import furthest_stage_for
 from .workspace_backup_validation import (
     WorkspaceBackupDocument,
     application_summary,
@@ -64,6 +65,7 @@ def _application_rows(document: WorkspaceBackupDocument) -> list[dict[str, Any]]
             "created_at": parse_backup_datetime(record.created_at),
             "updated_at": parse_backup_datetime(record.updated_at),
         })
+        row["furthest_stage"] = furthest_stage_for(record.status, row["date_applied"], record.furthest_stage)
         rows.append(row)
     return rows
 

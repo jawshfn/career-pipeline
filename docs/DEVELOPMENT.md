@@ -18,6 +18,8 @@ Start the backend and frontend using the commands in [the root README](../README
 
 Running `ai-gateway/` locally is optional contributor/operator work for developing, testing, deploying, or self-hosting the gateway. It is not part of normal local app setup.
 
+Startup applies additive local schema work when needed. Historical outcome reconciliation is one-time and marker protected; local and demo behavior should remain aligned. Relevant focused tests cover transitions, Insights, contributors, cache behavior, and backup persistence.
+
 ## Environment and secrets
 
 | Area | Variable | Purpose |
