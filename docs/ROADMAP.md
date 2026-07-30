@@ -144,10 +144,6 @@ Implemented trusted Outcome Insights with a persistent highest confirmed stage a
 
 Insights excludes archived records and reports applications analyzed, progression beyond Applied, human response, interview stage or later, and offer received. It compares source and resume outcomes with small-sample cautions and contributor drill-downs, explains current status versus confirmed history, refreshes stale reports in the background, and keeps responsive, accessible local and demo behavior aligned. Assessment is an optional stage, not a required milestone, and the duplicate funnel panel was not retained.
 
-## Current work
-
-The immediate documentation closeout completes Phase 27 on this branch before merge.
-
 ## Phase 28 — Repository audit and legacy cleanup
 
 ### Phase 28.0a — Read-only audit
