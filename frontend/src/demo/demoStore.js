@@ -77,12 +77,6 @@ function getRedFlagCount(application) {
   return RED_FLAG_OPTIONS.filter((option) => application[option.name]).length;
 }
 
-function getResumeLabel(resumeVersion) {
-  return resumeVersion?.target_role
-    ? `${resumeVersion.name} (${resumeVersion.target_role})`
-    : resumeVersion?.name;
-}
-
 function getSourceLabel(source) {
   return String(source || "").trim() || "Unspecified";
 }
