@@ -3,9 +3,10 @@ import React, { useState } from "react";
 import {
   ACTIVE_APPLICATION_STATUSES,
   CLOSED_APPLICATION_STATUSES,
-  SAVED_APPLICATION_STATUS,
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../../constants/applicationConstants.js";
+import { isArchivedApplication } from "../../utils/applicationReviewRows.js";
+import ErrorMessage from "../ui/ErrorMessage.jsx";
 import PipelineColumn from "./PipelineColumn.jsx";
 
 const ALL_STATUSES_FILTER = "All";
@@ -19,27 +20,35 @@ export default function PipelineBoard({
   applications,
   onOpenDetails,
   onStatusChange,
-  updatingApplicationId,
+  statusUpdateErrors = new Map(),
+  updatingApplicationIds = new Set(),
 }) {
   const [selectedStatus, setSelectedStatus] = useState(ALL_STATUSES_FILTER);
   const [searchTerm, setSearchTerm] = useState("");
   const [openStatusMenuApplicationId, setOpenStatusMenuApplicationId] = useState(null);
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const invalidStatusApplications = [];
   const applicationsByStatus = USER_SELECTABLE_APPLICATION_STATUSES.reduce((groupedApplications, status) => {
     groupedApplications[status] = [];
     return groupedApplications;
   }, {});
 
   applications.forEach((application) => {
+    if (isArchivedApplication(application)) {
+      return;
+    }
+
+    if (!USER_SELECTABLE_APPLICATION_STATUSES.includes(application.status)) {
+      invalidStatusApplications.push(application);
+      return;
+    }
+
     const searchableText = `${application.company_name || ""} ${application.role_title || ""}`.toLowerCase();
     if (normalizedSearchTerm && !searchableText.includes(normalizedSearchTerm)) {
       return;
     }
 
-    const status = USER_SELECTABLE_APPLICATION_STATUSES.includes(application.status)
-      ? application.status
-      : SAVED_APPLICATION_STATUS;
-    applicationsByStatus[status].push({ ...application, status });
+    applicationsByStatus[application.status].push(application);
   });
 
   let selectedStatuses = USER_SELECTABLE_APPLICATION_STATUSES;
@@ -83,6 +92,8 @@ export default function PipelineBoard({
         ))}
       </div>
 
+      {invalidStatusApplications.length > 0 ? <ErrorMessage message="Some applications have an unsupported status and are not shown on the Status Board." /> : null}
+
       {normalizedSearchTerm && visibleStatuses.length === 0 ? (
         <p className="pipeline-empty-board">No applications match that Status Board search.</p>
       ) : (
@@ -96,7 +107,8 @@ export default function PipelineBoard({
               onStatusChange={onStatusChange}
               onStatusMenuChange={(applicationId, isOpen) => setOpenStatusMenuApplicationId(isOpen ? applicationId : null)}
               status={status}
-              updatingApplicationId={updatingApplicationId}
+              statusUpdateErrors={statusUpdateErrors}
+              updatingApplicationIds={updatingApplicationIds}
             />
           ))}
         </div>

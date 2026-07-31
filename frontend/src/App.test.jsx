@@ -5,8 +5,10 @@ import {
   clearDeletedResumeAssignments,
   importedApplicationsFromResult,
   mergeImportedApplications,
+  getActiveApplications,
   removeApplicationById,
   removeResumeVersionById,
+  replaceApplicationById,
   updateActiveResumeVersions,
   upsertResumeVersionToFront,
   UNSAVED_PAGE_CONFIRM_MESSAGE,
@@ -156,6 +158,21 @@ describe("resume version collection state", () => {
 describe("application collection state", () => {
   it("removes a permanently deleted application without affecting other records", () => {
     expect(removeApplicationById([{ id: 1 }, { id: "2" }, { id: 3 }], 2)).toEqual([{ id: 1 }, { id: 3 }]);
+  });
+
+  it("replaces only the authoritative application when local and demo IDs use different primitive types", () => {
+    expect(replaceApplicationById([{ id: 1, status: "Saved" }, { id: "2", status: "Applied" }], { id: 2, status: "Interview" })).toEqual([
+      { id: 1, status: "Saved" },
+      { id: 2, status: "Interview" },
+    ]);
+  });
+
+  it("keeps legacy Archived-status records out of active workspace views", () => {
+    expect(getActiveApplications([
+      { id: 1, status: "Applied", is_archived: false },
+      { id: 2, status: "Archived", is_archived: false },
+      { id: 3, status: "Rejected", is_archived: true },
+    ])).toEqual([{ id: 1, status: "Applied", is_archived: false }]);
   });
 
   it("merges imported applications once, lets the import response replace matching state, and keeps compatibility archives", () => {

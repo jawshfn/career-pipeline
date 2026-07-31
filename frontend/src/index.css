@@ -3381,6 +3381,10 @@ a {
   background: #fbfdfc;
 }
 
+.pipeline-card > .message {
+  grid-column: 1 / -1;
+}
+
 .pipeline-card-heading {
   grid-area: heading;
   min-width: 0;
@@ -3441,27 +3445,6 @@ a {
 .pipeline-status-select span {
   color: #60706d;
   font-size: 0.74rem;
-}
-
-.pipeline-status-select select {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid #cbd6d3;
-  border-radius: 6px;
-  padding: 7px 8px;
-  color: #17202a;
-  background: #ffffff;
-  cursor: pointer;
-}
-
-.pipeline-status-select select:disabled {
-  cursor: wait;
-  opacity: 0.72;
-}
-
-.pipeline-status-select select:focus {
-  border-color: var(--color-primary);
-  outline: 3px solid rgba(69, 87, 216, 0.2);
 }
 
 /* Phase 20.7a: compact Status Board cards and status actions. */
@@ -3843,8 +3826,7 @@ textarea:focus-visible {
 .resume-version-form input,
 .resume-version-form textarea,
 .resume-version-edit-form input,
-.resume-version-edit-form textarea,
-.pipeline-status-select select {
+.resume-version-edit-form textarea {
   border-color: var(--color-border-strong);
   border-radius: var(--radius-sm);
   color: var(--color-text);
@@ -3865,8 +3847,7 @@ textarea:focus-visible {
 .resume-version-form input:focus,
 .resume-version-form textarea:focus,
 .resume-version-edit-form input:focus,
-.resume-version-edit-form textarea:focus,
-.pipeline-status-select select:focus {
+.resume-version-edit-form textarea:focus {
   border-color: var(--color-primary);
   outline: none;
   box-shadow: var(--focus-ring);

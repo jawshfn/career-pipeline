@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
 import PipelineBoard from "../components/pipeline/PipelineBoard.jsx";
 import StatusTransitionDialog from "../components/applications/StatusTransitionDialog.jsx";
@@ -7,20 +7,45 @@ import LoadingState from "../components/ui/LoadingState.jsx";
 import { analyzeStatusTransition, transitionPayloadForDecision } from "../utils/statusTransition.js";
 
 export default function PipelinePage({ applications, error, isLoading, onOpenDetails, onTransitionApplicationStatus }) {
-  const [statusUpdateError, setStatusUpdateError] = useState("");
-  const [updatingApplicationId, setUpdatingApplicationId] = useState(null);
+  const [statusUpdateErrors, setStatusUpdateErrors] = useState(() => new Map());
+  const [updatingApplicationIds, setUpdatingApplicationIds] = useState(() => new Set());
   const [pendingTransition, setPendingTransition] = useState(null);
+  const pendingStatusUpdatesRef = useRef(new Set());
+
+  function applicationKey(applicationId) {
+    return String(applicationId);
+  }
 
   async function submitStatusChange(application, nextStatus, payload = {}) {
-    setStatusUpdateError("");
-    setUpdatingApplicationId(application.id);
+    const key = applicationKey(application.id);
+    if (pendingStatusUpdatesRef.current.has(key)) {
+      return;
+    }
+
+    pendingStatusUpdatesRef.current.add(key);
+    setStatusUpdateErrors((currentErrors) => {
+      const nextErrors = new Map(currentErrors);
+      nextErrors.delete(key);
+      return nextErrors;
+    });
+    setUpdatingApplicationIds((currentIds) => new Set(currentIds).add(key));
     try {
       await onTransitionApplicationStatus(application, { status: nextStatus, ...payload });
-      setPendingTransition(null);
+      setPendingTransition((currentTransition) => (
+        applicationKey(currentTransition?.application?.id) === key ? null : currentTransition
+      ));
     } catch (updateError) {
-      setStatusUpdateError(updateError.message || "Could not update application status.");
+      setStatusUpdateErrors((currentErrors) => new Map(currentErrors).set(
+        key,
+        updateError.message || "Could not update application status.",
+      ));
     } finally {
-      setUpdatingApplicationId(null);
+      pendingStatusUpdatesRef.current.delete(key);
+      setUpdatingApplicationIds((currentIds) => {
+        const nextIds = new Set(currentIds);
+        nextIds.delete(key);
+        return nextIds;
+      });
     }
   }
 
@@ -28,7 +53,11 @@ export default function PipelinePage({ applications, error, isLoading, onOpenDet
     if (application.status === nextStatus) return;
     const decision = analyzeStatusTransition(application, nextStatus);
     if (decision.requiresConfirmation) {
-      setStatusUpdateError("");
+      setStatusUpdateErrors((currentErrors) => {
+        const nextErrors = new Map(currentErrors);
+        nextErrors.delete(applicationKey(application.id));
+        return nextErrors;
+      });
       setPendingTransition({ application, decision });
       return;
     }
@@ -39,8 +68,7 @@ export default function PipelinePage({ applications, error, isLoading, onOpenDet
     <header className="page-header"><div><p className="eyebrow">Status workflow</p><h2>Status Board</h2><p>Move opportunities through stages quickly and keep your application list current.</p></div></header>
     {isLoading ? <LoadingState message="Loading status board..." /> : null}
     {!isLoading && error ? <ErrorMessage message={error} /> : null}
-    {!isLoading && statusUpdateError && !pendingTransition ? <ErrorMessage message={statusUpdateError} /> : null}
-    {!isLoading && !error ? <PipelineBoard applications={applications} onOpenDetails={onOpenDetails} onStatusChange={handleStatusChange} updatingApplicationId={updatingApplicationId} /> : null}
-    {pendingTransition ? <StatusTransitionDialog decision={pendingTransition.decision} errorMessage={statusUpdateError} isProcessing={updatingApplicationId === pendingTransition.application.id} onCancel={() => !updatingApplicationId && setPendingTransition(null)} onConfirm={(intent, confirmedStage) => submitStatusChange(pendingTransition.application, pendingTransition.decision.nextStatus, transitionPayloadForDecision(pendingTransition.decision, intent, confirmedStage))} /> : null}
+    {!isLoading && !error ? <PipelineBoard applications={applications} onOpenDetails={onOpenDetails} onStatusChange={handleStatusChange} statusUpdateErrors={statusUpdateErrors} updatingApplicationIds={updatingApplicationIds} /> : null}
+    {pendingTransition ? <StatusTransitionDialog decision={pendingTransition.decision} errorMessage={statusUpdateErrors.get(applicationKey(pendingTransition.application.id))} isProcessing={updatingApplicationIds.has(applicationKey(pendingTransition.application.id))} onCancel={() => !updatingApplicationIds.has(applicationKey(pendingTransition.application.id)) && setPendingTransition(null)} onConfirm={(intent, confirmedStage) => submitStatusChange(pendingTransition.application, pendingTransition.decision.nextStatus, transitionPayloadForDecision(pendingTransition.decision, intent, confirmedStage))} /> : null}
   </div>;
 }

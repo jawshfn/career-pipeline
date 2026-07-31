@@ -27,6 +27,7 @@ import SupportPage from "./pages/SupportPage.jsx";
 import DataPage from "./pages/DataPage.jsx";
 import { downloadApplicationsCsv, downloadApplicationsWorkbook, downloadWorkspaceBackup } from "./services/exportsService.js";
 import { restoreWorkspaceBackup, validateWorkspaceBackup } from "./services/workspaceImportsService.js";
+import { isArchivedApplication } from "./utils/applicationReviewRows.js";
 
 export const UNSAVED_PAGE_CONFIRM_MESSAGE = "You have unsaved changes on this page. Leave without saving?";
 
@@ -54,6 +55,16 @@ export function clearDeletedResumeAssignments(applications, resumeVersionId) {
 
 export function removeApplicationById(applications, applicationId) {
   return applications.filter((application) => String(application.id) !== String(applicationId));
+}
+
+export function replaceApplicationById(applications, updatedApplication) {
+  return applications.map((application) =>
+    String(application.id) === String(updatedApplication.id) ? updatedApplication : application,
+  );
+}
+
+export function getActiveApplications(applications) {
+  return applications.filter((application) => !isArchivedApplication(application));
 }
 
 export function importedApplicationsFromResult(result) {
@@ -266,11 +277,7 @@ export default function App() {
 
   async function handleUpdateApplication(applicationId, applicationData) {
     const updatedApplication = await updateApplication(applicationId, applicationData);
-    setApplications((currentApplications) =>
-      currentApplications.map((application) =>
-        application.id === updatedApplication.id ? updatedApplication : application,
-      ),
-    );
+    setApplications((currentApplications) => replaceApplicationById(currentApplications, updatedApplication));
     invalidateResource("outcome-insights");
     return updatedApplication;
   }
@@ -281,7 +288,7 @@ export default function App() {
       expected_status: application.status,
       expected_furthest_stage: application.furthest_stage,
     });
-    setApplications((currentApplications) => currentApplications.map((item) => item.id === updatedApplication.id ? updatedApplication : item));
+    setApplications((currentApplications) => replaceApplicationById(currentApplications, updatedApplication));
     invalidateResource("outcome-insights");
     return updatedApplication;
   }
@@ -291,7 +298,7 @@ export default function App() {
       ...payload,
       expected_furthest_stage: application.furthest_stage,
     });
-    setApplications((currentApplications) => currentApplications.map((item) => item.id === updatedApplication.id ? updatedApplication : item));
+    setApplications((currentApplications) => replaceApplicationById(currentApplications, updatedApplication));
     invalidateResource("outcome-insights");
     return updatedApplication;
   }
@@ -306,11 +313,7 @@ export default function App() {
 
   async function handleFollowUpAction(applicationId, payload) {
     const result = await applyApplicationFollowUpAction(applicationId, payload);
-    setApplications((currentApplications) =>
-      currentApplications.map((application) =>
-        application.id === result.application.id ? result.application : application,
-      ),
-    );
+    setApplications((currentApplications) => replaceApplicationById(currentApplications, result.application));
     invalidateResource("outcome-insights");
     return result;
   }
@@ -348,7 +351,7 @@ export default function App() {
     return deleted;
   }
 
-  const activeApplications = applications.filter((application) => !application.is_archived);
+  const activeApplications = getActiveApplications(applications);
   const activeResumeVersions = allResumeVersions.length
     ? allResumeVersions.filter((resumeVersion) => resumeVersion.is_active)
     : resumeVersions.filter((resumeVersion) => resumeVersion.is_active);

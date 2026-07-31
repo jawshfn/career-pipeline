@@ -1,6 +1,7 @@
 import React from "react";
 
 import PipelineStatusSelect from "./PipelineStatusSelect.jsx";
+import ErrorMessage from "../ui/ErrorMessage.jsx";
 
 function getRedFlagCount(application) {
   return [
@@ -17,7 +18,7 @@ function getStatusAccentClass(status) {
   return `pipeline-card-${String(status || "default").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 }
 
-export default function PipelineCard({ application, isStatusMenuOpen, isUpdating, onOpenDetails, onStatusChange, onStatusMenuChange }) {
+export default function PipelineCard({ application, isStatusMenuOpen, isUpdating, onOpenDetails, onStatusChange, onStatusMenuChange, statusUpdateError }) {
   const redFlagCount = getRedFlagCount(application);
   const compactActionText = application.next_action || application.follow_up_date || "";
   const compactActionLabel = application.next_action ? "Next" : "Follow-up";
@@ -64,6 +65,7 @@ export default function PipelineCard({ application, isStatusMenuOpen, isUpdating
         onOpenChange={onStatusMenuChange}
         value={application.status}
       />
+      {statusUpdateError ? <ErrorMessage message={statusUpdateError} /> : null}
     </article>
   );
 }
