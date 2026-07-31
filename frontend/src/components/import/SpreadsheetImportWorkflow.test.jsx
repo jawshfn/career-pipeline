@@ -5,7 +5,13 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../../import/spreadsheetIntake.js", async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, parseSpreadsheetFile: vi.fn(actual.parseSpreadsheetFile) };
+});
+
 import SpreadsheetImportWorkflow from "./SpreadsheetImportWorkflow.jsx";
+import { createSheet, parseSpreadsheetFile } from "../../import/spreadsheetIntake.js";
 
 function csvFile(contents, name = "applications.csv") {
   const file = new File([contents], name, { type: "text/csv" });
@@ -102,6 +108,23 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Remove").click(); await flush(); });
     expect(container.textContent).not.toContain("headerless.csv");
     expect(onImport).not.toHaveBeenCalled();
+  });
+
+  it("selects duplicate worksheet names by stable worksheet ID", async () => {
+    parseSpreadsheetFile.mockResolvedValueOnce({ format: "xlsx", sheets: [
+      createSheet("Jobs", [["Company", "Role"], ["Acme", "Engineer"]], [], false, "sheet-1"),
+      createSheet("Jobs", [["Company", "Role"], ["Beta", "Analyst"]], [], false, "sheet-2"),
+    ] });
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={vi.fn()} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const input = container.querySelector('input[type="file"]');
+    Object.defineProperty(input, "files", { configurable: true, value: [new File(["workbook"], "jobs.xlsx")] });
+    await act(async () => { input.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    const worksheet = [...container.querySelectorAll("select")].find((select) => select.parentElement.textContent.includes("Worksheet"));
+    await act(async () => { worksheet.value = "sheet-2"; worksheet.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    expect(container.textContent).toContain("Beta");
+    expect(container.textContent).not.toContain("Acme");
   });
 
   it("keeps the newest file when an earlier parse finishes later", async () => {
