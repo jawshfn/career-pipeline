@@ -3,13 +3,14 @@ from datetime import date, datetime
 from urllib.parse import parse_qs, urlparse
 from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator, model_validator
 
 from .domain import (
     ALLOWED_APPLICATION_STATUSES,
     ARCHIVED_APPLICATION_STATUS,
     PROGRESSION_STAGES,
     SAVED_APPLICATION_STATUS,
+    SOURCE_ORDER,
     USER_SELECTABLE_APPLICATION_STATUSES,
 )
 
@@ -113,7 +114,7 @@ class ApplicationRead(ApplicationBase):
     updated_at: datetime
 
 
-IMPORT_SOURCES = ("LinkedIn", "Indeed", "ZipRecruiter", "Company Website", "Recruiter", "Referral", "Handshake", "Other")
+IMPORT_SOURCES = SOURCE_ORDER
 IMPORT_EMPLOYMENT_TYPES = ("Full-time", "Part-time", "Contract", "Internship", "Temporary", "Other")
 
 
@@ -134,7 +135,7 @@ class ApplicationImportRow(BaseModel):
     date_applied: date | None = None
     follow_up_date: date | None = None
     next_action: StrictStr | None = Field(default=None, max_length=10_000)
-    resume_version_id: StrictInt | None = None
+    resume_version_id: StrictInt | None = Field(default=None, gt=0)
     contact_name: StrictStr | None = Field(default=None, max_length=160)
     contact_info: StrictStr | None = Field(default=None, max_length=10_000)
     prep_notes: StrictStr | None = Field(default=None, max_length=10_000)
@@ -142,7 +143,7 @@ class ApplicationImportRow(BaseModel):
     job_description: StrictStr | None = Field(default=None, max_length=10_000)
     red_flags_notes: StrictStr | None = Field(default=None, max_length=10_000)
     highest_confirmed_stage: str | None = None
-    allow_duplicate: bool = False
+    allow_duplicate: StrictBool = False
 
     @field_validator("company_name", "role_title")
     @classmethod
@@ -178,6 +179,15 @@ class ApplicationImportRow(BaseModel):
     def import_stage(cls, value: str | None) -> str | None:
         if value is not None and value not in PROGRESSION_STAGES:
             raise ValueError("highest_confirmed_stage must be a progression stage")
+        return value
+
+    @field_validator("date_saved", "date_applied", "follow_up_date", mode="before")
+    @classmethod
+    def import_date_only_values(cls, value):
+        if value is None or (isinstance(value, date) and not isinstance(value, datetime)):
+            return value
+        if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+            raise ValueError("must be a YYYY-MM-DD date")
         return value
 
 

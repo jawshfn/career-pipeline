@@ -58,8 +58,16 @@ def _import_row_errors(payload: ApplicationImportBatchRequest, db: Session) -> l
         item[0] for item in db.query(ResumeVersion.id).filter(ResumeVersion.id.in_(resume_ids)).all()
     } if resume_ids else set()
     existing = db.query(Application).all()  # includes compatibility-archived applications
-    request_links: dict[str, int] = {}
-    request_company_role_dates: dict[tuple[str, str, object], int] = {}
+    request_links: dict[str, list[int]] = {}
+    request_company_role_dates: dict[tuple[str, str, object], list[int]] = {}
+
+    for row in payload.rows:
+        link_key = _import_link_key(row.job_link)
+        if link_key:
+            request_links.setdefault(link_key, []).append(row.source_row_number)
+        if row.date_applied is not None:
+            company_date_key = (_import_key(row.company_name), _import_key(row.role_title), row.date_applied)
+            request_company_role_dates.setdefault(company_date_key, []).append(row.source_row_number)
 
     for row in payload.rows:
         field = None
@@ -83,15 +91,15 @@ def _import_row_errors(payload: ApplicationImportBatchRequest, db: Session) -> l
         link_key = _import_link_key(row.job_link)
         company_date_key = (_import_key(row.company_name), _import_key(row.role_title), row.date_applied)
         if message is None and link_key:
-            duplicate_row = request_links.get(link_key)
-            if duplicate_row is not None:
-                field, message, conflict_type = "job_link", f"This batch already includes the same job link on spreadsheet row {duplicate_row}.", "in_batch_exact_link"
-            request_links[link_key] = row.source_row_number
+            duplicate_rows = request_links[link_key]
+            if len(duplicate_rows) > 1 and not row.allow_duplicate:
+                duplicate_row = next(number for number in duplicate_rows if number != row.source_row_number)
+                field, message, conflict_type = "job_link", f"This batch already includes the same job link on spreadsheet row {duplicate_row}. Choose Import as new for every matching row after reviewing the duplicate.", "in_batch_exact_link"
         if message is None and row.date_applied is not None:
-            duplicate_row = request_company_role_dates.get(company_date_key)
-            if duplicate_row is not None:
-                field, message, conflict_type = "date_applied", f"This batch already includes the same company, role, and applied date on spreadsheet row {duplicate_row}.", "in_batch_company_role_date"
-            request_company_role_dates[company_date_key] = row.source_row_number
+            duplicate_rows = request_company_role_dates[company_date_key]
+            if len(duplicate_rows) > 1 and not row.allow_duplicate:
+                duplicate_row = next(number for number in duplicate_rows if number != row.source_row_number)
+                field, message, conflict_type = "date_applied", f"This batch already includes the same company, role, and applied date on spreadsheet row {duplicate_row}. Choose Import as new for every matching row after reviewing the duplicate.", "in_batch_company_role_date"
         if message is None:
             matched = next((application for application in existing if (
                 link_key and link_key == _import_link_key(application.job_link)
@@ -449,6 +457,10 @@ def import_applications_batch(
     if errors:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"row_errors": errors})
     applications = [_import_application(row) for row in payload.rows]
+    # Keep the authoritative duplicate check immediately adjacent to insertion.
+    errors = _import_row_errors(payload, db)
+    if errors:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"row_errors": errors})
     try:
         db.add_all(applications)
         db.flush()

@@ -1,5 +1,7 @@
 from datetime import date
 
+import pytest
+
 from app.models import Application, ApplicationActivity
 
 
@@ -28,6 +30,7 @@ def test_import_batch_creates_rows_without_defaulting_date_applied_or_activity(c
     assert body["created"][0]["application"]["date_applied"] is None
     assert body["created"][1]["application"]["furthest_stage"] == "Interview"
     assert db_session.query(Application).count() == 2
+    assert db_session.query(Application).filter(Application.company_name == "Company 4").one().date_applied is None
     assert db_session.query(ApplicationActivity).count() == 0
 
 
@@ -57,6 +60,45 @@ def test_import_batch_accepts_duplicate_only_with_explicit_override(client, db_s
     assert db_session.query(Application).count() == 2
 
 
+@pytest.mark.parametrize(
+    ("overrides", "status_code", "expected_error_rows"),
+    [
+        ([{}, {}], 409, [2, 3]),
+        ([{"allow_duplicate": True}, {}], 409, [3]),
+        ([{}, {"allow_duplicate": True}], 409, [2]),
+        ([{"allow_duplicate": True}, {"allow_duplicate": True}], 201, []),
+    ],
+)
+def test_import_batch_requires_each_in_request_duplicate_to_be_explicitly_authorized(
+    client, db_session, overrides, status_code, expected_error_rows
+):
+    response = client.post("/api/applications/import-batch", json={"rows": [
+        import_row(2, job_link="https://example.test/job", **overrides[0]),
+        import_row(3, job_link="https://example.test/job", **overrides[1]),
+    ]})
+
+    assert response.status_code == status_code
+    if expected_error_rows:
+        assert [error["source_row_number"] for error in response.json()["detail"]["row_errors"]] == expected_error_rows
+        assert all(error["conflict_type"] == "in_batch_exact_link" for error in response.json()["detail"]["row_errors"])
+        assert db_session.query(Application).count() == 0
+    else:
+        assert response.json()["created_count"] == 2
+        assert db_session.query(Application).count() == 2
+
+
+@pytest.mark.parametrize("field, value", [
+    ("allow_duplicate", "true"),
+    ("allow_duplicate", 1),
+    ("resume_version_id", 0),
+    ("date_applied", "2026-07-01T00:00:00"),
+])
+def test_import_batch_rejects_coerced_authorization_and_non_date_values(client, field, value):
+    response = client.post("/api/applications/import-batch", json={"rows": [import_row(2, **{field: value})]})
+
+    assert response.status_code == 422
+
+
 def test_import_batch_rejects_unresolved_terminal_history_and_invalid_payload_shape(client):
     terminal = client.post("/api/applications/import-batch", json={"rows": [import_row(2, status="Rejected")]})
     malformed = client.post("/api/applications/import-batch", json={"rows": [import_row(2, unexpected="value")]})
@@ -80,6 +122,74 @@ def test_import_batch_reports_history_and_resume_errors_without_partial_creates(
         (4, "resume_version_id"),
     ]
     assert db_session.query(Application).count() == 0
+    assert db_session.query(ApplicationActivity).count() == 0
+
+
+@pytest.mark.parametrize(
+    ("status", "highest_confirmed_stage", "date_applied", "expected_stage"),
+    [
+        ("Saved", None, None, "Saved"),
+        ("Applied", None, None, "Applied"),
+        ("Assessment", None, None, "Assessment"),
+        ("Recruiter Screen", None, None, "Recruiter Screen"),
+        ("Interview", None, None, "Interview"),
+        ("Offer", None, None, "Offer"),
+        ("Rejected", "Saved", None, "Saved"),
+        ("Rejected", None, "2026-07-01", "Applied"),
+        ("Withdrawn", "Interview", None, "Interview"),
+    ],
+)
+def test_import_batch_persists_reviewed_historical_stage(status, highest_confirmed_stage, date_applied, expected_stage, client, db_session):
+    response = client.post("/api/applications/import-batch", json={"rows": [
+        import_row(2, status=status, highest_confirmed_stage=highest_confirmed_stage, date_applied=date_applied),
+    ]})
+
+    assert response.status_code == 201
+    application = db_session.query(Application).one()
+    assert application.furthest_stage == expected_stage
+    assert application.date_applied == (date.fromisoformat(date_applied) if date_applied else None)
+
+
+def test_import_batch_rolls_back_when_database_flush_fails(client, db_session, monkeypatch):
+    def fail_flush():
+        raise RuntimeError("forced flush failure")
+
+    monkeypatch.setattr(db_session, "flush", fail_flush)
+
+    with pytest.raises(RuntimeError, match="forced flush failure"):
+        client.post("/api/applications/import-batch", json={"rows": [import_row(2), import_row(3)]})
+
+    assert db_session.query(Application).count() == 0
+    assert db_session.query(ApplicationActivity).count() == 0
+
+
+def test_imported_rows_feed_dashboard_outcomes_and_action_items_without_activity(client, db_session):
+    response = client.post("/api/applications/import-batch", json={"rows": [
+        import_row(2, status="Saved"),
+        import_row(3, status="Applied", follow_up_date=date.today().isoformat()),
+        import_row(4, status="Interview", highest_confirmed_stage="Interview"),
+        import_row(5, status="Rejected", highest_confirmed_stage="Saved"),
+        import_row(6, status="Withdrawn", date_applied="2026-07-01"),
+    ]})
+
+    assert response.status_code == 201
+    dashboard = client.get("/api/dashboard/summary").json()
+    cards = {item["key"]: item["value"] for item in dashboard["summary_cards"]}
+    assert cards["total_applications"] == 5
+    assert cards["active_applications"] == 3
+    assert cards["closed_applications"] == 2
+    assert cards["upcoming_followups"] == 1
+
+    outcomes = client.get("/api/insights/outcomes").json()
+    assert outcomes["scope"] == {
+        "visible_applications": 5,
+        "analyzed_applications": 3,
+        "saved_applications_excluded": 1,
+        "closed_without_confirmed_submission_excluded": 1,
+        "archived_applications_excluded": 0,
+    }
+    assert {item["key"]: item["count"] for item in outcomes["summary"]}["reached_interview"] == 1
+    assert [item["company_name"] for item in client.get("/api/applications/action-items").json()["upcoming_followups"]] == ["Company 3"]
     assert db_session.query(ApplicationActivity).count() == 0
 
 
