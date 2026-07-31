@@ -161,6 +161,26 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     expect(container.textContent).toContain("Ready: 1");
   });
 
+  it("keeps company-and-role duplicate warnings out of duplicate authorization", async () => {
+    const onImport = vi.fn().mockResolvedValue({ created: [{ source_row_number: 2 }] });
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[{ id: 9, company_name: "Acme", role_title: "Engineer", job_link: null, date_applied: "2026-07-04" }]} resumeVersions={[]} onImport={onImport} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const input = container.querySelector('input[type="file"]');
+    Object.defineProperty(input, "files", { configurable: true, value: [csvFile("Company,Role\nAcme,Engineer")] });
+    await act(async () => { input.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Confirm mapping").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Review").click(); await flush(); });
+
+    expect(container.textContent).toContain("Possible duplicate: Acme — Engineer.");
+    expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Import as new")).toBe(false);
+
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Done").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import 1 applications").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import applications").click(); await flush(); });
+    expect(onImport).toHaveBeenCalledWith(expect.objectContaining({ rows: [expect.objectContaining({ allow_duplicate: false })] }));
+  });
+
   it("submits an eligible batch only once when confirmation is clicked repeatedly", async () => {
     let completeImport;
     const onImport = vi.fn(() => new Promise((resolve) => { completeImport = resolve; }));

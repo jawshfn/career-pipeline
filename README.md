@@ -12,6 +12,7 @@ PursuitHQ helps job seekers capture opportunities, track application status and 
 - Use the local Browser Capture companion for supported job pages.
 - Manage applications in Application Detail, Status Board, Reminders, and Dashboard.
 - Assign resume variants, record preparation notes, red flags, and activity.
+- Import reviewed CSV or XLSX application trackers locally; raw spreadsheets stay in the browser until normalized applications are confirmed.
 - Back up a complete workspace as JSON; export applications as CSV or XLSX.
 - Generate an explicit, review-only AI Brief without changing saved application fields; local mode stores the latest brief in SQLite.
 - Compare confirmed progression by source and resume version, then inspect the applications contributing to each Outcome Insights metric.
@@ -34,7 +35,7 @@ The local full-stack app stores workspace data in SQLite. The optional Chrome co
 
 The locally running PursuitHQ app includes AI access by default through the deployed PursuitHQ gateway. The Gemini API key remains server-side in that Worker: normal local use needs neither a Gemini key nor Cloudflare, Wrangler, or gateway setup. Job Intelligence Brief does not run Gemini or the Worker on the user's computer.
 
-The public demo is a static GitHub Pages build. It uses fictional in-memory workspace data, so ordinary edits reset on reload and it does not connect to FastAPI. It also uses the deployed AI gateway, includes five AI-ready fictional applications (with Harborview Systems featured), and keeps generated briefs only for the browser session. Browser Capture and workspace restore are local-only.
+The public demo is a static GitHub Pages build. It uses fictional in-memory workspace data, so ordinary edits, including reviewed spreadsheet imports, reset on reload and it does not connect to FastAPI. It also uses the deployed AI gateway, includes five AI-ready fictional applications (with Harborview Systems featured), and keeps generated briefs only for the browser session. Browser Capture and workspace restore are local-only.
 
 The AI gateway is a Cloudflare Worker that validates a six-field request, calls Google Gemini with `gemini-3.5-flash-lite`, validates schema version 2 responses, and returns a result for the local app to save. The gateway does not persist workspace data. Generation is user initiated; two valid attempts per minute are allowed per bounded client key.
 

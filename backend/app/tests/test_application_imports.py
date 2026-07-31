@@ -99,6 +99,15 @@ def test_import_batch_rejects_coerced_authorization_and_non_date_values(client, 
     assert response.status_code == 422
 
 
+def test_import_batch_rejects_unsupported_job_link_schemes(client, db_session):
+    response = client.post("/api/applications/import-batch", json={"rows": [
+        import_row(2, job_link="javascript:alert(1)"),
+    ]})
+
+    assert response.status_code == 422
+    assert db_session.query(Application).count() == 0
+
+
 def test_import_batch_rejects_unresolved_terminal_history_and_invalid_payload_shape(client):
     terminal = client.post("/api/applications/import-batch", json={"rows": [import_row(2, status="Rejected")]})
     malformed = client.post("/api/applications/import-batch", json={"rows": [import_row(2, unexpected="value")]})

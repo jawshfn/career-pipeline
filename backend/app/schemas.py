@@ -153,6 +153,19 @@ class ApplicationImportRow(BaseModel):
             raise ValueError("must not be blank")
         return value
 
+    @field_validator("job_link")
+    @classmethod
+    def import_job_link(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            return None
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("job_link must be an HTTP or HTTPS URL")
+        return value
+
     @field_validator("status")
     @classmethod
     def import_status(cls, value: str) -> str:

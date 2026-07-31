@@ -215,6 +215,17 @@ function isImportDate(value) {
   return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
 }
 
+function isImportJobLink(value) {
+  if (value === null || value === undefined) return true;
+  if (typeof value !== "string" || !value.trim()) return false;
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
 function importTextError(row, field, limit, { required = false } = {}) {
   const value = row[field];
   if (value === null || value === undefined) return required ? `Spreadsheet row ${row.source_row_number} needs ${field === "company_name" ? "Company" : "Role"}.` : null;
@@ -235,6 +246,7 @@ export function importDemoApplications(payload) {
       const error = importTextError(row, field, limit);
       if (error) throw new Error(error);
     }
+    if (!isImportJobLink(row.job_link)) throw new Error(`Spreadsheet row ${row.source_row_number} has an invalid job link.`);
     const status = row.status ?? "Saved";
     const source = row.source ?? DEFAULT_APPLICATION_SOURCE;
     if (!IMPORT_STATUSES.has(status)) throw new Error(`Spreadsheet row ${row.source_row_number} has an invalid status.`);

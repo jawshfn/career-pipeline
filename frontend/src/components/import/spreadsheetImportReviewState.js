@@ -62,7 +62,7 @@ export function deriveReview({ rows, submissionIssues, filter, search, page }) {
     issues: [...row.issues, ...(submissionIssues[row.sourceRowNumber] || [])],
   }));
   const included = reviewRows.filter((row) => !row.excluded);
-  const blocking = included.filter((row) => row.issues.length || (row.duplicate && !row.allowDuplicate));
+  const blocking = included.filter((row) => row.issues.length || (row.duplicate?.highConfidence && !row.allowDuplicate));
   const normalizedSearch = search.toLowerCase();
   const filtered = reviewRows.filter((row) => (
     (filter === "All" || reviewStateFor(row) === filter)

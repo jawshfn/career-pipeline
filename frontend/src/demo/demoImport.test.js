@@ -43,6 +43,7 @@ describe("demo spreadsheet import parity", () => {
       row({ status: "Rejected", highest_confirmed_stage: "Saved", date_applied: "2026-07-04" }),
       row({ date_applied: "07/04/2026" }),
       row({ company_name: "x".repeat(161) }),
+      row({ job_link: "javascript:alert(1)" }),
     ];
     for (const invalid of invalidRows) expect(() => importDemoApplications({ rows: [invalid] })).toThrow();
   });

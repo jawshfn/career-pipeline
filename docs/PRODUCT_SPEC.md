@@ -28,7 +28,7 @@ PursuitHQ is a local-first job-search workspace for people who want to move from
 6. **Follow through.** Manage reminders with Complete, Complete and schedule next, Reschedule, or Clear; review the resulting activity history.
 7. **Prepare and assess.** Assign a resume variant, add preparation notes, and record red flags.
 8. **Review progress.** Use Dashboard and Status Board for current workspace status, then use Outcome Insights to compare confirmed progression by source and resume version and inspect contributing applications.
-9. **Protect the workspace.** Export JSON backups and CSV/XLSX review exports; validate and explicitly replace a local workspace from a compatible JSON backup.
+9. **Protect the workspace.** Import reviewed CSV/XLSX application trackers locally, export JSON backups and CSV/XLSX review exports, and validate and explicitly replace a local workspace from a compatible JSON backup.
 
 ## Application Detail
 
@@ -40,7 +40,7 @@ Each application keeps a highest confirmed stage separate from its current statu
 
 ## Boundaries and non-goals
 
-PursuitHQ does not provide authentication, multi-user collaboration, production backend hosting, automatic application submission, generic scraping, AI resume generation, automated candidate scoring, email/calendar integration, merge-style restore, or arbitrary spreadsheet import. The browser companion is not a generic page or selected-text collector.
+PursuitHQ does not provide authentication, multi-user collaboration, production backend hosting, automatic application submission, generic scraping, AI resume generation, automated candidate scoring, email/calendar integration, merge-style restore, or unreviewed arbitrary spreadsheet ingestion. The browser companion is not a generic page or selected-text collector.
 
 ## Success criteria
 

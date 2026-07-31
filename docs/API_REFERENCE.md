@@ -13,6 +13,7 @@ FastAPI serves the local JSON API under `/api`; generated interactive schemas ar
 | Method | Path | Purpose | Important behavior |
 | --- | --- | --- | --- |
 | GET, POST | `/api/applications` | List or create applications | List can filter; new records are not archived. |
+| POST | `/api/applications/import-batch` | Atomically create reviewed, normalized application rows | Up to 1,000 rows; validates histories, resumes, URLs, and high-confidence duplicates before one final commit. |
 | GET, PATCH, DELETE | `/api/applications/{id}` | Read, update, or permanently delete | Compatibility PATCH delegates status changes to the protected transition logic; deletion removes related activities and any saved AI brief. |
 | POST | `/api/applications/{id}/status-transition` | Change current status | Requires expected status and furthest stage; handles first-time terminal closure and backward-stage confirmation explicitly, updates historical evidence safely, and logs one status-change activity. |
 | POST | `/api/applications/{id}/outcome-history-correction` | Correct confirmed historical reach | Requires expected furthest stage; never changes current status, rejects archived records and invalid active-stage combinations, and logs one correction activity. |
@@ -52,6 +53,8 @@ FastAPI serves the local JSON API under `/api`; generated interactive schemas ar
 | POST | `/api/imports/workspace/restore` | Replace a workspace | Requires authorization; transactional replace restore preserves compatible legacy archives. |
 
 The frontend generates XLSX directly; it is not a backend endpoint.
+
+Spreadsheet import sends reviewed, normalized rows rather than raw files. Each row has a unique positive `source_row_number`; a successful request returns `created_count` and source-row provenance. A failed validation or duplicate check creates no rows, and imports create no activity records.
 
 ## Outcome Insights
 
