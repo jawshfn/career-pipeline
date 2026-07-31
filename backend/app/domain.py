@@ -33,7 +33,9 @@ SOURCE_ORDER: tuple[str, ...] = (
     "Indeed",
     "ZipRecruiter",
     "Company Website",
+    "Recruiter",
     "Referral",
+    "Handshake",
     "Other",
 )
 

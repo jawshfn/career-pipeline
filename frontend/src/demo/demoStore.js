@@ -1,8 +1,11 @@
 import {
   DEFAULT_APPLICATION_SOURCE,
+  EMPLOYMENT_TYPE_OPTIONS,
   FOLLOW_UP_EXCLUDED_STATUSES,
   PROGRESSION_STAGES,
+  SOURCE_OPTIONS,
   STALE_EXCLUDED_STATUSES,
+  USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../constants/applicationConstants.js";
 import { createDemoState } from "./demoData.js";
 import { createCanonicalJobBriefSource, createJobBriefPayload, createJobBriefSourceFingerprint } from "../services/jobBriefService.js";
@@ -144,7 +147,7 @@ export function deleteDemoApplicationAiBrief(applicationId) {
 export function createDemoApplication(payload) {
   const timestamp = nowIso();
   const status = payload.status || "Saved";
-  const dateApplied = normalizeDateOnly(payload.date_applied) || (PROGRESSION_STAGES.indexOf(status) >= 1 ? getTodayValue() : null);
+  const dateApplied = normalizeDateOnly(payload.date_applied) || (payload.__import ? null : (PROGRESSION_STAGES.indexOf(status) >= 1 ? getTodayValue() : null));
   const createdApplication = {
     id: demoState.nextApplicationId,
     company_name: payload.company_name,
@@ -185,6 +188,68 @@ export function createDemoApplication(payload) {
   };
 
   return clone(createdApplication);
+}
+
+function importKey(value) { return String(value || "").trim().replace(/\s+/gu, " ").toLowerCase(); }
+function importLink(value) { return String(value || "").trim().toLowerCase().replace(/\/$/u, ""); }
+const IMPORT_STATUSES = new Set(USER_SELECTABLE_APPLICATION_STATUSES);
+const IMPORT_SOURCES = new Set(SOURCE_OPTIONS);
+const IMPORT_EMPLOYMENT_TYPES = new Set(EMPLOYMENT_TYPE_OPTIONS.filter(Boolean));
+const IMPORT_TEXT_LIMITS = {
+  job_link: 500, location: 160, compensation: 160, next_action: 10_000,
+  contact_name: 160, contact_info: 10_000, prep_notes: 10_000, notes: 10_000,
+  job_description: 10_000, red_flags_notes: 10_000,
+};
+
+function isImportDate(value) {
+  if (value === null || value === undefined) return true;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/u.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+}
+
+function importTextError(row, field, limit, { required = false } = {}) {
+  const value = row[field];
+  if (value === null || value === undefined) return required ? `Spreadsheet row ${row.source_row_number} needs ${field === "company_name" ? "Company" : "Role"}.` : null;
+  if (typeof value !== "string" || (required && !value.trim()) || value.length > limit) return `Spreadsheet row ${row.source_row_number} has an invalid ${field}.`;
+  return null;
+}
+
+export function importDemoApplications(payload) {
+  const rows = payload?.rows;
+  if (!Array.isArray(rows) || !rows.length || rows.length > 1000) throw new Error("Choose between one and 1,000 reviewed applications.");
+  const rowNumbers = new Set(); const links = new Set(); const companyDates = new Set();
+  for (const row of rows) {
+    if (!Number.isInteger(row.source_row_number) || row.source_row_number < 1 || rowNumbers.has(row.source_row_number)) throw new Error("Each imported row needs a unique spreadsheet row number.");
+    rowNumbers.add(row.source_row_number);
+    const requiredTextError = importTextError(row, "company_name", 160, { required: true }) || importTextError(row, "role_title", 160, { required: true });
+    if (requiredTextError) throw new Error(requiredTextError);
+    for (const [field, limit] of Object.entries(IMPORT_TEXT_LIMITS)) {
+      const error = importTextError(row, field, limit);
+      if (error) throw new Error(error);
+    }
+    const status = row.status ?? "Saved";
+    const source = row.source ?? DEFAULT_APPLICATION_SOURCE;
+    if (!IMPORT_STATUSES.has(status)) throw new Error(`Spreadsheet row ${row.source_row_number} has an invalid status.`);
+    if (!IMPORT_SOURCES.has(source)) throw new Error(`Spreadsheet row ${row.source_row_number} has an invalid source.`);
+    if (row.employment_type !== null && row.employment_type !== undefined && !IMPORT_EMPLOYMENT_TYPES.has(row.employment_type)) throw new Error(`Spreadsheet row ${row.source_row_number} has an invalid employment type.`);
+    if (row.highest_confirmed_stage !== null && row.highest_confirmed_stage !== undefined && !PROGRESSION_STAGES.includes(row.highest_confirmed_stage)) throw new Error(`Spreadsheet row ${row.source_row_number} has an invalid highest stage.`);
+    for (const field of ["date_saved", "date_applied", "follow_up_date"]) if (!isImportDate(row[field])) throw new Error(`Spreadsheet row ${row.source_row_number} has an invalid ${field}.`);
+    if (status === "Saved" && row.date_applied) throw new Error(`Spreadsheet row ${row.source_row_number} has a Saved/date-applied conflict.`);
+    if (PROGRESSION_STAGES.includes(status) && row.highest_confirmed_stage && PROGRESSION_STAGES.indexOf(row.highest_confirmed_stage) < PROGRESSION_STAGES.indexOf(status)) throw new Error(`Spreadsheet row ${row.source_row_number} has a highest-stage conflict.`);
+    if (["Rejected", "Withdrawn"].includes(status) && !row.highest_confirmed_stage && !row.date_applied) throw new Error(`Spreadsheet row ${row.source_row_number} needs terminal history.`);
+    if (["Rejected", "Withdrawn"].includes(status) && row.highest_confirmed_stage === "Saved" && row.date_applied) throw new Error(`Spreadsheet row ${row.source_row_number} has a terminal history conflict.`);
+    if (row.resume_version_id !== null && row.resume_version_id !== undefined && !Number.isInteger(row.resume_version_id)) throw new Error(`Spreadsheet row ${row.source_row_number} references an invalid resume.`);
+    const link = importLink(row.job_link); const companyDate = row.date_applied && `${importKey(row.company_name)}|${importKey(row.role_title)}|${row.date_applied}`;
+    if ((link && links.has(link)) || (companyDate && companyDates.has(companyDate))) throw new Error(`Spreadsheet row ${row.source_row_number} duplicates another row in this import.`);
+    if (link) links.add(link); if (companyDate) companyDates.add(companyDate);
+    const existing = demoState.applications.find((application) => (link && link === importLink(application.job_link)) || (companyDate && companyDate === `${importKey(application.company_name)}|${importKey(application.role_title)}|${application.date_applied || ""}`));
+    if (existing && !row.allow_duplicate) throw new Error(`Spreadsheet row ${row.source_row_number} matches an existing application.`);
+    if (row.resume_version_id !== null && row.resume_version_id !== undefined && !demoState.resumeVersions.some((resume) => resume.id === row.resume_version_id)) throw new Error(`Spreadsheet row ${row.source_row_number} references a missing resume.`);
+  }
+  const created = rows.map((row) => createDemoApplication({ ...row, __import: true, furthest_stage: row.highest_confirmed_stage }));
+  return { created_count: created.length, created: created.map((application, index) => ({ source_row_number: rows[index].source_row_number, application })) };
 }
 
 export function updateDemoApplication(applicationId, payload) {

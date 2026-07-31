@@ -21,6 +21,10 @@ export function createApplication(applicationData) {
   return apiPost("/api/applications", applicationData, APPLICATION_ERROR);
 }
 
+export function importApplicationsBatch(payload) {
+  return apiPost("/api/applications/import-batch", payload, APPLICATION_ERROR);
+}
+
 export function updateApplication(applicationId, applicationData) {
   return apiPatch(`/api/applications/${applicationId}`, applicationData, APPLICATION_ERROR);
 }

@@ -11,6 +11,7 @@ import {
   getDemoApplicationAiBrief,
   saveDemoApplicationAiBrief,
   deleteDemoApplicationAiBrief,
+  importDemoApplications,
 } from "./demoStore.js";
 
 function asAsync(value) {
@@ -28,6 +29,8 @@ export function getApplication(applicationId) {
 export function createApplication(applicationData) {
   return asAsync(createDemoApplication(applicationData));
 }
+
+export function importApplicationsBatch(payload) { return asAsync(importDemoApplications(payload)); }
 
 export function updateApplication(applicationId, applicationData) {
   return asAsync(updateDemoApplication(applicationId, applicationData));

@@ -3,6 +3,7 @@ import { loadExcelJs } from "../utils/applicationsWorkbook.js";
 
 export const MAX_SPREADSHEET_BYTES = 10 * 1024 * 1024;
 export const MAX_SPREADSHEET_ROWS = 1000;
+export const MAX_RAW_SPREADSHEET_ROWS = 10_000;
 export const MAX_SPREADSHEET_COLUMNS = 80;
 export const MAX_CELL_CHARACTERS = 10000;
 
@@ -65,16 +66,21 @@ export function parseCsvText(text) {
   return rows;
 }
 
-export function createSheet(name, values, mergedCells = []) {
-  const rows = values.map((row, index) => ({ originalRowNumber: index + 1, rawValues: [...row], values: row.map(boundedValue) }));
-  return { name, rows, mergedCells, ...getMeaningfulBounds(rows) };
+export function createSheet(name, values, mergedCells = [], date1904 = false) {
+  const rows = values.map((row, index) => ({
+    originalRowNumber: (!Array.isArray(row) && row.originalRowNumber) || index + 1,
+    rawValues: !Array.isArray(row) ? [...row.values] : [...row],
+    values: (!Array.isArray(row) ? row.values : row).map(boundedValue),
+    hyperlinks: !Array.isArray(row) ? row.hyperlinks || [] : [],
+  }));
+  return { name, rows, mergedCells, date1904, ...getMeaningfulBounds(rows) };
 }
 
 export function getMeaningfulBounds(rows) {
   const meaningfulRows = rows.filter((row) => row.values.some(isMeaningfulValue));
   let columnCount = 0;
   meaningfulRows.forEach((row) => { row.values.forEach((value, index) => { if (isMeaningfulValue(value)) columnCount = Math.max(columnCount, index + 1); }); });
-  if (meaningfulRows.length > MAX_SPREADSHEET_ROWS) throw new SpreadsheetIntakeError("This spreadsheet has more than the supported 1,000 usable rows.");
+  if (meaningfulRows.length > MAX_RAW_SPREADSHEET_ROWS) throw new SpreadsheetIntakeError("This spreadsheet has more than the supported readable row limit.");
   if (columnCount > MAX_SPREADSHEET_COLUMNS) throw new SpreadsheetIntakeError("This spreadsheet has more than the supported 80 usable columns.");
   return { meaningfulRowCount: meaningfulRows.length, meaningfulColumnCount: columnCount };
 }
@@ -93,19 +99,28 @@ export async function parseSpreadsheetFile(file) {
     await workbook.xlsx.load(await file.arrayBuffer());
     const sheets = workbook.worksheets.map((worksheet) => {
       const values = [];
-      const rowCount = worksheet.rowCount || 0;
-      for (let rowIndex = 1; rowIndex <= rowCount; rowIndex += 1) {
-        const row = worksheet.getRow(rowIndex);
-        const cells = [];
-        for (let columnIndex = 1; columnIndex <= (row.cellCount || 0); columnIndex += 1) {
-          const raw = row.getCell(columnIndex).value;
-          const value = raw && typeof raw === "object" && "formula" in raw ? raw.result : raw;
-          cells.push(value === undefined || value === null || (typeof value === "object" && !(value instanceof Date)) ? "" : value);
-        }
-        values.push(cells);
+      // ExcelJS's rowCount may include a style applied to an entire column or a
+      // distant formatted cell. actual rows/cells keep intake bounded to data.
+      if ((worksheet.actualRowCount || 0) > 10_000 || (worksheet.actualColumnCount || 0) > MAX_SPREADSHEET_COLUMNS) {
+        throw new SpreadsheetIntakeError("This workbook has an unreasonable readable worksheet range.");
       }
+      worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+        const cells = [];
+        const hyperlinks = [];
+        row.eachCell({ includeEmpty: false }, (cell, columnNumber) => {
+          const raw = cell.value;
+          let value = raw;
+          if (raw && typeof raw === "object" && "formula" in raw) value = raw.result ?? "";
+          else if (raw && typeof raw === "object" && "hyperlink" in raw) {
+            value = raw.text ?? raw.hyperlink ?? "";
+            hyperlinks[columnNumber - 1] = /^https?:\/\//iu.test(String(raw.hyperlink || "")) ? raw.hyperlink : "";
+          } else if (raw && typeof raw === "object" && Array.isArray(raw.richText)) value = raw.richText.map((part) => part.text || "").join("");
+          if (value !== undefined && value !== null && (typeof value !== "object" || value instanceof Date)) cells[columnNumber - 1] = value;
+        });
+        if (cells.some(isMeaningfulValue)) values.push({ originalRowNumber: rowNumber, values: cells, hyperlinks });
+      });
       const mergedCells = Object.values(worksheet._merges || {}).map((range) => range.model).filter(Boolean);
-      return createSheet(worksheet.name, values, mergedCells);
+      return createSheet(worksheet.name, values, mergedCells, Boolean(workbook.properties.date1904));
     });
     if (!sheets.some((sheet) => sheet.meaningfulRowCount)) throw new SpreadsheetIntakeError("This workbook has no usable rows.");
     return { format: "xlsx", sheets };
@@ -146,7 +161,7 @@ export function buildTable(sheet, headerRowNumber, headerless = false) {
   const startRow = headerless ? firstDataRow : header.originalRowNumber;
   const hasMergedCell = sheet.mergedCells.some((merge) => merge && merge.bottom >= startRow && merge.top <= dataRows.at(-1).originalRowNumber && merge.right >= 1 && merge.left <= columns.length);
   if (hasMergedCell) throw new SpreadsheetIntakeError("The selected table includes merged cells. Choose an unmerged table area.");
-  return { columns, dataRows, headerRowNumber: headerless ? null : header.originalRowNumber, headerless };
+  return { columns, dataRows, headerRowNumber: headerless ? null : header.originalRowNumber, headerless, date1904: Boolean(sheet.date1904) };
 }
 
 function valueHint(values) {
@@ -179,7 +194,7 @@ export function createSuggestedMappings(table) {
 }
 
 export function mappingValidation(mappings) {
-  const keys = Object.values(mappings).map((mapping) => mapping.key).filter(Boolean);
+  const keys = Object.values(mappings).map((mapping) => mapping.key).filter((key) => key && key !== "append_notes");
   const duplicates = keys.filter((key, index) => keys.indexOf(key) !== index);
   if (duplicates.length) return "Each PursuitHQ field can be mapped from only one spreadsheet column.";
   if (!keys.includes("company_name")) return "Map a column to Company before continuing.";

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 
-import { applyApplicationFollowUpAction, correctApplicationOutcomeHistory, createApplication, deleteApplication, getApplications, transitionApplicationStatus, updateApplication } from "./services/applicationsService.js";
+import { applyApplicationFollowUpAction, correctApplicationOutcomeHistory, createApplication, deleteApplication, getApplications, importApplicationsBatch, transitionApplicationStatus, updateApplication } from "./services/applicationsService.js";
 import { invalidateResource } from "./services/staleResource.js";
 import {
   createResumeVersion,
@@ -233,6 +233,16 @@ export default function App() {
     return createdApplication;
   }
 
+  async function handleImportApplications(payload) {
+    const result = await importApplicationsBatch(payload);
+    const created = result.created.map((item) => item.application);
+    setApplications((current) => [...created, ...current.filter((item) => !created.some((createdItem) => createdItem.id === item.id))]);
+    invalidateResource("dashboard");
+    invalidateResource("outcome-insights");
+    invalidateResource("reminder-action-items");
+    return result;
+  }
+
   async function handleUpdateApplication(applicationId, applicationData) {
     const updatedApplication = await updateApplication(applicationId, applicationData);
     setApplications((currentApplications) =>
@@ -378,6 +388,10 @@ export default function App() {
       ) : activePage === "data" ? (
         <DataPage
           isDemoMode={demoMode}
+          applications={applications}
+          resumeVersions={allResumeVersions}
+          onImportApplications={handleImportApplications}
+          onViewApplications={() => navigateToPage("applications")}
           onDownloadApplicationsCsv={downloadApplicationsCsv}
           onDownloadApplicationsWorkbook={downloadApplicationsWorkbook}
           onDownloadWorkspaceBackup={downloadWorkspaceBackup}

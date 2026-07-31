@@ -21,7 +21,7 @@ describe("DataPage", () => {
   it("keeps browser-local demo intake separate from workspace restore", () => {
     const markup = renderToStaticMarkup(<DataPage isDemoMode onUnsavedChangesChange={vi.fn()} />);
     expect(markup).toContain("does not upload the file");
-    expect(markup).toContain("No applications are saved in this phase");
+    expect(markup).toContain("Imported demo applications are temporary and reset when the page reloads.");
     expect(markup).not.toContain("Review a workspace backup");
   });
 });
