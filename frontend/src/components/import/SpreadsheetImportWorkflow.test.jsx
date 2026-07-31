@@ -13,6 +13,13 @@ function csvFile(contents, name = "applications.csv") {
   return file;
 }
 
+function deferredCsvFile(name = "applications.csv") {
+  let complete;
+  const file = new File(["pending"], name, { type: "text/csv" });
+  Object.defineProperty(file, "text", { value: () => new Promise((resolve) => { complete = resolve; }) });
+  return { file, complete: (contents) => complete(contents) };
+}
+
 async function flush() {
   await Promise.resolve();
   await Promise.resolve();
@@ -95,6 +102,57 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Remove").click(); await flush(); });
     expect(container.textContent).not.toContain("headerless.csv");
     expect(onImport).not.toHaveBeenCalled();
+  });
+
+  it("keeps the newest file when an earlier parse finishes later", async () => {
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={vi.fn()} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const input = container.querySelector('input[type="file"]');
+    const slow = deferredCsvFile("older.csv");
+    Object.defineProperty(input, "files", { configurable: true, value: [slow.file] });
+    await act(async () => { input.dispatchEvent(new Event("change", { bubbles: true })); });
+    Object.defineProperty(input, "files", { configurable: true, value: [csvFile("Company,Role\nNewer,Engineer", "newer.csv")] });
+    await act(async () => { input.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    expect(container.textContent).toContain("newer.csv");
+
+    await act(async () => { slow.complete("Company,Role\nOlder,Engineer"); await flush(); });
+    expect(container.textContent).toContain("newer.csv");
+    expect(container.textContent).not.toContain("older.csv");
+    expect(container.textContent).toContain("Newer");
+  });
+
+  it("preserves an excluded row while resolving a shared spreadsheet value", async () => {
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={vi.fn()} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const input = container.querySelector('input[type="file"]');
+    Object.defineProperty(input, "files", { configurable: true, value: [csvFile("Company,Role,Status\nAcme,Engineer,Unrecognized\nBeta,Analyst,Unrecognized")] });
+    await act(async () => { input.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Confirm mapping").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Review").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Exclude row").click(); [...container.querySelectorAll("button")].find((button) => button.textContent === "Done").click(); await flush(); });
+    const resolution = container.querySelector('[aria-label="Map Unrecognized"]');
+    await act(async () => { resolution.value = "Saved"; resolution.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    expect(container.textContent).toContain("Excluded: 1");
+    expect(container.textContent).toContain("Ready: 1");
+  });
+
+  it("submits an eligible batch only once when confirmation is clicked repeatedly", async () => {
+    let completeImport;
+    const onImport = vi.fn(() => new Promise((resolve) => { completeImport = resolve; }));
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={onImport} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const input = container.querySelector('input[type="file"]');
+    Object.defineProperty(input, "files", { configurable: true, value: [csvFile("Company,Role\nAcme,Engineer")] });
+    await act(async () => { input.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Confirm mapping").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import 1 applications").click(); await flush(); });
+    const confirm = [...container.querySelectorAll("button")].find((button) => button.textContent === "Import applications");
+    await act(async () => { confirm.click(); confirm.click(); await flush(); });
+    expect(onImport).toHaveBeenCalledTimes(1);
+    await act(async () => { completeImport({ created: [] }); await flush(); });
   });
 
   it("keeps a manually edited terminal/history conflict blocking instead of deferring it to submission", async () => {
