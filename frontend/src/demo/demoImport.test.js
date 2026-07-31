@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getDemoExportSnapshot, importDemoApplications, resetDemoState } from "./demoStore.js";
+import { importApplicationsBatch } from "./demoApplicationsApi.js";
 
 function row(overrides = {}) {
   return {
@@ -16,6 +17,7 @@ function row(overrides = {}) {
 
 describe("demo spreadsheet import parity", () => {
   beforeEach(() => resetDemoState());
+  afterEach(() => vi.unstubAllGlobals());
 
   it("creates reviewed rows atomically, preserves blank imported dates, and creates no activities", () => {
     const before = getDemoExportSnapshot();
@@ -60,5 +62,38 @@ describe("demo spreadsheet import parity", () => {
     const before = getDemoExportSnapshot();
     expect(() => importDemoApplications({ rows: [row({ source_row_number: 51, job_link: "https://example.test/import" }), row({ source_row_number: 52, job_link: "https://example.test/import/" })] })).toThrow("duplicates another row");
     expect(getDemoExportSnapshot().applications).toHaveLength(before.applications.length);
+  });
+
+  it("matches local in-batch override behavior and never reaches the backend transport", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    const result = await importApplicationsBatch({ rows: [
+      row({ source_row_number: 51, job_link: "https://example.test/import", allow_duplicate: true }),
+      row({ source_row_number: 52, job_link: "https://example.test/import/", allow_duplicate: true }),
+    ] });
+
+    expect(result.created_count).toBe(2);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("uses stable numeric IDs across consecutive imports and restores the original dataset on reset", () => {
+    const first = importDemoApplications({ rows: [row({ source_row_number: 51 })] });
+    const second = importDemoApplications({ rows: [row({ source_row_number: 52, company_name: "Second Co", job_link: "https://example.test/second" })] });
+    const snapshot = getDemoExportSnapshot();
+
+    expect(first.created[0].application.id).toBe(13);
+    expect(second.created[0].application.id).toBe(14);
+    expect(new Set(snapshot.applications.map((application) => application.id)).size).toBe(snapshot.applications.length);
+    expect(first.created[0].application).toMatchObject({
+      job_link: null,
+      location: null,
+      employment_type: null,
+      date_applied: "2026-07-04",
+      furthest_stage: "Applied",
+    });
+
+    resetDemoState();
+    expect(getDemoExportSnapshot().applications.map((application) => application.id)).toEqual(expect.arrayContaining([1, 12]));
+    expect(importDemoApplications({ rows: [row({ source_row_number: 53 })] }).created[0].application.id).toBe(13);
   });
 });

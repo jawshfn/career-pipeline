@@ -28,4 +28,14 @@ describe("ordinary JSON API requests", () => {
       body: " {\n  \"raw\": true\n} ",
     });
   });
+
+  it("keeps controlled object details available to the import workflow without exposing them as text", async () => {
+    const detail = { row_errors: [{ source_row_number: 2, field: "job_link", message: "Duplicate." }] };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 409, json: vi.fn().mockResolvedValue({ detail }) }));
+
+    await expect(apiPost("/applications/import-batch", { rows: [] }, "Application request failed.")).rejects.toMatchObject({
+      message: "Application request failed.",
+      detail,
+    });
+  });
 });

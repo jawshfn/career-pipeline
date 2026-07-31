@@ -178,6 +178,26 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     await act(async () => { completeImport({ created: [] }); await flush(); });
   });
 
+  it("keeps reviewed rows dirty and associates a controlled batch error with its source row", async () => {
+    const failure = new Error("Application request failed.");
+    failure.detail = { row_errors: [{ source_row_number: 2, field: "job_link", message: "A matching application already exists." }] };
+    const onImport = vi.fn().mockRejectedValue(failure);
+    const onUnsavedChangesChange = vi.fn();
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode={false} applications={[]} resumeVersions={[]} onImport={onImport} onViewApplications={vi.fn()} onUnsavedChangesChange={onUnsavedChangesChange} />);
+    });
+    const input = container.querySelector('input[type="file"]');
+    Object.defineProperty(input, "files", { configurable: true, value: [csvFile("Company,Role\nAcme,Engineer")] });
+    await act(async () => { input.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Confirm mapping").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import 1 applications").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import applications").click(); await flush(); });
+
+    expect(container.querySelector('[role="alert"]').textContent).toContain("highlighted rows");
+    expect(container.textContent).toContain("Needs review: 1");
+    expect(onUnsavedChangesChange).toHaveBeenLastCalledWith(true);
+  });
+
   it("keeps a manually edited terminal/history conflict blocking instead of deferring it to submission", async () => {
     await act(async () => {
       root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={vi.fn()} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);

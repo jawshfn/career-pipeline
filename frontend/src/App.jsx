@@ -56,6 +56,27 @@ export function removeApplicationById(applications, applicationId) {
   return applications.filter((application) => String(application.id) !== String(applicationId));
 }
 
+export function importedApplicationsFromResult(result) {
+  if (!Array.isArray(result?.created)) throw new Error("The import response could not be verified. Review rows were kept.");
+  return result.created.map((item) => {
+    if (!item?.application || item.application.id === null || item.application.id === undefined) {
+      throw new Error("The import response could not be verified. Review rows were kept.");
+    }
+    return item.application;
+  });
+}
+
+export function mergeImportedApplications(applications, createdApplications) {
+  const importedIds = new Set();
+  const uniqueCreated = createdApplications.filter((application) => {
+    const key = String(application.id);
+    if (importedIds.has(key)) return false;
+    importedIds.add(key);
+    return true;
+  });
+  return [...uniqueCreated, ...applications.filter((application) => !importedIds.has(String(application.id)))];
+}
+
 export function shouldConfirmPageNavigation(currentPage, requestedPage, hasUnsavedChanges) {
   return Boolean(hasUnsavedChanges && requestedPage !== currentPage);
 }
@@ -235,8 +256,8 @@ export default function App() {
 
   async function handleImportApplications(payload) {
     const result = await importApplicationsBatch(payload);
-    const created = result.created.map((item) => item.application);
-    setApplications((current) => [...created, ...current.filter((item) => !created.some((createdItem) => createdItem.id === item.id))]);
+    const created = importedApplicationsFromResult(result);
+    setApplications((current) => mergeImportedApplications(current, created));
     invalidateResource("dashboard");
     invalidateResource("outcome-insights");
     invalidateResource("reminder-action-items");

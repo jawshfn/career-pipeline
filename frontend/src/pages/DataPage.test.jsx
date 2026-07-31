@@ -1,4 +1,8 @@
+// @vitest-environment jsdom
+
 import React from "react";
+import { act } from "react";
+import { createRoot } from "react-dom/client";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -23,5 +27,30 @@ describe("DataPage", () => {
     expect(markup).toContain("does not upload the file");
     expect(markup).toContain("Imported demo applications are temporary and reset when the page reloads.");
     expect(markup).not.toContain("Review a workspace backup");
+  });
+
+  it("preserves a prepared spreadsheet while moving between Data sections", async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    const file = new File(["Company,Role\nAcme,Engineer"], "applications.csv", { type: "text/csv" });
+    Object.defineProperty(file, "text", { value: async () => "Company,Role\nAcme,Engineer" });
+    await act(async () => {
+      root.render(<DataPage isDemoMode applications={[]} resumeVersions={[]} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const input = container.querySelector('input[type="file"]');
+    Object.defineProperty(input, "files", { configurable: true, value: [file] });
+    await act(async () => {
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+    });
+    expect(container.textContent).toContain("applications.csv");
+
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Export & backup").click(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import applications").click(); });
+    expect(container.textContent).toContain("applications.csv");
+    await act(async () => root.unmount());
+    container.remove();
   });
 });

@@ -61,6 +61,11 @@ function normalizeDateOnly(value) {
   return value || null;
 }
 
+function optionalDemoImportText(value, isImport) {
+  if (value === null || value === undefined) return isImport ? null : "";
+  return value;
+}
+
 function furthestStageFor(application) {
   const storedRank = PROGRESSION_STAGES.indexOf(application.furthest_stage);
   const statusRank = PROGRESSION_STAGES.indexOf(application.status);
@@ -146,36 +151,37 @@ export function deleteDemoApplicationAiBrief(applicationId) {
 
 export function createDemoApplication(payload) {
   const timestamp = nowIso();
+  const isImport = Boolean(payload.__import);
   const status = payload.status || "Saved";
-  const dateApplied = normalizeDateOnly(payload.date_applied) || (payload.__import ? null : (PROGRESSION_STAGES.indexOf(status) >= 1 ? getTodayValue() : null));
+  const dateApplied = normalizeDateOnly(payload.date_applied) || (isImport ? null : (PROGRESSION_STAGES.indexOf(status) >= 1 ? getTodayValue() : null));
   const createdApplication = {
     id: demoState.nextApplicationId,
     company_name: payload.company_name,
     role_title: payload.role_title,
-    job_link: payload.job_link || "",
+    job_link: optionalDemoImportText(payload.job_link, isImport),
     source: payload.source || DEFAULT_APPLICATION_SOURCE,
     status,
     furthest_stage: furthestStageFor({ ...payload, status, date_applied: dateApplied }),
-    location: payload.location || "",
-    compensation: payload.compensation || "",
-    employment_type: payload.employment_type || "",
+    location: optionalDemoImportText(payload.location, isImport),
+    compensation: optionalDemoImportText(payload.compensation, isImport),
+    employment_type: optionalDemoImportText(payload.employment_type, isImport),
     date_saved: payload.date_saved || getTodayValue(),
     date_applied: dateApplied,
     follow_up_date: normalizeDateOnly(payload.follow_up_date),
-    next_action: payload.next_action || "",
-    contact_name: payload.contact_name || "",
-    contact_info: payload.contact_info || "",
-    prep_notes: payload.prep_notes || "",
+    next_action: optionalDemoImportText(payload.next_action, isImport),
+    contact_name: optionalDemoImportText(payload.contact_name, isImport),
+    contact_info: optionalDemoImportText(payload.contact_info, isImport),
+    prep_notes: optionalDemoImportText(payload.prep_notes, isImport),
     resume_version_id: payload.resume_version_id ?? null,
-    job_description: payload.job_description || "",
-    notes: payload.notes || "",
+    job_description: optionalDemoImportText(payload.job_description, isImport),
+    notes: optionalDemoImportText(payload.notes, isImport),
     vague_job_description: Boolean(payload.vague_job_description),
     unrealistic_salary: Boolean(payload.unrealistic_salary),
     asks_for_payment: Boolean(payload.asks_for_payment),
     suspicious_contact: Boolean(payload.suspicious_contact),
     company_mismatch: Boolean(payload.company_mismatch),
     too_good_to_be_true: Boolean(payload.too_good_to_be_true),
-    red_flags_notes: payload.red_flags_notes || "",
+    red_flags_notes: optionalDemoImportText(payload.red_flags_notes, isImport),
     is_archived: false,
     created_at: timestamp,
     updated_at: timestamp,
@@ -219,7 +225,7 @@ function importTextError(row, field, limit, { required = false } = {}) {
 export function importDemoApplications(payload) {
   const rows = payload?.rows;
   if (!Array.isArray(rows) || !rows.length || rows.length > 1000) throw new Error("Choose between one and 1,000 reviewed applications.");
-  const rowNumbers = new Set(); const links = new Set(); const companyDates = new Set();
+  const rowNumbers = new Set(); const links = new Map(); const companyDates = new Map();
   for (const row of rows) {
     if (!Number.isInteger(row.source_row_number) || row.source_row_number < 1 || rowNumbers.has(row.source_row_number)) throw new Error("Each imported row needs a unique spreadsheet row number.");
     rowNumbers.add(row.source_row_number);
@@ -242,11 +248,17 @@ export function importDemoApplications(payload) {
     if (["Rejected", "Withdrawn"].includes(status) && row.highest_confirmed_stage === "Saved" && row.date_applied) throw new Error(`Spreadsheet row ${row.source_row_number} has a terminal history conflict.`);
     if (row.resume_version_id !== null && row.resume_version_id !== undefined && !Number.isInteger(row.resume_version_id)) throw new Error(`Spreadsheet row ${row.source_row_number} references an invalid resume.`);
     const link = importLink(row.job_link); const companyDate = row.date_applied && `${importKey(row.company_name)}|${importKey(row.role_title)}|${row.date_applied}`;
-    if ((link && links.has(link)) || (companyDate && companyDates.has(companyDate))) throw new Error(`Spreadsheet row ${row.source_row_number} duplicates another row in this import.`);
-    if (link) links.add(link); if (companyDate) companyDates.add(companyDate);
+    if (link) links.set(link, [...(links.get(link) || []), row]);
+    if (companyDate) companyDates.set(companyDate, [...(companyDates.get(companyDate) || []), row]);
     const existing = demoState.applications.find((application) => (link && link === importLink(application.job_link)) || (companyDate && companyDate === `${importKey(application.company_name)}|${importKey(application.role_title)}|${application.date_applied || ""}`));
     if (existing && !row.allow_duplicate) throw new Error(`Spreadsheet row ${row.source_row_number} matches an existing application.`);
     if (row.resume_version_id !== null && row.resume_version_id !== undefined && !demoState.resumeVersions.some((resume) => resume.id === row.resume_version_id)) throw new Error(`Spreadsheet row ${row.source_row_number} references a missing resume.`);
+  }
+  for (const row of rows) {
+    const link = importLink(row.job_link); const companyDate = row.date_applied && `${importKey(row.company_name)}|${importKey(row.role_title)}|${row.date_applied}`;
+    if ((link && links.get(link).length > 1) || (companyDate && companyDates.get(companyDate).length > 1)) {
+      if (!row.allow_duplicate) throw new Error(`Spreadsheet row ${row.source_row_number} duplicates another row in this import.`);
+    }
   }
   const created = rows.map((row) => createDemoApplication({ ...row, __import: true, furthest_stage: row.highest_confirmed_stage }));
   return { created_count: created.length, created: created.map((application, index) => ({ source_row_number: rows[index].source_row_number, application })) };
