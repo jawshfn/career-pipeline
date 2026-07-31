@@ -24,7 +24,9 @@ import PipelinePage from "./pages/PipelinePage.jsx";
 import QuickAddPage from "./pages/QuickAddPage.jsx";
 import ResumeVersionsPage from "./pages/ResumeVersionsPage.jsx";
 import SupportPage from "./pages/SupportPage.jsx";
-import { downloadApplicationsCsv, downloadWorkspaceBackup } from "./services/exportsService.js";
+import DataPage from "./pages/DataPage.jsx";
+import { downloadApplicationsCsv, downloadApplicationsWorkbook, downloadWorkspaceBackup } from "./services/exportsService.js";
+import { restoreWorkspaceBackup, validateWorkspaceBackup } from "./services/workspaceImportsService.js";
 
 export const UNSAVED_PAGE_CONFIRM_MESSAGE = "You have unsaved changes on this page. Leave without saving?";
 
@@ -371,10 +373,18 @@ export default function App() {
       ) : activePage === "support" ? (
         <SupportPage
           isDemoMode={demoMode}
-          onDownloadApplicationsCsv={downloadApplicationsCsv}
-          onDownloadWorkspaceBackup={downloadWorkspaceBackup}
           onNavigate={navigateToPage}
+        />
+      ) : activePage === "data" ? (
+        <DataPage
+          isDemoMode={demoMode}
+          onDownloadApplicationsCsv={downloadApplicationsCsv}
+          onDownloadApplicationsWorkbook={downloadApplicationsWorkbook}
+          onDownloadWorkspaceBackup={downloadWorkspaceBackup}
+          onRestoreWorkspaceBackup={restoreWorkspaceBackup}
+          onValidateWorkspaceBackup={validateWorkspaceBackup}
           onWorkspaceRestored={handleWorkspaceRestored}
+          onUnsavedChangesChange={handlePageUnsavedChangesChange}
         />
       ) : (
         <ApplicationsPage
