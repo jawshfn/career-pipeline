@@ -20,8 +20,10 @@ It is not a production SaaS platform: workspace data remains local, there is no 
 | 25–26      | AI Job Intelligence and persistence                 | A privacy-bounded, user-initiated Brief moved from gateway integration to a persisted local lifecycle.                                             |
 | 27          | Trusted Outcome Insights                            | Confirmed-history reporting added transparent, drill-down outcome comparisons.                                                                     |
 | 28          | Repository audit and maintainability cleanup        | Removed verified remnants and consolidated active domain, demo read-model, and cached-resource responsibilities without changing product behavior. |
-| 30          | First-run onboarding and guided setup               | Added local starting guidance, actionable recovery states, a seeded-demo evaluation path, and accessible reversible guidance. |
+
 | 29          | Flexible spreadsheet import and Data workspace      | Completed reviewed CSV/XLSX import, templates, duplicate integrity, long Job Links, and stabilization.                                             |
+
+| 30          | First-run onboarding and guided setup               | Added local starting guidance, actionable recovery states, a seeded-demo evaluation path, and accessible reversible guidance. |
 
 ## Phase 0 — Product Planning
 
