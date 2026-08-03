@@ -148,10 +148,12 @@ export function normalizeSpreadsheetRows({ table, mappings, valueMappings = {}, 
     Object.assign(values, overrides);
     const issues = [["status", status], ["source", source], ["employment_type", employment], ["highest_confirmed_stage", stage]].filter(([kind, item]) => item.issue && !Object.hasOwn(overrides, kind)).map(([kind, item]) => ({ field: kind, kind, message: item.issue, raw: item.raw }));
     ["date_saved", "date_applied", "follow_up_date"].forEach((field) => { const result = normalizeDateValue(raw(field), dateOrders[field], table.date1904); if (!Object.hasOwn(overrides, field) && (result.issue || result.ambiguous)) issues.push({ field, message: result.ambiguous ? `Choose the date order for “${result.raw}”.` : result.issue, raw: result.raw }); });
-    if (resumeRaw && !resolvedResume && resumeMatches.length !== 1) issues.push({ field: "resume_version_id", message: resumeMatches.length ? `Choose which resume named “${resumeRaw}” to use.` : `Choose a resume for “${resumeRaw}” or leave it unassigned.`, raw: resumeRaw });
+    const hasResumeOverride = Object.hasOwn(overrides, "resume_version_id");
+    const validResumeOverride = values.resume_version_id === null || resumeVersions.some((resume) => String(resume.id) === String(values.resume_version_id));
+    if (resumeRaw && !resolvedResume && (!hasResumeOverride || !validResumeOverride) && resumeMatches.length !== 1) issues.push({ field: "resume_version_id", message: resumeMatches.length ? `Choose which resume named “${resumeRaw}” to use.` : `Choose a resume for “${resumeRaw}” or leave it unassigned.`, raw: resumeRaw });
     issues.forEach((issue) => { if (!issue.kind && ["date_saved", "date_applied", "follow_up_date"].includes(issue.field)) issue.kind = issue.field; if (issue.field === "resume_version_id") issue.kind = "resume_version_name"; });
     if (!values.company_name) issues.push({ field: "company_name", message: "Company is required." }); if (!values.role_title) issues.push({ field: "role_title", message: "Role is required." });
-    if (!Object.hasOwn(overrides, "job_link") && link && !getOpenableJobLink(values.job_link)) issues.push({ field: "job_link", message: "Job Link must be an HTTP or HTTPS link, or be cleared." });
+    if (values.job_link && !getOpenableJobLink(values.job_link)) issues.push({ field: "job_link", message: "Job Link must be an HTTP or HTTPS link, or be cleared." });
     issues.push(...textIssues(values));
     if (values.status === "Saved" && values.date_applied) issues.push({ field: "date_applied", message: "Saved applications cannot have a Date Applied." });
     if (["Rejected", "Withdrawn"].includes(values.status) && !values.highest_confirmed_stage && !values.date_applied) issues.push({ field: "highest_confirmed_stage", message: "Choose whether this terminal application was submitted." });

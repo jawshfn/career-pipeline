@@ -18,7 +18,7 @@ describe("DataPage", () => {
     expect(markup).toContain("Import applications");
     expect(markup).toContain("Export &amp; backup");
     expect(markup).toContain("Restore workspace");
-    expect(markup).toContain("CSV or XLSX spreadsheet");
+    expect(markup).toContain("CSV or Excel tracker");
     expect(markup).toContain("Prepare or standardize a spreadsheet");
   });
 

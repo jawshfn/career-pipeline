@@ -2,15 +2,50 @@ import { describe, expect, it } from "vitest";
 
 import { buildTable, createSheet } from "./spreadsheetIntake.js";
 import { buildImportedDetails, importPayload, normalizeDateValue, normalizeSpreadsheetRows } from "./spreadsheetNormalization.js";
+import { reviewStateFor } from "../components/import/spreadsheetImportReviewState.js";
 
-const mappings = { 0: { key: "company_name" }, 1: { key: "role_title" }, 2: { key: "status" }, 3: { key: "date_applied" }, 4: { key: "resume_version_name" } };
+const mappings = { 0: { key: "company_name" }, 1: { key: "role_title" }, 2: { key: "status" }, 3: { key: "date_applied" }, 4: { key: "resume_version_name" }, 5: { key: "highest_confirmed_stage" } };
 
 function normalized(values, options = {}) {
-  const table = buildTable(createSheet("Tracker", [["Company", "Role", "Status", "Applied", "Resume"], values]), 1);
+  const table = buildTable(createSheet("Tracker", [["Company", "Role", "Status", "Applied", "Resume", "Highest Stage"], values]), 1);
   return normalizeSpreadsheetRows({ table, mappings, ...options })[0];
 }
 
 describe("spreadsheet normalization", () => {
+  it("keeps a valid Saved row ready and lets a row-specific date correction resolve Saved plus Date Applied", () => {
+    const saved = normalized(["Acme", "Engineer", "Saved", "", "", ""]);
+    const needsReview = normalized(["Acme", "Engineer", "Saved", "2026-07-04", "", ""]);
+    const corrected = normalized(["Acme", "Engineer", "Saved", "2026-07-04", "", ""], { rowOverrides: { 2: { date_applied: null } } });
+    const statusCorrected = normalized(["Acme", "Engineer", "Saved", "2026-07-04", "", ""], { rowOverrides: { 2: { status: "Applied" } } });
+
+    expect(reviewStateFor(saved)).toBe("Ready");
+    expect(needsReview.issues).toEqual(expect.arrayContaining([expect.objectContaining({ field: "date_applied", message: "Saved applications cannot have a Date Applied." })]));
+    expect(reviewStateFor(corrected)).toBe("Ready");
+    expect(reviewStateFor(statusCorrected)).toBe("Ready");
+  });
+
+  it("recalculates active and terminal history after row-specific stage corrections", () => {
+    const active = normalized(["Acme", "Engineer", "Interview", "", "", "Applied"]);
+    const activeCorrected = normalized(["Acme", "Engineer", "Interview", "", "", "Applied"], { rowOverrides: { 2: { highest_confirmed_stage: "Interview" } } });
+    const terminal = normalized(["Acme", "Engineer", "Rejected", "", "", ""]);
+    const terminalCorrected = normalized(["Acme", "Engineer", "Rejected", "", "", ""], { rowOverrides: { 2: { highest_confirmed_stage: "Saved" } } });
+
+    expect(active.issues).toEqual(expect.arrayContaining([expect.objectContaining({ field: "highest_confirmed_stage", message: "Highest Stage Reached cannot be below current status." })]));
+    expect(reviewStateFor(activeCorrected)).toBe("Ready");
+    expect(terminal.issues).toEqual(expect.arrayContaining([expect.objectContaining({ field: "highest_confirmed_stage", message: "Choose whether this terminal application was submitted." })]));
+    expect(reviewStateFor(terminalCorrected)).toBe("Ready");
+  });
+
+  it("treats an explicit resume assignment or deliberate unassignment as a row-level resolution", () => {
+    const unresolved = normalized(["Acme", "Engineer", "Saved", "", "Unknown resume", ""]);
+    const assigned = normalized(["Acme", "Engineer", "Saved", "", "Unknown resume", ""], { resumeVersions: [{ id: 7, name: "Targeted resume" }], rowOverrides: { 2: { resume_version_id: 7 } } });
+    const unassigned = normalized(["Acme", "Engineer", "Saved", "", "Unknown resume", ""], { rowOverrides: { 2: { resume_version_id: null } } });
+
+    expect(unresolved.issues).toEqual(expect.arrayContaining([expect.objectContaining({ field: "resume_version_id" })]));
+    expect(reviewStateFor(assigned)).toBe("Ready");
+    expect(reviewStateFor(unassigned)).toBe("Ready");
+  });
+
   it("requires a decision for unknown categorical values and preserves source row numbers", () => {
     const row = normalized(["Acme", "Engineer", "Maybe", "", ""]);
     expect(row.sourceRowNumber).toBe(2);
