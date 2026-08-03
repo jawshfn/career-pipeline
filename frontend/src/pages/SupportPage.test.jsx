@@ -93,6 +93,7 @@ describe("SupportPage", () => {
     expect(markup).toContain("Suggested demo walkthrough");
     expect(markup).toContain("reload restores the seeded workspace");
     ["Review Reminders.", "Explore the featured application.", "Open Status Board.", "View Outcome Insights.", "Open Data &amp; Import."].forEach((stop) => expect(markup).toContain(stop));
+    expect((markup.match(/support-workflow-step-description/g) || [])).toHaveLength(5);
     expect(markup).toContain("Local app only");
     expect(markup).toContain("Recommended in demo");
     expect(markup).toContain("Paste copied job-posting text to explore the review and save workflow");

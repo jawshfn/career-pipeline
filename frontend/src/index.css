@@ -762,7 +762,7 @@ a {
 
 .support-workflow-list {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
   margin: 0;
   padding: 0;
@@ -2449,6 +2449,12 @@ a {
   background: rgba(255, 255, 255, .7);
   counter-increment: support-step;
 }
+.support-workflow-list li > strong {
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.support-workflow-step-description { grid-column: 1 / -1; }
 .support-workflow-list li::before {
   display: grid;
   place-items: center;
