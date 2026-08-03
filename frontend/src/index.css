@@ -4109,6 +4109,26 @@ textarea:focus-visible {
 .import-readiness-panel { display: grid; gap: 8px; }
 .import-readiness-panel h3, .import-readiness-panel p { margin: 0; }
 .review-row-ready { margin: 0; color: #1f5f45; font-weight: 700; }
+.spreadsheet-import-completion { align-items: start; }
+.spreadsheet-import-completion-card { display: grid; gap: 20px; width: min(100%, 760px); padding: 24px; border-color: #a9d6c8; background: #f7fcf9; }
+.spreadsheet-import-completion-heading { display: flex; align-items: flex-start; gap: 14px; }
+.spreadsheet-import-completion-mark { display: grid; flex: 0 0 auto; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: #1f5f45; background: #dff3e9; font-weight: 900; line-height: 1; }
+.spreadsheet-import-completion-heading p { margin: 0; color: #52605d; }
+.spreadsheet-import-completion-heading p:first-child { color: #1f5f45; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.spreadsheet-import-completion-heading h2 { margin: 3px 0 6px; color: #17202a; font-size: 1.35rem; }
+.spreadsheet-import-completion-heading h2:focus { outline: 3px solid rgba(69, 87, 216, .32); outline-offset: 4px; }
+.spreadsheet-import-result-summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; }
+.spreadsheet-import-result-summary > div { display: grid; min-width: 120px; gap: 2px; padding: 11px 13px; border: 1px solid #c8e3d7; border-radius: 7px; background: #ffffff; }
+.spreadsheet-import-result-summary dt { color: #52605d; font-size: .82rem; font-weight: 700; }
+.spreadsheet-import-result-summary dd { margin: 0; color: #1f5f45; font-size: 1.35rem; font-weight: 900; line-height: 1.1; }
+.spreadsheet-import-override-note, .spreadsheet-import-demo-note { margin: -8px 0 0; color: #315a4b; font-size: .9rem; }
+.spreadsheet-import-completion-actions { align-items: center; }
+@media (max-width: 560px) {
+  .spreadsheet-import-completion-card { padding: 18px; }
+  .spreadsheet-import-result-summary > div { flex: 1 1 130px; }
+  .spreadsheet-import-completion-actions { align-items: stretch; }
+  .spreadsheet-import-completion-actions button { width: 100%; }
+}
 .spreadsheet-value-resolution-dialog { display: grid; gap: 16px; width: min(900px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; }
 .spreadsheet-value-resolution-dialog header h3, .spreadsheet-value-resolution-dialog h4 { margin: 0; }
 .spreadsheet-value-resolution-dialog header p { margin: 6px 0 0; color: #60706d; }

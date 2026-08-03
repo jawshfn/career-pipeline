@@ -75,9 +75,10 @@ describe("SpreadsheetImportWorkflow file intake", () => {
 
   it("reads a user-selected CSV File, maps it, reviews it, confirms it, and reports completion", async () => {
     const onImport = vi.fn().mockResolvedValue({ created: [{ source_row_number: 2 }] });
+    const onViewApplications = vi.fn();
     const onUnsavedChangesChange = vi.fn();
     await act(async () => {
-      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={onImport} onViewApplications={vi.fn()} onUnsavedChangesChange={onUnsavedChangesChange} />);
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={onImport} onViewApplications={onViewApplications} onUnsavedChangesChange={onUnsavedChangesChange} />);
     });
 
     const input = container.querySelector('input[type="file"]');
@@ -117,12 +118,31 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     expect(container.querySelector('[role="dialog"]').className).not.toContain("spreadsheet-preview-dialog");
 
     await act(async () => {
+      window.matchMedia.mockReturnValue({ matches: true });
       [...container.querySelectorAll("button")].find((button) => button.textContent === "Import applications").click();
       await flush();
     });
     expect(onImport).toHaveBeenCalledWith(expect.objectContaining({ rows: [expect.objectContaining({ source_row_number: 2, company_name: "Acme", role_title: "Engineer", status: "Applied" })] }));
     expect(container.textContent).toContain("Import complete");
-    expect(container.textContent).toContain("Imported demo applications are temporary");
+    expect(container.querySelector(".spreadsheet-import-completion-card")).not.toBeNull();
+    expect(container.querySelector("#import-completion-heading")?.textContent).toBe("Applications imported");
+    expect(document.activeElement).toBe(container.querySelector("#import-completion-heading"));
+    expect(scrollIntoView).toHaveBeenLastCalledWith({ behavior: "auto", block: "start" });
+    expect(container.textContent).toContain("1 demo application was added for this session.");
+    expect(container.textContent).toContain("Created1");
+    expect(container.textContent).not.toContain("Skipped or excluded");
+    expect(container.textContent).not.toContain("Imported as new");
+    expect(container.textContent).toContain("Demo applications are temporary and reset when the page reloads.");
+    const viewImported = [...container.querySelectorAll("button")].find((button) => button.textContent === "View imported applications");
+    expect(viewImported.className).not.toContain("secondary-button");
+    await act(async () => { viewImported.click(); await flush(); });
+    expect(onViewApplications).toHaveBeenCalledTimes(1);
+    const restart = [...container.querySelectorAll("button")].find((button) => button.textContent === "Import another spreadsheet");
+    expect(restart.className).toContain("secondary-button");
+    await act(async () => { restart.click(); await flush(); });
+    expect(container.textContent).toContain("1. Upload spreadsheet");
+    expect(container.textContent).not.toContain("Applications imported");
+    expect(container.querySelector('input[type="file"]')).not.toBeNull();
   });
 
   it("supports switching an uploaded sheet to headerless mode and removing it without accidental import", async () => {
@@ -432,6 +452,30 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     await act(async () => { confirm.click(); confirm.click(); await flush(); });
     expect(onImport).toHaveBeenCalledTimes(1);
     await act(async () => { completeImport({ created: [] }); await flush(); });
+  });
+
+  it("shows excluded rows and duplicate approvals as contextual completion results", async () => {
+    const onImport = vi.fn().mockResolvedValue({ created: [{ source_row_number: 2 }] });
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode={false} applications={[{ id: 9, company_name: "Acme", role_title: "Engineer", job_link: "https://example.test/acme" }]} resumeVersions={[]} onImport={onImport} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const input = container.querySelector('input[type="file"]');
+    Object.defineProperty(input, "files", { configurable: true, value: [csvFile("Company,Role,Job Link\nAcme,Engineer,https://example.test/acme\nBeta,Analyst,https://example.test/beta")] });
+    await act(async () => { input.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Confirm mapping").click(); await flush(); });
+    const filter = [...container.querySelectorAll("select")].find((select) => select.parentElement.textContent.includes("Review state"));
+    await act(async () => { filter.value = "All"; filter.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Review").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import as new").click(); [...container.querySelectorAll("button")].find((button) => button.textContent === "Back to review table").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Exclude from import").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import 1 applications").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import applications").click(); await flush(); });
+
+    expect(container.textContent).toContain("1 application was added to this local workspace.");
+    expect(container.textContent).toContain("Created1");
+    expect(container.textContent).toContain("Skipped or excluded1");
+    expect(container.textContent).toContain("Imported as new1");
+    expect(container.textContent).toContain("Imported as new is included in the created total.");
   });
 
   it("keeps reviewed rows dirty and associates a controlled batch error with its source row", async () => {
