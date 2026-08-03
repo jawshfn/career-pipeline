@@ -15,10 +15,44 @@ const staleApplication = { ...overdueApplication, company_name: "Harbor Works", 
 const actionItems = ({ overdue = [], upcoming = [], stale = [] } = {}) => ({ overdue_followups: overdue, upcoming_followups: upcoming, stale_applications: stale });
 
 describe("CommandCenterPage", () => {
-  let container; let root;
-  beforeEach(() => { resetStaleResourcesForTests(); globalThis.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); });
+  let container; let root; let localStorage;
+  beforeEach(() => { resetStaleResourcesForTests(); const values = new Map(); localStorage = { clear: () => values.clear(), getItem: (key) => values.get(key) || null, setItem: (key, value) => values.set(key, value) }; Object.defineProperty(window, "localStorage", { configurable: true, value: localStorage }); globalThis.IS_REACT_ACT_ENVIRONMENT = true; container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container); });
   afterEach(async () => { await act(async () => root.unmount()); container.remove(); resetStaleResourcesForTests(); vi.clearAllMocks(); });
-  async function renderPage(items, onApplyFollowUpAction = vi.fn().mockResolvedValue({}), onOpenApplication = vi.fn()) { mocks.getApplicationActionItems.mockResolvedValue(items); await act(async () => { root.render(<CommandCenterPage onApplyFollowUpAction={onApplyFollowUpAction} onOpenApplication={onOpenApplication} />); await Promise.resolve(); await Promise.resolve(); }); return { onApplyFollowUpAction, onOpenApplication }; }
+  async function renderPage(items, onApplyFollowUpAction = vi.fn().mockResolvedValue({}), onOpenApplication = vi.fn(), options = {}) { mocks.getApplicationActionItems.mockResolvedValue(items); const onNavigate = options.onNavigate || vi.fn(); await act(async () => { root.render(<CommandCenterPage applications={options.applications} isDemoMode={options.isDemoMode} onApplyFollowUpAction={onApplyFollowUpAction} onNavigate={onNavigate} onOpenApplication={onOpenApplication} />); await Promise.resolve(); await Promise.resolve(); }); return { onApplyFollowUpAction, onNavigate, onOpenApplication }; }
+
+  it("renders the empty local starting surface above ordinary reminder content and navigates its actions", async () => {
+    const { onNavigate } = await renderPage(actionItems(), vi.fn(), vi.fn(), { applications: [] });
+    expect(container.textContent).toContain("Start your job search workspace");
+    expect(container.textContent).toContain("No urgent follow-ups today");
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Add one job").click());
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Import a tracker").click());
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Learn how PursuitHQ works").click());
+    expect(onNavigate.mock.calls).toEqual([["quick-add"], ["data"], ["support"]]);
+    await act(async () => container.querySelector('[aria-label="Dismiss getting started panel"]').click());
+    expect(container.textContent).not.toContain("Start your job search workspace");
+    expect(localStorage.getItem("pursuithq:onboarding:local:v1")).toBe("dismissed");
+  });
+
+  it("opens the single getting-started application with its id", async () => {
+    const onOpenApplication = vi.fn();
+    await renderPage(actionItems(), vi.fn(), onOpenApplication, { applications: [{ ...overdueApplication, follow_up_date: null, next_action: "", resume_version_id: null }] });
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Open your application").click());
+    expect(onOpenApplication).toHaveBeenCalledWith(overdueApplication.id);
+  });
+
+  it("shows the demo evaluator panel for seeded data and stores dismissal separately", async () => {
+    const onOpenApplication = vi.fn(); const onNavigate = vi.fn();
+    await renderPage(actionItems(), vi.fn(), onOpenApplication, { applications: [{ ...overdueApplication, id: 3 }, { ...overdueApplication, id: 4 }], isDemoMode: true, onNavigate });
+    expect(container.textContent).toContain("Explore the PursuitHQ demo");
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Explore featured application").click());
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "View Outcome Insights").click());
+    expect(onOpenApplication).toHaveBeenCalledWith(3);
+    expect(onNavigate).toHaveBeenCalledWith("insights");
+    await act(async () => container.querySelector('[aria-label="Dismiss getting started panel"]').click());
+    expect(container.textContent).not.toContain("Explore the PursuitHQ demo");
+    expect(localStorage.getItem("pursuithq:onboarding:demo:v1")).toBe("dismissed");
+    expect(localStorage.getItem("pursuithq:onboarding:local:v1")).toBeNull();
+  });
 
   it("keeps populated sections in urgency order and preserves the daily header", async () => {
     await renderPage(actionItems({ overdue: [overdueApplication], upcoming: [upcomingApplication], stale: [staleApplication] }));

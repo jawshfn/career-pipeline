@@ -360,7 +360,10 @@ export default function App() {
     <AppLayout activePage={activePage} isDemoMode={demoMode} onNavigate={navigateToPage}>
       {activePage === "command-center" ? (
         <CommandCenterPage
+          applications={applications}
+          isDemoMode={demoMode}
           onApplyFollowUpAction={handleFollowUpAction}
+          onNavigate={navigateToPage}
           onOpenApplication={handleOpenApplicationDetails}
         />
       ) : activePage === "dashboard" ? (

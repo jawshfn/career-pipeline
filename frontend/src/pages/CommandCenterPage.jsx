@@ -5,6 +5,10 @@ import { fetchResource, getCachedResource } from "../services/staleResource.js";
 import CommandCenterSection from "../components/command-center/CommandCenterSection.jsx";
 import DailyRemindersHeader from "../components/command-center/DailyRemindersHeader.jsx";
 import FollowUpActionDialog from "../components/command-center/FollowUpActionDialog.jsx";
+import StartingSurface from "../components/command-center/StartingSurface.jsx";
+import { getOnboardingState } from "../components/command-center/onboardingState.js";
+import { isArchivedApplication } from "../utils/applicationReviewRows.js";
+import { FEATURED_DEMO_APPLICATION_ID } from "../demo/demoApplications.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 
@@ -18,7 +22,7 @@ function normalizeActionItems(actionItems) {
   };
 }
 
-export default function CommandCenterPage({ onApplyFollowUpAction, onOpenApplication }) {
+export default function CommandCenterPage({ applications = [], isDemoMode = false, onApplyFollowUpAction, onNavigate = () => {}, onOpenApplication }) {
   const cachedActionItems = getCachedResource("reminder-action-items");
   const [actionItems, setActionItems] = useState(() => cachedActionItems ? normalizeActionItems(cachedActionItems) : emptyActionItems);
   const [actionItemsError, setActionItemsError] = useState("");
@@ -94,8 +98,11 @@ export default function CommandCenterPage({ onApplyFollowUpAction, onOpenApplica
   }
 
   const hasActionItems = actionItems.overdue_followups.length > 0 || actionItems.upcoming_followups.length > 0 || actionItems.stale_applications.length > 0;
+  const onboardingState = getOnboardingState({ applications, isDemoMode });
+  const onboardingApplication = isDemoMode ? applications.find((application) => application.id === FEATURED_DEMO_APPLICATION_ID) : applications.find((application) => !isArchivedApplication(application));
   return <div className="command-center-page">
     <DailyRemindersHeader />
+    {onboardingState === "empty" || onboardingState === "getting-started" ? <StartingSurface application={onboardingApplication} isDemoMode={isDemoMode} onNavigate={onNavigate} onOpenApplication={onOpenApplication} /> : null}
     {!isActionItemsLoading && actionMessage ? <div className="message command-center-message" role="status">{actionMessage}</div> : null}
     {isActionItemsLoading ? <LoadingState message="Loading action items..." /> : null}
     {!isActionItemsLoading && actionItemsError ? <ErrorMessage message={actionItemsError} /> : null}
