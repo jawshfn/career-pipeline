@@ -2,6 +2,7 @@ import {
   DEFAULT_APPLICATION_SOURCE,
   EMPLOYMENT_TYPE_OPTIONS,
   FOLLOW_UP_EXCLUDED_STATUSES,
+  JOB_LINK_MAX_LENGTH,
   PROGRESSION_STAGES,
   SOURCE_OPTIONS,
   STALE_EXCLUDED_STATUSES,
@@ -202,7 +203,7 @@ const IMPORT_STATUSES = new Set(USER_SELECTABLE_APPLICATION_STATUSES);
 const IMPORT_SOURCES = new Set(SOURCE_OPTIONS);
 const IMPORT_EMPLOYMENT_TYPES = new Set(EMPLOYMENT_TYPE_OPTIONS.filter(Boolean));
 const IMPORT_TEXT_LIMITS = {
-  job_link: 500, location: 160, compensation: 160, next_action: 10_000,
+  job_link: JOB_LINK_MAX_LENGTH, location: 160, compensation: 160, next_action: 10_000,
   contact_name: 160, contact_info: 10_000, prep_notes: 10_000, notes: 10_000,
   job_description: 10_000, red_flags_notes: 10_000,
 };

@@ -33,3 +33,7 @@ Deleting an application removes its activities. Removing a resume version requir
 ## AI persistence boundary
 
 Job Intelligence Briefs use the `application_ai_briefs` one-to-one SQLite table. The latest validated brief, source fingerprint, and generation metadata are stored locally with its application. The gateway does not persist workspace data; demo briefs remain in memory until reload.
+
+# Job Links
+
+Job Links support HTTP and HTTPS posting URLs up to 2,048 characters. PursuitHQ preserves the complete URL, including query parameters, rather than silently truncating it.

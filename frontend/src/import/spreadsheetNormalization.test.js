@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildTable, createSheet } from "./spreadsheetIntake.js";
 import { buildImportedDetails, importPayload, normalizeDateValue, normalizeSpreadsheetRows } from "./spreadsheetNormalization.js";
 import { reviewStateFor } from "../components/import/spreadsheetImportReviewState.js";
+import { JOB_LINK_MAX_LENGTH } from "../constants/applicationConstants.js";
 
 const mappings = { 0: { key: "company_name" }, 1: { key: "role_title" }, 2: { key: "status" }, 3: { key: "date_applied" }, 4: { key: "resume_version_name" }, 5: { key: "highest_confirmed_stage" } };
 
@@ -11,7 +12,36 @@ function normalized(values, options = {}) {
   return normalizeSpreadsheetRows({ table, mappings, ...options })[0];
 }
 
+function jobLinkOfLength(length, suffix = "") {
+  const prefix = "https://example.com/jobs/platform-engineer?tracking=";
+  return `${prefix}${"x".repeat(length - prefix.length - suffix.length)}${suffix}`;
+}
+
 describe("spreadsheet normalization", () => {
+  it("keeps 501- and 2,048-character job links intact and reports 2,049 with the Job Link contract", () => {
+    const jobMappings = { 0: { key: "company_name" }, 1: { key: "role_title" }, 2: { key: "job_link" } };
+    const links = [jobLinkOfLength(501), jobLinkOfLength(JOB_LINK_MAX_LENGTH), jobLinkOfLength(JOB_LINK_MAX_LENGTH + 1)];
+    const table = buildTable(createSheet("Tracker", [["Company", "Role", "Job Link"], ["One", "Engineer", links[0]], ["Two", "Engineer", links[1]], ["Three", "Engineer", links[2]]]), 1);
+    const rows = normalizeSpreadsheetRows({ table, mappings: jobMappings });
+
+    expect(rows[0].values.job_link).toBe(links[0]);
+    expect(rows[1].values.job_link).toBe(links[1]);
+    expect(rows[0].issues).not.toEqual(expect.arrayContaining([expect.objectContaining({ field: "job_link" })]));
+    expect(rows[1].issues).not.toEqual(expect.arrayContaining([expect.objectContaining({ field: "job_link" })]));
+    expect(rows[2].issues).toEqual(expect.arrayContaining([{ field: "job_link", message: "Job Link must be no longer than 2,048 characters." }]));
+  });
+
+  it("uses the complete long job link for duplicate detection", () => {
+    const jobMappings = { 0: { key: "company_name" }, 1: { key: "role_title" }, 2: { key: "job_link" } };
+    const original = jobLinkOfLength(700, "a");
+    const distinct = jobLinkOfLength(700, "b");
+    const table = buildTable(createSheet("Tracker", [["Company", "Role", "Job Link"], ["New company", "New role", distinct]]), 1);
+    const [row] = normalizeSpreadsheetRows({ table, mappings: jobMappings, existingApplications: [{ company_name: "Existing", role_title: "Existing role", job_link: original }] });
+
+    expect(row.duplicate).toBeNull();
+    expect(row.excluded).toBe(false);
+  });
+
   it("keeps a valid Saved row ready and lets a row-specific date correction resolve Saved plus Date Applied", () => {
     const saved = normalized(["Acme", "Engineer", "Saved", "", "", ""]);
     const needsReview = normalized(["Acme", "Engineer", "Saved", "2026-07-04", "", ""]);

@@ -2,6 +2,7 @@ from datetime import date
 
 import pytest
 
+from app.domain import JOB_LINK_MAX_LENGTH
 from app.models import Application, ApplicationActivity
 
 
@@ -15,6 +16,11 @@ def import_row(number: int, **overrides):
     }
     row.update(overrides)
     return row
+
+
+def job_link_of_length(length: int, suffix: str = "") -> str:
+    prefix = "https://example.com/jobs/platform-engineer?tracking="
+    return prefix + "x" * (length - len(prefix) - len(suffix)) + suffix
 
 
 def test_import_batch_creates_rows_without_defaulting_date_applied_or_activity(client, db_session):
@@ -32,6 +38,35 @@ def test_import_batch_creates_rows_without_defaulting_date_applied_or_activity(c
     assert db_session.query(Application).count() == 2
     assert db_session.query(Application).filter(Application.company_name == "Company 4").one().date_applied is None
     assert db_session.query(ApplicationActivity).count() == 0
+
+
+@pytest.mark.parametrize("length", [501, JOB_LINK_MAX_LENGTH])
+def test_import_batch_preserves_long_job_links(client, db_session, length):
+    job_link = job_link_of_length(length)
+    response = client.post("/api/applications/import-batch", json={"rows": [import_row(4, job_link=job_link)]})
+
+    assert response.status_code == 201
+    assert response.json()["created"][0]["application"]["job_link"] == job_link
+    assert db_session.query(Application).one().job_link == job_link
+
+
+def test_import_batch_rejects_overlong_job_link_without_creating_rows(client, db_session):
+    response = client.post("/api/applications/import-batch", json={"rows": [import_row(4), import_row(5, job_link=job_link_of_length(JOB_LINK_MAX_LENGTH + 1))]})
+
+    assert response.status_code == 422
+    assert db_session.query(Application).count() == 0
+
+
+def test_import_duplicate_detection_uses_complete_long_job_links(client, db_session):
+    original = job_link_of_length(700, "a")
+    db_session.add(Application(company_name="Existing", role_title="Engineer", status="Applied", source="LinkedIn", date_saved=date.today(), furthest_stage="Applied", job_link=original))
+    db_session.commit()
+
+    exact = client.post("/api/applications/import-batch", json={"rows": [import_row(4, job_link=original)]})
+    distinct = client.post("/api/applications/import-batch", json={"rows": [import_row(5, job_link=job_link_of_length(700, "b"))]})
+
+    assert exact.status_code == 409
+    assert distinct.status_code == 201
 
 
 def test_import_batch_rejects_duplicate_and_rolls_back_every_row(client, db_session):

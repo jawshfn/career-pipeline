@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, Strict
 from .domain import (
     ALLOWED_APPLICATION_STATUSES,
     ARCHIVED_APPLICATION_STATUS,
+    JOB_LINK_MAX_LENGTH,
     PROGRESSION_STAGES,
     SAVED_APPLICATION_STATUS,
     SOURCE_ORDER,
@@ -16,7 +17,7 @@ from .domain import (
 
 
 class ApplicationBase(BaseModel):
-    job_link: str | None = None
+    job_link: str | None = Field(default=None, max_length=JOB_LINK_MAX_LENGTH)
     source: str = "Other"
     status: str = SAVED_APPLICATION_STATUS
     location: str | None = None
@@ -68,7 +69,7 @@ class ApplicationCreate(ApplicationBase):
 class ApplicationUpdate(BaseModel):
     company_name: str | None = Field(default=None, min_length=1)
     role_title: str | None = Field(default=None, min_length=1)
-    job_link: str | None = None
+    job_link: str | None = Field(default=None, max_length=JOB_LINK_MAX_LENGTH)
     source: str | None = None
     status: str | None = None
     location: str | None = None
@@ -127,7 +128,7 @@ class ApplicationImportRow(BaseModel):
     role_title: StrictStr = Field(min_length=1, max_length=160)
     status: str = SAVED_APPLICATION_STATUS
     source: str = "Other"
-    job_link: StrictStr | None = Field(default=None, max_length=500)
+    job_link: StrictStr | None = Field(default=None, max_length=JOB_LINK_MAX_LENGTH)
     location: StrictStr | None = Field(default=None, max_length=160)
     compensation: StrictStr | None = Field(default=None, max_length=160)
     employment_type: str | None = None
@@ -403,7 +404,7 @@ class GreenhouseImportRequest(BaseModel):
 
 
 class CustomGreenhouseImportRequest(BaseModel):
-    job_url: str = Field(min_length=1, max_length=2048)
+    job_url: str = Field(min_length=1, max_length=JOB_LINK_MAX_LENGTH)
 
 
 class GreenhousePayRangeRead(BaseModel):
@@ -455,7 +456,7 @@ class LeverJobImportRead(BaseModel):
 
 
 MAX_BROWSER_CAPTURE_TEXT_LENGTH = 100_000
-MAX_BROWSER_CAPTURE_URL_LENGTH = 2_048
+MAX_BROWSER_CAPTURE_URL_LENGTH = JOB_LINK_MAX_LENGTH
 BROWSER_CAPTURE_TOKEN_PATTERN = r"^[A-Za-z0-9_-]{32,128}$"
 ZIPRECRUITER_SEARCH_PATH_PATTERN = re.compile(r"^/jobs-search(?:/[1-9]\d*)?/?$")
 HANDSHAKE_JOB_PATH_PATTERN = re.compile(r"^/jobs/[1-9]\d*/?$")

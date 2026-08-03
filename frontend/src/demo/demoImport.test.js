@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getDemoExportSnapshot, importDemoApplications, resetDemoState } from "./demoStore.js";
 import { importApplicationsBatch } from "./demoApplicationsApi.js";
+import { JOB_LINK_MAX_LENGTH } from "../constants/applicationConstants.js";
 
 function row(overrides = {}) {
   return {
@@ -13,6 +14,11 @@ function row(overrides = {}) {
     date_applied: "2026-07-04",
     ...overrides,
   };
+}
+
+function jobLinkOfLength(length) {
+  const prefix = "https://example.com/jobs/platform-engineer?tracking=";
+  return `${prefix}${"x".repeat(length - prefix.length)}`;
 }
 
 describe("demo spreadsheet import parity", () => {
@@ -46,6 +52,18 @@ describe("demo spreadsheet import parity", () => {
       row({ job_link: "javascript:alert(1)" }),
     ];
     for (const invalid of invalidRows) expect(() => importDemoApplications({ rows: [invalid] })).toThrow();
+  });
+
+  it("accepts full 501- and 2,048-character job links and rejects 2,049 atomically", () => {
+    const accepted = importDemoApplications({ rows: [
+      row({ source_row_number: 51, company_name: "Long one", job_link: jobLinkOfLength(501) }),
+      row({ source_row_number: 52, company_name: "Long two", job_link: jobLinkOfLength(JOB_LINK_MAX_LENGTH) }),
+    ] });
+    expect(accepted.created.map((item) => item.application.job_link)).toEqual([jobLinkOfLength(501), jobLinkOfLength(JOB_LINK_MAX_LENGTH)]);
+
+    const before = getDemoExportSnapshot();
+    expect(() => importDemoApplications({ rows: [row({ source_row_number: 53, job_link: jobLinkOfLength(JOB_LINK_MAX_LENGTH + 1) })] })).toThrow();
+    expect(getDemoExportSnapshot().applications).toHaveLength(before.applications.length);
   });
 
   it("rejects exact duplicates by default, permits reviewed overrides, and leaves failed batches unchanged", () => {

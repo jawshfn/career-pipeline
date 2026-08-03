@@ -1,5 +1,5 @@
 import { getOpenableJobLink, normalizeExplicitJobLink } from "../utils/jobLinks.js";
-import { PROGRESSION_STAGES, SOURCE_OPTIONS, EMPLOYMENT_TYPE_OPTIONS } from "../constants/applicationConstants.js";
+import { EMPLOYMENT_TYPE_OPTIONS, JOB_LINK_MAX_LENGTH, PROGRESSION_STAGES, SOURCE_OPTIONS } from "../constants/applicationConstants.js";
 
 export const IMPORT_STATUSES = ["Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer", "Rejected", "Withdrawn"];
 const STATUS_ALIASES = new Map([
@@ -10,7 +10,7 @@ const STATUS_ALIASES = new Map([
 const SOURCE_ALIASES = new Map([["linkedin jobs", "LinkedIn"], ["company site", "Company Website"], ["careers page", "Company Website"], ["employee referral", "Referral"], ["recruiter outreach", "Recruiter"]]);
 const EMPLOYMENT_ALIASES = new Map([["full time", "Full-time"], ["part time", "Part-time"], ["intern", "Internship"], ["temp", "Temporary"]]);
 const IMPORT_TEXT_LIMITS = Object.freeze({
-  company_name: 160, role_title: 160, job_link: 500, location: 160, compensation: 160,
+  company_name: 160, role_title: 160, job_link: JOB_LINK_MAX_LENGTH, location: 160, compensation: 160,
   next_action: 10_000, contact_name: 160, contact_info: 10_000, prep_notes: 10_000,
   notes: 10_000, job_description: 10_000, red_flags_notes: 10_000,
 });
@@ -91,7 +91,7 @@ export function buildImportedDetails(existing, entries) {
 function textIssues(values) {
   return Object.entries(IMPORT_TEXT_LIMITS)
     .filter(([field, limit]) => values[field] && characterCount(values[field]) > limit)
-    .map(([field, limit]) => ({ field, message: `${field === "company_name" ? "Company" : field === "role_title" ? "Role" : field.replace(/_/gu, " ")} must be no longer than ${limit.toLocaleString()} characters.` }));
+    .map(([field, limit]) => ({ field, message: `${field === "company_name" ? "Company" : field === "role_title" ? "Role" : field === "job_link" ? "Job Link" : field.replace(/_/gu, " ")} must be no longer than ${limit.toLocaleString()} characters.` }));
 }
 
 function jobLinkKey(value) {

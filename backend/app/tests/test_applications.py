@@ -3,7 +3,7 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from app.domain import ACTIVE_APPLICATION_STATUSES, PROGRESSION_STAGES
+from app.domain import ACTIVE_APPLICATION_STATUSES, JOB_LINK_MAX_LENGTH, PROGRESSION_STAGES
 from app.routers.applications import ai_source_fingerprint
 from app.schemas import ApplicationStatusTransitionRequest, OutcomeHistoryCorrectionRequest
 
@@ -16,6 +16,11 @@ def create_application(client, **overrides):
     }
     payload.update(overrides)
     return client.post("/api/applications", json=payload)
+
+
+def job_link_of_length(length: int) -> str:
+    prefix = "https://example.com/jobs/platform-engineer?tracking="
+    return prefix + "x" * (length - len(prefix))
 
 
 def test_ai_source_fingerprint_matches_frontend_unicode_parity_fixture():
@@ -60,6 +65,24 @@ def test_create_application(client):
     assert data["contact_info"] is None
     assert data["prep_notes"] is None
     assert data["job_description"] is None
+
+
+@pytest.mark.parametrize("length", [501, JOB_LINK_MAX_LENGTH])
+def test_create_and_update_preserve_long_job_links(client, length):
+    job_link = job_link_of_length(length)
+    created = create_application(client, job_link=job_link).json()
+
+    assert created["job_link"] == job_link
+    updated = client.patch(f"/api/applications/{created['id']}", json={"job_link": job_link})
+    assert updated.status_code == 200
+    assert updated.json()["job_link"] == job_link
+    assert client.patch(f"/api/applications/{created['id']}", json={"job_link": None}).json()["job_link"] is None
+
+
+def test_create_and_update_reject_job_links_over_2048_characters(client):
+    assert create_application(client, job_link=job_link_of_length(JOB_LINK_MAX_LENGTH + 1)).status_code == 422
+    created = create_application(client).json()
+    assert client.patch(f"/api/applications/{created['id']}", json={"job_link": job_link_of_length(JOB_LINK_MAX_LENGTH + 1)}).status_code == 422
 
 
 def test_create_application_without_status_defaults_to_saved(client):

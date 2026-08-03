@@ -1,5 +1,6 @@
 import React from "react";
 
+import { JOB_LINK_MAX_LENGTH } from "../../constants/applicationConstants.js";
 import AutoGrowingTextarea from "../ui/AutoGrowingTextarea.jsx";
 
 export default function JobDetailsTab({
@@ -58,6 +59,7 @@ export default function JobDetailsTab({
               name="job_link"
               value={formData.job_link}
               onChange={updateField}
+              maxLength={JOB_LINK_MAX_LENGTH}
               placeholder="https://..."
             />
             <span className="field-helper">Use a full posting URL. Bare domains are opened with https://.</span>

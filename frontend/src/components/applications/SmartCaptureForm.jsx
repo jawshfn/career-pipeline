@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { DEFAULT_APPLICATION_SOURCE, SOURCE_OPTIONS } from "../../constants/applicationConstants.js";
+import { DEFAULT_APPLICATION_SOURCE, JOB_LINK_MAX_LENGTH, SOURCE_OPTIONS } from "../../constants/applicationConstants.js";
 import { buildCaptureResult, captureResultToReviewState } from "../../capture/captureEngine.js";
 import CaptureReviewForm, {
   CaptureReviewSummary as SmartCaptureReviewSummary,
@@ -137,6 +137,7 @@ export default function SmartCaptureForm({
               name="jobLink"
               value={captureData.jobLink}
               onChange={updateCaptureField}
+              maxLength={JOB_LINK_MAX_LENGTH}
               placeholder="https://..."
             />
           </label>

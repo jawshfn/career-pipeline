@@ -5,7 +5,21 @@ from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import Session
 
 from app import database
+from app.domain import JOB_LINK_MAX_LENGTH
 from app.models import Application, ApplicationActivity
+
+
+def test_sqlite_legacy_varchar_500_stores_long_job_links_and_current_metadata_uses_2048(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'legacy-job-link.db'}")
+    job_link = "https://example.com/jobs/platform-engineer?tracking=" + "x" * 1_990
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE legacy_applications (job_link VARCHAR(500))"))
+        connection.execute(text("INSERT INTO legacy_applications (job_link) VALUES (:job_link)"), {"job_link": job_link})
+        assert connection.execute(text("SELECT job_link FROM legacy_applications")).scalar_one() == job_link
+    database.Base.metadata.create_all(bind=engine)
+    job_link_column = next(column for column in inspect(engine).get_columns("applications") if column["name"] == "job_link")
+    assert job_link_column["type"].length == JOB_LINK_MAX_LENGTH
+    engine.dispose()
 
 
 def test_additive_application_columns_preserve_existing_notes_and_rows(tmp_path, monkeypatch):

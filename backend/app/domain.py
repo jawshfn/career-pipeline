@@ -12,6 +12,7 @@ ALLOWED_APPLICATION_STATUSES: tuple[str, ...] = (
 
 ARCHIVED_APPLICATION_STATUS = "Archived"
 SAVED_APPLICATION_STATUS = "Saved"
+JOB_LINK_MAX_LENGTH = 2048
 PROGRESSION_STAGES: tuple[str, ...] = ("Saved", "Applied", "Assessment", "Recruiter Screen", "Interview", "Offer")
 INTERVIEW_APPLICATION_STATUS = "Interview"
 OFFER_APPLICATION_STATUS = "Offer"

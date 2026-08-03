@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 from app.models import Application
+from app.domain import JOB_LINK_MAX_LENGTH
 from app.services.browser_text_captures import (
     BrowserTextCaptureError,
     BrowserTextCaptureStore,
@@ -30,6 +31,14 @@ def linkedin_capture_payload(**overrides):
     }
     payload.update(overrides)
     return payload
+
+
+def test_browser_capture_accepts_a_complete_2048_character_job_link(client):
+    prefix = "https://www.linkedin.com/jobs/view/123456789?tracking="
+    job_link = prefix + "x" * (JOB_LINK_MAX_LENGTH - len(prefix))
+    response = client.post("/api/browser-text-captures", json=linkedin_capture_payload(original_job_link=job_link))
+
+    assert response.status_code == 200
 
 
 def ziprecruiter_capture_payload(**overrides):

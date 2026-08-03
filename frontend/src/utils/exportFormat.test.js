@@ -6,6 +6,8 @@ import {
   createExportFilename,
   createWorkspaceBackup,
 } from "./exportFormat.js";
+import { buildTable, createSheet, parseCsvText } from "../import/spreadsheetIntake.js";
+import { importPayload, normalizeSpreadsheetRows } from "../import/spreadsheetNormalization.js";
 
 const snapshot = {
   resume_versions: [{ id: 2, name: 'Resume "Two"', is_active: false }, { id: 1, name: "Resume One", is_active: true }],
@@ -35,6 +37,19 @@ function parseCsv(csv) {
 }
 
 describe("export formatting", () => {
+  it("round-trips a complete long job link through the CSV export and spreadsheet intake", () => {
+    const jobLink = `https://example.com/jobs/platform-engineer?tracking=${"x".repeat(1_990)}`;
+    const csv = createApplicationsCsv({ ...snapshot, applications: [{ id: 9, company_name: "Fictional Co", role_title: "Engineer", status: "Saved", source: "Other", date_saved: "2026-07-21", job_link: jobLink }] });
+    const table = buildTable(createSheet("Applications", parseCsvText(csv)), 1);
+    const keys = { Company: "company_name", Role: "role_title", Status: "status", Source: "source", "Job Link": "job_link" };
+    const mappings = Object.fromEntries(table.columns.map((column) => [column.index, keys[column.name] ? { key: keys[column.name] } : { key: "" }]));
+    const [row] = normalizeSpreadsheetRows({ table, mappings });
+
+    expect(row.values.job_link).toBe(jobLink);
+    expect(row.issues).not.toEqual(expect.arrayContaining([expect.objectContaining({ field: "job_link" })]));
+    expect(importPayload([row]).rows[0].job_link).toBe(jobLink);
+  });
+
   it("creates an ordered, clone-safe workspace backup", () => {
     const backup = createWorkspaceBackup(snapshot, new Date("2026-07-21T22:30:00Z"));
 

@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
+from app.domain import JOB_LINK_MAX_LENGTH
 from app.models import Application, ApplicationActivity, ResumeVersion
 from app.routers.exports import workspace_backup_payload
 from app.services.workspace_restore_authorizations import WorkspaceRestoreAuthorizations
@@ -108,6 +109,20 @@ def test_preview_authorizes_and_restore_replaces_exact_workspace(client, db_sess
     exported = workspace_backup_payload(db_session)
     assert exported["data"] == backup["data"]
     assert _post_restore(client, raw, authorization["token"]).status_code == 409
+
+
+def test_restore_preserves_a_complete_long_job_link(client, db_session):
+    backup = _source_backup(db_session)
+    prefix = "https://example.com/jobs/platform-engineer?tracking="
+    job_link = prefix + "x" * (JOB_LINK_MAX_LENGTH - len(prefix))
+    backup["data"]["applications"][0]["job_link"] = job_link
+    raw = _raw(backup)
+    _replace_with_current_workspace(db_session)
+
+    preview = _post_preview(client, raw).json()
+    assert preview["is_valid"] is True
+    assert _post_restore(client, raw, preview["restore_authorization"]["token"]).status_code == 200
+    assert db_session.query(Application).one().job_link == job_link
 
 
 def test_restore_rejects_different_raw_text_and_workspace_changes(client, db_session):

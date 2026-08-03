@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from ..backup_format import BACKUP_FORMAT
 from ..schemas import JobBriefV2
-from ..domain import ACTIVE_APPLICATION_STATUSES, ARCHIVED_APPLICATION_STATUS, CLOSED_APPLICATION_STATUSES
+from ..domain import ACTIVE_APPLICATION_STATUSES, ARCHIVED_APPLICATION_STATUS, CLOSED_APPLICATION_STATUSES, JOB_LINK_MAX_LENGTH
 from .workspace_backup_data import workspace_content_payload
 
 MAX_RESUME_VERSIONS = 5_000
@@ -87,7 +87,7 @@ class ApplicationBackupRecord(_StrictBackupModel):
     id: StrictInt
     company_name: StrictStr
     role_title: StrictStr
-    job_link: StrictStr | None
+    job_link: StrictStr | None = Field(default=None, max_length=JOB_LINK_MAX_LENGTH)
     source: StrictStr
     status: StrictStr
     furthest_stage: StrictStr
