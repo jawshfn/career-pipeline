@@ -3,8 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import {
   getBrowserCaptureStartupState,
   clearDeletedResumeAssignments,
+  importedApplicationsFromResult,
+  mergeImportedApplications,
+  getActiveApplications,
   removeApplicationById,
   removeResumeVersionById,
+  replaceApplicationById,
   updateActiveResumeVersions,
   upsertResumeVersionToFront,
   UNSAVED_PAGE_CONFIRM_MESSAGE,
@@ -154,6 +158,44 @@ describe("resume version collection state", () => {
 describe("application collection state", () => {
   it("removes a permanently deleted application without affecting other records", () => {
     expect(removeApplicationById([{ id: 1 }, { id: "2" }, { id: 3 }], 2)).toEqual([{ id: 1 }, { id: 3 }]);
+  });
+
+  it("replaces only the authoritative application when local and demo IDs use different primitive types", () => {
+    expect(replaceApplicationById([{ id: 1, status: "Saved" }, { id: "2", status: "Applied" }], { id: 2, status: "Interview" })).toEqual([
+      { id: 1, status: "Saved" },
+      { id: 2, status: "Interview" },
+    ]);
+  });
+
+  it("keeps legacy Archived-status records out of active workspace views", () => {
+    expect(getActiveApplications([
+      { id: 1, status: "Applied", is_archived: false },
+      { id: 2, status: "Archived", is_archived: false },
+      { id: 3, status: "Rejected", is_archived: true },
+    ])).toEqual([{ id: 1, status: "Applied", is_archived: false }]);
+  });
+
+  it("merges imported applications once, lets the import response replace matching state, and keeps compatibility archives", () => {
+    const existing = [
+      { id: 1, company_name: "Existing" },
+      { id: 2, company_name: "Archived", is_archived: true },
+    ];
+    const created = [
+      { id: 3, company_name: "New" },
+      { id: 1, company_name: "Authoritative replacement" },
+      { id: 3, company_name: "Duplicate callback record" },
+    ];
+
+    expect(mergeImportedApplications(existing, created)).toEqual([
+      { id: 3, company_name: "New" },
+      { id: 1, company_name: "Authoritative replacement" },
+      { id: 2, company_name: "Archived", is_archived: true },
+    ]);
+  });
+
+  it("rejects a malformed import response before it can change App state", () => {
+    expect(() => importedApplicationsFromResult({ created: [{ source_row_number: 2 }] })).toThrow("could not be verified");
+    expect(importedApplicationsFromResult({ created: [{ source_row_number: 2, application: { id: 13 } }] })).toEqual([{ id: 13 }]);
   });
 });
 

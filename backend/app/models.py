@@ -4,7 +4,7 @@ from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Tex
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
-from .domain import SAVED_APPLICATION_STATUS, furthest_stage_for
+from .domain import JOB_LINK_MAX_LENGTH, SAVED_APPLICATION_STATUS, furthest_stage_for
 
 
 def utc_now() -> datetime:
@@ -36,7 +36,7 @@ class Application(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     company_name: Mapped[str] = mapped_column(String(160), nullable=False, index=True)
     role_title: Mapped[str] = mapped_column(String(160), nullable=False, index=True)
-    job_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    job_link: Mapped[str | None] = mapped_column(String(JOB_LINK_MAX_LENGTH), nullable=True)
     source: Mapped[str] = mapped_column(String(80), default="Other", nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(40), default=SAVED_APPLICATION_STATUS, nullable=False, index=True)
     furthest_stage: Mapped[str] = mapped_column(String(40), default=SAVED_APPLICATION_STATUS, server_default=text("'Saved'"), nullable=False)

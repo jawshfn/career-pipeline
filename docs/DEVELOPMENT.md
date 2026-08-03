@@ -48,6 +48,22 @@ The AI gateway rows apply only when working on `ai-gateway/`. Use ignored `ai-ga
 | AI gateway | `cd ai-gateway; npm run check` |
 | Cross-stack | Relevant checks for every changed subsystem. |
 
+## Spreadsheet import verification
+
+Run the complete release checks from the repository roots:
+
+```powershell
+cd backend
+.\.venv\Scripts\python.exe -m pytest
+cd ../frontend
+npm.cmd test -- --run
+npm.cmd run build
+```
+
+Focused import coverage includes `backend/app/tests/test_application_imports.py`, `frontend/src/components/import/SpreadsheetImportWorkflow.test.jsx`, `frontend/src/components/import/spreadsheetImportReviewState.test.js`, `frontend/src/import/importFieldDefinitions.test.js`, `frontend/src/import/spreadsheetIntake.test.js`, `frontend/src/import/spreadsheetIntake.xlsx.test.js`, `frontend/src/import/spreadsheetNormalization.test.js`, `frontend/src/pages/DataPage.test.jsx`, and `frontend/src/demo/demoImport.test.js`.
+
+For manual testing, run FastAPI with `python -m uvicorn app.main:app --reload` from `backend`, and Vite with `npm run dev` from `frontend`. Normal local mode uses FastAPI and SQLite. Set `VITE_APP_MODE=demo` to exercise the fictional, in-memory demo; it resets after reload. The browser parses the spreadsheet and submits normalized JSON only. The established ExcelJS bundle-size warning is nonblocking when it remains the only build warning.
+
 ## CI and deployment
 
 `ci.yml` runs backend pytest, browser-extension Node tests, frontend Vitest, and a frontend build on pushes and pull requests. `pages.yml` runs frontend tests, builds demo mode from `frontend/dist`, and deploys GitHub Pages on `main` or manual dispatch. `deploy-ai-gateway.yml` is manually dispatched; it installs gateway dependencies, tests, validates a Wrangler deployment, and deploys the Worker with repository secrets.

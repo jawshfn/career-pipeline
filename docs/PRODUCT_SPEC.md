@@ -28,7 +28,38 @@ PursuitHQ is a local-first job-search workspace for people who want to move from
 6. **Follow through.** Manage reminders with Complete, Complete and schedule next, Reschedule, or Clear; review the resulting activity history.
 7. **Prepare and assess.** Assign a resume variant, add preparation notes, and record red flags.
 8. **Review progress.** Use Dashboard and Status Board for current workspace status, then use Outcome Insights to compare confirmed progression by source and resume version and inspect contributing applications.
-9. **Protect the workspace.** Export JSON backups and CSV/XLSX review exports; validate and explicitly replace a local workspace from a compatible JSON backup.
+9. **Protect the workspace.** Import reviewed CSV/XLSX application trackers locally, export JSON backups and CSV/XLSX review exports, and validate and explicitly replace a local workspace from a compatible JSON backup.
+
+## Data workspace
+
+The **Data & Import** page has four sections: **Import applications**, **Templates**, **Export & backup**, and **Restore workspace**. Import is a five-step, review-first workflow: upload a CSV or XLSX file; choose an XLSX worksheet and table structure (including headerless data); map columns; review rows; and import approved rows.
+
+Company and Role are required. Suggested mappings always require confirmation, and repeated unknown values (including categories, dates, or resume names) are resolved once for the affected included rows. Users review and may edit each row before creation. Exact duplicates are skipped by default but can be explicitly imported as new; possible duplicates require an explicit Keep or Exclude decision. The resulting backend batch creates new applications transactionally, and demo mode provides the same temporary in-memory import behavior.
+
+The raw spreadsheet remains in the browser. Only normalized, approved application rows are sent to the backend. PursuitHQ does not automatically scrape sites. Google Sheets are supported only through CSV or XLSX export.
+
+### Import non-goals
+
+Import does not update or merge existing applications, connect directly to Google Sheets, run background synchronization, keep persistent import history, or store raw spreadsheet files.
+
+### Import limits and mapping
+
+| Limit | Value |
+| --- | ---: |
+| File size | 10 MiB |
+| Application data rows | 1,000 |
+| Meaningful columns | 80 |
+| Cell text | 10,000 characters |
+| Job Link | 2,048 characters |
+| Preview rows | 15 populated rows |
+
+Raw parser safeguards can be higher than the application import limit. Blank and formatting-only rows do not count; the selected header determines which populated rows are application data.
+
+Supported destinations are **Company**, **Role**, **Status**, **Source**, **Job Link**, **Location**, **Compensation**, **Employment Type**, **Date Saved**, **Date Applied**, **Follow-up Date**, **Next Action**, **Resume Version**, **Contact Name**, **Contact Information**, **Preparation Notes**, **Personal Notes**, **Job Description**, **Red-Flag Notes**, and **Highest Stage Reached**. **Append to Personal Notes** can be selected for more than one source column; **Ignore this column** omits it. Each normal destination can be mapped once. Ambiguous headings may require manual mapping, and suggestions never bypass confirmation.
+
+Imported dates are not changed to today, and Date Applied may be blank. Saved rows cannot retain Date Applied. Rejected and Withdrawn rows without sufficient historical context require an explicit review decision; Highest Stage Reached supplies that context. Ambiguous slash dates require the user to choose the date order.
+
+An exact duplicate has the same normalized Job Link or the same Company, Role, and Date Applied, and is skipped by default. **Import as new** explicitly creates an additional application. A possible duplicate has the same Company and Role and must be kept or excluded explicitly. The same comparisons are made among spreadsheet rows; exclusions can also result from unresolved or invalid values, not only duplicates.
 
 ## Application Detail
 
@@ -40,7 +71,7 @@ Each application keeps a highest confirmed stage separate from its current statu
 
 ## Boundaries and non-goals
 
-PursuitHQ does not provide authentication, multi-user collaboration, production backend hosting, automatic application submission, generic scraping, AI resume generation, automated candidate scoring, email/calendar integration, merge-style restore, or arbitrary spreadsheet import. The browser companion is not a generic page or selected-text collector.
+PursuitHQ does not provide authentication, multi-user collaboration, production backend hosting, automatic application submission, generic scraping, AI resume generation, automated candidate scoring, email/calendar integration, merge-style restore, or unreviewed arbitrary spreadsheet ingestion. The browser companion is not a generic page or selected-text collector.
 
 ## Success criteria
 

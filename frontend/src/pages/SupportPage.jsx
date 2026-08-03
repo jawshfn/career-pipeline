@@ -1,7 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { downloadApplicationsCsv, downloadApplicationsWorkbook, downloadWorkspaceBackup } from "../services/exportsService.js";
-import WorkspaceBackupReview from "../components/support/WorkspaceBackupReview.jsx";
-import { restoreWorkspaceBackup, validateWorkspaceBackup } from "../services/workspaceImportsService.js";
 
 export const SUPPORT_EMAIL = "nunezjf2001@gmail.com";
 export const SUPPORT_MAILTO_SUBJECT = "PursuitHQ Issue Report";
@@ -165,26 +162,16 @@ const commonTasks = [
   { title: "Set and review follow-ups", description: "See overdue and upcoming follow-ups and decide what needs attention next.", action: "Open Reminders", page: "command-center" },
   { title: "Manage resume versions", description: "Create, duplicate, update, deactivate, or remove the resume variants used across applications.", action: "Open Resumes", page: "resume-versions" },
   { title: "Record application activity", description: "Open an application, select Activity, and add dated notes for calls, assessments, interviews, and other updates.", action: "Open Applications", page: "applications" },
+  { title: "Import, export, or restore data", description: "Open Data to import an existing spreadsheet, export applications, create a complete backup, or review a workspace restore.", action: "Open Data", page: "data" },
 ];
 
 export default function SupportPage({
   isDemoMode = false,
-  onDownloadApplicationsCsv = downloadApplicationsCsv,
-  onDownloadApplicationsWorkbook = downloadApplicationsWorkbook,
-  onDownloadWorkspaceBackup = downloadWorkspaceBackup,
-  onRestoreWorkspaceBackup = restoreWorkspaceBackup,
-  onValidateWorkspaceBackup = validateWorkspaceBackup,
-  onWorkspaceRestored = async () => true,
   onNavigate = () => {},
 }) {
   const [copyStatus, setCopyStatus] = useState("");
-  const [activeExport, setActiveExport] = useState(null);
-  const [exportError, setExportError] = useState("");
-  const [exportStatus, setExportStatus] = useState("");
   const [showBackToTop, setShowBackToTop] = useState(false);
   const topRegionRef = useRef(null);
-  const exportErrorRef = useRef(null);
-  const exportInFlightRef = useRef(false);
   const reportTemplate = getSupportReportTemplate();
   const captureMethods = getCaptureMethods(isDemoMode);
 
@@ -197,41 +184,12 @@ export default function SupportPage({
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (exportError) exportErrorRef.current?.focus();
-  }, [exportError]);
-
   async function handleCopyEmail() {
     setCopyStatus(await copyTextToClipboard(SUPPORT_EMAIL, "Email copied"));
   }
 
   async function handleCopyReportTemplate() {
     setCopyStatus(await copyTextToClipboard(reportTemplate, "Issue template copied"));
-  }
-
-  async function handleExport(kind) {
-    if (exportInFlightRef.current) return;
-    exportInFlightRef.current = true;
-    setActiveExport(kind);
-    setExportError("");
-    setExportStatus("");
-    try {
-      if (kind === "workspace") {
-        await onDownloadWorkspaceBackup();
-        setExportStatus("Workspace backup downloaded.");
-      } else if (kind === "csv") {
-        await onDownloadApplicationsCsv();
-        setExportStatus("Applications CSV downloaded.");
-      } else {
-        await onDownloadApplicationsWorkbook();
-        setExportStatus("Applications workbook downloaded.");
-      }
-    } catch {
-      setExportError(kind === "workspace" ? "Could not download the workspace backup." : kind === "csv" ? "Could not download the applications CSV." : "Could not download the applications workbook.");
-    } finally {
-      exportInFlightRef.current = false;
-      setActiveExport(null);
-    }
   }
 
   return (
@@ -256,7 +214,7 @@ export default function SupportPage({
         <span className="support-section-nav-label">Jump to:</span>
         <a href="#help-start">Start here</a>
         <a href="#help-common-tasks">Common tasks</a>
-        <a href="#help-data-backup">Data &amp; backup</a>
+        <a href="#help-data">Data &amp; Import</a>
         <a href="#help-capture">Capture help</a>
         <a href="#help-troubleshooting">Troubleshooting</a>
         <a href="#help-feedback">Feedback</a>
@@ -281,44 +239,16 @@ export default function SupportPage({
         <div className="support-task-grid">{commonTasks.map((task) => <section className="support-task-card" key={task.title} aria-labelledby={`task-${task.page}-${task.title.replaceAll(" ", "-")}`}><h3 id={`task-${task.page}-${task.title.replaceAll(" ", "-")}`}>{task.title}</h3><p>{task.description}</p><button className="support-action-control secondary-button" type="button" aria-label={`${task.action}: ${task.title}`} onClick={() => onNavigate(task.page)}>{task.action}</button></section>)}</div>
       </section>
 
-      <section className="panel support-panel support-data-backup-panel" id="help-data-backup" aria-labelledby="data-backup-heading">
-        <div className="section-heading">
-          <h2 id="data-backup-heading">Data &amp; backup</h2>
-          <p>Exports download directly to your device. PursuitHQ does not upload your workspace to a cloud service.</p>
+      <section className="panel support-panel" id="help-data" aria-labelledby="data-help-heading">
+        <div className="section-heading"><h2 id="data-help-heading">Data &amp; Import</h2><p>Open Data for the reviewed spreadsheet and workspace tools.</p></div>
+        <div className="support-disclosure-list">
+          <details className="support-disclosure" open><summary>Import applications</summary><div className="support-disclosure-content"><ol><li>Choose or drag in a CSV or XLSX file.</li><li>Select a worksheet and header or headerless table structure.</li><li>Map Company and Role, then confirm the mapping.</li><li>Resolve repeated values, review rows and duplicate decisions, then import approved rows.</li></ol><p>Exact duplicates are skipped by default; choose Import as new only to create another application. Possible duplicates require Keep in import or Exclude from import.</p></div></details>
+          <details className="support-disclosure"><summary>Templates</summary><div className="support-disclosure-content"><p>Download browser-local Minimal, Common, or Custom templates as CSV or Excel files.</p></div></details>
+          <details className="support-disclosure"><summary>Export &amp; backup</summary><div className="support-disclosure-content"><p>An application export is a spreadsheet for review or re-import. A workspace backup is a complete JSON copy of the workspace.</p></div></details>
+          <details className="support-disclosure"><summary>Restore workspace</summary><div className="support-disclosure-content"><p>Restore replaces the complete current workspace after review; it is not a merge or spreadsheet import.</p></div></details>
         </div>
-        {isDemoMode ? <p className="support-demo-export-note">Fictional demo data: exports contain the current demo session. Demo data still resets when the page reloads.</p> : null}
-        <div className="support-export-grid">
-          <section className="support-export-card" aria-labelledby="workspace-backup-heading">
-            <p className="support-recommended-label">Complete backup</p>
-            <h3 id="workspace-backup-heading">Workspace backup</h3>
-            <p>Download a complete PursuitHQ backup containing applications, activity history, resume versions, and their relationships.</p>
-            <p className="support-export-supporting-text">Use this JSON file for safekeeping and future restore support.</p>
-            <button className="support-action-control support-primary-action" type="button" disabled={activeExport !== null} onClick={() => handleExport("workspace")}>{activeExport === "workspace" ? "Preparing backup..." : "Download workspace backup"}</button>
-          </section>
-          <section className="support-export-card" aria-labelledby="applications-workbook-heading">
-            <p className="support-recommended-label">Best for Excel and Google Sheets</p>
-            <h3 id="applications-workbook-heading">Formatted applications workbook</h3>
-            <p>Download a formatted workbook with filters, readable dates, clickable job links, and application-status highlights.</p>
-            <p className="support-export-supporting-text">The workbook contains concise review fields. Complete notes, job descriptions, activity history, and relationships remain in the workspace backup.</p>
-            <button className="support-action-control support-primary-action" type="button" disabled={activeExport !== null} onClick={() => handleExport("workbook")}>{activeExport === "workbook" ? "Preparing workbook..." : "Download Excel workbook"}</button>
-          </section>
-          <section className="support-export-card" aria-labelledby="applications-spreadsheet-heading">
-            <p className="support-recommended-label">Portable fallback</p>
-            <h3 id="applications-spreadsheet-heading">Applications CSV</h3>
-            <p>Download one plain CSV row per application for use with spreadsheet tools and other software.</p>
-            <p className="support-export-supporting-text">Activity history remains in the full workspace backup and is not expanded into CSV rows. Long-form job descriptions and complete notes remain available in the workspace backup.</p>
-            <button className="support-action-control secondary-button" type="button" disabled={activeExport !== null} onClick={() => handleExport("csv")}>{activeExport === "csv" ? "Preparing CSV..." : "Download applications CSV"}</button>
-          </section>
-        </div>
-        {exportStatus ? <p className="support-export-status" role="status">{exportStatus}</p> : null}
-        {exportError ? <p className="support-export-error" ref={exportErrorRef} role="alert" tabIndex={-1}>{exportError}</p> : null}
-        <WorkspaceBackupReview
-          isDemoMode={isDemoMode}
-          onRestoreWorkspaceBackup={onRestoreWorkspaceBackup}
-          onValidateWorkspaceBackup={onValidateWorkspaceBackup}
-          onWorkspaceRestored={onWorkspaceRestored}
-        />
       </section>
+
 
       <section className="panel support-panel" id="help-capture" aria-labelledby="capture-methods-heading">
         <div className="section-heading">

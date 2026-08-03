@@ -1,7 +1,9 @@
+import { JOB_LINK_MAX_LENGTH } from "../constants/applicationConstants.js";
+
 export const BROWSER_CAPTURE_HASH_KEY = "career-pipeline-capture";
 export const MAX_BROWSER_CAPTURE_LENGTH = 4096;
 
-const MAX_ORIGINAL_URL_LENGTH = 2048;
+const MAX_ORIGINAL_URL_LENGTH = JOB_LINK_MAX_LENGTH;
 const BOARD_TOKEN_PATTERN = /^[A-Za-z0-9_-]{1,80}$/;
 const JOB_ID_PATTERN = /^[1-9][0-9]{0,17}$/;
 

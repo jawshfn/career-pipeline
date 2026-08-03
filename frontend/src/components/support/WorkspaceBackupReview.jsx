@@ -26,6 +26,7 @@ export default function WorkspaceBackupReview({
   onRestoreWorkspaceBackup = async () => {},
   onValidateWorkspaceBackup = async () => {},
   onWorkspaceRestored = async () => true,
+  onUnsavedChangesChange = () => {},
 }) {
   const [file, setFile] = useState(null);
   const [selectionError, setSelectionError] = useState("");
@@ -47,6 +48,12 @@ export default function WorkspaceBackupReview({
   useEffect(() => {
     if (reviewError || restoreError || result?.is_valid === false) errorRef.current?.focus();
   }, [reviewError, restoreError, result]);
+
+  useEffect(() => {
+    onUnsavedChangesChange(Boolean(file || result || isConfirmationOpen));
+  }, [file, result, isConfirmationOpen, onUnsavedChangesChange]);
+
+  useEffect(() => () => onUnsavedChangesChange(false), [onUnsavedChangesChange]);
 
   function resetRestoreState() {
     setResult(null);

@@ -25,6 +25,13 @@ describe("SupportPage", () => {
     expect(navigationItems.at(-1)).toEqual({ id: "support", label: "Help" });
   });
 
+  it("routes data tasks to the permanent Data page", () => {
+    const onNavigate = vi.fn();
+    const markup = renderToStaticMarkup(<SupportPage onNavigate={onNavigate} />);
+    expect(markup).toContain("Import, export, or restore data");
+    expect(markup).toContain("Open Data");
+  });
+
   it("renders through the app layout as the active Help page", () => {
     const markup = renderToStaticMarkup(
       <AppLayout activePage="support" onNavigate={() => {}}>
@@ -45,6 +52,7 @@ describe("SupportPage", () => {
       "Applications",
       "Status Board",
       "Resumes",
+      "Data",
       "Help",
     ]);
   });
@@ -88,19 +96,15 @@ describe("SupportPage", () => {
     expect(markup).toContain("support-method-card-unavailable");
     expect(markup).not.toContain("Full local workflow available");
     expect(markup).not.toContain("Run PursuitHQ Capture.");
-    expect(markup).toContain("Workspace restore preview");
-    expect(markup).toContain("LOCAL APP ONLY");
+    expect(markup).toContain("Import, export, or restore data");
     expect(markup).not.toContain('type="file"');
   });
 
-  it("places local backup review after the unchanged export cards", () => {
+  it("keeps backup and restore controls out of Help", () => {
     const markup = renderToStaticMarkup(<SupportPage isDemoMode={false} onValidateWorkspaceBackup={vi.fn()} />);
 
-    const review = markup.indexOf("Review a workspace backup");
-    expect(review).toBeGreaterThan(markup.indexOf("Download workspace backup"));
-    expect(review).toBeGreaterThan(markup.indexOf("Download Excel workbook"));
-    expect(review).toBeGreaterThan(markup.indexOf("Download applications CSV"));
-    expect(markup).toContain("PursuitHQ JSON backup");
+    expect(markup).not.toContain("Review a workspace backup");
+    expect(markup).not.toContain("Download workspace backup");
   });
 
   it("uses stable whitespace-free heading IDs for capture-method cards in both runtimes", async () => {
@@ -162,52 +166,19 @@ describe("SupportPage", () => {
     container.remove();
   });
 
-  it("renders data exports and manages loading, success, and failure feedback", async () => {
+  it("offers the concise Data common task", async () => {
     globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     const container = document.createElement("div");
     const root = createRoot(container);
     document.body.appendChild(container);
-    let resolveWorkspace;
-    const onDownloadWorkspaceBackup = vi.fn(() => new Promise((resolve) => { resolveWorkspace = resolve; }));
-    let rejectCsv;
-    const onDownloadApplicationsCsv = vi.fn(() => new Promise((_, reject) => { rejectCsv = reject; }));
-    const onDownloadApplicationsWorkbook = vi.fn().mockResolvedValue(undefined);
+    const onNavigate = vi.fn();
 
     await act(async () => root.render(
-      <SupportPage
-        isDemoMode
-        onDownloadApplicationsCsv={onDownloadApplicationsCsv}
-        onDownloadApplicationsWorkbook={onDownloadApplicationsWorkbook}
-        onDownloadWorkspaceBackup={onDownloadWorkspaceBackup}
-      />,
+      <SupportPage isDemoMode onNavigate={onNavigate} />,
     ));
-    expect(container.querySelector('a[href="#help-data-backup"]')).not.toBeNull();
-    expect(container.textContent).toContain("Fictional demo data");
-    expect(container.textContent).toContain("Long-form job descriptions and complete notes remain available in the workspace backup.");
-    const workspaceButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Download workspace backup");
-    const csvButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Download applications CSV");
-    const workbookButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Download Excel workbook");
-    expect(container.textContent).toContain("Complete backup");
-    expect(container.textContent).toContain("Best for Excel and Google Sheets");
-    expect(container.textContent).toContain("Portable fallback");
-    await act(async () => workspaceButton.click());
-    expect(workspaceButton.textContent).toBe("Preparing backup...");
-    expect(csvButton.disabled).toBe(true);
-    await act(async () => resolveWorkspace());
-    expect(container.querySelector('[role="status"]').textContent).toBe("Workspace backup downloaded.");
-
-    await act(async () => workbookButton.click());
-    expect(onDownloadApplicationsWorkbook).toHaveBeenCalledOnce();
-    expect(container.querySelector('[role="status"]').textContent).toBe("Applications workbook downloaded.");
-
-    await act(async () => csvButton.click());
-    expect(csvButton.textContent).toBe("Preparing CSV...");
-    await act(async () => rejectCsv(new Error("offline")));
-    const error = container.querySelector('[role="alert"]');
-    expect(error.textContent).toBe("Could not download the applications CSV.");
-    expect(document.activeElement).toBe(error);
-    expect(onDownloadWorkspaceBackup).toHaveBeenCalledOnce();
-    expect(onDownloadApplicationsCsv).toHaveBeenCalledOnce();
+    const action = [...container.querySelectorAll("button")].find((button) => button.textContent === "Open Data");
+    await act(async () => action.click());
+    expect(onNavigate).toHaveBeenCalledWith("data");
     await act(async () => root.unmount());
     container.remove();
   });

@@ -4,7 +4,9 @@ async function parseResponse(response, fallbackErrorMessage) {
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
     const message = errorBody?.detail || fallbackErrorMessage;
-    throw new Error(Array.isArray(message) ? fallbackErrorMessage : message);
+    const error = new Error(typeof message === "string" ? message : fallbackErrorMessage);
+    if (message && typeof message === "object") error.detail = message;
+    throw error;
   }
 
   if (response.status === 204) {
@@ -18,7 +20,9 @@ async function parseDownloadResponse(response, fallbackErrorMessage) {
   if (!response.ok) {
     const errorBody = await response.json().catch(() => null);
     const message = errorBody?.detail || fallbackErrorMessage;
-    throw new Error(Array.isArray(message) ? fallbackErrorMessage : message);
+    const error = new Error(typeof message === "string" ? message : fallbackErrorMessage);
+    if (message && typeof message === "object") error.detail = message;
+    throw error;
   }
 
   return response.blob();

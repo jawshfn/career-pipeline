@@ -3,18 +3,21 @@ from datetime import date, datetime
 from urllib.parse import parse_qs, urlparse
 from typing import ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator, model_validator
 
 from .domain import (
     ALLOWED_APPLICATION_STATUSES,
     ARCHIVED_APPLICATION_STATUS,
+    JOB_LINK_MAX_LENGTH,
     PROGRESSION_STAGES,
     SAVED_APPLICATION_STATUS,
+    SOURCE_ORDER,
+    USER_SELECTABLE_APPLICATION_STATUSES,
 )
 
 
 class ApplicationBase(BaseModel):
-    job_link: str | None = None
+    job_link: str | None = Field(default=None, max_length=JOB_LINK_MAX_LENGTH)
     source: str = "Other"
     status: str = SAVED_APPLICATION_STATUS
     location: str | None = None
@@ -66,7 +69,7 @@ class ApplicationCreate(ApplicationBase):
 class ApplicationUpdate(BaseModel):
     company_name: str | None = Field(default=None, min_length=1)
     role_title: str | None = Field(default=None, min_length=1)
-    job_link: str | None = None
+    job_link: str | None = Field(default=None, max_length=JOB_LINK_MAX_LENGTH)
     source: str | None = None
     status: str | None = None
     location: str | None = None
@@ -110,6 +113,119 @@ class ApplicationRead(ApplicationBase):
     date_saved: date
     created_at: datetime
     updated_at: datetime
+
+
+IMPORT_SOURCES = SOURCE_ORDER
+IMPORT_EMPLOYMENT_TYPES = ("Full-time", "Part-time", "Contract", "Internship", "Temporary", "Other")
+
+
+class ApplicationImportRow(BaseModel):
+    """The deliberately small, reviewed payload accepted from spreadsheet import."""
+    model_config = ConfigDict(extra="forbid")
+
+    source_row_number: StrictInt = Field(gt=0)
+    company_name: StrictStr = Field(min_length=1, max_length=160)
+    role_title: StrictStr = Field(min_length=1, max_length=160)
+    status: str = SAVED_APPLICATION_STATUS
+    source: str = "Other"
+    job_link: StrictStr | None = Field(default=None, max_length=JOB_LINK_MAX_LENGTH)
+    location: StrictStr | None = Field(default=None, max_length=160)
+    compensation: StrictStr | None = Field(default=None, max_length=160)
+    employment_type: str | None = None
+    date_saved: date | None = None
+    date_applied: date | None = None
+    follow_up_date: date | None = None
+    next_action: StrictStr | None = Field(default=None, max_length=10_000)
+    resume_version_id: StrictInt | None = Field(default=None, gt=0)
+    contact_name: StrictStr | None = Field(default=None, max_length=160)
+    contact_info: StrictStr | None = Field(default=None, max_length=10_000)
+    prep_notes: StrictStr | None = Field(default=None, max_length=10_000)
+    notes: StrictStr | None = Field(default=None, max_length=10_000)
+    job_description: StrictStr | None = Field(default=None, max_length=10_000)
+    red_flags_notes: StrictStr | None = Field(default=None, max_length=10_000)
+    highest_confirmed_stage: str | None = None
+    allow_duplicate: StrictBool = False
+
+    @field_validator("company_name", "role_title")
+    @classmethod
+    def required_import_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+    @field_validator("job_link")
+    @classmethod
+    def import_job_link(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            return None
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("job_link must be an HTTP or HTTPS URL")
+        return value
+
+    @field_validator("status")
+    @classmethod
+    def import_status(cls, value: str) -> str:
+        if value not in USER_SELECTABLE_APPLICATION_STATUSES:
+            raise ValueError("status must be a supported active or terminal status")
+        return value
+
+    @field_validator("source")
+    @classmethod
+    def import_source(cls, value: str) -> str:
+        if value not in IMPORT_SOURCES:
+            raise ValueError("source must be a supported import source")
+        return value
+
+    @field_validator("employment_type")
+    @classmethod
+    def import_employment_type(cls, value: str | None) -> str | None:
+        if value is not None and value not in IMPORT_EMPLOYMENT_TYPES:
+            raise ValueError("employment_type must be a supported import employment type")
+        return value
+
+    @field_validator("highest_confirmed_stage")
+    @classmethod
+    def import_stage(cls, value: str | None) -> str | None:
+        if value is not None and value not in PROGRESSION_STAGES:
+            raise ValueError("highest_confirmed_stage must be a progression stage")
+        return value
+
+    @field_validator("date_saved", "date_applied", "follow_up_date", mode="before")
+    @classmethod
+    def import_date_only_values(cls, value):
+        if value is None or (isinstance(value, date) and not isinstance(value, datetime)):
+            return value
+        if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+            raise ValueError("must be a YYYY-MM-DD date")
+        return value
+
+
+class ApplicationImportBatchRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    rows: list[ApplicationImportRow] = Field(min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def unique_source_rows(self) -> "ApplicationImportBatchRequest":
+        row_numbers = [row.source_row_number for row in self.rows]
+        if len(set(row_numbers)) != len(row_numbers):
+            raise ValueError("source_row_number must be unique within an import batch")
+        return self
+
+
+class ApplicationImportCreated(BaseModel):
+    source_row_number: int
+    application: ApplicationRead
+
+
+class ApplicationImportBatchRead(BaseModel):
+    created_count: int
+    created: list[ApplicationImportCreated]
 
 
 class ApplicationActionItemsRead(BaseModel):
@@ -288,7 +404,7 @@ class GreenhouseImportRequest(BaseModel):
 
 
 class CustomGreenhouseImportRequest(BaseModel):
-    job_url: str = Field(min_length=1, max_length=2048)
+    job_url: str = Field(min_length=1, max_length=JOB_LINK_MAX_LENGTH)
 
 
 class GreenhousePayRangeRead(BaseModel):
@@ -340,7 +456,7 @@ class LeverJobImportRead(BaseModel):
 
 
 MAX_BROWSER_CAPTURE_TEXT_LENGTH = 100_000
-MAX_BROWSER_CAPTURE_URL_LENGTH = 2_048
+MAX_BROWSER_CAPTURE_URL_LENGTH = JOB_LINK_MAX_LENGTH
 BROWSER_CAPTURE_TOKEN_PATTERN = r"^[A-Za-z0-9_-]{32,128}$"
 ZIPRECRUITER_SEARCH_PATH_PATTERN = re.compile(r"^/jobs-search(?:/[1-9]\d*)?/?$")
 HANDSHAKE_JOB_PATH_PATTERN = re.compile(r"^/jobs/[1-9]\d*/?$")

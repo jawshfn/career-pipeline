@@ -22,6 +22,7 @@ export const PROGRESSION_STAGES = [
 export const ARCHIVED_APPLICATION_STATUS = "Archived";
 export const SAVED_APPLICATION_STATUS = "Saved";
 export const DEFAULT_APPLICATION_SOURCE = "Other";
+export const JOB_LINK_MAX_LENGTH = 2_048;
 
 export const USER_SELECTABLE_APPLICATION_STATUSES = APPLICATION_STATUSES.filter(
   (status) => status !== ARCHIVED_APPLICATION_STATUS,

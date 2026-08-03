@@ -5,12 +5,13 @@ import { createApplicationsWorkbookBlob } from "./applicationsWorkbook.js";
 
 describe("applications workbook", () => {
   it("creates a single formatted, safe review worksheet", async () => {
+    const longJobLink = `https://example.com/jobs/platform-engineer?tracking=${"x".repeat(1_990)}`;
     const blob = await createApplicationsWorkbookBlob({
       now: new Date("2026-07-21T12:00:00Z"),
       resumeVersions: [{ id: 1, name: "Resume A" }],
       applications: [
         { id: 1, company_name: "Archived", status: "Archived", is_archived: true, date_saved: "2026-07-20" },
-        { id: 2, company_name: "=literal", role_title: "Engineer", status: "Applied", date_saved: "2026-07-20", date_applied: "2026-07-20", follow_up_date: "2026-07-20", updated_at: "2026-07-21T10:30:00Z", resume_version_id: 1, job_link: "https://example.com/job", notes: "Hello\nworld", job_description: "saved", vague_job_description: true, asks_for_payment: true },
+        { id: 2, company_name: "=literal", role_title: "Engineer", status: "Applied", date_saved: "2026-07-20", date_applied: "2026-07-20", follow_up_date: "2026-07-20", updated_at: "2026-07-21T10:30:00Z", resume_version_id: 1, job_link: longJobLink, notes: "Hello\nworld", job_description: "saved", vague_job_description: true, asks_for_payment: true },
         { id: 3, company_name: "Closed", status: "Rejected", date_saved: "2026-07-19", follow_up_date: "2026-07-01", job_link: "javascript:bad", too_good_to_be_true: true },
       ],
     });
@@ -31,7 +32,7 @@ describe("applications workbook", () => {
     expect(sheet.getRow(2).getCell(8).value).toBeInstanceOf(Date);
     expect(sheet.getRow(2).getCell(8).numFmt).toBe("mmm d, yyyy");
     expect(sheet.getRow(2).getCell(13).text).toBe("Open posting");
-    expect(sheet.getRow(2).getCell(13).hyperlink).toBe("https://example.com/job");
+    expect(sheet.getRow(2).getCell(13).hyperlink).toBe(longJobLink);
     expect(sheet.getRow(3).getCell(13).value).toBe("javascript:bad");
     expect(sheet.getRow(2).getCell(16).value).toBe("Yes");
     expect(sheet.getRow(2).getCell(17).value).toBe(2);

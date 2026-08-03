@@ -13,7 +13,8 @@ export default function PipelineColumn({
   onStatusChange,
   onStatusMenuChange,
   status,
-  updatingApplicationId,
+  statusUpdateErrors,
+  updatingApplicationIds,
 }) {
   return (
     <section className={`pipeline-column ${getStatusAccentClass(status)}`} aria-labelledby={`pipeline-column-${status}`}>
@@ -34,7 +35,8 @@ export default function PipelineColumn({
               onOpenDetails={onOpenDetails}
               onStatusChange={onStatusChange}
               onStatusMenuChange={(isOpen) => onStatusMenuChange(application.id, isOpen)}
-              isUpdating={updatingApplicationId === application.id}
+              isUpdating={updatingApplicationIds.has(String(application.id))}
+              statusUpdateError={statusUpdateErrors.get(String(application.id))}
             />
           ))
         )}

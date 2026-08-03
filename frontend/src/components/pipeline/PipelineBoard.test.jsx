@@ -271,4 +271,20 @@ describe("PipelineBoard", () => {
 
     expect(onOpenDetails).not.toHaveBeenCalled();
   });
+
+  it("excludes archived compatibility records and reports unsupported statuses without mislabeling them", async () => {
+    await renderBoard({ applications: [
+      { company_name: "Legacy archive", id: 21, role_title: "Old role", status: "Archived" },
+      { company_name: "Bad status", id: 22, role_title: "Unverified role", status: "Paused" },
+      { company_name: "Visible application", id: 23, role_title: "Current role", status: "Applied" },
+    ] });
+
+    expect(container.textContent).not.toContain("Legacy archive");
+    expect(container.textContent).not.toContain("Bad status");
+    expect(container.textContent).toContain("Visible application");
+    expect(container.querySelector('[role="alert"]').textContent).toContain("unsupported status");
+    const savedColumn = [...container.querySelectorAll(".pipeline-column")]
+      .find((column) => column.querySelector("h3").textContent === "Saved");
+    expect(savedColumn.textContent).not.toContain("Bad status");
+  });
 });

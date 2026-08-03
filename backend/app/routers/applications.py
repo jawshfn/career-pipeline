@@ -20,13 +20,15 @@ from ..domain import (
     should_default_date_applied,
     furthest_stage_for,
 )
-from ..models import Application, ApplicationActivity, ApplicationAiBrief, utc_now
+from ..models import Application, ApplicationActivity, ApplicationAiBrief, ResumeVersion, utc_now
 from ..schemas import (
     ApplicationActionItemsRead,
     ApplicationActivityCreate,
     ApplicationActivityRead,
     ApplicationActivityUpdate,
     ApplicationCreate,
+    ApplicationImportBatchRead,
+    ApplicationImportBatchRequest,
     ApplicationFollowUpActionRead,
     ApplicationFollowUpActionRequest,
     ApplicationRead,
@@ -38,6 +40,97 @@ from ..schemas import (
 )
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
+
+
+def _import_key(value: str | None) -> str:
+    return " ".join(str(value or "").split()).casefold()
+
+
+def _import_link_key(value: str | None) -> str:
+    return str(value or "").strip().casefold().rstrip("/")
+
+
+def _import_row_errors(payload: ApplicationImportBatchRequest, db: Session) -> list[dict]:
+    """Run the import-only integrity checks without changing the workspace."""
+    errors: list[dict] = []
+    resume_ids = {row.resume_version_id for row in payload.rows if row.resume_version_id is not None}
+    known_resume_ids = {
+        item[0] for item in db.query(ResumeVersion.id).filter(ResumeVersion.id.in_(resume_ids)).all()
+    } if resume_ids else set()
+    existing = db.query(Application).all()  # includes compatibility-archived applications
+    request_links: dict[str, list[int]] = {}
+    request_company_role_dates: dict[tuple[str, str, object], list[int]] = {}
+
+    for row in payload.rows:
+        link_key = _import_link_key(row.job_link)
+        if link_key:
+            request_links.setdefault(link_key, []).append(row.source_row_number)
+        if row.date_applied is not None:
+            company_date_key = (_import_key(row.company_name), _import_key(row.role_title), row.date_applied)
+            request_company_role_dates.setdefault(company_date_key, []).append(row.source_row_number)
+
+    for row in payload.rows:
+        field = None
+        message = None
+        conflict_type = None
+        if row.resume_version_id is not None and row.resume_version_id not in known_resume_ids:
+            field, message = "resume_version_id", "The selected resume version no longer exists."
+        elif row.status == "Saved" and row.date_applied is not None:
+            field, message = "date_applied", "Saved applications cannot have a Date Applied."
+        else:
+            stage = row.highest_confirmed_stage
+            if row.status in ACTIVE_APPLICATION_STATUSES:
+                if stage is not None and progression_rank(stage) < progression_rank(row.status):
+                    field, message = "highest_confirmed_stage", "Highest confirmed stage cannot be below the current active status."
+            elif row.status in CLOSED_APPLICATION_STATUSES:
+                if stage is None and row.date_applied is None:
+                    field, message = "highest_confirmed_stage", "Choose submitted history for a terminal application before importing."
+                elif stage == "Saved" and row.date_applied is not None:
+                    field, message = "highest_confirmed_stage", "A submitted terminal application must have reached at least Applied."
+
+        link_key = _import_link_key(row.job_link)
+        company_date_key = (_import_key(row.company_name), _import_key(row.role_title), row.date_applied)
+        if message is None and link_key:
+            duplicate_rows = request_links[link_key]
+            if len(duplicate_rows) > 1 and row.source_row_number != min(duplicate_rows) and not row.allow_duplicate:
+                duplicate_row = min(duplicate_rows)
+                field, message, conflict_type = "job_link", f"This batch already includes the same job link on canonical spreadsheet row {duplicate_row}. Choose Import as new for this additional duplicate.", "in_batch_exact_link"
+        if message is None and row.date_applied is not None:
+            duplicate_rows = request_company_role_dates[company_date_key]
+            if len(duplicate_rows) > 1 and row.source_row_number != min(duplicate_rows) and not row.allow_duplicate:
+                duplicate_row = min(duplicate_rows)
+                field, message, conflict_type = "date_applied", f"This batch already includes the same company, role, and applied date on canonical spreadsheet row {duplicate_row}. Choose Import as new for this additional duplicate.", "in_batch_company_role_date"
+        if message is None:
+            matched = next((application for application in existing if (
+                link_key and link_key == _import_link_key(application.job_link)
+            ) or (
+                row.date_applied is not None
+                and _import_key(row.company_name) == _import_key(application.company_name)
+                and _import_key(row.role_title) == _import_key(application.role_title)
+                and row.date_applied == application.date_applied
+            )), None)
+            if matched is not None and not row.allow_duplicate:
+                field, message, conflict_type = "job_link" if link_key == _import_link_key(matched.job_link) else "date_applied", "A matching application already exists. Choose Import as new after reviewing the duplicate.", "existing_high_confidence_duplicate"
+        if message:
+            error = {"source_row_number": row.source_row_number, "field": field, "message": message}
+            if conflict_type:
+                error["conflict_type"] = conflict_type
+            errors.append(error)
+    return errors
+
+
+def _import_application(row) -> Application:
+    values = row.model_dump(exclude={"source_row_number", "highest_confirmed_stage", "allow_duplicate"}, exclude_none=True)
+    # Import intentionally never invokes normal create's current-date Applied default.
+    values.setdefault("date_saved", date.today())
+    application = Application(**values)
+    stage = row.highest_confirmed_stage
+    if row.status in ACTIVE_APPLICATION_STATUSES:
+        stage = stage or row.status
+    elif row.status in CLOSED_APPLICATION_STATUSES:
+        stage = stage or ("Applied" if row.date_applied is not None else "Saved")
+    application.furthest_stage = furthest_stage_for(row.status, row.date_applied, stage)
+    return application
 
 
 AI_SOURCE_FIELDS = ("company_name", "role_title", "job_posting_text", "location", "compensation", "employment_type")
@@ -352,6 +445,37 @@ def get_action_items(db: Session = Depends(get_db)) -> dict[str, list[Applicatio
         "overdue_followups": overdue_followups,
         "upcoming_followups": upcoming_followups,
         "stale_applications": stale_applications,
+    }
+
+
+@router.post("/import-batch", response_model=ApplicationImportBatchRead, status_code=status.HTTP_201_CREATED)
+def import_applications_batch(
+    payload: ApplicationImportBatchRequest, db: Session = Depends(get_db)
+) -> dict:
+    """Create a fully-reviewed spreadsheet batch atomically; it never creates activity history."""
+    errors = _import_row_errors(payload, db)
+    if errors:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"row_errors": errors})
+    applications = [_import_application(row) for row in payload.rows]
+    # Keep the authoritative duplicate check immediately adjacent to insertion.
+    errors = _import_row_errors(payload, db)
+    if errors:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"row_errors": errors})
+    try:
+        db.add_all(applications)
+        db.flush()
+        for application in applications:
+            db.refresh(application)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    return {
+        "created_count": len(applications),
+        "created": [
+            {"source_row_number": row.source_row_number, "application": application}
+            for row, application in zip(payload.rows, applications)
+        ],
     }
 
 

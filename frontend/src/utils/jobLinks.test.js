@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { canonicalizeIndeedJobLink, getOpenableJobLink, normalizeExplicitJobLink } from "./jobLinks.js";
 
+const longLinkedInJobLink = `https://www.linkedin.com/jobs/view/1234567890?tracking=${"x".repeat(1_980)}`;
+
 describe("canonicalizeIndeedJobLink", () => {
   it("converts strict Indeed side-panel links into standalone URLs", () => {
     expect(canonicalizeIndeedJobLink("https://www.indeed.com/?vjk=0123456789abcdef")).toBe(
@@ -51,6 +53,11 @@ describe("normalizeExplicitJobLink", () => {
     expect(normalizeExplicitJobLink("http://indeed.com/viewjob?jk=abc")).toBe(
       "http://indeed.com/viewjob?jk=abc",
     );
+  });
+
+  it("preserves complete long HTTP URLs and their query parameters", () => {
+    expect(normalizeExplicitJobLink(`  ${longLinkedInJobLink}  `)).toBe(longLinkedInJobLink);
+    expect(getOpenableJobLink(longLinkedInJobLink)).toBe(longLinkedInJobLink);
   });
 
   it("canonicalizes Indeed side-panel links for persistence and outbound navigation", () => {

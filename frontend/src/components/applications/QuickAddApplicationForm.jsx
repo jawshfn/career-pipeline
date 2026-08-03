@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   APPLIED_OR_LATER_APPLICATION_STATUSES,
   DEFAULT_APPLICATION_SOURCE,
+  JOB_LINK_MAX_LENGTH,
   SAVED_APPLICATION_STATUS,
   SOURCE_OPTIONS,
   USER_SELECTABLE_APPLICATION_STATUSES,
@@ -195,6 +196,7 @@ export default function QuickAddApplicationForm({
               name="job_link"
               value={formData.job_link}
               onChange={updateField}
+              maxLength={JOB_LINK_MAX_LENGTH}
               placeholder="https://..."
             />
           </label>

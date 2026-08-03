@@ -10,6 +10,7 @@ export const navigationItems = [
   { id: "applications", label: "Applications" },
   { id: "pipeline", label: "Status Board" },
   { id: "resume-versions", label: "Resumes" },
+  { id: "data", label: "Data" },
   { id: "support", label: "Help" },
 ];
 
@@ -21,6 +22,7 @@ const pageTitles = {
   applications: "Applications",
   pipeline: "Status Board",
   "resume-versions": "Resumes",
+  data: "Data & Import",
   support: "Help",
 };
 

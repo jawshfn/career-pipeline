@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
-import { DEFAULT_APPLICATION_SOURCE, SOURCE_OPTIONS } from "../../constants/applicationConstants.js";
+import { DEFAULT_APPLICATION_SOURCE, JOB_LINK_MAX_LENGTH, SOURCE_OPTIONS } from "../../constants/applicationConstants.js";
 import { captureResultToReviewState } from "../../capture/captureEngine.js";
 import { buildLinkOnlyCaptureResult } from "../../capture/linkOnlyAdapter.js";
 import { JOB_LINK_KINDS, JOB_LINK_ROUTES, routeJobLink } from "../../capture/jobLinkRouter.js";
@@ -333,6 +333,7 @@ export default function JobLinkCaptureForm({
                   name="jobLink"
                   value={captureData.jobLink}
                   onChange={updateCaptureField}
+                  maxLength={JOB_LINK_MAX_LENGTH}
                   placeholder="https://..."
                   required
                 />

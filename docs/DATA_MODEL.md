@@ -33,3 +33,13 @@ Deleting an application removes its activities. Removing a resume version requir
 ## AI persistence boundary
 
 Job Intelligence Briefs use the `application_ai_briefs` one-to-one SQLite table. The latest validated brief, source fingerprint, and generation metadata are stored locally with its application. The gateway does not persist workspace data; demo briefs remain in memory until reload.
+
+# Job Links
+
+Job Links support HTTP and HTTPS posting URLs up to 2,048 characters. PursuitHQ preserves the complete URL, including query parameters, rather than silently truncating it.
+
+## Spreadsheet import boundary
+
+Spreadsheet import has no database model and stores no raw spreadsheet. It creates new `applications` only; it does not create `application_activities`, update existing records, or merge records. A successful batch is transactional: all reviewed rows are created or none are.
+
+Imported `date_applied` and other import dates may be null. `date_saved` is retained when supplied (or defaults when absent). `furthest_stage` remains the stored historical-stage field. The import-only heading **Highest Stage Reached** is translated to `highest_confirmed_stage` input and then to `furthest_stage`; the heading itself is not persisted. Imported applications can associate a nullable `resume_version_id` with an existing resume. These contracts work with the existing SQLite schema; this feature adds no migration.

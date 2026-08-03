@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 import pytest
 
 from app.backup_format import BACKUP_FORMAT
-from app.domain import ALLOWED_APPLICATION_STATUSES
+from app.domain import ALLOWED_APPLICATION_STATUSES, JOB_LINK_MAX_LENGTH
 from app.models import Application, ApplicationActivity, ResumeVersion
 from app.routers.exports import workspace_backup_payload
 from app.routers.workspace_imports import MAX_WORKSPACE_BACKUP_BYTES
@@ -39,6 +39,16 @@ def post_backup(client, payload, content_type="application/json"):
 
 def issue_codes(response):
     return [issue["code"] for issue in response.json()["errors"]]
+
+
+def test_backup_validation_accepts_long_job_links_and_rejects_overlong_ones(client, db_session):
+    payload, _ = populated_backup(db_session)
+    prefix = "https://example.com/jobs/platform-engineer?tracking="
+    accepted = prefix + "x" * (JOB_LINK_MAX_LENGTH - len(prefix))
+    payload["data"]["applications"][0]["job_link"] = accepted
+    assert post_backup(client, payload).json()["is_valid"] is True
+    payload["data"]["applications"][0]["job_link"] = accepted + "x"
+    assert "schema_error" in issue_codes(post_backup(client, payload))
 
 
 def test_transport_content_type_and_body_handling(client, db_session):
