@@ -23,6 +23,14 @@ export function storeOnboardingDismissal(isDemoMode, storage = typeof window ===
   }
 }
 
+export function removeOnboardingDismissal(isDemoMode, storage = typeof window === "undefined" ? null : window.localStorage) {
+  try {
+    storage?.removeItem(getOnboardingStorageKey(isDemoMode));
+  } catch {
+    // Local storage is optional: restoring the guide still updates this visit.
+  }
+}
+
 export function getOnboardingState({ applications = [], isDemoMode = false, isDismissed = false } = {}) {
   if (isDismissed) return "dismissed";
   if (isDemoMode) return "getting-started";

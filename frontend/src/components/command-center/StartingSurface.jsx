@@ -2,6 +2,7 @@ import React, { useState } from "react";
 
 import {
   getStoredOnboardingDismissal,
+  removeOnboardingDismissal,
   storeOnboardingDismissal,
 } from "./onboardingState.js";
 
@@ -22,14 +23,20 @@ const panelContent = {
 
 export default function StartingSurface({ application, isDemoMode, onNavigate, onOpenApplication }) {
   const [isDismissed, setIsDismissed] = useState(() => getStoredOnboardingDismissal(isDemoMode));
-  if (isDismissed) return null;
-
   const variant = isDemoMode ? "demo" : application ? "getting-started" : "empty";
   const content = panelContent[variant];
   const dismiss = () => {
     storeOnboardingDismissal(isDemoMode);
     setIsDismissed(true);
   };
+  const restore = () => {
+    removeOnboardingDismissal(isDemoMode);
+    setIsDismissed(false);
+  };
+
+  if (isDismissed) {
+    return <div className="starting-surface-restore"><button className="quiet-button" onClick={restore} type="button">{isDemoMode ? "Show demo guide" : "Show getting started"}</button></div>;
+  }
 
   return (
     <section aria-labelledby="starting-surface-title" className="starting-surface">
@@ -39,7 +46,7 @@ export default function StartingSurface({ application, isDemoMode, onNavigate, o
           <h3 id="starting-surface-title">{content.title}</h3>
           <p>{content.description}</p>
         </div>
-        <button aria-label="Dismiss getting started panel" className="quiet-button starting-surface-dismiss" onClick={dismiss} type="button">Dismiss</button>
+        <button className="quiet-button starting-surface-dismiss" onClick={dismiss} type="button">Hide guide</button>
       </div>
       <div className="starting-surface-actions">
         {isDemoMode ? <>

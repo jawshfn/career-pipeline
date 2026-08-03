@@ -101,6 +101,21 @@ describe("PipelineBoard", () => {
     expect(onOpenDetails).toHaveBeenCalledWith(1);
   });
 
+  it("shows one actionable empty board without board controls", async () => {
+    const onNavigate = vi.fn();
+    await renderBoard({ applications: [], onNavigate });
+    expect(container.textContent).toContain("No applications on the Status Board");
+    expect(container.querySelector('input[type="search"]')).toBeNull();
+    expect(container.querySelector(".pipeline-filter")).toBeNull();
+    expect(container.querySelectorAll(".pipeline-column")).toHaveLength(0);
+    expect(getButton(container, "Add one job").classList).toContain("primary-small-button");
+    expect(getButton(container, "Import a tracker").classList).toContain("secondary-button");
+    await act(async () => getButton(container, "Add one job").click());
+    await act(async () => getButton(container, "Import a tracker").click());
+    expect(onNavigate).toHaveBeenNthCalledWith(1, "quick-add");
+    expect(onNavigate).toHaveBeenNthCalledWith(2, "data");
+  });
+
   it("opens status choices and marks the current status unavailable", async () => {
     await renderBoard();
     const trigger = getButton(container, "Change status");

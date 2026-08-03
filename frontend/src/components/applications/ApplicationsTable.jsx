@@ -126,9 +126,9 @@ function getRedFlagCount(application) {
   ].filter(Boolean).length;
 }
 
-export default function ApplicationsTable({ applications, hasFilteredResults = false, isDemoMode = false, onOpenDetails, resumeVersions }) {
+export default function ApplicationsTable({ applications, hasFilteredResults = false, isDemoMode = false, onNavigate, onOpenDetails, resumeVersions, selectedViewEmpty }) {
   if (applications.length === 0) {
-    return <EmptyApplicationsState isFiltered={hasFilteredResults} />;
+    return <EmptyApplicationsState isFiltered={hasFilteredResults} onNavigate={onNavigate} selectedViewEmpty={selectedViewEmpty} />;
   }
 
   const resumeVersionsById = new Map(resumeVersions.map((resumeVersion) => [resumeVersion.id, resumeVersion]));

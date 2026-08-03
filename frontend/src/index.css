@@ -2772,6 +2772,8 @@ a {
   margin: 6px auto 0;
 }
 
+.empty-state-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
+
 .dashboard-metric-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -2997,6 +2999,7 @@ a {
 .starting-surface p:not(.eyebrow) { max-width: 680px; margin: 7px 0 0; color: var(--color-muted); }
 .starting-surface-dismiss { flex: 0 0 auto; }
 .starting-surface-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.starting-surface-restore { margin: 0 0 12px; }
 
 @media (max-width: 620px) {
   .starting-surface-heading { align-items: stretch; flex-direction: column; }

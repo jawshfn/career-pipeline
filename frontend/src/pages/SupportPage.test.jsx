@@ -41,7 +41,7 @@ describe("SupportPage", () => {
 
     expect(markup).toContain("Help &amp; Feedback");
     expect(markup).toContain("PursuitHQ");
-    expect(markup).toContain("Add a job in four steps");
+    expect(markup).toContain("Choose how to start");
     expect(markup).toContain("app-nav-item-active");
     expect(markup).toContain('aria-current="page"');
     expect(navigationItems.map((item) => item.label)).toEqual([
@@ -60,10 +60,11 @@ describe("SupportPage", () => {
   it("renders local runtime guidance, in-page navigation, and the four capture methods", () => {
     const markup = renderToStaticMarkup(<SupportPage isDemoMode={false} />);
 
-    expect(markup.indexOf("Add a job in four steps")).toBeLessThan(markup.indexOf("Report an issue"));
+    expect(markup.indexOf("Choose how to start")).toBeLessThan(markup.indexOf("Report an issue"));
     expect(markup).toContain("Full local workflow available");
     expect(markup).toContain("Browser Capture is available");
-    expect(markup).toContain("Run PursuitHQ Capture.");
+    expect(markup).toContain("Add one opportunity");
+    expect(markup).toContain("Import an existing tracker");
     expect(markup).toContain('aria-label="Help sections"');
     ["help-start", "help-common-tasks", "help-capture", "help-troubleshooting", "help-feedback"].forEach((target) => {
       expect(markup).toContain(`id="${target}"`);
@@ -158,10 +159,12 @@ describe("SupportPage", () => {
     await act(async () => root.render(<SupportPage onNavigate={onNavigate} />));
     const buttons = [...container.querySelectorAll("button")];
     await act(async () => buttons.find((button) => button.textContent === "Open Add Job").click());
+    await act(async () => buttons.find((button) => button.textContent === "Open Data & Import").click());
     await act(async () => buttons.find((button) => button.getAttribute("aria-label") === "Open Applications: Record application activity").click());
 
     expect(onNavigate).toHaveBeenNthCalledWith(1, "quick-add");
-    expect(onNavigate).toHaveBeenNthCalledWith(2, "applications");
+    expect(onNavigate).toHaveBeenNthCalledWith(2, "data");
+    expect(onNavigate).toHaveBeenNthCalledWith(3, "applications");
     await act(async () => root.unmount());
     container.remove();
   });

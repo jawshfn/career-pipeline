@@ -225,6 +225,7 @@ export default function ApplicationsPage({
   onDeleteApplication,
   onCorrectApplicationOutcomeHistory,
   onFeaturedApplicationPresented,
+  onNavigate = () => {},
   onUpdateApplication,
   onTransitionApplicationStatus,
   resumeVersions,
@@ -253,6 +254,14 @@ export default function ApplicationsPage({
   const advancedFilterCount = getAdvancedFilterCount(filters);
   const hasActiveFilters = hasAnyNonDefaultFilter(filters);
   const advancedFilterButtonLabel = `${showAdvancedFilters ? "Hide filters" : "More filters"} (${advancedFilterCount})`;
+  const isCompletelyEmpty = applications.length === 0;
+  const selectedViewEmpty = !hasActiveFilters && viewedApplications.length === 0
+    ? applicationView === "active" && applications.some((application) => CLOSED_APPLICATION_STATUSES.has(application.status))
+      ? "active"
+      : applicationView === "closed" && applications.some((application) => ACTIVE_APPLICATION_STATUSES.has(application.status))
+        ? "closed"
+        : ""
+    : "";
 
   function scrollDetailPanelIntoView() {
     detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -394,7 +403,7 @@ export default function ApplicationsPage({
         </div>
         {successMessage ? <div className="message message-success applications-list-feedback" role="status">{successMessage}</div> : null}
 
-        <div className="application-view-tabs" aria-label="Application view">
+        {!isCompletelyEmpty ? <><div className="application-view-tabs" aria-label="Application view">
           {applicationViewOptions.map((option) => (
             <button
               aria-pressed={applicationView === option.value}
@@ -497,7 +506,7 @@ export default function ApplicationsPage({
               </label>
             </div>
           ) : null}
-        </div>
+        </div></> : null}
 
         {isLoading ? <LoadingState message="Loading applications..." /> : null}
         {!isLoading && error ? <ErrorMessage message={error} /> : null}
@@ -506,8 +515,10 @@ export default function ApplicationsPage({
             applications={filteredApplications}
             hasFilteredResults={viewedApplications.length > 0 && hasActiveFilters}
             isDemoMode={isDemoMode}
+            onNavigate={selectedViewEmpty ? setApplicationView : onNavigate}
             onOpenDetails={openDetails}
             resumeVersions={resumeVersions}
+            selectedViewEmpty={selectedViewEmpty}
           />
         ) : null}
       </section>

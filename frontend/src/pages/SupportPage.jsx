@@ -224,14 +224,11 @@ export default function SupportPage({
         <div className="support-panel-heading">
           <div>
             <p className="support-recommended-label">{isDemoMode ? "Recommended in demo" : "Recommended local workflow"}</p>
-            <h2 id="start-here-heading">Add a job in four steps</h2>
-            <p>{isDemoMode ? "Use a flexible entry method to add fictional demo opportunities." : "Browser Capture is fastest when you are already viewing a supported job posting."}</p>
+            <h2 id="start-here-heading">{isDemoMode ? "Add a job in four steps" : "Choose how to start"}</h2>
+            <p>{isDemoMode ? "Use a flexible entry method to add fictional demo opportunities." : "Start with one opportunity or bring in the tracker you already use."}</p>
           </div>
         </div>
-        <ol className="support-workflow-list">
-          {(isDemoMode ? ["Open Add Job.", "Choose Paste Job Text or Manual Entry.", "Review and adjust the opportunity details.", "Save the opportunity."] : ["Open a supported job posting.", "Run PursuitHQ Capture.", "Review the populated opportunity details.", "Save the opportunity."]).map((step) => <li key={step}>{step}</li>)}
-        </ol>
-        <div className="support-start-actions"><button className="support-action-control support-primary-action" type="button" onClick={() => onNavigate("quick-add")}>Open Add Job</button><p>Add Job is available whenever Browser Capture is not the right fit.</p></div>
+        {isDemoMode ? <><ol className="support-workflow-list">{["Open Add Job.", "Choose Paste Job Text or Manual Entry.", "Review and adjust the opportunity details.", "Save the opportunity."].map((step) => <li key={step}>{step}</li>)}</ol><div className="support-start-actions"><button className="support-action-control support-primary-action" type="button" onClick={() => onNavigate("quick-add")}>Open Add Job</button><p>Add Job is available whenever Browser Capture is not the right fit.</p></div></> : <div className="support-task-grid"><section className="support-task-card"><h3>Add one opportunity</h3><p>Use this when you are beginning with a job you are currently reviewing.</p><button className="support-action-control support-primary-action" type="button" onClick={() => onNavigate("quick-add")}>Open Add Job</button></section><section className="support-task-card"><h3>Import an existing tracker</h3><p>Use this when you already track applications in CSV or Excel.</p><button className="support-action-control secondary-button" type="button" onClick={() => onNavigate("data")}>Open Data &amp; Import</button></section></div>}
       </section>
 
       <section className="panel support-panel" id="help-common-tasks" aria-labelledby="common-tasks-heading">

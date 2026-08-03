@@ -18,6 +18,7 @@ const statusFilters = [ALL_STATUSES_FILTER, ACTIVE_STATUSES_FILTER, CLOSED_STATU
 
 export default function PipelineBoard({
   applications,
+  onNavigate = () => {},
   onOpenDetails,
   onStatusChange,
   statusUpdateErrors = new Map(),
@@ -26,6 +27,9 @@ export default function PipelineBoard({
   const [selectedStatus, setSelectedStatus] = useState(ALL_STATUSES_FILTER);
   const [searchTerm, setSearchTerm] = useState("");
   const [openStatusMenuApplicationId, setOpenStatusMenuApplicationId] = useState(null);
+  if (applications.length === 0) {
+    return <section className="pipeline-board" aria-label="Applications grouped by status"><div className="empty-state"><h3>No applications on the Status Board</h3><p>Add an opportunity or import your tracker, then use this board to keep each application stage current.</p><div className="empty-state-actions"><button className="primary-small-button" type="button" onClick={() => onNavigate("quick-add")}>Add one job</button><button className="secondary-button" type="button" onClick={() => onNavigate("data")}>Import a tracker</button></div></div></section>;
+  }
   const normalizedSearchTerm = searchTerm.trim().toLowerCase();
   const invalidStatusApplications = [];
   const applicationsByStatus = USER_SELECTABLE_APPLICATION_STATUSES.reduce((groupedApplications, status) => {

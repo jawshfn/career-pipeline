@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getOnboardingState, getOnboardingStorageKey, getStoredOnboardingDismissal, storeOnboardingDismissal } from "./onboardingState.js";
+import { getOnboardingState, getOnboardingStorageKey, getStoredOnboardingDismissal, removeOnboardingDismissal, storeOnboardingDismissal } from "./onboardingState.js";
 
 const application = { id: 1, next_action: "", follow_up_date: null, resume_version_id: null };
 
@@ -35,10 +35,14 @@ describe("onboarding state", () => {
   it("uses separate, versioned storage keys and fails safely when storage is unavailable", () => {
     expect(getOnboardingStorageKey(false)).not.toBe(getOnboardingStorageKey(true));
     const storage = new Map();
-    const fakeStorage = { getItem: (key) => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) };
+    const fakeStorage = { getItem: (key) => storage.get(key) || null, removeItem: (key) => storage.delete(key), setItem: (key, value) => storage.set(key, value) };
     storeOnboardingDismissal(false, fakeStorage);
     expect(getStoredOnboardingDismissal(false, fakeStorage)).toBe(true);
     expect(getStoredOnboardingDismissal(true, fakeStorage)).toBe(false);
+    removeOnboardingDismissal(false, fakeStorage);
+    expect(getStoredOnboardingDismissal(false, fakeStorage)).toBe(false);
     expect(getStoredOnboardingDismissal(false, { getItem: () => { throw new Error("blocked"); } })).toBe(false);
+    expect(() => storeOnboardingDismissal(false, { setItem: () => { throw new Error("blocked"); } })).not.toThrow();
+    expect(() => removeOnboardingDismissal(false, { removeItem: () => { throw new Error("blocked"); } })).not.toThrow();
   });
 });

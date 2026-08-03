@@ -367,7 +367,7 @@ export default function App() {
           onOpenApplication={handleOpenApplicationDetails}
         />
       ) : activePage === "dashboard" ? (
-        <DashboardPage onOpenStatusBoard={() => navigateToPage("pipeline")} onOpenInsights={() => navigateToPage("insights")} />
+        <DashboardPage onNavigate={navigateToPage} onOpenStatusBoard={() => navigateToPage("pipeline")} onOpenInsights={() => navigateToPage("insights")} />
       ) : activePage === "insights" ? (
         <InsightsPage onOpenApplication={handleOpenApplicationDetails} />
       ) : activePage === "quick-add" ? (
@@ -405,6 +405,7 @@ export default function App() {
           error={loadError}
           isLoading={isLoading}
           onOpenDetails={handleOpenApplicationDetails}
+          onNavigate={navigateToPage}
           onTransitionApplicationStatus={handleTransitionApplicationStatus}
         />
       ) : activePage === "support" ? (
@@ -435,6 +436,7 @@ export default function App() {
           isDemoMode={demoMode}
           featuredApplicationId={demoMode && !hasPresentedFeaturedDemoApplication ? FEATURED_DEMO_APPLICATION_ID : null}
           onFeaturedApplicationPresented={() => setHasPresentedFeaturedDemoApplication(true)}
+          onNavigate={navigateToPage}
           onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onRequestedApplicationHandled={() => setRequestedApplicationId(null)}
           onDeleteApplication={handleDeleteApplication}
