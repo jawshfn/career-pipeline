@@ -92,14 +92,14 @@ def _import_row_errors(payload: ApplicationImportBatchRequest, db: Session) -> l
         company_date_key = (_import_key(row.company_name), _import_key(row.role_title), row.date_applied)
         if message is None and link_key:
             duplicate_rows = request_links[link_key]
-            if len(duplicate_rows) > 1 and not row.allow_duplicate:
-                duplicate_row = next(number for number in duplicate_rows if number != row.source_row_number)
-                field, message, conflict_type = "job_link", f"This batch already includes the same job link on spreadsheet row {duplicate_row}. Choose Import as new for every matching row after reviewing the duplicate.", "in_batch_exact_link"
+            if len(duplicate_rows) > 1 and row.source_row_number != min(duplicate_rows) and not row.allow_duplicate:
+                duplicate_row = min(duplicate_rows)
+                field, message, conflict_type = "job_link", f"This batch already includes the same job link on canonical spreadsheet row {duplicate_row}. Choose Import as new for this additional duplicate.", "in_batch_exact_link"
         if message is None and row.date_applied is not None:
             duplicate_rows = request_company_role_dates[company_date_key]
-            if len(duplicate_rows) > 1 and not row.allow_duplicate:
-                duplicate_row = next(number for number in duplicate_rows if number != row.source_row_number)
-                field, message, conflict_type = "date_applied", f"This batch already includes the same company, role, and applied date on spreadsheet row {duplicate_row}. Choose Import as new for every matching row after reviewing the duplicate.", "in_batch_company_role_date"
+            if len(duplicate_rows) > 1 and row.source_row_number != min(duplicate_rows) and not row.allow_duplicate:
+                duplicate_row = min(duplicate_rows)
+                field, message, conflict_type = "date_applied", f"This batch already includes the same company, role, and applied date on canonical spreadsheet row {duplicate_row}. Choose Import as new for this additional duplicate.", "in_batch_company_role_date"
         if message is None:
             matched = next((application for application in existing if (
                 link_key and link_key == _import_link_key(application.job_link)

@@ -104,7 +104,7 @@ export default function SpreadsheetImportPage({
 
       <section className="panel spreadsheet-import-privacy" aria-label="Local privacy">
         <strong>Template generation stays in your browser.</strong>
-        <span>No spreadsheet or application data is uploaded from this page.</span>
+        <span>No spreadsheet or application data is uploaded.</span>
       </section>
 
       <section className="panel spreadsheet-import-builder" aria-labelledby="template-builder-heading">

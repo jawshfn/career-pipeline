@@ -241,6 +241,7 @@ export function importDemoApplications(payload) {
   for (const row of rows) {
     if (!Number.isInteger(row.source_row_number) || row.source_row_number < 1 || rowNumbers.has(row.source_row_number)) throw new Error("Each imported row needs a unique spreadsheet row number.");
     rowNumbers.add(row.source_row_number);
+    if (row.allow_duplicate !== undefined && typeof row.allow_duplicate !== "boolean") throw new Error(`Spreadsheet row ${row.source_row_number} has an invalid duplicate authorization.`);
     const requiredTextError = importTextError(row, "company_name", 160, { required: true }) || importTextError(row, "role_title", 160, { required: true });
     if (requiredTextError) throw new Error(requiredTextError);
     for (const [field, limit] of Object.entries(IMPORT_TEXT_LIMITS)) {
@@ -270,7 +271,9 @@ export function importDemoApplications(payload) {
   for (const row of rows) {
     const link = importLink(row.job_link); const companyDate = row.date_applied && `${importKey(row.company_name)}|${importKey(row.role_title)}|${row.date_applied}`;
     if ((link && links.get(link).length > 1) || (companyDate && companyDates.get(companyDate).length > 1)) {
-      if (!row.allow_duplicate) throw new Error(`Spreadsheet row ${row.source_row_number} duplicates another row in this import.`);
+      const matches = [...(link ? links.get(link) : []), ...(companyDate ? companyDates.get(companyDate) : [])];
+      const canonical = Math.min(...matches.map((item) => item.source_row_number));
+      if (row.source_row_number !== canonical && !row.allow_duplicate) throw new Error(`Spreadsheet row ${row.source_row_number} duplicates canonical spreadsheet row ${canonical} in this import.`);
     }
   }
   const created = rows.map((row) => createDemoApplication({ ...row, __import: true, furthest_stage: row.highest_confirmed_stage }));

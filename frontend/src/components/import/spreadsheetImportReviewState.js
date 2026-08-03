@@ -1,5 +1,5 @@
-export const REVIEW_CATEGORIES = ["All", "Included", "Ready", "Needs review", "Possible duplicate", "Excluded"];
-export const REVIEW_STATE_CATEGORIES = ["Ready", "Needs review", "Possible duplicate", "Excluded"];
+export const REVIEW_CATEGORIES = ["All", "Included", "Needs attention", "Ready", "Needs review", "Possible duplicate", "Exact duplicates", "Excluded"];
+export const REVIEW_STATE_CATEGORIES = ["Ready", "Needs review", "Possible duplicate", "Exact duplicate — skipped", "Imported as new", "Excluded"];
 export const REVIEW_PAGE_SIZE = 50;
 export const BULK_RESOLUTION_KINDS = ["status", "source", "employment_type", "highest_confirmed_stage", "date_saved", "date_applied", "follow_up_date", "resume_version_name"];
 
@@ -87,9 +87,10 @@ export function createInitialReviewState() {
 }
 
 export function reviewStateFor(row) {
+  if (row.duplicate?.confidence === "exact") return row.allowDuplicate && !row.excluded ? "Imported as new" : "Exact duplicate — skipped";
   if (row.excluded) return "Excluded";
   if (row.issues.length) return "Needs review";
-  if (row.duplicate && !row.allowDuplicate) return "Possible duplicate";
+  if ((row.duplicate?.confidence === "possible" || (row.duplicate && !row.duplicate.confidence)) && row.duplicateDecision !== "keep_in_import") return "Possible duplicate";
   return "Ready";
 }
 
@@ -102,14 +103,16 @@ export function updateRowReviewState({ rowOverrides, rowDecisions }, rowNumber, 
   const decision = {
     ...(rowDecisions[rowNumber] || {}),
     ...Object.fromEntries(
-      ["excluded", "allowDuplicate"]
+      ["excluded", "allowDuplicate", "duplicateDecision"]
         .filter((key) => Object.hasOwn(change, key))
         .map((key) => [key, change[key]]),
     ),
   };
 
   if ((change.values || change.clearValues) && [...Object.keys(change.values || {}), ...(change.clearValues || [])].some((key) => ["company_name", "role_title", "job_link", "date_applied"].includes(key))) {
+    if (["skip_exact", "import_as_new", "exclude"].includes(decision.duplicateDecision)) delete decision.excluded;
     delete decision.allowDuplicate;
+    delete decision.duplicateDecision;
   }
 
   return { rowOverrides: nextOverrides, rowDecisions: { ...rowDecisions, [rowNumber]: decision } };
@@ -131,18 +134,26 @@ export function deriveReview({ rows, submissionIssues, filter, search, page }) {
     issues: [...row.issues, ...(submissionIssues[row.sourceRowNumber] || [])],
   }));
   const included = reviewRows.filter((row) => !row.excluded);
-  const blocking = included.filter((row) => row.issues.length || (row.duplicate?.highConfidence && !row.allowDuplicate));
+  const blocking = included.filter((row) => row.issues.length || (row.duplicate?.confidence === "exact" && !row.allowDuplicate) || (row.duplicate?.confidence === "possible" && row.duplicateDecision !== "keep_in_import"));
   const normalizedSearch = search.toLowerCase();
   const filtered = reviewRows.filter((row) => (
-    (filter === "All" || (filter === "Included" && !row.excluded) || reviewStateFor(row) === filter)
+    (filter === "All" || (filter === "Included" && !row.excluded) || (filter === "Needs attention" && !row.excluded && (row.issues.length || (row.duplicate?.confidence === "possible" && row.duplicateDecision !== "keep_in_import") || (row.duplicate?.confidence === "exact" && !row.allowDuplicate))) || (filter === "Exact duplicates" && row.duplicate?.confidence === "exact") || reviewStateFor(row) === filter)
     && `${row.values.company_name || ""} ${row.values.role_title || ""}`.toLowerCase().includes(normalizedSearch)
   ));
   const pageCount = Math.max(1, Math.ceil(filtered.length / REVIEW_PAGE_SIZE));
   const currentPage = Math.min(page, pageCount - 1);
   const pageRows = filtered.slice(currentPage * REVIEW_PAGE_SIZE, (currentPage + 1) * REVIEW_PAGE_SIZE);
-  const unresolved = bulkResolutionIssuesFor(reviewRows);
+  const unresolved = bulkResolutionIssuesFor(included);
+  const excludedUnresolved = bulkResolutionIssuesFor(reviewRows.filter((row) => row.excluded));
 
-  return { reviewRows, included, blocking, filtered, pageRows, unresolved, currentPage, pageCount };
+  return { reviewRows, included, blocking, filtered, pageRows, unresolved, excludedUnresolved, currentPage, pageCount };
+}
+
+export function initialReviewFilter(rows) {
+  const included = (rows || []).filter((row) => !row.excluded);
+  if (included.some((row) => row.issues.length || (row.duplicate?.confidence === "possible" && row.duplicateDecision !== "keep_in_import"))) return "Needs attention";
+  if (included.length) return "Included";
+  return (rows || []).some((row) => row.duplicate?.confidence === "exact") ? "Exact duplicates" : "All";
 }
 
 export function deriveImportWorkflowSteps({ file, table, mappingConfirmed, mappingNeedsAttention, mappedCount = 0, ignoredCount = 0, includedCount = 0, blockingCount = 0, possibleDuplicateCount = 0, importing = false, importComplete = false }) {

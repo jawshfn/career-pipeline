@@ -98,13 +98,13 @@ def test_import_batch_accepts_duplicate_only_with_explicit_override(client, db_s
 @pytest.mark.parametrize(
     ("overrides", "status_code", "expected_error_rows"),
     [
-        ([{}, {}], 409, [2, 3]),
+        ([{}, {}], 409, [3]),
         ([{"allow_duplicate": True}, {}], 409, [3]),
-        ([{}, {"allow_duplicate": True}], 409, [2]),
+        ([{}, {"allow_duplicate": True}], 201, []),
         ([{"allow_duplicate": True}, {"allow_duplicate": True}], 201, []),
     ],
 )
-def test_import_batch_requires_each_in_request_duplicate_to_be_explicitly_authorized(
+def test_import_batch_allows_the_canonical_in_request_row_without_an_override(
     client, db_session, overrides, status_code, expected_error_rows
 ):
     response = client.post("/api/applications/import-batch", json={"rows": [

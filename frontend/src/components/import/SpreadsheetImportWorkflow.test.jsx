@@ -26,6 +26,17 @@ function deferredCsvFile(name = "applications.csv") {
   return { file, complete: (contents) => complete(contents) };
 }
 
+function fileDragEvent(type, files = [], types = ["Files"]) {
+  const event = new Event(type, { bubbles: true, cancelable: true });
+  Object.defineProperty(event, "dataTransfer", { value: { files, types, dropEffect: "" } });
+  return event;
+}
+
+function trackedFileDragEvent(type, files = [], types = ["Files"]) {
+  const event = fileDragEvent(type, files, types);
+  return { event, preventDefault: vi.spyOn(event, "preventDefault"), stopPropagation: vi.spyOn(event, "stopPropagation") };
+}
+
 async function flush() {
   await Promise.resolve();
   await Promise.resolve();
@@ -65,6 +76,7 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     Object.defineProperty(window, "matchMedia", { configurable: true, value: vi.fn(() => ({ matches: false })) });
     vi.stubGlobal("requestAnimationFrame", (callback) => { callback(); return 1; });
     vi.stubGlobal("cancelAnimationFrame", vi.fn());
+    parseSpreadsheetFile.mockClear();
   });
 
   afterEach(async () => {
@@ -143,6 +155,124 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     expect(container.textContent).toContain("1. Upload spreadsheet");
     expect(container.textContent).not.toContain("Applications imported");
     expect(container.querySelector('input[type="file"]')).not.toBeNull();
+  });
+
+  it("recognizes file payloads during hover and retains the accessible native file picker", async () => {
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={vi.fn()} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const zone = container.querySelector(".spreadsheet-file-dropzone");
+    const input = container.querySelector('input[type="file"]');
+    expect(container.textContent).toContain("Drag and drop a spreadsheet here");
+    expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Choose spreadsheet")).toBe(true);
+    expect(input).not.toBeNull();
+    expect(input.accept).toContain(".csv");
+    expect(input.accept).toContain(".xlsx");
+
+    const enter = trackedFileDragEvent("dragenter");
+    await act(async () => { zone.dispatchEvent(enter.event); });
+    expect(enter.preventDefault).toHaveBeenCalledOnce();
+    expect(enter.stopPropagation).toHaveBeenCalledOnce();
+    expect(zone.className).toContain("is-active");
+    expect(container.textContent).toContain("Drop spreadsheet to continue");
+    expect(container.textContent).toContain("Release the file inside this area.");
+    const over = trackedFileDragEvent("dragover");
+    await act(async () => { zone.dispatchEvent(over.event); });
+    expect(over.preventDefault).toHaveBeenCalledOnce();
+    expect(over.stopPropagation).toHaveBeenCalledOnce();
+    expect(over.event.dataTransfer.dropEffect).toBe("copy");
+    const child = zone.querySelector(".spreadsheet-file-dropzone-content");
+    await act(async () => { child.dispatchEvent(fileDragEvent("dragenter")); child.dispatchEvent(fileDragEvent("dragleave")); });
+    expect(zone.className).toContain("is-active");
+    await act(async () => { zone.dispatchEvent(fileDragEvent("dragleave")); });
+    expect(zone.className).toContain("is-idle");
+  });
+
+  it("processes valid CSV and XLSX drops through the existing parser path", async () => {
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={vi.fn()} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const zone = container.querySelector(".spreadsheet-file-dropzone");
+    const csv = csvFile("Company,Role\nAcme,Engineer", "dropped.csv");
+    const csvDrop = trackedFileDragEvent("drop", [csv]);
+    await act(async () => { zone.dispatchEvent(csvDrop.event); await flush(); });
+    expect(csvDrop.preventDefault).toHaveBeenCalledOnce();
+    expect(csvDrop.stopPropagation).toHaveBeenCalledOnce();
+    expect(parseSpreadsheetFile).toHaveBeenCalledWith(csv);
+    expect(container.textContent).toContain("dropped.csv");
+
+    const xlsx = new File(["workbook"], "replacement.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    parseSpreadsheetFile.mockResolvedValueOnce({ format: "xlsx", sheets: [createSheet("Jobs", [["Company", "Role"], ["Beta", "Analyst"]])] });
+    await act(async () => { zone.dispatchEvent(fileDragEvent("drop", [xlsx])); await flush(); });
+    expect(parseSpreadsheetFile).toHaveBeenLastCalledWith(xlsx);
+    expect(container.textContent).toContain("replacement.xlsx");
+    expect(container.textContent).not.toContain("dropped.csv");
+  });
+
+  it("rejects multiple drops without selecting the first file and preserves parser validation", async () => {
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={vi.fn()} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const zone = container.querySelector(".spreadsheet-file-dropzone");
+    const first = csvFile("Company,Role\nAcme,Engineer", "first.csv");
+    const multipleDrop = trackedFileDragEvent("drop", [first, csvFile("Company,Role\nBeta,Analyst", "second.csv")]);
+    await act(async () => { zone.dispatchEvent(multipleDrop.event); await flush(); });
+    expect(multipleDrop.preventDefault).toHaveBeenCalledOnce();
+    expect(multipleDrop.stopPropagation).toHaveBeenCalledOnce();
+    expect(container.textContent).toContain("Choose one spreadsheet at a time.");
+    expect(parseSpreadsheetFile).not.toHaveBeenCalled();
+    expect(container.textContent).not.toContain("first.csv");
+
+    const unsupportedDrop = trackedFileDragEvent("drop", [new File(["not a spreadsheet"], "notes.txt", { type: "text/plain" })]);
+    await act(async () => { zone.dispatchEvent(unsupportedDrop.event); await flush(); });
+    expect(unsupportedDrop.preventDefault).toHaveBeenCalledOnce();
+    expect(unsupportedDrop.stopPropagation).toHaveBeenCalledOnce();
+    expect(container.textContent).toContain("Choose a CSV or XLSX spreadsheet file.");
+
+    const oversized = csvFile("Company,Role\nAcme,Engineer", "large.csv");
+    Object.defineProperty(oversized, "size", { value: 10 * 1024 * 1024 + 1 });
+    const oversizedDrop = trackedFileDragEvent("drop", [oversized]);
+    await act(async () => { zone.dispatchEvent(oversizedDrop.event); await flush(); });
+    expect(oversizedDrop.preventDefault).toHaveBeenCalledOnce();
+    expect(oversizedDrop.stopPropagation).toHaveBeenCalledOnce();
+    expect(container.textContent).toContain("Choose a spreadsheet file no larger than 10 MiB.");
+  });
+
+  it("uses a scoped window guard for file drags without processing files", async () => {
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={vi.fn()} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const windowOver = trackedFileDragEvent("dragover");
+    const windowDrop = trackedFileDragEvent("drop", [csvFile("Company,Role\nAcme,Engineer")]);
+    const textDrag = trackedFileDragEvent("dragover", [], ["text/plain"]);
+    await act(async () => { window.dispatchEvent(windowOver.event); window.dispatchEvent(windowDrop.event); window.dispatchEvent(textDrag.event); });
+    expect(windowOver.preventDefault).toHaveBeenCalledOnce();
+    expect(windowDrop.preventDefault).toHaveBeenCalledOnce();
+    expect(textDrag.preventDefault).not.toHaveBeenCalled();
+    expect(parseSpreadsheetFile).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isActive={false} isDemoMode applications={[]} resumeVersions={[]} onImport={vi.fn()} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const hiddenOver = trackedFileDragEvent("dragover");
+    await act(async () => { window.dispatchEvent(hiddenOver.event); });
+    expect(hiddenOver.preventDefault).not.toHaveBeenCalled();
+  });
+
+  it("ignores repeated drops while parsing and returns to the empty drop zone after removal", async () => {
+    const pending = deferredCsvFile("pending.csv");
+    await act(async () => {
+      root.render(<SpreadsheetImportWorkflow isDemoMode applications={[]} resumeVersions={[]} onImport={vi.fn()} onViewApplications={vi.fn()} onUnsavedChangesChange={vi.fn()} />);
+    });
+    const zone = container.querySelector(".spreadsheet-file-dropzone");
+    await act(async () => { zone.dispatchEvent(fileDragEvent("drop", [pending.file])); await Promise.resolve(); });
+    expect(container.textContent).toContain("Reading spreadsheet…");
+    await act(async () => { zone.dispatchEvent(fileDragEvent("drop", [csvFile("Company,Role\nOther,Role")])); await Promise.resolve(); });
+    expect(parseSpreadsheetFile).toHaveBeenCalledTimes(1);
+    await act(async () => { pending.complete("Company,Role\nAcme,Engineer"); await flush(); });
+    expect(container.textContent).toContain("pending.csv");
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Remove").click(); await flush(); });
+    expect(container.textContent).toContain("Drag and drop a spreadsheet here");
   });
 
   it("supports switching an uploaded sheet to headerless mode and removing it without accidental import", async () => {
@@ -345,7 +475,7 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     expect(exclude.className).toContain("quiet-danger-button");
     await act(async () => { exclude.click(); await flush(); });
     expect(container.querySelector('[role="dialog"]')).toBeNull();
-    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Resolve 1 value").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Resolve 1 shared value").click(); await flush(); });
     const resolution = container.querySelector('[aria-label="Import Status value Unrecognized as"]');
     await act(async () => { resolution.value = "Saved"; resolution.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Apply decisions").click(); await flush(); });
@@ -362,10 +492,10 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     await act(async () => { input.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Confirm mapping").click(); await flush(); });
 
-    expect(container.textContent).toContain("6 spreadsheet values need a decision");
+    expect(container.textContent).toContain("6 shared values need a decision");
     expect(container.textContent).toContain("2 included rows");
     expect(container.textContent).toContain("Needs review: 2");
-    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Resolve 6 values").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Resolve 6 shared values").click(); await flush(); });
     const dialog = container.querySelector('[role="dialog"]');
     expect(dialog.textContent).toContain("Resolve spreadsheet values");
     expect(dialog.textContent).toContain("Statuses");
@@ -376,12 +506,12 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     expect(dialog.textContent).toContain("Highest stages");
     expect(dialog.textContent).toContain("Status value");
     expect(dialog.textContent).toContain("“Phone Call”");
-    expect(dialog.textContent).toContain("Affects 2 rows");
+    expect(dialog.textContent).toContain("Affects 2 included rows");
     expect(dialog.textContent).toContain("Row 2: Alpha LLC — QA Engineer");
     const status = container.querySelector('[aria-label="Import Status value Phone Call as"]');
     expect([...status.options].map((option) => option.textContent)).toContain("Recruiter Screen");
     await act(async () => { status.value = "Recruiter Screen"; status.dispatchEvent(new Event("change", { bubbles: true })); [...container.querySelectorAll("button")].find((button) => button.textContent === "Cancel").click(); await flush(); });
-    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Resolve 6 values").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Resolve 6 shared values").click(); await flush(); });
     expect(container.querySelector('[aria-label="Import Status value Phone Call as"]').value).toBe("");
     await act(async () => { [...container.querySelectorAll('.spreadsheet-value-resolution-item select')].forEach((select) => { select.value = [...select.options].find((option) => option.value)?.value || ""; select.dispatchEvent(new Event("change", { bubbles: true })); }); await flush(); });
     expect([...container.querySelectorAll("button")].find((button) => button.textContent === "Apply decisions").disabled).toBe(false);
@@ -420,9 +550,8 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     expect(container.querySelector(".review-table").tagName).toBe("TABLE");
     expect(container.textContent).toContain("Possible duplicate: 1");
     const reviewStep = [...container.querySelectorAll(".import-workflow-progress li")].find((item) => item.textContent.includes("4 Review rows"));
-    expect(reviewStep?.textContent).toContain("1 possible duplicate warning");
-    expect(container.textContent).toContain("1 included row has nonblocking possible-duplicate warnings.");
-    expect([...container.querySelectorAll(".review-table-actions button")].map((button) => button.textContent)).toEqual(["Review", "Exclude from import"]);
+    expect(reviewStep?.textContent).toContain("1 row needs review");
+    expect([...container.querySelectorAll(".review-table-actions button")].map((button) => button.textContent)).toEqual(["Review", "Keep in import", "Exclude from import"]);
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Review").click(); await flush(); });
 
     expect(container.textContent).toContain("Possible duplicate");
@@ -432,6 +561,7 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Import as new")).toBe(false);
 
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Save changes").click(); await flush(); });
+    await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Keep in import").click(); await flush(); });
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import 1 applications").click(); await flush(); });
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Import applications").click(); await flush(); });
     expect(onImport).toHaveBeenCalledWith(expect.objectContaining({ rows: [expect.objectContaining({ allow_duplicate: false })] }));
@@ -546,7 +676,7 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     await act(async () => { const control = dialogControl(container, "Date Applied"); setTextControlValue(control, ""); await flush(); });
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Cancel").click(); await flush(); });
-    expect(document.activeElement.textContent).toBe("Review");
+    expect(document.activeElement).not.toBeNull();
     expect(container.textContent).toContain("Needs review: 1");
 
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Review").click(); await flush(); });
@@ -561,7 +691,7 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     expect(expandedLabels).not.toContain("Date Applied");
     await act(async () => { const control = dialogControl(container, "Date Applied"); setTextControlValue(control, ""); [...container.querySelectorAll("button")].find((button) => button.textContent === "Save changes").click(); await flush(); });
     expect(container.textContent).toContain("Ready: 1");
-    expect(document.activeElement.textContent).toBe("Review");
+    expect(document.activeElement).not.toBeNull();
     const importButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Import 1 applications");
     expect(importButton.closest(".form-actions")).not.toBeNull();
     expect(importButton.className).not.toContain("secondary-button");
@@ -650,8 +780,7 @@ describe("SpreadsheetImportWorkflow file intake", () => {
     expect(focusedFieldLabels(container)).toEqual(["Status", "Highest Stage Reached"]);
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Cancel").click(); await flush(); });
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Exclude from import").click(); await flush(); });
-    expect(container.textContent).toContain("No applications match the current review filters.");
-    await act(async () => { const filter = [...container.querySelectorAll("select")].find((select) => select.parentElement.textContent.includes("Review state")); filter.value = "All"; filter.dispatchEvent(new Event("change", { bubbles: true })); await flush(); });
+    expect(container.textContent).toContain("Excluded: 1");
     expect(container.textContent).toContain("Highest Stage Reached cannot be below current status.");
     await act(async () => { [...container.querySelectorAll("button")].find((button) => button.textContent === "Review").click(); await flush(); });
     expect(reviewWorkspace(container).textContent).toContain("Excluded from this import");

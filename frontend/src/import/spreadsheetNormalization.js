@@ -160,18 +160,31 @@ export function normalizeSpreadsheetRows({ table, mappings, valueMappings = {}, 
     if (["Rejected", "Withdrawn"].includes(values.status) && values.highest_confirmed_stage === "Saved" && values.date_applied) issues.push({ field: "highest_confirmed_stage", message: "A submitted terminal application must have reached at least Applied." });
     if (values.status && PROGRESSION_STAGES.includes(values.status) && values.highest_confirmed_stage && PROGRESSION_STAGES.indexOf(values.highest_confirmed_stage) < PROGRESSION_STAGES.indexOf(values.status)) issues.push({ field: "highest_confirmed_stage", message: "Highest Stage Reached cannot be below current status." });
     const companyRole = key(values.company_name) && key(values.role_title) ? `${key(values.company_name)}|${key(values.role_title)}` : "";
-    const duplicate = duplicateIndexes.byLink.get(jobLinkKey(values.job_link)) || (values.date_applied && companyRole ? duplicateIndexes.byCompanyRoleDate.get(`${companyRole}|${values.date_applied}`) : null);
-    const possibleDuplicate = duplicate || (companyRole ? duplicateIndexes.byCompanyRole.get(companyRole) : null);
-    return { sourceRowNumber: sourceRow.originalRowNumber, raw: sourceRow.values, values, issues, excluded: Boolean(duplicate), duplicate: possibleDuplicate ? { application: possibleDuplicate, highConfidence: Boolean(duplicate) } : null, allowDuplicate: false };
+    // Exact rules are deliberately evaluated independently: a distinct link must
+    // not hide a same-company/role/applied-date duplicate.
+    const linkMatch = duplicateIndexes.byLink.get(jobLinkKey(values.job_link));
+    const companyDateMatch = values.date_applied && companyRole ? duplicateIndexes.byCompanyRoleDate.get(`${companyRole}|${values.date_applied}`) : null;
+    const exactApplication = linkMatch || companyDateMatch;
+    const reason = linkMatch ? "job_link" : companyDateMatch ? "company_role_date" : companyRole ? "company_role" : null;
+    const application = exactApplication || (companyRole ? duplicateIndexes.byCompanyRole.get(companyRole) : null);
+    return { sourceRowNumber: sourceRow.originalRowNumber, raw: sourceRow.values, values, issues, excluded: Boolean(exactApplication), duplicate: application ? { confidence: exactApplication ? "exact" : "possible", scope: "existing", reason, application, sourceRowNumber: null, highConfidence: Boolean(exactApplication) } : null, allowDuplicate: false };
   });
-  const firstByExactKey = new Map();
+  const firstByLink = new Map(); const firstByCompanyDate = new Map(); const firstByCompanyRole = new Map();
   return rows.map((row) => {
     const companyRole = key(row.values.company_name) && key(row.values.role_title) ? `${key(row.values.company_name)}|${key(row.values.role_title)}` : "";
-    const exactKey = jobLinkKey(row.values.job_link) || (row.values.date_applied && companyRole ? `${companyRole}|${row.values.date_applied}` : "");
-    if (!exactKey || row.duplicate?.highConfidence) return row;
-    const prior = firstByExactKey.get(exactKey);
-    if (!prior) { firstByExactKey.set(exactKey, row); return row; }
-    return { ...row, excluded: true, duplicate: { application: prior.values, highConfidence: true } };
+    const link = jobLinkKey(row.values.job_link);
+    const companyDate = row.values.date_applied && companyRole ? `${companyRole}|${row.values.date_applied}` : "";
+    const priorLink = link && firstByLink.get(link);
+    const priorCompanyDate = companyDate && firstByCompanyDate.get(companyDate);
+    const prior = priorLink || priorCompanyDate;
+    if (link && !firstByLink.has(link)) firstByLink.set(link, row);
+    if (companyDate && !firstByCompanyDate.has(companyDate)) firstByCompanyDate.set(companyDate, row);
+    if (companyRole && !firstByCompanyRole.has(companyRole)) firstByCompanyRole.set(companyRole, row);
+    if (row.duplicate?.highConfidence || !prior) {
+      if (!row.duplicate && companyRole && firstByCompanyRole.get(companyRole) !== row) return { ...row, duplicate: { confidence: "possible", scope: "in_batch", reason: "company_role", application: null, sourceRowNumber: firstByCompanyRole.get(companyRole).sourceRowNumber, highConfidence: false } };
+      return row;
+    }
+    return { ...row, excluded: true, duplicate: { confidence: "exact", scope: "in_batch", reason: priorLink ? "job_link" : "company_role_date", application: null, sourceRowNumber: prior.sourceRowNumber, highConfidence: true } };
   });
 }
 

@@ -77,10 +77,11 @@ describe("demo spreadsheet import parity", () => {
     expect(imported.created_count).toBe(1);
   });
 
-  it("rejects in-batch exact duplicates before creating any applications", () => {
+  it("requires an override only for additional in-batch exact duplicates", () => {
     const before = getDemoExportSnapshot();
-    expect(() => importDemoApplications({ rows: [row({ source_row_number: 51, job_link: "https://example.test/import" }), row({ source_row_number: 52, job_link: "https://example.test/import/" })] })).toThrow("duplicates another row");
+    expect(() => importDemoApplications({ rows: [row({ source_row_number: 51, job_link: "https://example.test/import" }), row({ source_row_number: 52, job_link: "https://example.test/import/" })] })).toThrow("canonical spreadsheet row 51");
     expect(getDemoExportSnapshot().applications).toHaveLength(before.applications.length);
+    expect(importDemoApplications({ rows: [row({ source_row_number: 51, job_link: "https://example.test/import" }), row({ source_row_number: 52, job_link: "https://example.test/import/", allow_duplicate: true })] }).created_count).toBe(2);
   });
 
   it("matches local in-batch override behavior and never reaches the backend transport", async () => {
