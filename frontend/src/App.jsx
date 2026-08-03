@@ -360,11 +360,14 @@ export default function App() {
     <AppLayout activePage={activePage} isDemoMode={demoMode} onNavigate={navigateToPage}>
       {activePage === "command-center" ? (
         <CommandCenterPage
+          applications={applications}
+          isDemoMode={demoMode}
           onApplyFollowUpAction={handleFollowUpAction}
+          onNavigate={navigateToPage}
           onOpenApplication={handleOpenApplicationDetails}
         />
       ) : activePage === "dashboard" ? (
-        <DashboardPage onOpenStatusBoard={() => navigateToPage("pipeline")} onOpenInsights={() => navigateToPage("insights")} />
+        <DashboardPage onNavigate={navigateToPage} onOpenStatusBoard={() => navigateToPage("pipeline")} onOpenInsights={() => navigateToPage("insights")} />
       ) : activePage === "insights" ? (
         <InsightsPage onOpenApplication={handleOpenApplicationDetails} />
       ) : activePage === "quick-add" ? (
@@ -402,12 +405,14 @@ export default function App() {
           error={loadError}
           isLoading={isLoading}
           onOpenDetails={handleOpenApplicationDetails}
+          onNavigate={navigateToPage}
           onTransitionApplicationStatus={handleTransitionApplicationStatus}
         />
       ) : activePage === "support" ? (
         <SupportPage
           isDemoMode={demoMode}
           onNavigate={navigateToPage}
+          onOpenApplication={() => handleOpenApplicationDetails(FEATURED_DEMO_APPLICATION_ID)}
         />
       ) : activePage === "data" ? (
         <DataPage
@@ -432,6 +437,7 @@ export default function App() {
           isDemoMode={demoMode}
           featuredApplicationId={demoMode && !hasPresentedFeaturedDemoApplication ? FEATURED_DEMO_APPLICATION_ID : null}
           onFeaturedApplicationPresented={() => setHasPresentedFeaturedDemoApplication(true)}
+          onNavigate={navigateToPage}
           onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onRequestedApplicationHandled={() => setRequestedApplicationId(null)}
           onDeleteApplication={handleDeleteApplication}

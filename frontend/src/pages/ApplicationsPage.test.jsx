@@ -185,6 +185,32 @@ describe("ApplicationsPage", () => {
     await act(async () => setControlValue(search, "No matching opportunity"));
 
     expect(container.textContent).toContain("No applications match your current filters.");
+    expect(container.textContent).not.toContain("Add one job");
+  });
+
+  it("guides an empty workspace to Add Job or Data without rendering list controls", async () => {
+    const onNavigate = vi.fn();
+    await act(async () => root.render(<ApplicationsPage applications={[]} error="" isLoading={false} onNavigate={onNavigate} onUnsavedChangesChange={vi.fn()} onUpdateApplication={vi.fn()} resumeVersions={[]} />));
+    expect(container.textContent).toContain("No applications yet");
+    expect(container.querySelector(".application-view-tabs")).toBeNull();
+    expect(container.querySelector(".application-filters")).toBeNull();
+    expect([...container.querySelectorAll("button")].find((button) => button.textContent === "Add one job").classList).toContain("primary-small-button");
+    expect([...container.querySelectorAll("button")].find((button) => button.textContent === "Import a tracker").classList).toContain("secondary-button");
+    await act(async () => clickButton(container, "Add one job"));
+    await act(async () => clickButton(container, "Import a tracker"));
+    expect(onNavigate).toHaveBeenNthCalledWith(1, "quick-add");
+    expect(onNavigate).toHaveBeenNthCalledWith(2, "data");
+  });
+
+  it("switches locally between empty Active and Closed views", async () => {
+    await act(async () => root.render(<ApplicationsPage applications={[applications[2]]} error="" isLoading={false} onUnsavedChangesChange={vi.fn()} onUpdateApplication={vi.fn()} resumeVersions={[]} />));
+    expect(container.textContent).toContain("No active applications");
+    expect([...container.querySelectorAll("button")].find((button) => button.textContent === "View closed applications").classList).toContain("secondary-button");
+    await act(async () => clickButton(container, "View closed applications"));
+    expect(container.textContent).toContain("Harbor Works");
+
+    await act(async () => root.render(<ApplicationsPage applications={[applications[0]]} error="" isLoading={false} onUnsavedChangesChange={vi.fn()} onUpdateApplication={vi.fn()} resumeVersions={[]} />));
+    expect([...container.querySelectorAll("button")].find((button) => button.textContent === "View active applications").classList).toContain("secondary-button");
   });
 
   it("opens the featured demo application on the AI Brief tab once", async () => {

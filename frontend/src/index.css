@@ -2772,6 +2772,8 @@ a {
   margin: 6px auto 0;
 }
 
+.empty-state-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
+
 .dashboard-metric-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -2978,6 +2980,32 @@ a {
 .command-center-layout {
   display: grid;
   gap: 16px;
+}
+
+.starting-surface {
+  display: grid;
+  gap: 14px;
+  max-width: 900px;
+  margin: 0 0 20px;
+  border: 1px solid #b9d8d2;
+  border-radius: var(--radius-lg);
+  padding: clamp(18px, 3vw, 26px);
+  background: linear-gradient(135deg, #f2fbf8, #f8fbff);
+  box-shadow: 0 8px 24px rgba(23, 32, 42, 0.05);
+}
+
+.starting-surface-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.starting-surface h3 { margin: 0; color: var(--color-text); font-size: 1.15rem; }
+.starting-surface p:not(.eyebrow) { max-width: 680px; margin: 7px 0 0; color: var(--color-muted); }
+.starting-surface-dismiss { flex: 0 0 auto; }
+.starting-surface-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.starting-surface-restore { margin: 0 0 12px; }
+
+@media (max-width: 620px) {
+  .starting-surface-heading { align-items: stretch; flex-direction: column; }
+  .starting-surface-dismiss { align-self: start; }
+  .starting-surface-actions { display: grid; }
+  .starting-surface-actions button { width: 100%; }
 }
 
 .command-center-daily-header {

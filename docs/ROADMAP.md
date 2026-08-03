@@ -20,6 +20,7 @@ It is not a production SaaS platform: workspace data remains local, there is no 
 | 25–26      | AI Job Intelligence and persistence                 | A privacy-bounded, user-initiated Brief moved from gateway integration to a persisted local lifecycle.                                             |
 | 27          | Trusted Outcome Insights                            | Confirmed-history reporting added transparent, drill-down outcome comparisons.                                                                     |
 | 28          | Repository audit and maintainability cleanup        | Removed verified remnants and consolidated active domain, demo read-model, and cached-resource responsibilities without changing product behavior. |
+| 30          | First-run onboarding and guided setup               | Added local starting guidance, actionable recovery states, a seeded-demo evaluation path, and accessible reversible guidance. |
 | 29          | Flexible spreadsheet import and Data workspace      | Completed reviewed CSV/XLSX import, templates, duplicate integrity, long Job Links, and stabilization.                                             |
 
 ## Phase 0 — Product Planning
@@ -158,6 +159,13 @@ Consolidated active progression, status, follow-up, red-flag, and Outcome Insigh
 - Added Minimal, Common, and Custom spreadsheet templates plus integrated Data tabs for import, templates, export/backup, and restore.
 - Added transactional new-application batch import with exact/possible and in-batch duplicate decisions, demo parity, and Job Links through 2,048 characters.
 - Stabilized parsing, export/re-import compatibility, accessibility, and responsive behavior.
+
+## Phase 30 — First-Run Onboarding And Guided Setup
+
+- Added local empty-workspace Add Job and Import paths plus a brief one-application follow-through guide that disappears once work is established.
+- Made guidance dismissal reversible, versioned, browser-local, and separate by local and demo mode; added actionable empty states across key workflow pages.
+- Kept the populated fictional demo separate from local onboarding with a seeded evaluation path through Reminders, a featured application, Status Board, Outcome Insights, Help, and Data & Import.
+- Stabilized focused keyboard behavior, responsive action layouts, and local/demo persistence messaging.
 
 ## Later possibilities
 

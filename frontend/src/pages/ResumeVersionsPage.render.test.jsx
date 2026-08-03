@@ -70,11 +70,32 @@ describe("ResumeVersionsPage library experience", () => {
     expect(container.querySelector('input[name="name"]').value).toBe("Platform Resume");
   });
 
-  it("starts expanded with the existing empty-state wording when there are no versions", async () => {
+  it("starts expanded with focused empty-library guidance when there are no versions", async () => {
     await renderPage([]);
     expect(container.querySelector("details").open).toBe(true);
     expect(container.textContent).toContain("No resume versions yet");
-    expect(container.textContent).toContain("Create resume versions to track which resume is tied to each opportunity.");
+    expect(container.textContent).toContain("Create your first resume version above. You can later assign it to applications and compare confirmed outcomes.");
+  });
+
+  it("reopens and focuses the empty create form without clearing its draft", async () => {
+    await renderPage([]);
+    const disclosure = container.querySelector("details");
+    const name = container.querySelector('input[name="name"]');
+    await act(async () => {
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+      setValue.call(name, "Platform Resume");
+      name.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      disclosure.open = false;
+      disclosure.dispatchEvent(new Event("toggle", { bubbles: true }));
+    });
+    expect(container.textContent).toContain("Create your first version");
+    expect([...container.querySelectorAll("button")].find((button) => button.textContent === "Create your first version").classList).toContain("primary-small-button");
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Create your first version").click());
+    expect(disclosure.open).toBe(true);
+    expect(container.querySelector('input[name="name"]').value).toBe("Platform Resume");
+    expect(document.activeElement).toBe(container.querySelector('input[name="name"]'));
   });
 
   it("uses the complete collection immediately when inactive versions are included", async () => {

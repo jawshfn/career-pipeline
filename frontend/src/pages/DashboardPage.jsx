@@ -85,7 +85,7 @@ function normalizeDashboardSummary(summary) {
   };
 }
 
-export default function DashboardPage({ onOpenStatusBoard, onOpenInsights }) {
+export default function DashboardPage({ onNavigate = () => {}, onOpenStatusBoard, onOpenInsights }) {
   const { data, error, refreshError, isInitialLoading: isLoading } = useStaleResource("dashboard", getDashboardSummary, {
     initialErrorMessage: "Could not load dashboard summary.",
     refreshErrorMessage: "Could not refresh dashboard. Showing the previous summary.",
@@ -118,7 +118,7 @@ export default function DashboardPage({ onOpenStatusBoard, onOpenInsights }) {
         </section>
       ) : null}
 
-      {!isLoading && !error ? (
+      {!isLoading && !error && totalApplications > 0 ? (
         <section className="dashboard-status-board-cta" aria-labelledby="dashboard-status-board-cta-title">
           <div>
             <h3 id="dashboard-status-board-cta-title">Keep statuses current</h3>
@@ -129,12 +129,13 @@ export default function DashboardPage({ onOpenStatusBoard, onOpenInsights }) {
           </button>
         </section>
       ) : null}
-      {!isLoading && !error ? <section className="dashboard-status-board-cta" aria-labelledby="dashboard-insights-cta-title"><div><h3 id="dashboard-insights-cta-title">Outcome Insights</h3><p>See how applications progress and compare source and resume outcomes.</p></div><button className="secondary-button" type="button" onClick={onOpenInsights}>View Insights</button></section> : null}
+      {!isLoading && !error && totalApplications > 0 ? <section className="dashboard-status-board-cta" aria-labelledby="dashboard-insights-cta-title"><div><h3 id="dashboard-insights-cta-title">Outcome Insights</h3><p>See how applications progress and compare source and resume outcomes.</p></div><button className="secondary-button" type="button" onClick={onOpenInsights}>View Insights</button></section> : null}
 
       {!isLoading && !error && totalApplications === 0 ? (
         <div className="empty-state">
-          <h3>No applications yet</h3>
-          <p>Add applications to start seeing job-search trends.</p>
+          <h3>Your dashboard will grow with your search</h3>
+          <p>Add one opportunity or import your current tracker to begin seeing status, source, follow-up, and red-flag summaries.</p>
+          <div className="empty-state-actions"><button className="primary-small-button" type="button" onClick={() => onNavigate("quick-add")}>Add one job</button><button className="secondary-button" type="button" onClick={() => onNavigate("data")}>Import a tracker</button></div>
         </div>
       ) : null}
 

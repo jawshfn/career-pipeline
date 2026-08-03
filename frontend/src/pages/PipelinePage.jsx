@@ -6,7 +6,7 @@ import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 import { analyzeStatusTransition, transitionPayloadForDecision } from "../utils/statusTransition.js";
 
-export default function PipelinePage({ applications, error, isLoading, onOpenDetails, onTransitionApplicationStatus }) {
+export default function PipelinePage({ applications, error, isLoading, onNavigate = () => {}, onOpenDetails, onTransitionApplicationStatus }) {
   const [statusUpdateErrors, setStatusUpdateErrors] = useState(() => new Map());
   const [updatingApplicationIds, setUpdatingApplicationIds] = useState(() => new Set());
   const [pendingTransition, setPendingTransition] = useState(null);
@@ -68,7 +68,7 @@ export default function PipelinePage({ applications, error, isLoading, onOpenDet
     <header className="page-header"><div><p className="eyebrow">Status workflow</p><h2>Status Board</h2><p>Move opportunities through stages quickly and keep your application list current.</p></div></header>
     {isLoading ? <LoadingState message="Loading status board..." /> : null}
     {!isLoading && error ? <ErrorMessage message={error} /> : null}
-    {!isLoading && !error ? <PipelineBoard applications={applications} onOpenDetails={onOpenDetails} onStatusChange={handleStatusChange} statusUpdateErrors={statusUpdateErrors} updatingApplicationIds={updatingApplicationIds} /> : null}
+    {!isLoading && !error ? <PipelineBoard applications={applications} onNavigate={onNavigate} onOpenDetails={onOpenDetails} onStatusChange={handleStatusChange} statusUpdateErrors={statusUpdateErrors} updatingApplicationIds={updatingApplicationIds} /> : null}
     {pendingTransition ? <StatusTransitionDialog decision={pendingTransition.decision} errorMessage={statusUpdateErrors.get(applicationKey(pendingTransition.application.id))} isProcessing={updatingApplicationIds.has(applicationKey(pendingTransition.application.id))} onCancel={() => !updatingApplicationIds.has(applicationKey(pendingTransition.application.id)) && setPendingTransition(null)} onConfirm={(intent, confirmedStage) => submitStatusChange(pendingTransition.application, pendingTransition.decision.nextStatus, transitionPayloadForDecision(pendingTransition.decision, intent, confirmedStage))} /> : null}
   </div>;
 }

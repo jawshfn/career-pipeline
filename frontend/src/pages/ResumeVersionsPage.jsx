@@ -338,6 +338,11 @@ export default function ResumeVersionsPage({
     requestResumeAction({ type: "start-create", currentResumeVersion: allResumeVersions.find((version) => version.id === editingId) }, currentState);
   }
 
+  function reopenEmptyCreateForm() {
+    shouldFocusCreateNameRef.current = true;
+    setIsCreateOpen(true);
+  }
+
   function startDuplicating(resumeVersion) {
     const currentState = {
       actionError,
@@ -572,7 +577,8 @@ export default function ResumeVersionsPage({
         {!isLoading && !error && visibleResumeVersions.length === 0 ? (
           <div className="empty-state">
             <h3>No resume versions yet</h3>
-            <p>Create resume versions to track which resume is tied to each opportunity.</p>
+            <p>Create your first resume version above. You can later assign it to applications and compare confirmed outcomes.</p>
+            {!isCreateOpen ? <div className="empty-state-actions"><button className="primary-small-button" type="button" onClick={reopenEmptyCreateForm}>Create your first version</button></div> : null}
           </div>
         ) : null}
 

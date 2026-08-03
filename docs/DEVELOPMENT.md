@@ -64,6 +64,12 @@ Focused import coverage includes `backend/app/tests/test_application_imports.py`
 
 For manual testing, run FastAPI with `python -m uvicorn app.main:app --reload` from `backend`, and Vite with `npm run dev` from `frontend`. Normal local mode uses FastAPI and SQLite. Set `VITE_APP_MODE=demo` to exercise the fictional, in-memory demo; it resets after reload. The browser parses the spreadsheet and submits normalized JSON only. The established ExcelJS bundle-size warning is nonblocking when it remains the only build warning.
 
+## First-run and demo guidance
+
+`frontend/src/components/command-center/onboardingState.js` keeps local workspace selection pure: empty and one-application states are distinguished from an established workspace. Demo guidance is mode-driven and remains independent of application count. `StartingSurface.jsx` owns versioned dismissal using `pursuithq:onboarding:local:v1` and `pursuithq:onboarding:demo:v1`; storage failures leave the guide usable. Increment `ONBOARDING_VERSION` deliberately when a material guide change should re-present it.
+
+`CommandCenterPage.jsx` wires the guide and its focus restoration, while `SupportPage.jsx` renders the local starting choices or the demo walkthrough using the existing featured-application callback from `App.jsx`. Focused coverage lives in `onboardingState.test.js`, `CommandCenterPage.test.jsx`, `SupportPage.test.jsx`, and `demoData.test.js`.
+
 ## CI and deployment
 
 `ci.yml` runs backend pytest, browser-extension Node tests, frontend Vitest, and a frontend build on pushes and pull requests. `pages.yml` runs frontend tests, builds demo mode from `frontend/dist`, and deploys GitHub Pages on `main` or manual dispatch. `deploy-ai-gateway.yml` is manually dispatched; it installs gateway dependencies, tests, validates a Wrangler deployment, and deploys the Worker with repository secrets.

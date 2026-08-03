@@ -71,13 +71,14 @@ describe("DashboardPage", () => {
 
   async function renderDashboard({ summary = dashboardSummary } = {}) {
     const onOpenStatusBoard = vi.fn();
+    const onNavigate = vi.fn();
     mocks.getDashboardSummary.mockResolvedValue(summary);
     await act(async () => {
-      root.render(<DashboardPage onOpenStatusBoard={onOpenStatusBoard} />);
+      root.render(<DashboardPage onNavigate={onNavigate} onOpenInsights={vi.fn()} onOpenStatusBoard={onOpenStatusBoard} />);
       await Promise.resolve();
       await Promise.resolve();
     });
-    return onOpenStatusBoard;
+    return { onNavigate, onOpenStatusBoard };
   }
 
   it("renders the dashboard heading, all six metrics, and their tone classes", async () => {
@@ -94,7 +95,7 @@ describe("DashboardPage", () => {
   });
 
   it("opens the Status Board and preserves native disclosure chevrons", async () => {
-    const onOpenStatusBoard = await renderDashboard();
+    const { onOpenStatusBoard } = await renderDashboard();
     const action = [...container.querySelectorAll("button")].find((button) => button.textContent === "Open Status Board");
     await act(async () => action.click());
 
@@ -129,7 +130,7 @@ describe("DashboardPage", () => {
   });
 
   it("renders the no-applications and subsection-empty messages", async () => {
-    await renderDashboard({
+    const { onNavigate } = await renderDashboard({
       summary: {
         ...dashboardSummary,
         red_flag_snapshot: { flagged_count: 0, items: [] },
@@ -139,8 +140,16 @@ describe("DashboardPage", () => {
       },
     });
 
-    expect(container.textContent).toContain("No applications yet");
-    expect(container.textContent).toContain("Add applications to start seeing job-search trends.");
+    expect(container.textContent).toContain("Your dashboard will grow with your search");
+    expect(container.textContent).toContain("Import a tracker");
+    expect(container.textContent).not.toContain("Open Status Board");
+    expect(container.textContent).not.toContain("View Insights");
+    expect([...container.querySelectorAll("button")].find((button) => button.textContent === "Add one job").classList).toContain("primary-small-button");
+    expect([...container.querySelectorAll("button")].find((button) => button.textContent === "Import a tracker").classList).toContain("secondary-button");
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Add one job").click());
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Import a tracker").click());
+    expect(onNavigate).toHaveBeenNthCalledWith(1, "quick-add");
+    expect(onNavigate).toHaveBeenNthCalledWith(2, "data");
   });
 
   it("preserves empty subsection messages when applications exist", async () => {
