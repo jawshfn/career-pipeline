@@ -4047,6 +4047,8 @@ textarea:focus-visible {
 .table-structure-summary > div { display: flex; flex: 1 1 460px; flex-wrap: wrap; gap: 4px 14px; }
 .table-structure-summary p { margin: 0; color: #52605d; }
 .table-structure-summary .table-structure-interpretation { flex-basis: 100%; color: #34413f; font-weight: 700; }
+.table-setup-error { display: grid; gap: 6px; padding: 12px; border: 1px solid #d8c189; border-left: 4px solid #b97913; border-radius: 6px; color: #604f2d; background: #fffaf0; }
+.table-setup-error strong, .table-setup-error p { margin: 0; }
 .spreadsheet-preview-dialog { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; width: min(94vw, 1480px); max-width: none; height: min(88vh, 960px); max-height: 88vh; max-height: 88dvh; overflow: hidden; padding: 0; }
 .spreadsheet-preview-dialog .confirmation-dialog-header { position: relative; z-index: 3; padding: 20px 24px 12px; border-bottom: 1px solid #e1e9e6; background: var(--color-surface); }
 .spreadsheet-preview-dialog-content { min-height: 0; overflow: hidden; padding: 0 24px; }

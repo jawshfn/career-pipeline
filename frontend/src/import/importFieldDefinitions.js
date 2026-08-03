@@ -7,8 +7,8 @@ const fields = [
   { key: "location", label: "Location", required: false, presets: ["common"], defaultOrder: 6, aliases: ["Location", "Job Location", "City", "Work Location"], valueKind: "text", description: "The job location or work arrangement." },
   { key: "compensation", label: "Compensation", required: false, presets: [], defaultOrder: 7, aliases: ["Compensation", "Salary", "Pay", "Salary Range", "Pay Range"], valueKind: "text" },
   { key: "employment_type", label: "Employment Type", required: false, presets: [], defaultOrder: 8, aliases: ["Employment Type", "Job Type", "Work Type", "Employment"], valueKind: "text" },
-  { key: "date_saved", label: "Date Saved", required: false, presets: [], defaultOrder: 9, aliases: ["Date Saved", "Saved", "Saved On", "Date Added", "Added On"], valueKind: "date" },
-  { key: "date_applied", label: "Date Applied", required: false, presets: ["common"], defaultOrder: 10, aliases: ["Date Applied", "Applied", "Applied On", "Application Date", "Submitted On"], valueKind: "date" },
+  { key: "date_saved", label: "Date Saved", required: false, presets: [], defaultOrder: 9, aliases: ["Date Saved", "Saved", "Saved On", "Date Added", "Added On"], ambiguousAliases: ["Saved"], valueKind: "date" },
+  { key: "date_applied", label: "Date Applied", required: false, presets: ["common"], defaultOrder: 10, aliases: ["Date Applied", "Applied", "Applied On", "Application Date", "Submitted On"], ambiguousAliases: ["Applied"], valueKind: "date" },
   { key: "follow_up_date", label: "Follow-up Date", required: false, presets: ["common"], defaultOrder: 11, aliases: ["Follow-up Date", "Followup Date", "Next Follow-up"], valueKind: "date" },
   { key: "next_action", label: "Next Action", required: false, presets: ["common"], defaultOrder: 12, aliases: ["Next Action", "Action", "To Do", "Todo", "Follow-up Action"], valueKind: "text" },
   { key: "resume_version_name", label: "Resume Version", required: false, presets: ["common"], defaultOrder: 13, aliases: ["Resume Version", "Resume", "CV Version", "Resume Name"], valueKind: "name", description: "The resume name; a later import step will match it to a resume version." },
@@ -21,7 +21,7 @@ const fields = [
   { key: "highest_confirmed_stage", label: "Highest Stage Reached", required: false, presets: [], defaultOrder: 20, aliases: ["Highest Stage Reached", "Highest Stage", "Furthest Stage", "Maximum Stage Reached"], valueKind: "status", description: "Historical stage evidence from an earlier application process." },
 ];
 
-export const IMPORT_FIELD_DEFINITIONS = Object.freeze(fields.map((field) => Object.freeze({ ...field, aliases: Object.freeze([...field.aliases]), presets: Object.freeze([...field.presets]) })));
+export const IMPORT_FIELD_DEFINITIONS = Object.freeze(fields.map((field) => Object.freeze({ ...field, aliases: Object.freeze([...field.aliases]), ambiguousAliases: Object.freeze([...(field.ambiguousAliases || [])]), presets: Object.freeze([...field.presets]) })));
 export const IMPORT_FIELD_BY_KEY = new Map(IMPORT_FIELD_DEFINITIONS.map((field) => [field.key, field]));
 
 export function normalizeImportHeader(value) {

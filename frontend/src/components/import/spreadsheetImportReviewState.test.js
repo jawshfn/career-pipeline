@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bulkResolutionIssuesFor, createInitialReviewState, deriveImportWorkflowSteps, deriveReview, fieldsNeededForIssues, reviewStateFor, submissionIssuesFor, updateRowReviewState } from "./spreadsheetImportReviewState.js";
+import { bulkResolutionIssuesFor, createInitialReviewState, deriveImportWorkflowSteps, deriveReview, duplicateReviewDescription, fieldsNeededForIssues, reviewStateFor, submissionIssuesFor, updateRowReviewState } from "./spreadsheetImportReviewState.js";
 
 function row(overrides = {}) {
   return {
@@ -21,6 +21,16 @@ describe("spreadsheet import review state", () => {
       filter: "Included", search: "", page: 0, editing: null, confirming: false,
       importing: false, summary: null, submissionIssues: {},
     });
+  });
+
+  it("describes existing and in-batch duplicate evidence without assuming an application exists", () => {
+    expect(duplicateReviewDescription({ scope: "existing", confidence: "exact", reason: "job_link", application: { company_name: "Example Existing LLC", role_title: "QA Engineer" } })).toBe("Exact Job Link match with Example Existing LLC — QA Engineer.");
+    expect(duplicateReviewDescription({ scope: "existing", confidence: "exact", reason: "company_role_date", application: { company_name: "Example Existing LLC", role_title: "QA Engineer" } })).toBe("Matches an existing application with the same company, role, and Date Applied: Example Existing LLC — QA Engineer.");
+    expect(duplicateReviewDescription({ scope: "existing", confidence: "possible", reason: "company_role", application: { company_name: "Example Warning LLC", role_title: "QA Engineer" } })).toBe("Possible match with an existing application: Example Warning LLC — QA Engineer.");
+    expect(duplicateReviewDescription({ scope: "in_batch", confidence: "exact", reason: "job_link", application: null, sourceRowNumber: 2 })).toBe("Exact Job Link match with spreadsheet row 2.");
+    expect(duplicateReviewDescription({ scope: "in_batch", confidence: "exact", reason: "company_role_date", application: null, sourceRowNumber: 2 })).toBe("Matches spreadsheet row 2 with the same company, role, and Date Applied.");
+    expect(duplicateReviewDescription({ scope: "in_batch", confidence: "possible", reason: "company_role", application: null, sourceRowNumber: 8 })).toBe("Possible match with spreadsheet row 8: same company and role.");
+    expect(duplicateReviewDescription({ scope: "in_batch", confidence: "possible", reason: "company_role", application: null, sourceRowNumber: null })).toBe("Possible match with another spreadsheet row: same company and role.");
   });
 
   it("keeps row decisions while recalculating values and invalidates a duplicate override when its basis changes", () => {

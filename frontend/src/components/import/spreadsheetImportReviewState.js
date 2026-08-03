@@ -32,6 +32,29 @@ export function reviewFieldLabel(field) {
   return FIELD_LABELS[field] || String(field || "Import issue").replace(/_/gu, " ");
 }
 
+export function duplicateReviewDescription(duplicate) {
+  const confidence = duplicate?.confidence;
+  const reason = duplicate?.reason;
+  const sourceRow = Number.isInteger(duplicate?.sourceRowNumber) ? `spreadsheet row ${duplicate.sourceRowNumber}` : "another spreadsheet row";
+  if (duplicate?.scope === "in_batch") {
+    if (reason === "job_link") return `Exact Job Link match with ${sourceRow}.`;
+    if (reason === "company_role_date") return `Matches ${sourceRow} with the same company, role, and Date Applied.`;
+    if (reason === "company_role") return `Possible match with ${sourceRow}: same company and role.`;
+    return confidence === "exact" ? `Exact match with ${sourceRow}.` : `Possible match with ${sourceRow}.`;
+  }
+  if (duplicate?.scope === "existing") {
+    const application = duplicate.application;
+    const company = application?.company_name || "an existing application";
+    const role = application?.role_title;
+    const context = role ? `${company} — ${role}` : company;
+    if (reason === "job_link") return `Exact Job Link match with ${context}.`;
+    if (reason === "company_role_date") return `Matches an existing application with the same company, role, and Date Applied: ${context}.`;
+    if (reason === "company_role") return `Possible match with an existing application: ${context}.`;
+    return confidence === "exact" ? `Exact match with an existing application: ${context}.` : `Possible match with an existing application: ${context}.`;
+  }
+  return confidence === "exact" ? "This row has an exact duplicate match." : "This row may match another application.";
+}
+
 export function fieldsNeededForIssues(row) {
   const fields = [];
   const add = (field) => {
@@ -156,12 +179,12 @@ export function initialReviewFilter(rows) {
   return (rows || []).some((row) => row.duplicate?.confidence === "exact") ? "Exact duplicates" : "All";
 }
 
-export function deriveImportWorkflowSteps({ file, table, mappingConfirmed, mappingNeedsAttention, mappedCount = 0, ignoredCount = 0, includedCount = 0, blockingCount = 0, possibleDuplicateCount = 0, importing = false, importComplete = false }) {
+export function deriveImportWorkflowSteps({ file, table, tableSetupError = "", tableSetupDetail, mappingConfirmed, mappingNeedsAttention, mappedCount = 0, ignoredCount = 0, includedCount = 0, blockingCount = 0, possibleDuplicateCount = 0, importing = false, importComplete = false }) {
   const reviewNeedsAttention = mappingConfirmed && (!includedCount || blockingCount);
   const currentId = importComplete ? "import" : !file ? "upload" : !table ? "structure" : !mappingConfirmed ? "mapping" : reviewNeedsAttention ? "review" : "import";
   const steps = [
     { id: "upload", label: "1 Upload file", status: file ? "Complete" : "Current" },
-    { id: "structure", label: "2 Table setup", status: !file ? "Locked" : table ? "Complete" : "Current" },
+    { id: "structure", label: "2 Table setup", status: !file ? "Locked" : tableSetupError ? "Needs attention" : table ? "Complete" : "Current", detail: tableSetupError ? tableSetupDetail : undefined },
     { id: "mapping", label: "3 Map columns", status: !table ? "Locked" : mappingConfirmed ? "Complete" : mappingNeedsAttention ? "Needs attention" : "Current", detail: mappingConfirmed ? `${mappedCount} mapped · ${ignoredCount} ignored` : undefined },
     { id: "review", label: "4 Review rows", status: !mappingConfirmed ? "Locked" : !includedCount ? "Needs attention" : blockingCount ? "Needs attention" : "Complete", detail: !mappingConfirmed ? undefined : !includedCount ? "No rows included" : blockingCount ? `${blockingCount} ${blockingCount === 1 ? "row needs" : "rows need"} review` : possibleDuplicateCount ? `${possibleDuplicateCount} possible duplicate ${possibleDuplicateCount === 1 ? "warning" : "warnings"}` : undefined },
     { id: "import", label: "5 Import", status: importComplete ? "Complete" : !mappingConfirmed || !includedCount || blockingCount ? "Locked" : importing ? "Importing" : "Ready", detail: importComplete ? undefined : !mappingConfirmed ? "Complete review first" : !includedCount ? "No rows included" : blockingCount ? `${blockingCount} ${blockingCount === 1 ? "row still needs" : "rows still need"} review` : importing ? "Submitting applications" : `${includedCount} ${includedCount === 1 ? "application" : "applications"} ready` },

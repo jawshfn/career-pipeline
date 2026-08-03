@@ -1,4 +1,5 @@
 import { IMPORT_FIELD_DEFINITIONS, normalizeImportHeader } from "./importFieldDefinitions.js";
+import { IMPORT_STATUSES } from "./spreadsheetNormalization.js";
 import { loadExcelJs } from "../utils/applicationsWorkbook.js";
 
 export const MAX_SPREADSHEET_BYTES = 10 * 1024 * 1024;
@@ -157,13 +158,29 @@ export function findSuggestedHeaderRow(sheet) {
   return best?.aliases ? best.rowNumber : null;
 }
 
-export function buildTable(sheet, headerRowNumber, headerless = false) {
+export function inspectTableSelection(sheet, headerRowNumber, headerless = false) {
   if (!sheet?.meaningfulRowCount) throw new SpreadsheetIntakeError("Choose a worksheet with usable rows.");
   const firstRow = sheet.rows.find((row) => row.values.some(isMeaningfulValue));
   const header = headerless ? null : sheet.rows.find((row) => row.originalRowNumber === Number(headerRowNumber));
   if (!headerless && (!header || !header.values.some(isMeaningfulValue))) throw new SpreadsheetIntakeError("Choose a header row inside the usable spreadsheet area.");
-  const firstDataRow = headerless ? firstRow.originalRowNumber : header.originalRowNumber + 1;
-  const tableRows = sheet.rows.filter((row) => row.originalRowNumber >= (headerless ? firstDataRow : header.originalRowNumber) && row.values.some(isMeaningfulValue));
+  const firstDataRowNumber = headerless ? firstRow.originalRowNumber : header.originalRowNumber + 1;
+  const dataRows = sheet.rows.filter((row) => row.originalRowNumber >= firstDataRowNumber && row.values.some(isMeaningfulValue));
+  const tableRows = sheet.rows.filter((row) => row.originalRowNumber >= (headerless ? firstDataRowNumber : header.originalRowNumber) && row.values.some(isMeaningfulValue));
+  return {
+    header,
+    firstDataRowNumber,
+    applicationDataRowCount: dataRows.length,
+    populatedRowsInSelection: tableRows.length,
+    exceedsRowLimit: dataRows.length > MAX_SPREADSHEET_ROWS,
+    rowLimit: MAX_SPREADSHEET_ROWS,
+    dataRows,
+    tableRows,
+  };
+}
+
+export function buildTable(sheet, headerRowNumber, headerless = false) {
+  const selection = inspectTableSelection(sheet, headerRowNumber, headerless);
+  const { header, firstDataRowNumber, tableRows } = selection;
   const sourceIndexes = [...new Set(tableRows.flatMap((row) => row.values.map((value, index) => isMeaningfulValue(value) ? index : null).filter((index) => index !== null)))].sort((left, right) => left - right);
   if (sourceIndexes.length > MAX_SPREADSHEET_COLUMNS) throw new SpreadsheetIntakeError("This spreadsheet has more than the supported 80 usable columns.");
   const usedNames = new Map();
@@ -173,10 +190,10 @@ export function buildTable(sheet, headerRowNumber, headerless = false) {
     usedNames.set(baseName, count + 1);
     return { index, name: count ? `${baseName} (${columnLetter(index)})` : baseName };
   });
-  const dataRows = sheet.rows.filter((row) => row.originalRowNumber >= firstDataRow && row.values.some(isMeaningfulValue)).map((row) => ({ ...row, columnIndexes: sourceIndexes, values: columns.map((column) => row.values[column.index] || "") }));
+  const dataRows = selection.dataRows.map((row) => ({ ...row, columnIndexes: sourceIndexes, values: columns.map((column) => row.values[column.index] || "") }));
   if (!dataRows.length) throw new SpreadsheetIntakeError("No usable data rows were found after the selected header.");
-  if (dataRows.length > MAX_SPREADSHEET_ROWS) throw new SpreadsheetIntakeError("This spreadsheet has more than the supported 1,000 data rows.");
-  const startRow = headerless ? firstDataRow : header.originalRowNumber;
+  if (selection.exceedsRowLimit) throw new SpreadsheetIntakeError("This spreadsheet has more than the supported 1,000 data rows.");
+  const startRow = headerless ? firstDataRowNumber : header.originalRowNumber;
   const leftmostColumn = columns[0].index + 1;
   const rightmostColumn = columns.at(-1).index + 1;
   const hasMergedCell = sheet.mergedCells.some((merge) => merge && merge.bottom >= startRow && merge.top <= dataRows.at(-1).originalRowNumber && merge.right >= leftmostColumn && merge.left <= rightmostColumn);
@@ -184,21 +201,52 @@ export function buildTable(sheet, headerRowNumber, headerless = false) {
   return { columns, dataRows, headerRowNumber: headerless ? null : header.originalRowNumber, headerless, date1904: Boolean(sheet.date1904) };
 }
 
+const DATE_LIKE_VALUE = /^(?:\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{2,4}|\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{2,4})$/iu;
+const STATUS_NAMES = new Set(IMPORT_STATUSES.map(normalizeImportHeader));
+
+function mappingValuesForColumn(column, dataRows) {
+  return dataRows.map((row) => row.rawValues?.[column.index] ?? row.values[row.columnIndexes.indexOf(column.index)]);
+}
+
+export function classifyMappingValues(values) {
+  const samples = values.filter(isMeaningfulValue).slice(0, 5);
+  if (!samples.length) return { kind: "unknown", confidence: "none" };
+  const kinds = samples.map((value) => {
+    if (value instanceof Date && !Number.isNaN(value.valueOf())) return "date";
+    const normalized = normalizeImportHeader(value);
+    if (STATUS_NAMES.has(normalized)) return "status";
+    if (/^https?:\/\//iu.test(String(value).trim())) return "url";
+    if (DATE_LIKE_VALUE.test(String(value).trim())) return "date";
+    return "unknown";
+  });
+  const uniqueKinds = new Set(kinds);
+  if (uniqueKinds.size === 1 && !uniqueKinds.has("unknown")) return { kind: kinds[0], confidence: "strong" };
+  return { kind: "unknown", confidence: uniqueKinds.size > 1 ? "mixed" : "none" };
+}
+
 function valueHint(values) {
   const samples = values.filter(isMeaningfulValue).slice(0, 5);
   if (!samples.length) return null;
   if (samples.filter((value) => /^https?:\/\//iu.test(value)).length >= Math.ceil(samples.length / 2)) return "job_link";
-  if (samples.filter((value) => /^(?:\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{2,4}|\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{2,4})$/iu.test(String(value).trim())).length >= Math.ceil(samples.length / 2)) return "date_applied";
-  const statusNames = new Set(["saved", "applied", "assessment", "interview", "offer", "rejected", "withdrawn"]);
-  if (samples.filter((value) => statusNames.has(normalizeImportHeader(value))).length >= Math.ceil(samples.length / 2)) return "status";
+  if (samples.filter((value) => value instanceof Date || DATE_LIKE_VALUE.test(String(value).trim())).length >= Math.ceil(samples.length / 2)) return "date_applied";
+  if (samples.filter((value) => STATUS_NAMES.has(normalizeImportHeader(value))).length >= Math.ceil(samples.length / 2)) return "status";
   return null;
 }
 
 export function suggestColumnMapping(column, dataRows) {
   const heading = normalizeImportHeader(column.name);
   const explicit = IMPORT_FIELD_DEFINITIONS.find((field) => field.aliases.some((alias) => normalizeImportHeader(alias) === heading));
+  const isAmbiguous = explicit?.ambiguousAliases.some((alias) => normalizeImportHeader(alias) === heading);
+  if (isAmbiguous) {
+    const classification = classifyMappingValues(mappingValuesForColumn(column, dataRows));
+    const status = IMPORT_FIELD_DEFINITIONS.find((field) => field.key === "status");
+    const quotedHeading = `“${column.name}”`;
+    if (classification.kind === "status") return { key: status.key, confidence: "Possible", reason: `The ${quotedHeading} heading is ambiguous, but its sample values match application statuses.` };
+    if (classification.kind === "date") return { key: explicit.key, confidence: "Possible", reason: `The ${quotedHeading} heading is ambiguous, but its sample values look like dates.` };
+    return { key: "", confidence: "None", reason: `The ${quotedHeading} heading could mean Status or ${explicit.label}. Choose the correct field.` };
+  }
   if (explicit) return { key: explicit.key, confidence: "High", reason: `Matches the ${explicit.label} heading.` };
-  const hint = valueHint(dataRows.map((row) => row.values[row.columnIndexes.indexOf(column.index)]));
+  const hint = valueHint(mappingValuesForColumn(column, dataRows));
   const field = IMPORT_FIELD_DEFINITIONS.find((candidate) => candidate.key === hint);
   return field ? { key: field.key, confidence: "Possible", reason: `Suggested from sample values that look like ${field.label.toLowerCase()} values.` } : { key: "", confidence: "None", reason: "No reliable suggestion." };
 }
