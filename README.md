@@ -37,6 +37,8 @@ The locally running PursuitHQ app includes AI access by default through the depl
 
 The public demo is a static GitHub Pages build. It uses temporary fictional in-memory workspace data, so ordinary edits, including reviewed spreadsheet imports, reset on reload and it does not connect to FastAPI. Real local persistence requires the FastAPI backend and SQLite workspace. It also uses the deployed AI gateway, includes five AI-ready fictional applications (with Harborview Systems featured), and keeps generated briefs only for the browser session. Browser Capture and workspace restore are local-only.
 
+New local workspaces offer guided Add Job or Import starting paths. The seeded public demo instead offers a concise evaluation path through its fictional workspace.
+
 The AI gateway is a Cloudflare Worker that validates a six-field request, calls Google Gemini with `gemini-3.5-flash-lite`, validates schema version 2 responses, and returns a result for the local app to save. The gateway does not persist workspace data. Generation is user initiated; two valid attempts per minute are allowed per bounded client key.
 
 ## Technology

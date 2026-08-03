@@ -412,6 +412,7 @@ export default function App() {
         <SupportPage
           isDemoMode={demoMode}
           onNavigate={navigateToPage}
+          onOpenApplication={() => handleOpenApplicationDetails(FEATURED_DEMO_APPLICATION_ID)}
         />
       ) : activePage === "data" ? (
         <DataPage

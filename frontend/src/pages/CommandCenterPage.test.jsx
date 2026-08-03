@@ -35,9 +35,11 @@ describe("CommandCenterPage", () => {
     expect(container.textContent).toContain("Show getting started");
     expect(container.textContent).toContain("No urgent follow-ups today");
     expect(localStorage.getItem("pursuithq:onboarding:local:v1")).toBe("dismissed");
+    expect(document.activeElement?.textContent).toBe("Show getting started");
     localStorage.setItem("unrelated", "keep");
     await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Show getting started").click());
     expect(container.textContent).toContain("Start your job search workspace");
+    expect(document.activeElement?.id).toBe("starting-surface-title");
     expect(localStorage.getItem("pursuithq:onboarding:local:v1")).toBeNull();
     expect(localStorage.getItem("unrelated")).toBe("keep");
   });
@@ -67,16 +69,20 @@ describe("CommandCenterPage", () => {
     await renderPage(actionItems(), vi.fn(), onOpenApplication, { applications: [{ ...overdueApplication, id: 3 }, { ...overdueApplication, id: 4 }], isDemoMode: true, onNavigate });
     expect(container.textContent).toContain("Explore the PursuitHQ demo");
     await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Explore featured application").click());
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Open Status Board").click());
     await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "View Outcome Insights").click());
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "View demo walkthrough").click());
     expect(onOpenApplication).toHaveBeenCalledWith(3);
-    expect(onNavigate).toHaveBeenCalledWith("insights");
+    expect(onNavigate.mock.calls).toEqual([["pipeline"], ["insights"], ["support"]]);
     await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Hide guide").click());
     expect(container.textContent).not.toContain("Explore the PursuitHQ demo");
     expect(container.textContent).toContain("Show demo guide");
     expect(localStorage.getItem("pursuithq:onboarding:demo:v1")).toBe("dismissed");
+    expect(document.activeElement?.textContent).toBe("Show demo guide");
     expect(localStorage.getItem("pursuithq:onboarding:local:v1")).toBeNull();
     await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Show demo guide").click());
     expect(container.textContent).toContain("Explore the PursuitHQ demo");
+    expect(document.activeElement?.id).toBe("starting-surface-title");
   });
 
   it("keeps local and demo dismissal state isolated", async () => {

@@ -59,6 +59,12 @@ Supported destinations are **Company**, **Role**, **Status**, **Source**, **Job 
 
 Imported dates are not changed to today, and Date Applied may be blank. Saved rows cannot retain Date Applied. Rejected and Withdrawn rows without sufficient historical context require an explicit review decision; Highest Stage Reached supplies that context. Ambiguous slash dates require the user to choose the date order.
 
+## First-run guidance and demo evaluation
+
+New local workspaces present workflow guidance rather than an account setup wizard: users can add one opportunity or import an existing tracker. With one untouched application, the guide briefly prompts follow-through; it disappears automatically once the workspace is established through additional applications, a next action, follow-up, resume assignment, or archived history. Dismissal is versioned and browser-local, can be restored, and does not add backend state.
+
+The public demo is a separately guided, already-populated fictional workspace. Its evaluator guide is mode-driven, never based on application count, and leads to seeded reminders, the featured application, Status Board, Outcome Insights, Help, and Data & Import. Demo changes reset on reload; persistent real use requires the local FastAPI and SQLite application.
+
 An exact duplicate has the same normalized Job Link or the same Company, Role, and Date Applied, and is skipped by default. **Import as new** explicitly creates an additional application. A possible duplicate has the same Company and Role and must be kept or excluded explicitly. The same comparisons are made among spreadsheet rows; exclusions can also result from unresolved or invalid values, not only duplicates.
 
 ## Application Detail

@@ -90,7 +90,9 @@ describe("SupportPage", () => {
 
     expect(markup).toContain("Explore PursuitHQ with fictional data");
     expect(markup).toContain("Browser Capture is unavailable in the GitHub Pages demo");
-    expect(markup).toContain("Choose Paste Job Text or Manual Entry.");
+    expect(markup).toContain("Suggested demo walkthrough");
+    expect(markup).toContain("reload restores the seeded workspace");
+    ["Review Reminders.", "Explore the featured application.", "Open Status Board.", "View Outcome Insights.", "Open Data &amp; Import."].forEach((stop) => expect(markup).toContain(stop));
     expect(markup).toContain("Local app only");
     expect(markup).toContain("Recommended in demo");
     expect(markup).toContain("Paste copied job-posting text to explore the review and save workflow");
@@ -182,6 +184,23 @@ describe("SupportPage", () => {
     const action = [...container.querySelectorAll("button")].find((button) => button.textContent === "Open Data");
     await act(async () => action.click());
     expect(onNavigate).toHaveBeenCalledWith("data");
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
+  it("routes every demo walkthrough action through the existing callbacks", async () => {
+    globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    const onNavigate = vi.fn();
+    const onOpenApplication = vi.fn();
+    document.body.appendChild(container);
+    await act(async () => root.render(<SupportPage isDemoMode onNavigate={onNavigate} onOpenApplication={onOpenApplication} />));
+    for (const label of ["Open Reminders", "Explore featured application", "Open Status Board", "View Outcome Insights", "Open Data & Import"]) {
+      await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === label).click());
+    }
+    expect(onNavigate.mock.calls).toEqual([["command-center"], ["pipeline"], ["insights"], ["data"]]);
+    expect(onOpenApplication).toHaveBeenCalledTimes(1);
     await act(async () => root.unmount());
     container.remove();
   });

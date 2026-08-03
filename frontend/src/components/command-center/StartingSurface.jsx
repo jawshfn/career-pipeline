@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   getStoredOnboardingDismissal,
@@ -23,19 +23,31 @@ const panelContent = {
 
 export default function StartingSurface({ application, isDemoMode, onNavigate, onOpenApplication }) {
   const [isDismissed, setIsDismissed] = useState(() => getStoredOnboardingDismissal(isDemoMode));
+  const guideHeadingRef = useRef(null);
+  const restoreButtonRef = useRef(null);
+  const pendingFocusRef = useRef(null);
   const variant = isDemoMode ? "demo" : application ? "getting-started" : "empty";
   const content = panelContent[variant];
+
+  useEffect(() => {
+    if (pendingFocusRef.current === "restore") restoreButtonRef.current?.focus();
+    if (pendingFocusRef.current === "guide") guideHeadingRef.current?.focus();
+    pendingFocusRef.current = null;
+  }, [isDismissed]);
+
   const dismiss = () => {
     storeOnboardingDismissal(isDemoMode);
+    pendingFocusRef.current = "restore";
     setIsDismissed(true);
   };
   const restore = () => {
     removeOnboardingDismissal(isDemoMode);
+    pendingFocusRef.current = "guide";
     setIsDismissed(false);
   };
 
   if (isDismissed) {
-    return <div className="starting-surface-restore"><button className="quiet-button" onClick={restore} type="button">{isDemoMode ? "Show demo guide" : "Show getting started"}</button></div>;
+    return <div className="starting-surface-restore"><button className="quiet-button" onClick={restore} ref={restoreButtonRef} type="button">{isDemoMode ? "Show demo guide" : "Show getting started"}</button></div>;
   }
 
   return (
@@ -43,7 +55,7 @@ export default function StartingSurface({ application, isDemoMode, onNavigate, o
       <div className="starting-surface-heading">
         <div>
           <p className="eyebrow">{isDemoMode ? "Demo guide" : "Getting started"}</p>
-          <h3 id="starting-surface-title">{content.title}</h3>
+          <h3 id="starting-surface-title" ref={guideHeadingRef} tabIndex={-1}>{content.title}</h3>
           <p>{content.description}</p>
         </div>
         <button className="quiet-button starting-surface-dismiss" onClick={dismiss} type="button">Hide guide</button>
@@ -51,9 +63,9 @@ export default function StartingSurface({ application, isDemoMode, onNavigate, o
       <div className="starting-surface-actions">
         {isDemoMode ? <>
           <button className="primary-small-button" onClick={() => onOpenApplication(application.id)} type="button">Explore featured application</button>
-          <button className="secondary-button" onClick={() => onNavigate("insights")} type="button">View Outcome Insights</button>
           <button className="secondary-button" onClick={() => onNavigate("pipeline")} type="button">Open Status Board</button>
-          <button className="secondary-button" onClick={() => onNavigate("support")} type="button">Learn how PursuitHQ works</button>
+          <button className="secondary-button" onClick={() => onNavigate("insights")} type="button">View Outcome Insights</button>
+          <button className="secondary-button" onClick={() => onNavigate("support")} type="button">View demo walkthrough</button>
         </> : variant === "empty" ? <>
           <button className="primary-small-button" onClick={() => onNavigate("quick-add")} type="button">Add one job</button>
           <button className="secondary-button" onClick={() => onNavigate("data")} type="button">Import a tracker</button>
