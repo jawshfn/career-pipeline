@@ -20,6 +20,7 @@ It is not a production SaaS platform: workspace data remains local, there is no 
 | 25–26 | AI Job Intelligence and persistence | A privacy-bounded, user-initiated Brief moved from gateway integration to a persisted local lifecycle. |
 | 27 | Trusted Outcome Insights | Confirmed-history reporting added transparent, drill-down outcome comparisons. |
 | 28 | Repository audit and maintainability cleanup | Removed verified remnants and consolidated active domain, demo read-model, and cached-resource responsibilities without changing product behavior. |
+| 29 | Flexible spreadsheet import and Data workspace | Completed reviewed CSV/XLSX import, templates, duplicate integrity, long Job Links, and stabilization. |
 
 ## Phase 0 — Product Planning
 
@@ -171,6 +172,13 @@ Archive behavior and compatibility infrastructure remained because they are acti
 
 Verified dead and obsolete code was removed, and active definitions with real drift risk were consolidated. Large responsibilities were separated only where the boundary was independently testable. Product behavior remained unchanged, and both local and static-demo workflows passed manual QA. The phase stopped before low-value abstraction work.
 
+## Phase 29 — Flexible Spreadsheet Import And Data Workspace
+
+- Completed browser-local CSV/XLSX intake with worksheet selection, header and headerless tables, drag-and-drop, mapping confirmation, shared-value resolution, and row review.
+- Added Minimal, Common, and Custom spreadsheet templates plus integrated Data tabs for import, templates, export/backup, and restore.
+- Added transactional new-application batch import with exact/possible and in-batch duplicate decisions, demo parity, and Job Links through 2,048 characters.
+- Stabilized parsing, export/re-import compatibility, accessibility, and responsive behavior.
+
 ## Later possibilities
 
 - Email and calendar integrations.
@@ -180,3 +188,4 @@ Verified dead and obsolete code was removed, and active definitions with real dr
 - Production distribution for the Browser Capture companion.
 - A hosted backend if the product reaches that stage.
 - Merge-style import and conflict resolution.
+- Direct provider integrations, larger import batches, saved import presets, persistent import history, and more sophisticated duplicate review remain possible future work rather than commitments.

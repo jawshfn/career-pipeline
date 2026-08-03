@@ -56,6 +56,22 @@ The frontend generates XLSX directly; it is not a backend endpoint.
 
 Spreadsheet import sends reviewed, normalized rows rather than raw files. Each row has a unique positive `source_row_number`; a successful request returns `created_count` and source-row provenance. A failed validation or duplicate check creates no rows, and imports create no activity records.
 
+### Batch import request and response
+
+`POST /api/applications/import-batch` accepts `{ "rows": [...] }`, with 1–1,000 rows. Each row uses these JSON names: required `source_row_number`, `company_name`, and `role_title`; `status`, `source`, `employment_type`, `job_link`, `location`, `compensation`; `date_saved`, `date_applied`, `follow_up_date`; `next_action`; `resume_version_id`; `contact_name`, `contact_info`, `prep_notes`, `notes`, `job_description`, `red_flags_notes`; `highest_confirmed_stage`; and strict Boolean `allow_duplicate`. Dates, when supplied, are `YYYY-MM-DD` strings. `source_row_number` preserves the original spreadsheet row and is not application data.
+
+```json
+{"rows":[{"source_row_number":2,"company_name":"Example Labs","role_title":"Platform Engineer","status":"Applied","source":"Other","job_link":"https://example.com/jobs/platform","date_saved":"2026-08-01","date_applied":"2026-08-01","allow_duplicate":false}]}
+```
+
+On success the endpoint returns `201` with only `created_count` and `created`; each created item contains `source_row_number` and the normal `application` representation. The example abbreviates unrelated `ApplicationRead` fields.
+
+```json
+{"created_count":1,"created":[{"source_row_number":2,"application":{"id":42,"company_name":"Example Labs","role_title":"Platform Engineer","status":"Applied","furthest_stage":"Applied","date_saved":"2026-08-01","date_applied":"2026-08-01"}}]}
+```
+
+The endpoint validates the complete request before persistence and rolls the complete batch back on failure. It rejects unsupported status, source, and employment-type values; missing resumes; invalid or overlong Job Links (maximum 2,048 characters); non-`YYYY-MM-DD` dates; non-Boolean duplicate overrides; invalid terminal history; and high-confidence existing or in-batch duplicates unless `allow_duplicate` is explicitly true. Controlled validation and duplicate conflicts return an error without creating rows. Frontend-only excluded/skipped counts are not response fields.
+
 ## Outcome Insights
 
 | Method | Path | Purpose | Important behavior |

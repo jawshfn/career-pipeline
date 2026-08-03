@@ -214,6 +214,7 @@ export default function SupportPage({
         <span className="support-section-nav-label">Jump to:</span>
         <a href="#help-start">Start here</a>
         <a href="#help-common-tasks">Common tasks</a>
+        <a href="#help-data">Data &amp; Import</a>
         <a href="#help-capture">Capture help</a>
         <a href="#help-troubleshooting">Troubleshooting</a>
         <a href="#help-feedback">Feedback</a>
@@ -236,6 +237,16 @@ export default function SupportPage({
       <section className="panel support-panel" id="help-common-tasks" aria-labelledby="common-tasks-heading">
         <div className="section-heading"><h2 id="common-tasks-heading">Common tasks</h2><p>Jump to the part of PursuitHQ that matches what you need to do.</p></div>
         <div className="support-task-grid">{commonTasks.map((task) => <section className="support-task-card" key={task.title} aria-labelledby={`task-${task.page}-${task.title.replaceAll(" ", "-")}`}><h3 id={`task-${task.page}-${task.title.replaceAll(" ", "-")}`}>{task.title}</h3><p>{task.description}</p><button className="support-action-control secondary-button" type="button" aria-label={`${task.action}: ${task.title}`} onClick={() => onNavigate(task.page)}>{task.action}</button></section>)}</div>
+      </section>
+
+      <section className="panel support-panel" id="help-data" aria-labelledby="data-help-heading">
+        <div className="section-heading"><h2 id="data-help-heading">Data &amp; Import</h2><p>Open Data for the reviewed spreadsheet and workspace tools.</p></div>
+        <div className="support-disclosure-list">
+          <details className="support-disclosure" open><summary>Import applications</summary><div className="support-disclosure-content"><ol><li>Choose or drag in a CSV or XLSX file.</li><li>Select a worksheet and header or headerless table structure.</li><li>Map Company and Role, then confirm the mapping.</li><li>Resolve repeated values, review rows and duplicate decisions, then import approved rows.</li></ol><p>Exact duplicates are skipped by default; choose Import as new only to create another application. Possible duplicates require Keep in import or Exclude from import.</p></div></details>
+          <details className="support-disclosure"><summary>Templates</summary><div className="support-disclosure-content"><p>Download browser-local Minimal, Common, or Custom templates as CSV or Excel files.</p></div></details>
+          <details className="support-disclosure"><summary>Export &amp; backup</summary><div className="support-disclosure-content"><p>An application export is a spreadsheet for review or re-import. A workspace backup is a complete JSON copy of the workspace.</p></div></details>
+          <details className="support-disclosure"><summary>Restore workspace</summary><div className="support-disclosure-content"><p>Restore replaces the complete current workspace after review; it is not a merge or spreadsheet import.</p></div></details>
+        </div>
       </section>
 
 
