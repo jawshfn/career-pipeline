@@ -223,13 +223,36 @@ describe("ResumeVersionsPage library experience", () => {
     expect(container.textContent).toContain("Inactive Resume");
   });
 
-  it("uses count-aware deletion confirmation and success messages", () => {
-    expect(getResumeDeleteConfirmationDescription({ assignment_count: 0 })).toContain("historical tracking");
-    expect(getResumeDeleteConfirmationDescription({ assignment_count: 1 })).toContain("1 application");
-    expect(getResumeDeleteConfirmationDescription({ assignment_count: 2 })).toContain("all 2 applications");
+  it("uses count-aware deletion confirmation copy with file removal disclosure", () => {
+    const zeroWithoutFile = getResumeDeleteConfirmationDescription({ assignment_count: 0 });
+    const zeroWithFile = getResumeDeleteConfirmationDescription({ assignment_count: 0, has_file: true });
+    const oneWithoutFile = getResumeDeleteConfirmationDescription({ assignment_count: 1 });
+    const oneWithFile = getResumeDeleteConfirmationDescription({ assignment_count: 1, has_file: true });
+    const multipleWithoutFile = getResumeDeleteConfirmationDescription({ assignment_count: 2 });
+    const multipleWithFile = getResumeDeleteConfirmationDescription({ assignment_count: 2, has_file: true });
+
+    expect(zeroWithoutFile).toBe("This resume version and its historical tracking will be permanently deleted. This action cannot be undone.");
+    expect(zeroWithFile).toBe("This resume version and its historical tracking will be permanently deleted. Its attached PDF will also be removed. This action cannot be undone.");
+    expect(oneWithoutFile).toBe("This resume version is currently used by 1 application. Deleting it will remove the resume assignment from that application and erase this resume’s historical tracking. This action cannot be undone.");
+    expect(oneWithFile).toBe("This resume version is currently used by 1 application. Deleting it will remove the resume assignment from that application and erase this resume’s historical tracking. Its attached PDF will also be removed. This action cannot be undone.");
+    expect(multipleWithoutFile).toBe("This resume version is currently used by 2 applications. Deleting it will remove the resume assignment from all 2 applications and erase this resume’s historical tracking. This action cannot be undone.");
+    expect(multipleWithFile).toBe("This resume version is currently used by 2 applications. Deleting it will remove the resume assignment from all 2 applications and erase this resume’s historical tracking. Its attached PDF will also be removed. This action cannot be undone.");
     expect(getResumeDeleteSuccessMessage({ name: "Resume", unassigned_application_count: 0 })).toBe('"Resume" permanently deleted.');
     expect(getResumeDeleteSuccessMessage({ name: "Resume", unassigned_application_count: 1 })).toBe('"Resume" permanently deleted and removed from 1 application.');
     expect(getResumeDeleteSuccessMessage({ name: "Resume", unassigned_application_count: 2 })).toBe('"Resume" permanently deleted and removed from 2 applications.');
+  });
+
+  it("shows assigned deletion impact, attached-PDF removal, and irreversibility in the dialog", async () => {
+    const inactiveWithFile = { ...resume, id: 2, is_active: false, name: "Inactive Resume", file: { original_filename: "inactive.pdf" } };
+    const onGetResumeVersionDeleteImpact = vi.fn().mockResolvedValue({ assignment_count: 1, is_active: false, name: inactiveWithFile.name });
+    await renderPage([inactiveWithFile], { applications: [{ resume_version_id: inactiveWithFile.id }], onGetResumeVersionDeleteImpact });
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+    await act(async () => container.querySelector("button.quiet-danger-button").click());
+
+    const dialogText = container.querySelector('[role="dialog"]').textContent;
+    expect(dialogText).toContain("used by 1 application");
+    expect(dialogText).toContain("Its attached PDF will also be removed.");
+    expect(dialogText).toContain("This action cannot be undone.");
   });
 
   it("clears and collapses the form after creating a version", async () => {

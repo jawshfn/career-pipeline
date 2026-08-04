@@ -16,9 +16,9 @@ export function getResumeDeleteConfirmationDescription({ assignment_count: assig
   const fileWording = hasFile ? " Its attached PDF will also be removed." : "";
   if (assignmentCount === 0) return `This resume version and its historical tracking will be permanently deleted.${fileWording} This action cannot be undone.`;
   if (assignmentCount === 1) {
-    return "This resume version is currently used by 1 application. Deleting it will remove the resume assignment from that application and erase this resume’s historical tracking. This action cannot be undone.";
+    return `This resume version is currently used by 1 application. Deleting it will remove the resume assignment from that application and erase this resume’s historical tracking.${fileWording} This action cannot be undone.`;
   }
-  return `This resume version is currently used by ${assignmentCount} applications. Deleting it will remove the resume assignment from all ${assignmentCount} applications and erase this resume’s historical tracking. This action cannot be undone.`;
+  return `This resume version is currently used by ${assignmentCount} applications. Deleting it will remove the resume assignment from all ${assignmentCount} applications and erase this resume’s historical tracking.${fileWording} This action cannot be undone.`;
 }
 
 export function getResumeDeleteSuccessMessage({ name, unassigned_application_count: assignmentCount }) {
