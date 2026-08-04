@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { getStoredSidebarCollapsed, removeStoredSidebarCollapsed, storeSidebarCollapsed } from "./sidebarPreference.js";
 import "./AppLayout.css";
+
+const MOBILE_NAVIGATION_QUERY = "(max-width: 780px)";
 
 export const navigationGroups = [
   { label: "Overview", items: [{ id: "command-center", label: "Reminders", icon: "checklist" }, { id: "dashboard", label: "Dashboard", icon: "grid" }, { id: "insights", label: "Insights", icon: "trend" }] },
@@ -31,9 +33,51 @@ function ChevronIcon({ expanded }) {
   return <svg aria-hidden="true" className="app-sidebar-toggle-icon" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24"><path d={expanded ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"} /></svg>;
 }
 
+function isMobileNavigation() {
+  return typeof window !== "undefined" && window.matchMedia?.(MOBILE_NAVIGATION_QUERY).matches;
+}
+
 export default function AppLayout({ activePage, children, isDemoMode = false, onNavigate }) {
   const [isCollapsed, setIsCollapsed] = useState(() => getStoredSidebarCollapsed());
+  const [isMobile, setIsMobile] = useState(isMobileNavigation);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [compactLabel, setCompactLabel] = useState(null);
+  const menuButtonRef = useRef(null);
+  const currentPage = navigationItems.find((item) => item.id === activePage)?.label || "Applications";
+  const expanded = !isCollapsed;
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return undefined;
+    const mediaQuery = window.matchMedia(MOBILE_NAVIGATION_QUERY);
+    const handleChange = (event) => {
+      setIsMobile(event.matches);
+      setIsMobileMenuOpen(false);
+    };
+    handleChange(mediaQuery);
+    if (mediaQuery.addEventListener) mediaQuery.addEventListener("change", handleChange);
+    else mediaQuery.addListener?.(handleChange);
+    return () => {
+      if (mediaQuery.removeEventListener) mediaQuery.removeEventListener("change", handleChange);
+      else mediaQuery.removeListener?.(handleChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [activePage]);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setIsMobileMenuOpen(false);
+      menuButtonRef.current?.focus();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isMobileMenuOpen]);
+
   const toggleSidebar = () => {
     setCompactLabel(null);
     setIsCollapsed((collapsed) => {
@@ -41,26 +85,35 @@ export default function AppLayout({ activePage, children, isDemoMode = false, on
       return !collapsed;
     });
   };
-  const expanded = !isCollapsed;
   const showCompactLabel = (event, label) => {
-    if (!isCollapsed) return;
+    if (!isCollapsed || isMobile) return;
     const { right, top, height } = event.currentTarget.getBoundingClientRect();
     setCompactLabel({ label, left: right + 12, top: top + height / 2 });
+  };
+  const handleNavigation = (itemId) => {
+    if (onNavigate(itemId)) setIsMobileMenuOpen(false);
   };
 
   return (
     <div className={`app-shell ${isCollapsed ? "app-shell-sidebar-collapsed" : ""}`}>
+      <header className="app-mobile-header">
+        <div>
+          <p className="app-mobile-brand">PursuitHQ</p>
+          <p className="app-mobile-page">{currentPage}</p>
+        </div>
+        <button aria-controls="primary-navigation" aria-expanded={isMobileMenuOpen} aria-label={`${isMobileMenuOpen ? "Close" : "Open"} navigation menu`} className="app-mobile-menu-toggle" onClick={() => setIsMobileMenuOpen((open) => !open)} ref={menuButtonRef} type="button">Menu</button>
+      </header>
       <aside className="app-sidebar" aria-label="PursuitHQ navigation">
         <div className="app-brand" aria-label="PursuitHQ">
           <p className="app-brand-name"><span aria-hidden="true" className="app-brand-mark">P</span><span className="app-brand-full">PursuitHQ</span></p>
           <p className="app-brand-description">Job-search command center</p>
         </div>
-        <nav className="app-nav" aria-label="Primary navigation" id="primary-navigation">
+        <nav aria-hidden={isMobile && !isMobileMenuOpen ? "true" : undefined} className="app-nav" hidden={isMobile && !isMobileMenuOpen} aria-label="Primary navigation" id="primary-navigation">
           {navigationGroups.map((group) => (
             <section aria-labelledby={`nav-group-${group.label.replace(/\s/g, "-").toLowerCase()}`} className="app-nav-group" key={group.label}>
               <p id={`nav-group-${group.label.replace(/\s/g, "-").toLowerCase()}`} className="app-nav-group-heading">{group.label}</p>
               <ul className="app-nav-list">
-                {group.items.map((item) => <li key={item.id}><button aria-current={activePage === item.id ? "page" : undefined} className={`app-nav-item ${activePage === item.id ? "app-nav-item-active" : ""}`} onBlur={() => setCompactLabel(null)} onClick={() => onNavigate(item.id)} onFocus={(event) => showCompactLabel(event, item.label)} onMouseEnter={(event) => showCompactLabel(event, item.label)} onMouseLeave={() => setCompactLabel(null)} type="button"><NavigationIcon name={item.icon} /><span className="app-nav-label">{item.label}</span></button></li>)}
+                {group.items.map((item) => <li key={item.id}><button aria-current={activePage === item.id ? "page" : undefined} className={`app-nav-item ${activePage === item.id ? "app-nav-item-active" : ""}`} onBlur={() => setCompactLabel(null)} onClick={() => handleNavigation(item.id)} onFocus={(event) => showCompactLabel(event, item.label)} onMouseEnter={(event) => showCompactLabel(event, item.label)} onMouseLeave={() => setCompactLabel(null)} type="button"><NavigationIcon name={item.icon} /><span className="app-nav-label">{item.label}</span></button></li>)}
               </ul>
             </section>
           ))}
