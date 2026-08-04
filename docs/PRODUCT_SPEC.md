@@ -65,6 +65,10 @@ New local workspaces present workflow guidance rather than an account setup wiza
 
 The public demo is a separately guided, already-populated fictional workspace. Its evaluator guide is mode-driven, never based on application count, and leads to seeded reminders, the featured application, Status Board, Outcome Insights, Help, and Data & Import. Demo changes reset on reload; persistent real use requires the local FastAPI and SQLite application.
 
+## Workspace navigation
+
+Desktop destinations are grouped into **Overview**, **Job search**, **Resources**, and **Support**. Desktop users can use either the expanded sidebar or compact rail; that compact choice is a browser-local presentation preference, not workspace data. Mobile uses a compact header and Menu disclosure. Successful top-level navigation opens the destination at the top, while guarded navigation retains drafts and does not move pages until confirmed. The same shell is used in local and demo modes.
+
 An exact duplicate has the same normalized Job Link or the same Company, Role, and Date Applied, and is skipped by default. **Import as new** explicitly creates an additional application. A possible duplicate has the same Company and Role and must be kept or excluded explicitly. The same comparisons are made among spreadsheet rows; exclusions can also result from unresolved or invalid values, not only duplicates.
 
 ## Application Detail
