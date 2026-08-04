@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text, event, text
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, LargeBinary, String, Text, event, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -28,6 +28,31 @@ class ResumeVersion(Base):
     )
 
     applications: Mapped[list["Application"]] = relationship(back_populates="resume_version")
+    file: Mapped["ResumeVersionFile | None"] = relationship(
+        back_populates="resume_version",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+
+class ResumeVersionFile(Base):
+    __tablename__ = "resume_version_files"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    resume_version_id: Mapped[int] = mapped_column(
+        ForeignKey("resume_versions.id"), nullable=False, unique=True, index=True
+    )
+    original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    media_type: Mapped[str] = mapped_column(String(255), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    content: Mapped[bytes] = mapped_column(LargeBinary, nullable=False, deferred=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+    resume_version: Mapped[ResumeVersion] = relationship(back_populates="file")
 
 
 class Application(Base):

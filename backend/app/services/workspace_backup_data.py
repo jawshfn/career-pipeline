@@ -21,7 +21,12 @@ def workspace_content_payload(db: Session) -> dict[str, Any]:
     applications = db.query(Application).order_by(Application.id.asc()).all()
     activities = db.query(ApplicationActivity).order_by(ApplicationActivity.id.asc()).all()
     briefs = db.query(ApplicationAiBrief).order_by(ApplicationAiBrief.id.asc()).all()
-    resume_records = [as_json_record(resume, ResumeVersionRead) for resume in resumes]
+    # Resume file metadata is API-only until Phase 32.3 adds portable file support.
+    resume_records = []
+    for resume in resumes:
+        record = as_json_record(resume, ResumeVersionRead)
+        record.pop("file", None)
+        resume_records.append(record)
     application_records = [as_json_record(application, ApplicationRead) for application in applications]
     activity_records = [as_json_record(activity, ApplicationActivityRead) for activity in activities]
     brief_records = [{"id": item.id, "application_id": item.application_id, "source_fingerprint": item.source_fingerprint,
