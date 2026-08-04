@@ -155,7 +155,11 @@ describe("WorkspaceBackupReview", () => {
     expect(container.textContent).toContain("Replace current workspace");
     expect(container.textContent).not.toContain("never-render-this");
     await act(async () => [...container.querySelectorAll("button")].find((item) => item.textContent === "Replace current workspace").click());
-    expect(container.querySelector('[role="dialog"]').textContent).toContain("This is not a merge");
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(dialog.textContent).toContain("attached PDFs");
+    expect(dialog.textContent).toContain("saved AI Briefs");
+    expect(dialog.textContent).toContain("complete workspace");
+    expect(dialog.textContent).toContain("This is not a merge");
     const confirm = [...container.querySelectorAll("button")].find((item) => item.textContent === "Replace workspace");
     expect(confirm.disabled).toBe(true);
     const phrase = container.querySelector('input:not([type="file"])');

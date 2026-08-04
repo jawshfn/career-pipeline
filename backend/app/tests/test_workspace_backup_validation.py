@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from app.backup_format import BACKUP_FORMAT
+from app.backup_format import BACKUP_FORMAT, LEGACY_BACKUP_FORMAT
 from app.domain import ALLOWED_APPLICATION_STATUSES, JOB_LINK_MAX_LENGTH
 from app.models import Application, ApplicationActivity, ResumeVersion
 from app.routers.exports import workspace_backup_payload
@@ -39,6 +39,14 @@ def post_backup(client, payload, content_type="application/json"):
 
 def issue_codes(response):
     return [issue["code"] for issue in response.json()["errors"]]
+
+
+def legacy_backup(payload):
+    payload = copy.deepcopy(payload)
+    payload["format"] = LEGACY_BACKUP_FORMAT
+    payload["counts"].pop("resume_version_files")
+    payload["data"].pop("resume_version_files")
+    return payload
 
 
 def test_backup_validation_accepts_long_job_links_and_rejects_overlong_ones(client, db_session):
@@ -88,6 +96,43 @@ def test_strict_scalar_and_contract_errors_are_structured(client, db_session, pa
     assert code in issue_codes(response)
     assert response.json()["current_workspace_summary"]
     assert response.json()["backup_summary"] is None
+
+
+def test_resume_file_field_presence_is_format_specific_and_never_authorizes_restore(client, db_session):
+    payload, _ = populated_backup(db_session)
+    assert post_backup(client, payload).json()["is_valid"] is True
+    assert post_backup(client, legacy_backup(payload)).json()["is_valid"] is True
+
+    invalid_payloads = []
+    for section, value in (("counts", None), ("data", None)):
+        missing = copy.deepcopy(payload)
+        missing[section].pop("resume_version_files")
+        invalid_payloads.append(missing)
+        null = copy.deepcopy(payload)
+        null[section]["resume_version_files"] = value
+        invalid_payloads.append(null)
+    negative = copy.deepcopy(payload)
+    negative["counts"]["resume_version_files"] = -1
+    invalid_payloads.append(negative)
+    for section, value in (("counts", None), ("counts", 0), ("data", None), ("data", [])):
+        invalid = legacy_backup(payload)
+        invalid[section]["resume_version_files"] = value
+        invalid_payloads.append(invalid)
+
+    for invalid in invalid_payloads:
+        response = post_backup(client, invalid)
+        body = response.json()
+        assert response.status_code == 200
+        assert body["is_valid"] is False and body["eligible_for_restore"] is False
+        assert body["restore_authorization"] is None
+        assert "schema_error" in issue_codes(response)
+
+    unknown = copy.deepcopy(payload)
+    unknown["format"] = "future-workspace-backup"
+    response = post_backup(client, unknown)
+    assert response.status_code == 200
+    assert response.json()["is_valid"] is False
+    assert "unsupported_format" in issue_codes(response)
 
 
 @pytest.mark.parametrize("mutation", [

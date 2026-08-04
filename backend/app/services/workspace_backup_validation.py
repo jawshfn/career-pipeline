@@ -53,8 +53,8 @@ class BackupCounts(_StrictBackupModel):
 
     @field_validator("resume_versions", "applications", "application_activities", "application_ai_briefs", "resume_version_files")
     @classmethod
-    def nonnegative(cls, value: int) -> int:
-        if value < 0:
+    def nonnegative(cls, value: int | None) -> int | None:
+        if value is not None and value < 0:
             raise ValueError("must be nonnegative")
         return value
 
@@ -333,9 +333,16 @@ class WorkspaceBackupDocument(_StrictBackupModel):
 
     @model_validator(mode="after")
     def versioned_file_contract(self):
-        if self.format == BACKUP_FORMAT and (self.counts.resume_version_files is None or self.data.resume_version_files is None):
+        count_supplied = "resume_version_files" in self.counts.model_fields_set
+        data_supplied = "resume_version_files" in self.data.model_fields_set
+        if self.format == BACKUP_FORMAT and (
+            not count_supplied
+            or not data_supplied
+            or self.counts.resume_version_files is None
+            or self.data.resume_version_files is None
+        ):
             raise ValueError("current backups require resume_version_files")
-        if self.format == LEGACY_BACKUP_FORMAT and (self.counts.resume_version_files is not None or self.data.resume_version_files is not None):
+        if self.format == LEGACY_BACKUP_FORMAT and (count_supplied or data_supplied):
             raise ValueError("legacy backups must not include resume_version_files")
         return self
 
