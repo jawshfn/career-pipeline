@@ -263,11 +263,9 @@ export default function ResumeVersionsPage({
       setOpenDisclosure({ resumeVersionId, type });
       return;
     }
-    queueMicrotask(() => {
-      setOpenDisclosure((current) => (
-        current?.resumeVersionId === resumeVersionId && current.type === type ? null : current
-      ));
-    });
+    setOpenDisclosure((current) => (
+      current?.resumeVersionId === resumeVersionId && current.type === type ? null : current
+    ));
   }
 
   function closeDisclosure(resumeVersionId, type) {
@@ -654,7 +652,7 @@ export default function ResumeVersionsPage({
                           <span className={`resume-version-state ${resumeVersion.is_active ? "" : "resume-version-state-inactive"}`}>
                             {resumeVersion.is_active ? "Active" : "Inactive"}
                           </span>
-                          <details className="resume-actions-disclosure" open={openDisclosure?.resumeVersionId === resumeVersion.id && openDisclosure.type === "resume-actions"} onKeyDown={(event) => handleDisclosureEscape(event, resumeVersion.id, "resume-actions")} onToggle={(event) => setDisclosureOpen(resumeVersion.id, "resume-actions", event.currentTarget.open)}>
+                          <details className="resume-actions-disclosure" open={openDisclosure?.resumeVersionId === resumeVersion.id && openDisclosure.type === "resume-actions"} onKeyDown={(event) => handleDisclosureEscape(event, resumeVersion.id, "resume-actions")}>
                             <summary aria-label={`Actions for ${resumeVersion.name}`} onClick={(event) => { event.preventDefault(); setDisclosureOpen(resumeVersion.id, "resume-actions", !(openDisclosure?.resumeVersionId === resumeVersion.id && openDisclosure.type === "resume-actions")); }}>Actions</summary>
                             <div className="resume-actions-panel">
                               <button className="secondary-button" type="button" disabled={isDeleteInProgress} onClick={() => { closeDisclosure(resumeVersion.id, "resume-actions"); startEditing(resumeVersion); }}>Edit details</button>

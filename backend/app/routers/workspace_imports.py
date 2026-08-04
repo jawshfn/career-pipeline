@@ -17,6 +17,8 @@ from ..services.workspace_restore import (
 from ..services.workspace_restore_authorizations import workspace_restore_authorizations
 
 router = APIRouter(prefix="/api/imports/workspace", tags=["workspace imports"])
+# This bound admits a maximum-size 5 MiB PDF after Base64 expansion while
+# retaining the established protection for unusually large local backups.
 MAX_WORKSPACE_BACKUP_BYTES = 25 * 1024 * 1024
 
 
@@ -35,7 +37,7 @@ async def _read_json_request(request: Request) -> JsonRequest:
     async for chunk in request.stream():
         size += len(chunk)
         if size > MAX_WORKSPACE_BACKUP_BYTES:
-            raise HTTPException(status_code=413, detail="The backup file is larger than 25 MiB.")
+            raise HTTPException(status_code=413, detail="The backup file is larger than the supported 25 MiB limit.")
         chunks.append(chunk)
     if not size:
         raise HTTPException(status_code=400, detail="The backup file is empty.")

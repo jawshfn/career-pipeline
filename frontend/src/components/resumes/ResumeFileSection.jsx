@@ -150,7 +150,7 @@ export default function ResumeFileSection({ disabled = false, isDemoMode, isMana
         <div className="resume-file-actions">
           <button className="secondary-button" disabled={busy} type="button" onClick={handlePreview}>{operation === "previewing" ? "Loading preview..." : "Preview"}</button>
           <button className="secondary-button" disabled={busy} type="button" onClick={handleDownload}>{operation === "downloading" ? "Downloading..." : "Download"}</button>
-          <details className="manage-pdf-disclosure" open={isManagePdfOpen} onKeyDown={onManagePdfEscape} onToggle={(event) => onManagePdfOpenChange?.(event.currentTarget.open)}>
+          <details className="manage-pdf-disclosure" open={isManagePdfOpen} onKeyDown={onManagePdfEscape}>
             <summary aria-label={`Manage PDF for ${resumeVersion.name}`} onClick={(event) => { event.preventDefault(); onManagePdfOpenChange?.(!isManagePdfOpen); }}>Manage PDF</summary>
             <div className="manage-pdf-panel">
               <button className="secondary-button" disabled={busy} type="button" onClick={() => { onManagePdfOpenChange?.(false); openPicker(); }}>{operation === "replacing" ? "Replacing..." : "Replace PDF"}</button>

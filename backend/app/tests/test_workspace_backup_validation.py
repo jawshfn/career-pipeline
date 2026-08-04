@@ -240,7 +240,7 @@ def test_schema_error_cap_and_export_contract(client, db_session):
     assert body["errors"][-1]["code"] == "errors_omitted"
     assert all("bad" not in issue["message"] for issue in body["errors"])
     exported, _ = populated_backup(db_session)
-    assert exported["format"] == BACKUP_FORMAT == "pursuithq-workspace-backup"
+    assert exported["format"] == BACKUP_FORMAT == "pursuithq-workspace-backup-v2"
     assert set(exported) == {"format", "exported_at", "counts", "data"}
     assert post_backup(client, exported).json()["is_valid"] is True
 

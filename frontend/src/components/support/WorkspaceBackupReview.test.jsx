@@ -10,6 +10,7 @@ import WorkspaceBackupReview from "./WorkspaceBackupReview.jsx";
 const backupSummary = {
   format: "pursuithq-workspace-backup", exported_at: "2026-07-01T12:00:00Z",
   resume_versions: 1, applications: 3, application_activities: 2,
+  resume_version_files: 1, resume_file_bytes: 1887437,
   active_applications: 1, closed_applications: 1, legacy_archived_applications: 1,
 };
 
@@ -116,7 +117,9 @@ describe("WorkspaceBackupReview", () => {
     expect(result.textContent).toContain("pursuithq-workspace-backup");
     expect(result.textContent).not.toContain("Version:");
     expect(result.textContent).toContain("Exported:");
-    ["Resume versions", "Applications", "Activities", "Active applications", "Closed applications", "Legacy archived"].forEach((label) => expect(result.textContent).toContain(label));
+    ["Resume versions", "Resume PDFs", "Resume file size", "Applications", "Activities", "Active applications", "Closed applications", "Legacy archived"].forEach((label) => expect(result.textContent).toContain(label));
+    expect(result.textContent).toContain("1 resume PDF");
+    expect(result.textContent).toContain("1.8 MB of resume files");
     expect(result.textContent.indexOf("First warning")).toBeLessThan(result.textContent.indexOf("Second warning"));
     await act(async () => root.unmount());
   });

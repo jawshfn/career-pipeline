@@ -14,9 +14,11 @@ function friendlyDate(value) {
 }
 
 function CountList({ title, summary }) {
+  const resumeFileCount = summary.resume_version_files ?? 0;
+  const resumeFileLabel = `${resumeFileCount} resume PDF${resumeFileCount === 1 ? "" : "s"}`;
   return <section className="workspace-backup-counts" aria-label={title}>
-    <h4>{title}</h4><dl>
-      <dt>Resume versions</dt><dd>{summary.resume_versions}</dd><dt>Applications</dt><dd>{summary.applications}</dd><dt>Activities</dt><dd>{summary.application_activities}</dd><dt>Active applications</dt><dd>{summary.active_applications}</dd><dt>Closed applications</dt><dd>{summary.closed_applications}</dd><dt>Legacy archived applications</dt><dd>{summary.legacy_archived_applications}</dd>
+    <h4>{title}</h4><p>{resumeFileLabel} · {friendlySize(summary.resume_file_bytes ?? 0)} of resume files</p><dl>
+      <dt>Resume versions</dt><dd>{summary.resume_versions}</dd><dt>Resume PDFs</dt><dd>{summary.resume_version_files ?? 0}</dd><dt>Resume file size</dt><dd>{friendlySize(summary.resume_file_bytes ?? 0)}</dd><dt>Applications</dt><dd>{summary.applications}</dd><dt>Activities</dt><dd>{summary.application_activities}</dd><dt>Active applications</dt><dd>{summary.active_applications}</dd><dt>Closed applications</dt><dd>{summary.closed_applications}</dd><dt>Legacy archived applications</dt><dd>{summary.legacy_archived_applications}</dd>
     </dl>
   </section>;
 }
