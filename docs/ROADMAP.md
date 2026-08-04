@@ -22,6 +22,7 @@ It is not a production SaaS platform: workspace data remains local, there is no 
 | 28          | Repository audit and maintainability cleanup        | Removed verified remnants and consolidated active domain, demo read-model, and cached-resource responsibilities without changing product behavior. |
 | 29          | Flexible spreadsheet import and Data workspace      | Completed reviewed CSV/XLSX import, templates, duplicate integrity, long Job Links, and stabilization.                                             |
 | 30          | First-run onboarding and guided setup               | Added local starting guidance, actionable recovery states, a seeded-demo evaluation path, and accessible reversible guidance.                     |
+| 31          | Navigation architecture and adaptive workspace shell | Grouped navigation, an optional compact desktop rail, an accessible mobile Menu, and reliable top-level transitions complete the workspace shell. |
 
 ## Phase 0 — Product Planning
 
@@ -166,6 +167,12 @@ Consolidated active progression, status, follow-up, red-flag, and Outcome Insigh
 - Made guidance dismissal reversible, versioned, browser-local, and separate by local and demo mode; added actionable empty states across key workflow pages.
 - Kept the populated fictional demo separate from local onboarding with a seeded evaluation path through Reminders, a featured application, Status Board, Outcome Insights, Help, and Data & Import.
 - Stabilized focused keyboard behavior, responsive action layouts, and local/demo persistence messaging.
+
+## Phase 31 — Navigation Architecture And Adaptive Workspace Shell
+
+- Grouped navigation by workflow beneath stable PursuitHQ branding, with full expanded-sidebar access and an optional compact desktop rail.
+- Kept the compact preference browser-local while adding an accessible transient mobile Menu disclosure for the same destinations.
+- Successful top-level navigation now begins at the page top while existing unsaved-change protections continue to guard drafts.
 
 ## Later possibilities
 

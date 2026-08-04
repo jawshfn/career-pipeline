@@ -61,8 +61,8 @@ describe("AppLayout", () => {
     await act(async () => root.render(<AppLayout activePage="data" onNavigate={onNavigate}><div data-testid="content">Persisted page</div></AppLayout>));
     const toggle = container.querySelector(".app-sidebar-toggle");
     expect(toggle.getAttribute("aria-label")).toBe("Collapse sidebar");
-    expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(toggle.getAttribute("aria-controls")).toBe("primary-navigation");
+    expect(toggle.getAttribute("aria-expanded")).toBeNull();
+    expect(toggle.getAttribute("aria-controls")).toBeNull();
     await act(async () => toggle.click());
     expect(container.querySelector(".app-shell").classList.contains("app-shell-sidebar-collapsed")).toBe(true);
     expect(container.querySelector(".app-sidebar-toggle").getAttribute("aria-label")).toBe("Expand sidebar");

@@ -118,7 +118,7 @@ export default function AppLayout({ activePage, children, isDemoMode = false, on
             </section>
           ))}
         </nav>
-        <button aria-controls="primary-navigation" aria-expanded={expanded} aria-label={`${expanded ? "Collapse" : "Expand"} sidebar`} className="app-sidebar-toggle" onClick={toggleSidebar} type="button"><ChevronIcon expanded={expanded} /><span className="app-sidebar-toggle-label">{expanded ? "Collapse" : "Expand"}</span></button>
+        <button aria-label={`${expanded ? "Collapse" : "Expand"} sidebar`} className="app-sidebar-toggle" onClick={toggleSidebar} type="button"><ChevronIcon expanded={expanded} /><span className="app-sidebar-toggle-label">{expanded ? "Collapse" : "Expand"}</span></button>
       </aside>
       {compactLabel ? <span aria-hidden="true" className="app-compact-nav-label" style={{ left: compactLabel.left, top: compactLabel.top }}>{compactLabel.label}</span> : null}
       <main className="app-main">

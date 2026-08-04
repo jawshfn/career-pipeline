@@ -16,6 +16,7 @@ PursuitHQ helps job seekers capture opportunities, track application status and 
 - Export applications as CSV/XLSX or create a complete JSON workspace backup.
 - Generate an explicit, review-only AI Brief without changing saved application fields; local mode stores the latest brief in SQLite.
 - Compare confirmed progression by source and resume version, then inspect the applications contributing to each Outcome Insights metric.
+- Navigate through grouped workflows with an optional compact desktop rail and a compact mobile Menu.
 
 ## Runtime architecture
 

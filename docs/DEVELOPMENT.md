@@ -70,6 +70,12 @@ For manual testing, run FastAPI with `python -m uvicorn app.main:app --reload` f
 
 `CommandCenterPage.jsx` wires the guide and its focus restoration, while `SupportPage.jsx` renders the local starting choices or the demo walkthrough using the existing featured-application callback from `App.jsx`. Focused coverage lives in `onboardingState.test.js`, `CommandCenterPage.test.jsx`, `SupportPage.test.jsx`, and `demoData.test.js`.
 
+## Application shell and navigation
+
+`frontend/src/components/layout/AppLayout.jsx` owns grouped shell presentation. Its `navigationGroups` configuration is the source for destination grouping and labels; add future destinations there instead of duplicating desktop and mobile arrays. Desktop expanded/compact presentation and the transient mobile Menu have separate state responsibilities. `frontend/src/components/layout/sidebarPreference.js` owns the browser-local compact preference under `SIDEBAR_COLLAPSED_STORAGE_KEY` (`pursuithq:sidebar:collapsed`): missing, malformed, or inaccessible storage safely falls back to expanded.
+
+`MOBILE_NAVIGATION_QUERY` is `(max-width: 780px)`. The mobile Menu is never stored, closes across responsive transitions, and does not change the desktop preference. The existing `onNavigate` return value tells `AppLayout` whether immediate mobile navigation succeeded. `App.jsx` remains the owner of top-level page state and guarded navigation; `resetViewportForPageTransition` resets only successful changes to a different top-level page. Focused coverage lives in `frontend/src/components/layout/AppLayout.test.jsx`, `frontend/src/components/layout/sidebarPreference.test.js`, `frontend/src/App.test.jsx`, and `frontend/src/App.browserTextCapture.test.jsx`.
+
 ## CI and deployment
 
 `ci.yml` runs backend pytest, browser-extension Node tests, frontend Vitest, and a frontend build on pushes and pull requests. `pages.yml` runs frontend tests, builds demo mode from `frontend/dist`, and deploys GitHub Pages on `main` or manual dispatch. `deploy-ai-gateway.yml` is manually dispatched; it installs gateway dependencies, tests, validates a Wrangler deployment, and deploys the Worker with repository secrets.
