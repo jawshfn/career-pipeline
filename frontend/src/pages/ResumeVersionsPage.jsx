@@ -4,6 +4,7 @@ import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import ConfirmationDialog from "../components/ui/ConfirmationDialog.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 import AutoGrowingTextarea from "../components/ui/AutoGrowingTextarea.jsx";
+import ResumeFileSection, { formatResumeFileDate, formatResumeFileSize } from "../components/resumes/ResumeFileSection.jsx";
 
 const initialCreateForm = {
   name: "",
@@ -11,8 +12,9 @@ const initialCreateForm = {
   description: "",
 };
 
-export function getResumeDeleteConfirmationDescription({ assignment_count: assignmentCount }) {
-  if (assignmentCount === 0) return "This resume version and its historical tracking will be permanently deleted. This action cannot be undone.";
+export function getResumeDeleteConfirmationDescription({ assignment_count: assignmentCount, has_file: hasFile = false }) {
+  const fileWording = hasFile ? " Its attached PDF will also be removed." : "";
+  if (assignmentCount === 0) return `This resume version and its historical tracking will be permanently deleted.${fileWording} This action cannot be undone.`;
   if (assignmentCount === 1) {
     return "This resume version is currently used by 1 application. Deleting it will remove the resume assignment from that application and erase this resume’s historical tracking. This action cannot be undone.";
   }
@@ -64,18 +66,6 @@ export function isResumeEditDirty(editingId, editForm, editFormBaseline) {
   return Boolean(editingId && isResumeFormDirty(editForm, editFormBaseline));
 }
 
-export function getDuplicateResumeName(sourceName, resumeVersions) {
-  const existingNames = new Set(resumeVersions.map((resumeVersion) => normalizeFormValue(resumeVersion.name).trim().toLocaleLowerCase()));
-  const copyName = `${sourceName} copy`;
-  if (!existingNames.has(copyName.toLocaleLowerCase())) return copyName;
-
-  let copyNumber = 2;
-  while (existingNames.has(`${copyName} ${copyNumber}`.toLocaleLowerCase())) {
-    copyNumber += 1;
-  }
-  return `${copyName} ${copyNumber}`;
-}
-
 export function getResumeUsageCounts(applications = []) {
   return applications.reduce((usageCounts, application) => {
     if (application.resume_version_id === null || application.resume_version_id === undefined || application.resume_version_id === "") {
@@ -124,22 +114,6 @@ export function resolveResumeCreateStart(currentState) {
   };
 }
 
-export function resolveResumeDuplicate(currentState, sourceResumeVersion, resumeVersions) {
-  return {
-    ...currentState,
-    ...getCleanEditState(),
-    actionError: "",
-    actionMessage: "",
-    createError: "",
-    createForm: {
-      name: getDuplicateResumeName(sourceResumeVersion.name, resumeVersions),
-      target_role: sourceResumeVersion.target_role || "",
-      description: sourceResumeVersion.description || "",
-    },
-    isCreateOpen: true,
-  };
-}
-
 export function getResumeConfirmationDescriptor(action, currentState) {
   const dirtyEdit = isResumeEditDirty(currentState.editingId, currentState.editForm, currentState.editFormBaseline);
   const dirtyCreate = isResumeFormDirty(currentState.createForm || initialCreateForm, initialCreateForm);
@@ -155,12 +129,6 @@ export function getResumeConfirmationDescriptor(action, currentState) {
   }
   if (action.type === "cancel-edit" && dirtyEdit) return { title: "Discard resume changes?", description: `Changes to "${editingResume?.name || "this resume"}" have not been saved.`, cancelLabel: "Keep editing", confirmLabel: "Discard changes" };
   if (action.type === "start-create" && dirtyEdit) return { title: "Start a new resume version?", description: `You have unsaved changes to "${editingResume?.name || "this resume"}". Starting a new resume version will discard them.`, cancelLabel: "Keep editing", confirmLabel: "Discard and continue" };
-  if (action.type === "duplicate" && (dirtyEdit || dirtyCreate)) {
-    const sourceName = action.sourceResumeVersion.name;
-    if (dirtyEdit && dirtyCreate) return { title: "Replace current resume work?", description: `You have unsaved resume changes and an unfinished new resume draft. Creating a duplicate of "${sourceName}" will discard both.`, cancelLabel: "Keep editing", confirmLabel: "Discard and duplicate" };
-    if (dirtyEdit) return { title: "Discard resume changes?", description: `You have unsaved resume changes. Creating a duplicate of "${sourceName}" will discard them.`, cancelLabel: "Keep editing", confirmLabel: "Discard and duplicate" };
-    return { title: "Replace new resume draft?", description: `You have an unfinished new resume version. Creating a duplicate of "${sourceName}" will replace that draft.`, cancelLabel: "Keep draft", confirmLabel: "Replace with duplicate" };
-  }
   return null;
 }
 
@@ -213,9 +181,13 @@ export default function ResumeVersionsPage({
   isLoading,
   onCreateResumeVersion,
   onDeleteResumeVersion,
+  onDeleteResumeVersionFile,
+  onGetResumeVersionFileContent,
   onGetResumeVersionDeleteImpact,
   onUnsavedChangesChange,
   onUpdateResumeVersion,
+  onUploadResumeVersionFile,
+  isDemoMode = false,
   resumeVersions,
   allResumeVersions = resumeVersions,
 }) {
@@ -235,6 +207,7 @@ export default function ResumeVersionsPage({
   const [deleteDialogError, setDeleteDialogError] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(resumeVersions.length === 0);
+  const [openDisclosure, setOpenDisclosure] = useState(null);
   const createDisclosureInitialized = useRef(false);
   const createNameRef = useRef(null);
   const shouldFocusCreateNameRef = useRef(false);
@@ -285,6 +258,31 @@ export default function ResumeVersionsPage({
     setActionError("");
   }
 
+  function setDisclosureOpen(resumeVersionId, type, isOpen) {
+    if (isOpen) {
+      setOpenDisclosure({ resumeVersionId, type });
+      return;
+    }
+    queueMicrotask(() => {
+      setOpenDisclosure((current) => (
+        current?.resumeVersionId === resumeVersionId && current.type === type ? null : current
+      ));
+    });
+  }
+
+  function closeDisclosure(resumeVersionId, type) {
+    setOpenDisclosure((current) => (
+      current?.resumeVersionId === resumeVersionId && current.type === type ? null : current
+    ));
+  }
+
+  function handleDisclosureEscape(event, resumeVersionId, type) {
+    if (event.key !== "Escape" || !event.currentTarget.open) return;
+    event.preventDefault();
+    closeDisclosure(resumeVersionId, type);
+    event.currentTarget.querySelector("summary")?.focus();
+  }
+
   async function handleCreate(event) {
     event.preventDefault();
     setCreateError("");
@@ -306,6 +304,7 @@ export default function ResumeVersionsPage({
   }
 
   function startEditing(resumeVersion) {
+    setOpenDisclosure(null);
     const currentState = {
       actionError,
       actionMessage,
@@ -343,29 +342,13 @@ export default function ResumeVersionsPage({
     setIsCreateOpen(true);
   }
 
-  function startDuplicating(resumeVersion) {
-    const currentState = {
-      actionError,
-      actionMessage,
-      createError,
-      createForm,
-      editForm,
-      editFormBaseline,
-      editingId,
-      isCreateOpen,
-    };
-    requestResumeAction({ type: "duplicate", sourceResumeVersion: resumeVersion, currentResumeVersion: allResumeVersions.find((version) => version.id === editingId) }, currentState);
-  }
-
   function applyResumeAction(action, currentState) {
     const nextState = action.type === "switch-edit"
       ? resolveResumeEditSwitch(currentState, action.targetResumeVersion)
       : action.type === "cancel-edit"
         ? resolveResumeEditCancel(currentState)
-        : action.type === "start-create"
-          ? resolveResumeCreateStart(currentState)
-          : resolveResumeDuplicate(currentState, action.sourceResumeVersion, allResumeVersions);
-    if (action.type === "start-create" || action.type === "duplicate") shouldFocusCreateNameRef.current = true;
+          : resolveResumeCreateStart(currentState);
+    if (action.type === "start-create") shouldFocusCreateNameRef.current = true;
     setActionError(nextState.actionError);
     setActionMessage(nextState.actionMessage);
     setCreateError(nextState.createError);
@@ -413,6 +396,7 @@ export default function ResumeVersionsPage({
   }
 
   async function handleActiveToggle(resumeVersion) {
+    setOpenDisclosure(null);
     setActionError("");
     setActionMessage("");
     setSavingId(resumeVersion.id);
@@ -430,6 +414,7 @@ export default function ResumeVersionsPage({
   }
 
   async function handleDeleteResumeVersion(resumeVersion) {
+    setOpenDisclosure(null);
     setActionError("");
     setCheckingDeleteId(resumeVersion.id);
     try {
@@ -482,6 +467,12 @@ export default function ResumeVersionsPage({
   const editingResumeVersion = libraryResumeVersions.find((resumeVersion) => resumeVersion.id === editingId);
   const remainingVisibleResumeVersions = visibleResumeVersions.filter((resumeVersion) => resumeVersion.id !== editingId);
   const resumeUsageCounts = getResumeUsageCounts(applications);
+
+  useEffect(() => {
+    if (!openDisclosure) return;
+    const isVisible = visibleResumeVersions.some((resumeVersion) => resumeVersion.id === openDisclosure.resumeVersionId);
+    if (!isVisible || editingId === openDisclosure.resumeVersionId) setOpenDisclosure(null);
+  }, [editingId, openDisclosure, visibleResumeVersions]);
 
   return (
     <div className="resume-versions-page">
@@ -617,7 +608,7 @@ export default function ResumeVersionsPage({
                 />
               </label>
 
-              <div className="resume-version-actions">
+              <div className="form-actions">
                 <button className="secondary-button" type="button" onClick={cancelEditing}>
                   Cancel
                 </button>
@@ -630,6 +621,11 @@ export default function ResumeVersionsPage({
                   {savingId === editingResumeVersion.id ? "Saving..." : "Save"}
                 </button>
               </div>
+              <section className="resume-file-section resume-file-section-read-only">
+                <h4>Resume file</h4>
+                {editingResumeVersion.file ? <p>{editingResumeVersion.file.original_filename} · {formatResumeFileSize(editingResumeVersion.file.size_bytes)} · Added {formatResumeFileDate(editingResumeVersion.file.updated_at || editingResumeVersion.file.created_at)}</p> : <p>No PDF attached</p>}
+                <p>Save or cancel resume details to manage the PDF.</p>
+              </section>
             </div>
           </article>
         ) : null}
@@ -654,66 +650,45 @@ export default function ResumeVersionsPage({
                           <h3>{resumeVersion.name}</h3>
                           <p>{resumeVersion.target_role || "No target role set"}</p>
                         </div>
-                        <span className={`resume-version-state ${resumeVersion.is_active ? "" : "resume-version-state-inactive"}`}>
-                          {resumeVersion.is_active ? "Active" : "Inactive"}
-                        </span>
+                        <div className="resume-version-header-controls">
+                          <span className={`resume-version-state ${resumeVersion.is_active ? "" : "resume-version-state-inactive"}`}>
+                            {resumeVersion.is_active ? "Active" : "Inactive"}
+                          </span>
+                          <details className="resume-actions-disclosure" open={openDisclosure?.resumeVersionId === resumeVersion.id && openDisclosure.type === "resume-actions"} onKeyDown={(event) => handleDisclosureEscape(event, resumeVersion.id, "resume-actions")} onToggle={(event) => setDisclosureOpen(resumeVersion.id, "resume-actions", event.currentTarget.open)}>
+                            <summary aria-label={`Actions for ${resumeVersion.name}`} onClick={(event) => { event.preventDefault(); setDisclosureOpen(resumeVersion.id, "resume-actions", !(openDisclosure?.resumeVersionId === resumeVersion.id && openDisclosure.type === "resume-actions")); }}>Actions</summary>
+                            <div className="resume-actions-panel">
+                              <button className="secondary-button" type="button" disabled={isDeleteInProgress} onClick={() => { closeDisclosure(resumeVersion.id, "resume-actions"); startEditing(resumeVersion); }}>Edit details</button>
+                              <button className="secondary-button" type="button" disabled={isSaving || isDeleteInProgress} onClick={() => { closeDisclosure(resumeVersion.id, "resume-actions"); handleActiveToggle(resumeVersion); }}>
+                                {isSaving ? "Saving..." : resumeVersion.is_active ? "Deactivate" : "Reactivate"}
+                              </button>
+                              {!resumeVersion.is_active ? <button className="quiet-danger-button" type="button" disabled={isDeleteInProgress} onClick={() => { closeDisclosure(resumeVersion.id, "resume-actions"); handleDeleteResumeVersion(resumeVersion); }}>{isCheckingDelete ? "Checking..." : isDeleting ? "Deleting..." : "Delete permanently"}</button> : null}
+                            </div>
+                          </details>
+                        </div>
                       </div>
 
                       {resumeVersion.description ? (
                         <p className="resume-version-description">{resumeVersion.description}</p>
                       ) : null}
 
-                      <dl className="resume-version-meta">
-                        <div>
-                          <dt>Updated</dt>
-                          <dd>
-                            <time
-                              aria-label={formatResumeUpdatedTimestamp(resumeVersion.updated_at) || "Updated date unavailable"}
-                              dateTime={resumeVersion.updated_at || undefined}
-                              title={formatResumeUpdatedTimestamp(resumeVersion.updated_at) || undefined}
-                            >
-                              {formatResumeUpdatedDate(resumeVersion.updated_at)}
-                            </time>
-                          </dd>
-                        </div>
-                        <div>
-                          <dt>Usage</dt>
-                          <dd>{formatResumeUsage(usageCount)}</dd>
-                        </div>
-                      </dl>
+                      <p className="resume-version-meta-line">
+                        <time aria-label={formatResumeUpdatedTimestamp(resumeVersion.updated_at) || "Updated date unavailable"} dateTime={resumeVersion.updated_at || undefined} title={formatResumeUpdatedTimestamp(resumeVersion.updated_at) || undefined}>{formatResumeUpdatedDate(resumeVersion.updated_at)}</time>
+                        <span aria-hidden="true"> · </span>{formatResumeUsage(usageCount)}
+                      </p>
 
-                      <div className="resume-version-actions">
-                        <button className="secondary-button" type="button" disabled={isDeleteInProgress} onClick={() => startEditing(resumeVersion)}>
-                          Edit
-                        </button>
-                        <button className="secondary-button" type="button" disabled={isDeleteInProgress} onClick={() => startDuplicating(resumeVersion)}>
-                          Duplicate
-                        </button>
-                        <button
-                          className="secondary-button"
-                          type="button"
-                          disabled={isSaving || isDeleteInProgress}
-                          onClick={() => handleActiveToggle(resumeVersion)}
-                        >
-                          {isSaving
-                            ? "Saving..."
-                            : resumeVersion.is_active
-                              ? "Deactivate"
-                              : "Reactivate"}
-                        </button>
-                        {!resumeVersion.is_active ? (
-                          <>
-                            <button
-                              className="quiet-danger-button"
-                              type="button"
-                              disabled={isDeleteInProgress}
-                              onClick={() => handleDeleteResumeVersion(resumeVersion)}
-                            >
-                              {isCheckingDelete ? "Checking..." : isDeleting ? "Deleting..." : "Delete permanently"}
-                            </button>
-                          </>
-                        ) : null}
-                      </div>
+                      <ResumeFileSection
+                        disabled={isDeleteInProgress}
+                        isDemoMode={isDemoMode}
+                        onDeleteFile={onDeleteResumeVersionFile}
+                        onGetFileContent={onGetResumeVersionFileContent}
+                        isManagePdfOpen={openDisclosure?.resumeVersionId === resumeVersion.id && openDisclosure.type === "manage-pdf"}
+                        onManagePdfOpenChange={(isOpen) => setDisclosureOpen(resumeVersion.id, "manage-pdf", isOpen)}
+                        onManagePdfEscape={(event) => handleDisclosureEscape(event, resumeVersion.id, "manage-pdf")}
+                        onUploadFile={onUploadResumeVersionFile}
+                        resumeVersion={resumeVersion}
+                        usageCount={usageCount}
+                      />
+
                   </>
                 </article>
               );
@@ -734,7 +709,7 @@ export default function ResumeVersionsPage({
         cancelLabel="Cancel"
         confirmLabel="Delete permanently"
         confirmTone="danger"
-        description={pendingResumeDeletion ? getResumeDeleteConfirmationDescription(pendingResumeDeletion.impact) : ""}
+        description={pendingResumeDeletion ? getResumeDeleteConfirmationDescription({ ...pendingResumeDeletion.impact, has_file: Boolean(pendingResumeDeletion.resumeVersion.file) }) : ""}
         errorMessage={deleteDialogError}
         isOpen={Boolean(pendingResumeDeletion)}
         isProcessing={Boolean(deletingId)}

@@ -1,4 +1,4 @@
-import { apiDelete, apiGet, apiPatch, apiPost } from "./apiClient.js";
+import { apiDelete, apiDownload, apiGet, apiPatch, apiPost, apiPutFormData } from "./apiClient.js";
 
 const RESUME_VERSION_ERROR = "Resume version request failed.";
 
@@ -11,6 +11,24 @@ export function getResumeVersions({ includeInactive = false } = {}) {
 
   const queryString = searchParams.toString();
   return apiGet(`/api/resume-versions${queryString ? `?${queryString}` : ""}`, RESUME_VERSION_ERROR);
+}
+
+export function getResumeVersion(resumeVersionId) {
+  return apiGet(`/api/resume-versions/${resumeVersionId}`, RESUME_VERSION_ERROR);
+}
+
+export function uploadResumeVersionFile(resumeVersionId, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiPutFormData(`/api/resume-versions/${resumeVersionId}/file`, formData, RESUME_VERSION_ERROR);
+}
+
+export function getResumeVersionFileContent(resumeVersionId) {
+  return apiDownload(`/api/resume-versions/${resumeVersionId}/file/content`, RESUME_VERSION_ERROR);
+}
+
+export function deleteResumeVersionFile(resumeVersionId) {
+  return apiDelete(`/api/resume-versions/${resumeVersionId}/file`, RESUME_VERSION_ERROR);
 }
 
 export function createResumeVersion(payload) {

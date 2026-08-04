@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { apiPost, apiPostRawJson } from "./apiClient.js";
+import { apiPost, apiPostRawJson, apiPutFormData } from "./apiClient.js";
 
 describe("ordinary JSON API requests", () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -37,5 +37,24 @@ describe("ordinary JSON API requests", () => {
       message: "Application request failed.",
       detail,
     });
+  });
+});
+
+describe("multipart API requests", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("sends the supplied FormData with PUT without a manual content type", async () => {
+    const formData = new FormData();
+    formData.append("file", new Blob(["pdf"]), "resume.pdf");
+    const metadata = { original_filename: "resume.pdf" };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, status: 200, json: vi.fn().mockResolvedValue(metadata) }));
+
+    await expect(apiPutFormData("/resume-file", formData, "Could not upload.")).resolves.toEqual(metadata);
+    expect(fetch).toHaveBeenCalledWith("http://127.0.0.1:8000/resume-file", { method: "PUT", body: formData });
+  });
+
+  it("surfaces backend multipart validation details", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 422, json: vi.fn().mockResolvedValue({ detail: "PDF files only." }) }));
+    await expect(apiPutFormData("/resume-file", new FormData(), "Could not upload.")).rejects.toThrow("PDF files only.");
   });
 });

@@ -160,7 +160,7 @@ const commonTasks = [
   { title: "Review applications", description: "Search your saved opportunities and open Application Detail for notes, dates, preparation, and history. Incorrect, duplicate, or test records can be permanently deleted from the bottom of Application Detail; this also removes activity history and cannot be undone. Use Rejected or Withdrawn for normal historical outcomes.", action: "Open Applications", page: "applications" },
   { title: "Update application status", description: "Move opportunities through Saved, Applied, Interview, Offer, and other workflow stages.", action: "Open Status Board", page: "pipeline" },
   { title: "Set and review follow-ups", description: "See overdue and upcoming follow-ups and decide what needs attention next.", action: "Open Reminders", page: "command-center" },
-  { title: "Manage resume versions", description: "Create, duplicate, update, deactivate, or remove the resume variants used across applications.", action: "Open Resumes", page: "resume-versions" },
+  { title: "Manage resume versions", description: "Create, update, deactivate, or remove the resume variants used across applications.", action: "Open Resumes", page: "resume-versions" },
   { title: "Record application activity", description: "Open an application, select Activity, and add dated notes for calls, assessments, interviews, and other updates.", action: "Open Applications", page: "applications" },
   { title: "Import, export, or restore data", description: "Open Data to import an existing spreadsheet, export applications, create a complete backup, or review a workspace restore.", action: "Open Data", page: "data" },
 ];

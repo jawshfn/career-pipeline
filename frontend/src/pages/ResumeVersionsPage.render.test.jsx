@@ -129,7 +129,7 @@ describe("ResumeVersionsPage library experience", () => {
     await renderPage([resume], { allResumeVersions: [inactive, resume] });
     await act(async () => container.querySelector('input[type="checkbox"]').click());
     const inactiveCard = [...container.querySelectorAll(".resume-version-card")].find((card) => card.textContent.includes(inactive.name));
-    await act(async () => [...inactiveCard.querySelectorAll("button")].find((button) => button.textContent === "Edit").click());
+    await act(async () => [...inactiveCard.querySelectorAll("button")].find((button) => button.textContent === "Edit details").click());
 
     await renderPage([resume], { allResumeVersions: [updatedInactive, resume] });
     expect(container.querySelector(".resume-version-card-editing")).toBeTruthy();
@@ -269,11 +269,13 @@ describe("ResumeVersionsPage library experience", () => {
     const updated = container.querySelector("time");
     expect(updated.textContent).toBe("Updated today");
     expect(updated.title).not.toBe("");
+    expect(container.querySelectorAll(".resume-version-meta-line")).toHaveLength(1);
+    expect(container.querySelector(".resume-version-meta-line").textContent).toContain("Not used by any applications");
   });
 
   it("uses the selected version's existing values in the distinct inline editing state", async () => {
     await renderPage();
-    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
+    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit details");
     await act(async () => edit.click());
     expect(container.textContent).toContain("Editing resume version");
     const editSurface = container.querySelector(".resume-version-card-editing");
@@ -283,7 +285,7 @@ describe("ResumeVersionsPage library experience", () => {
 
   it("closes a clean edit and opens New resume version without confirmation", async () => {
     await renderPage();
-    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
+    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit details");
     await act(async () => edit.click());
     const disclosure = container.querySelector("details");
     const createName = container.querySelector('.resume-version-create-panel input[name="name"]');
@@ -296,7 +298,7 @@ describe("ResumeVersionsPage library experience", () => {
 
   it("keeps a dirty edit open when opening New resume version is declined", async () => {
     await renderPage();
-    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
+    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit details");
     await act(async () => edit.click());
     const editName = container.querySelector('.resume-version-card-editing input[name="name"]');
     await act(async () => {
@@ -315,7 +317,7 @@ describe("ResumeVersionsPage library experience", () => {
 
   it("clears a confirmed dirty edit and opens New resume version", async () => {
     await renderPage();
-    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
+    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit details");
     await act(async () => edit.click());
     const editName = container.querySelector('.resume-version-card-editing input[name="name"]');
     await act(async () => {
@@ -333,79 +335,80 @@ describe("ResumeVersionsPage library experience", () => {
     expect(document.activeElement).toBe(createName);
   });
 
-  it("prepares a duplicate draft without creating a record and focuses its editable name", async () => {
-    let resolveCreate;
-    const onCreateResumeVersion = vi.fn(
-      () => new Promise((resolve) => {
-        resolveCreate = resolve;
-      }),
-    );
-    await renderPage([resume, { ...resume, id: 2, name: "Engineering Resume copy" }], { onCreateResumeVersion });
-    const duplicate = [...container.querySelectorAll("button")].find((button) => button.textContent === "Duplicate");
-    await act(async () => duplicate.click());
-    const disclosure = container.querySelector("details");
-    const name = container.querySelector('.resume-version-create-panel input[name="name"]');
-    expect(onCreateResumeVersion).not.toHaveBeenCalled();
-    expect(disclosure.open).toBe(true);
-    expect(name.value).toBe("Engineering Resume copy 2");
-    expect(container.querySelector('input[name="target_role"]').value).toBe(resume.target_role);
-    expect(container.querySelector('textarea[name="description"]').value).toBe(resume.description);
-    expect(document.activeElement).toBe(name);
-    expect(resume.name).toBe("Engineering Resume");
-    await act(async () => disclosure.querySelector("summary").click());
-    await act(async () => disclosure.querySelector("summary").click());
-    expect(name.value).toBe("Engineering Resume copy 2");
-    await act(async () => container.querySelector("form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })));
-    expect(onCreateResumeVersion).toHaveBeenCalledWith({
-      description: resume.description,
-      name: "Engineering Resume copy 2",
-      target_role: resume.target_role,
-    });
-    await act(async () => {
-      resolveCreate({ name: "Engineering Resume copy 2" });
-      await Promise.resolve();
-    });
+  it("groups active-card actions in a labeled disclosure", async () => {
+    await renderPage();
+    const card = container.querySelector(".resume-version-card");
+    const disclosure = card.querySelector(".resume-actions-disclosure");
+    expect(disclosure.querySelector("summary").getAttribute("aria-label")).toBe("Actions for Engineering Resume");
     expect(disclosure.open).toBe(false);
-  });
-
-  it("does not replace an unfinished new-resume draft when duplication is declined", async () => {
-    await renderPage();
-    const disclosure = container.querySelector("details");
     await act(async () => disclosure.querySelector("summary").click());
-    const name = container.querySelector('.resume-version-create-panel input[name="name"]');
-    await act(async () => {
-      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
-      setValue.call(name, "Unfinished draft");
-      name.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    const duplicate = [...container.querySelectorAll("button")].find((button) => button.textContent === "Duplicate");
-    await act(async () => duplicate.click());
-    expect(container.querySelector('[role="dialog"]').textContent).toContain("Replace new resume draft?");
-    await act(async () => container.querySelector('[role="dialog"]').querySelector("button").click());
-    expect(name.value).toBe("Unfinished draft");
-    expect(disclosure.open).toBe(true);
-  });
-
-  it("protects a duplicate-populated draft before opening an edit", async () => {
-    await renderPage();
-    const duplicate = [...container.querySelectorAll("button")].find((button) => button.textContent === "Duplicate");
-    await act(async () => duplicate.click());
-    const createName = container.querySelector('.resume-version-create-panel input[name="name"]');
-    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
-    await act(async () => edit.click());
-
-    await act(async () => container.querySelector('[role="dialog"]').querySelector("button").click());
-    expect(createName.value).toBe("Engineering Resume copy");
-    expect(container.querySelector(".resume-version-card-editing")).toBeNull();
-    expect(container.querySelector("details").open).toBe(true);
-  });
-
-  it("uses the secondary action treatment for Edit, Duplicate, and Deactivate", async () => {
-    await renderPage();
-    for (const label of ["Edit", "Duplicate", "Deactivate"]) {
-      const button = [...container.querySelectorAll("button")].find((item) => item.textContent === label);
+    for (const label of ["Edit details", "Deactivate"]) {
+      const button = [...disclosure.querySelectorAll("button")].find((item) => item.textContent === label);
       expect(button.className).toBe("secondary-button");
     }
+    expect([...disclosure.querySelectorAll("button")].map((button) => button.textContent)).not.toContain("Delete permanently");
+    await act(async () => disclosure.querySelector("button").click());
+    expect(container.querySelectorAll(".resume-actions-disclosure[open], .manage-pdf-disclosure[open]")).toHaveLength(0);
+    expect(container.querySelector(".resume-version-card-editing")).toBeTruthy();
+  });
+
+  it("places inactive-card editing, reactivation, and deletion together", async () => {
+    const inactiveResume = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    await renderPage([inactiveResume]);
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+    const disclosure = container.querySelector(".resume-actions-disclosure");
+    await act(async () => disclosure.querySelector("summary").click());
+    expect([...disclosure.querySelectorAll("button")].map((button) => button.textContent)).toEqual([
+      "Edit details",
+      "Reactivate",
+      "Delete permanently",
+    ]);
+  });
+
+  it("coordinates card disclosures and restores the active trigger after Escape", async () => {
+    const attachedResume = {
+      ...resume,
+      file: { original_filename: "engineering-resume.pdf", size_bytes: 2048, updated_at: resume.updated_at },
+    };
+    const secondResume = { ...resume, id: 2, name: "Second Resume" };
+    await renderPage([attachedResume, secondResume]);
+
+    const cards = [...container.querySelectorAll(".resume-version-card")];
+    const firstActions = cards[0].querySelector(".resume-actions-disclosure");
+    const managePdf = cards[0].querySelector(".manage-pdf-disclosure");
+    const secondActions = cards[1].querySelector(".resume-actions-disclosure");
+    await act(async () => firstActions.querySelector("summary").click());
+    expect(firstActions.open).toBe(true);
+    expect(managePdf.open).toBe(false);
+
+    await act(async () => managePdf.querySelector("summary").click());
+    expect(container.querySelector(".resume-actions-disclosure").open).toBe(false);
+    expect(container.querySelector(".manage-pdf-disclosure").open).toBe(true);
+
+    await act(async () => secondActions.querySelector("summary").click());
+    expect(container.querySelector(".manage-pdf-disclosure").open).toBe(false);
+    expect(container.querySelectorAll(".resume-version-card")[1].querySelector(".resume-actions-disclosure").open).toBe(true);
+    expect(container.querySelectorAll("details[open]")).toHaveLength(1);
+
+    const activeActions = container.querySelectorAll(".resume-version-card")[1].querySelector(".resume-actions-disclosure");
+    const trigger = activeActions.querySelector("summary");
+    trigger.focus();
+    await act(async () => trigger.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" })));
+    expect(activeActions.open).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("clears an open disclosure when its card is filtered from the library", async () => {
+    const inactiveResume = { ...resume, id: 2, is_active: false, name: "Inactive Resume" };
+    await renderPage([resume], { allResumeVersions: [resume, inactiveResume] });
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+    const inactiveActions = [...container.querySelectorAll(".resume-version-card")]
+      .find((card) => card.textContent.includes(inactiveResume.name))
+      .querySelector(".resume-actions-disclosure");
+    await act(async () => inactiveActions.querySelector("summary").click());
+    expect(inactiveActions.open).toBe(true);
+    await act(async () => container.querySelector('input[type="checkbox"]').click());
+    expect(container.querySelectorAll(".resume-actions-disclosure[open], .manage-pdf-disclosure[open]")).toHaveLength(0);
   });
 
   it("shows ID-based usage context for active and inactive resume cards", async () => {
@@ -434,7 +437,7 @@ describe("ResumeVersionsPage library experience", () => {
       setValue.call(createName, "Saved Draft");
       createName.dispatchEvent(new Event("input", { bubbles: true }));
     });
-    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit");
+    const edit = [...container.querySelectorAll("button")].find((button) => button.textContent === "Edit details");
     await act(async () => edit.click());
     await act(async () => [...container.querySelector('[role="dialog"]').querySelectorAll("button")].at(-1).click());
     expect(disclosure.open).toBe(false);
@@ -447,7 +450,7 @@ describe("ResumeVersionsPage library experience", () => {
     const onUpdateResumeVersion = vi.fn().mockResolvedValue(secondResume);
     await renderPage([resume, secondResume], { onUpdateResumeVersion });
     const cards = [...container.querySelectorAll(".resume-version-card")];
-    const secondEdit = [...cards[1].querySelectorAll("button")].find((button) => button.textContent === "Edit");
+    const secondEdit = [...cards[1].querySelectorAll("button")].find((button) => button.textContent === "Edit details");
     await act(async () => secondEdit.click());
     const listPanel = container.querySelector(".resume-version-list-panel");
     const editSurface = listPanel.querySelector(".resume-version-card-editing");
@@ -468,7 +471,7 @@ describe("ResumeVersionsPage library experience", () => {
     const secondResume = { ...resume, id: 2, name: "Second Resume" };
     await renderPage([resume, secondResume]);
     const secondEdit = [...container.querySelectorAll(".resume-version-card")[1].querySelectorAll("button")]
-      .find((button) => button.textContent === "Edit");
+      .find((button) => button.textContent === "Edit details");
     await act(async () => secondEdit.click());
     await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Cancel").click());
     expect([...container.querySelectorAll(".resume-version-list h3")].map((heading) => heading.textContent)).toEqual([resume.name, secondResume.name]);
