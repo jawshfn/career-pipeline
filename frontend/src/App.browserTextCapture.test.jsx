@@ -42,6 +42,7 @@ describe("browser text capture startup", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
+    Object.defineProperty(window, "scrollTo", { configurable: true, value: vi.fn() });
     mocks.getApplications.mockResolvedValue([]);
     mocks.getResumeVersions.mockResolvedValue([]);
     mocks.consumeBrowserTextCapture.mockResolvedValue({
@@ -94,6 +95,47 @@ describe("browser text capture startup", () => {
     expect(container.textContent).not.toContain("expired or was already used");
     expect(mocks.createApplication).not.toHaveBeenCalled();
     expect(mocks.getApplications).toHaveBeenCalledTimes(2);
+  });
+
+  it("resets only after an accepted top-level page change, not initial rendering, same-page navigation, or sidebar toggles", async () => {
+    window.history.replaceState(null, "", "/");
+    await act(async () => {
+      root.render(<App />);
+    });
+    expect(window.scrollTo).not.toHaveBeenCalled();
+
+    const dashboard = [...container.querySelectorAll(".app-nav-item")].find((button) => button.textContent.includes("Dashboard"));
+    await act(async () => dashboard.click());
+    expect(window.scrollTo).toHaveBeenCalledTimes(1);
+    expect(window.scrollTo).toHaveBeenLastCalledWith({ left: 0, top: 0, behavior: "auto" });
+
+    await act(async () => dashboard.click());
+    await act(async () => container.querySelector(".app-sidebar-toggle").click());
+    await act(async () => container.querySelector(".app-sidebar-toggle").click());
+    expect(window.scrollTo).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits to reset scroll until guarded navigation is confirmed", async () => {
+    window.history.replaceState(null, "", "/");
+    await act(async () => root.render(<App />));
+    const findNavigation = (label) => [...container.querySelectorAll(".app-nav-item")].find((button) => button.textContent.includes(label));
+    await act(async () => findNavigation("Add Job").click());
+    window.scrollTo.mockClear();
+
+    const companyName = container.querySelector('input[name="company_name"]');
+    const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
+    setValue.call(companyName, "Northstar");
+    await act(async () => companyName.dispatchEvent(new Event("input", { bubbles: true })));
+    await act(async () => findNavigation("Dashboard").click());
+    expect(container.textContent).toContain("Leave this page?");
+    expect(window.scrollTo).not.toHaveBeenCalled();
+
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Stay here").click());
+    expect(window.scrollTo).not.toHaveBeenCalled();
+    await act(async () => findNavigation("Dashboard").click());
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Leave page").click());
+    expect(window.scrollTo).toHaveBeenCalledOnce();
+    expect(window.scrollTo).toHaveBeenCalledWith({ left: 0, top: 0, behavior: "auto" });
   });
 
   it("consumes a LinkedIn browser capture once in StrictMode and prepares its editable review without saving", async () => {

@@ -13,6 +13,7 @@ import {
   upsertResumeVersionToFront,
   UNSAVED_PAGE_CONFIRM_MESSAGE,
   resolvePageNavigation,
+  resetViewportForPageTransition,
   shouldConfirmPageNavigation,
 } from "./App.jsx";
 import {
@@ -69,6 +70,30 @@ describe("unsaved page navigation guard", () => {
       shouldNavigate: true,
       targetPage: "dashboard",
     });
+  });
+});
+
+describe("top-level page scroll reset", () => {
+  it("does not reset on initial render or same-page activity", () => {
+    const scrollTo = vi.fn();
+    resetViewportForPageTransition(null, "applications", { scrollTo });
+    resetViewportForPageTransition("applications", "applications", { scrollTo });
+    expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  it("resets the document viewport once after a successful page transition", () => {
+    const scrollTo = vi.fn();
+    resetViewportForPageTransition("applications", "pipeline", { scrollTo });
+    expect(scrollTo).toHaveBeenCalledTimes(1);
+    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 0, behavior: "auto" });
+  });
+
+  it("does not reset when guarded navigation is canceled", () => {
+    const scrollTo = vi.fn();
+    const navigation = resolvePageNavigation("applications", "pipeline", true, () => false);
+    resetViewportForPageTransition("applications", navigation.targetPage, { scrollTo });
+    expect(navigation.shouldNavigate).toBe(false);
+    expect(scrollTo).not.toHaveBeenCalled();
   });
 });
 

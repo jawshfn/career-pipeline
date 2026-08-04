@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { applyApplicationFollowUpAction, correctApplicationOutcomeHistory, createApplication, deleteApplication, getApplications, importApplicationsBatch, transitionApplicationStatus, updateApplication } from "./services/applicationsService.js";
 import { invalidateResource } from "./services/staleResource.js";
@@ -104,6 +104,11 @@ export function resolvePageNavigation(currentPage, requestedPage, hasUnsavedChan
   return { shouldClearDirtyState: true, shouldNavigate: true, targetPage: requestedPage };
 }
 
+export function resetViewportForPageTransition(previousPage, nextPage, windowObject = typeof window === "undefined" ? null : window) {
+  if (!previousPage || previousPage === nextPage || typeof windowObject?.scrollTo !== "function") return;
+  windowObject.scrollTo({ left: 0, top: 0, behavior: "auto" });
+}
+
 export function getBrowserCaptureStartupState(windowObject = typeof window === "undefined" ? null : window) {
   const captureResult = windowObject ? consumeBrowserCaptureFromWindow(windowObject) : { status: "none" };
   const textCaptureResult = windowObject ? consumeBrowserTextCaptureFromWindow(windowObject) : { status: "none" };
@@ -129,6 +134,7 @@ export default function App() {
   const [activePage, setActivePage] = useState(
     browserCaptureStartup.shouldOpenQuickAdd ? "quick-add" : "command-center",
   );
+  const previouslyRenderedPage = useRef(activePage);
   const [activePageHasUnsavedChanges, setActivePageHasUnsavedChanges] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState(null);
   const [requestedApplicationId, setRequestedApplicationId] = useState(null);
@@ -197,6 +203,11 @@ export default function App() {
   useEffect(() => {
     loadWorkspaceData();
   }, [loadWorkspaceData]);
+
+  useEffect(() => {
+    resetViewportForPageTransition(previouslyRenderedPage.current, activePage);
+    previouslyRenderedPage.current = activePage;
+  }, [activePage]);
 
   useEffect(() => {
     if (!activePageHasUnsavedChanges) {
