@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import {
   DEFAULT_APPLICATION_SOURCE,
@@ -177,13 +177,34 @@ export default function CaptureReviewForm({
   const [showTrackingDetails, setShowTrackingDetails] = useState(false);
   const [showJobDetails, setShowJobDetails] = useState(false);
   const [showPersonalNotes, setShowPersonalNotes] = useState(() => Boolean(reviewData?.notes));
+  const [showAdvancedStatus, setShowAdvancedStatus] = useState(false);
+  const [advancedStatus, setAdvancedStatus] = useState(() => USER_SELECTABLE_APPLICATION_STATUSES.find((status) => !["Saved", "Applied"].includes(status)) || "");
   const postingTriggerRef = useRef(null);
+  const reviewHeadingRef = useRef(null);
+  const hasNavigatedToReview = useRef(false);
+  const [submittingStatus, setSubmittingStatus] = useState("");
 
   useEffect(() => {
     setShowTrackingDetails(false);
     setShowJobDetails(false);
     setShowPersonalNotes(Boolean(reviewData?.notes));
   }, [reviewData?.parser_format]);
+
+  useLayoutEffect(() => {
+    if (captureOrigin !== "browser-capture" || hasNavigatedToReview.current) return undefined;
+    hasNavigatedToReview.current = true;
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        const heading = reviewHeadingRef.current;
+        if (!heading) return;
+        const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+        window.scrollTo({ top: Math.max(0, window.scrollY + heading.getBoundingClientRect().top - 24), behavior: reducedMotion ? "auto" : "smooth" });
+        heading.focus({ preventScroll: true });
+      });
+    });
+    return () => { window.cancelAnimationFrame(firstFrame); window.cancelAnimationFrame(secondFrame); };
+  }, [captureOrigin]);
 
   function updateReviewField(event) {
     const { name, value } = event.target;
@@ -192,7 +213,11 @@ export default function CaptureReviewForm({
 
   async function handleSubmitReview(event) {
     event.preventDefault();
+    if (isSubmitting) return;
+    const intent = event.nativeEvent.submitter?.value || "selected-status";
+    const status = intent === "save-for-later" ? "Saved" : intent === "save-as-applied" ? "Applied" : intent === "advanced-status" ? advancedStatus : reviewData.status;
     setError("");
+    setSubmittingStatus(status);
     setIsSubmitting(true);
 
     const payload = {
@@ -200,7 +225,7 @@ export default function CaptureReviewForm({
       role_title: normalizeRequiredText(reviewData.role_title),
       job_link: normalizeOptionalJobLink(reviewData.job_link),
       source: reviewData.source || DEFAULT_APPLICATION_SOURCE,
-      status: reviewData.status,
+      status,
       resume_version_id: normalizeOptionalId(reviewData.resume_version_id),
       location: normalizeOptionalText(reviewData.location),
       employment_type: normalizeOptionalText(reviewData.employment_type),
@@ -220,6 +245,7 @@ export default function CaptureReviewForm({
       setShowPersonalNotes(true);
     } finally {
       setIsSubmitting(false);
+      setSubmittingStatus("");
     }
   }
 
@@ -237,6 +263,8 @@ export default function CaptureReviewForm({
     (field) => normalizedCapturedReviewFields[field.name],
   );
   const uncapturedParsedJobDetailFields = getUncapturedParsedJobDetailFields(normalizedCapturedReviewFields);
+  const advancedStatuses = USER_SELECTABLE_APPLICATION_STATUSES.filter((status) => !["Saved", "Applied"].includes(status));
+  const browserCaptureSavingLabel = submittingStatus === "Saved" ? "Saving for later..." : `Saving as ${submittingStatus}...`;
 
   function closePostingDialog() {
     setShowJobDetails(false);
@@ -246,7 +274,7 @@ export default function CaptureReviewForm({
   return (
     <form className="quick-add-form smart-capture-review-form" onSubmit={handleSubmitReview}>
       <div className="section-heading smart-capture-review-heading">
-        <h3>Review before saving</h3>
+        <h3 ref={reviewHeadingRef} tabIndex="-1">Review before saving</h3>
         {introText ? <p>{introText}</p> : null}
       </div>
 
@@ -364,16 +392,16 @@ export default function CaptureReviewForm({
           ) : null}
 
           <div className="quick-add-row quick-add-row-selects">
-            <label>
-              Status
-              <select name="status" value={reviewData.status} onChange={updateReviewField}>
-                {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {status}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {captureOrigin !== "browser-capture" ? (
+              <label>
+                Status
+                <select name="status" value={reviewData.status} onChange={updateReviewField}>
+                  {USER_SELECTABLE_APPLICATION_STATUSES.map((status) => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
 
             <label>
               Resume version
@@ -463,11 +491,40 @@ export default function CaptureReviewForm({
         value={reviewData.job_description}
       />
 
-      <div className="form-actions">
+      {captureOrigin === "browser-capture" ? (
+        <div className="browser-capture-quick-finish" aria-label="Browser Capture quick finish actions">
+          <div className="browser-capture-quick-finish-intro quick-finish-copy">
+            <strong>Ready to save</strong>
+            <p>Choose the status that should be recorded.</p>
+          </div>
+          <div className="browser-capture-quick-finish-actions quick-finish-common-actions">
+            <button className="secondary-button" name="save_intent" type="submit" value="save-for-later" disabled={isSubmitting}>
+              {isSubmitting && submittingStatus === "Saved" ? browserCaptureSavingLabel : "Save for later"}
+            </button>
+            <button className="primary-small-button" name="save_intent" type="submit" value="save-as-applied" disabled={isSubmitting}>
+              {isSubmitting && submittingStatus === "Applied" ? browserCaptureSavingLabel : "Save as applied"}
+            </button>
+          </div>
+          <div className="browser-capture-advanced-status quick-finish-disclosure">
+            <button aria-controls="browser-capture-advanced-status-content" aria-expanded={showAdvancedStatus} className="browser-capture-status-disclosure" type="button" onClick={() => setShowAdvancedStatus((current) => !current)}>
+              <span aria-hidden="true" className="quick-add-disclosure-cue" />
+              {showAdvancedStatus ? "Hide other statuses" : "Choose another status"}
+            </button>
+            {showAdvancedStatus ? <div className="browser-capture-advanced-status-content quick-finish-advanced-panel" id="browser-capture-advanced-status-content">
+              <label>Advanced status<select aria-label="Advanced status" value={advancedStatus} onChange={(event) => setAdvancedStatus(event.target.value)} disabled={isSubmitting}>{advancedStatuses.map((status) => <option key={status} value={status}>{status}</option>)}</select></label>
+              <button className="secondary-button" name="save_intent" type="submit" value="advanced-status" disabled={isSubmitting}>
+                {isSubmitting && submittingStatus === advancedStatus ? browserCaptureSavingLabel : `Save as ${advancedStatus}`}
+              </button>
+            </div> : null}
+          </div>
+        </div>
+      ) : null}
+
+      {captureOrigin !== "browser-capture" ? <div className="form-actions">
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Saving..." : "Save opportunity"}
         </button>
-      </div>
+      </div> : null}
     </form>
   );
 }

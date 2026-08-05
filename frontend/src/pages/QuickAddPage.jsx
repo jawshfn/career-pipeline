@@ -29,6 +29,8 @@ export default function QuickAddPage({
   const [smartCaptureTransfer, setSmartCaptureTransfer] = useState(null);
   const hasHandledIncomingBrowserCapture = useRef(false);
   const hasHandledIncomingBrowserTextCapture = useRef(false);
+  const successHeadingRef = useRef(null);
+  const lastNavigatedSuccess = useRef(null);
 
   useEffect(() => {
     onUnsavedChangesChange?.(activeModeHasUnsavedChanges);
@@ -85,6 +87,19 @@ export default function QuickAddPage({
     }
   }, [activeModeHasUnsavedChanges, browserTextCaptureError, incomingBrowserTextCapture, onBrowserTextCaptureConsumed, onBrowserTextCaptureErrorConsumed]);
 
+  useEffect(() => {
+    if (!createdApplication || lastNavigatedSuccess.current === createdApplication) return undefined;
+    lastNavigatedSuccess.current = createdApplication;
+    const frame = window.requestAnimationFrame(() => {
+      const heading = successHeadingRef.current;
+      if (!heading) return;
+      heading.focus({ preventScroll: true });
+      const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+      heading.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [createdApplication]);
+
   function handleAddAnother() {
     setCreatedApplication(null);
   }
@@ -138,7 +153,7 @@ export default function QuickAddPage({
       {createdApplication ? (
         <section className="panel quick-add-success-panel" aria-labelledby="quick-add-success-title">
           <div>
-            <h2 id="quick-add-success-title">Added successfully</h2>
+            <h2 id="quick-add-success-title" ref={successHeadingRef} tabIndex="-1">Added successfully</h2>
             <p>
               {createdApplication.role_title} at {createdApplication.company_name} is now in your application list.
             </p>
