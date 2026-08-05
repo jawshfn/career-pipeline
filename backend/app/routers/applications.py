@@ -350,19 +350,36 @@ FOLLOW_UP_CLOSED_DETAIL = "This application is closed or archived and its follow
 
 def build_follow_up_activity_note(payload: ApplicationFollowUpActionRequest) -> str:
     expected = payload.expected_follow_up_date.isoformat()
+
     if payload.action == "complete":
         note = "Completed follow-up."
     elif payload.action == "complete_and_schedule":
-        note = f"Completed follow-up and scheduled the next follow-up for {payload.follow_up_date.isoformat()}."
+        follow_up_date = payload.follow_up_date
+        if follow_up_date is None:
+            raise ValueError("follow_up_date is required for complete_and_schedule")
+        note = (
+            "Completed follow-up and scheduled the next follow-up for "
+            f"{follow_up_date.isoformat()}."
+        )
     elif payload.action == "reschedule":
-        note = f"Rescheduled follow-up from {expected} to {payload.follow_up_date.isoformat()}."
+        follow_up_date = payload.follow_up_date
+        if follow_up_date is None:
+            raise ValueError("follow_up_date is required for reschedule")
+        note = (
+            f"Rescheduled follow-up from {expected} "
+            f"to {follow_up_date.isoformat()}."
+        )
     else:
         note = "Cleared follow-up without marking it complete."
 
     if payload.activity_note is not None:
         note += f" Note: {payload.activity_note}"
     if "next_action" in payload.model_fields_set:
-        note += " Next action cleared." if payload.next_action is None else f" Next action: {payload.next_action}"
+        note += (
+            " Next action cleared."
+            if payload.next_action is None
+            else f" Next action: {payload.next_action}"
+        )
     return note
 
 
