@@ -75,6 +75,7 @@ function application(overrides) {
 }
 
 export function createDemoState() {
+  const seededFileTimestamp = "2026-07-01T14:30:00.000Z";
   const resumeVersions = [
     {
       id: 1,
@@ -412,10 +413,22 @@ export function createDemoState() {
   return {
     applications,
     resumeVersions,
+    resumeFiles: [{
+      id: 1,
+      resume_version_id: 1,
+      original_filename: "fictional-software-engineering-resume.pdf",
+      media_type: "application/pdf",
+      size_bytes: 1054,
+      sha256: "45f0f4f8e0b87211184aedff4e580bd506a8bd3f9922bb3cd3ea9600c2aa2f10",
+      created_at: seededFileTimestamp,
+      updated_at: seededFileTimestamp,
+      seeded_asset: "demo/fictional-software-engineering-resume.pdf",
+    }],
     aiBriefs: [],
     activities,
     nextApplicationId: 13,
     nextResumeVersionId: 5,
+    nextResumeFileId: 2,
     nextActivityId: 7,
     nextAiBriefId: 1,
   };

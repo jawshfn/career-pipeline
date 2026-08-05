@@ -23,12 +23,19 @@ PursuitHQ is a local-first job-search workspace for people who want to move from
 1. **Capture a job.** Add it manually, import a supported Greenhouse or Lever link, use deterministic Paste Job Text, or begin a bounded Browser Capture handoff.
 2. **Review and save.** Correct the editable draft, choose source and job link, then explicitly save it as an application.
 3. **Manage the application.** Update status, dates, contact details, next action, and notes in Application Detail.
-4. **Keep the posting.** Store and review a Job Posting Snapshot separately from Personal Notes.
-5. **Generate an AI Brief.** From Application Detail, explicitly analyze the current approved company, role, optional job details, and snapshot. Local mode saves the latest brief; demo mode keeps it in memory until reload.
-6. **Follow through.** Manage reminders with Complete, Complete and schedule next, Reschedule, or Clear; review the resulting activity history.
-7. **Prepare and assess.** Assign a resume variant, add preparation notes, and record red flags.
-8. **Review progress.** Use Dashboard and Status Board for current workspace status, then use Outcome Insights to compare confirmed progression by source and resume version and inspect contributing applications.
-9. **Protect the workspace.** Import reviewed CSV/XLSX application trackers locally, export JSON backups and CSV/XLSX review exports, and validate and explicitly replace a local workspace from a compatible JSON backup.
+4. **Manage resume versions.** Create a version, attach one PDF, preview, download, replace, or remove it, then assign that version to applications. Complete backups preserve attached PDFs through local restore.
+5. **Keep the posting.** Store and review a Job Posting Snapshot separately from Personal Notes.
+6. **Generate an AI Brief.** From Application Detail, explicitly analyze the current approved company, role, optional job details, and snapshot. Local mode saves the latest brief; demo mode keeps it in memory until reload.
+7. **Follow through.** Manage reminders with Complete, Complete and schedule next, Reschedule, or Clear; review the resulting activity history.
+8. **Prepare and assess.** Assign a resume variant, add preparation notes, and record red flags.
+9. **Review progress.** Use Dashboard and Status Board for current workspace status, then use Outcome Insights to compare confirmed progression by source and resume version and inspect contributing applications.
+10. **Protect the workspace.** Import reviewed CSV/XLSX application trackers locally, export JSON backups and CSV/XLSX review exports, and validate and explicitly replace a local workspace from a compatible JSON backup.
+
+## Resume Library and files
+
+Each resume version can have one optional PDF (PDF-only, 5 MiB maximum). The local app stores file content in SQLite while ordinary resume reads expose only metadata. Replacing a PDF keeps its application assignments connected; material changes should normally use a new resume version. Public-demo files are fictional and session-only. Current V2 complete backups are portable and include PDFs; legacy backups contain no files.
+
+Non-goals include DOCX conversion, resume editing, OCR, text extraction, AI critique or tailoring, multiple files per version, revision history, and public sharing links.
 
 ## Data workspace
 

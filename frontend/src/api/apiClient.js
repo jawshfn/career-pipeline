@@ -67,6 +67,14 @@ export function apiPut(path, payload, fallbackErrorMessage) {
   return apiRequest(path, { body: payload, fallbackErrorMessage, method: "PUT" });
 }
 
+export async function apiPutFormData(path, formData, fallbackErrorMessage) {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    method: "PUT",
+    body: formData,
+  });
+  return parseResponse(response, fallbackErrorMessage);
+}
+
 export function apiDelete(path, fallbackErrorMessage) {
   return apiRequest(path, { fallbackErrorMessage, method: "DELETE" });
 }

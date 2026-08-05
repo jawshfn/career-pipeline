@@ -1,21 +1,26 @@
 """Read-only validation for the current PursuitHQ workspace backup contract."""
 
 from datetime import date, datetime, timedelta, timezone
+import base64
+import binascii
+import hashlib
 import re
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, ValidationError, field_validator, model_validator
 from sqlalchemy.orm import Session
 
-from ..backup_format import BACKUP_FORMAT
+from ..backup_format import BACKUP_FORMAT, LEGACY_BACKUP_FORMAT, SUPPORTED_BACKUP_FORMATS
 from ..schemas import JobBriefV2
 from ..domain import ACTIVE_APPLICATION_STATUSES, ARCHIVED_APPLICATION_STATUS, CLOSED_APPLICATION_STATUSES, JOB_LINK_MAX_LENGTH
+from .resume_files import MAX_PDF_SIZE_BYTES, PDF_MEDIA_TYPE, PDF_SIGNATURE
 from .workspace_backup_data import workspace_content_payload
 
 MAX_RESUME_VERSIONS = 5_000
 MAX_APPLICATIONS = 25_000
 MAX_APPLICATION_ACTIVITIES = 100_000
 MAX_APPLICATION_AI_BRIEFS = 25_000
+MAX_RESUME_VERSION_FILES = 5_000
 MAX_RETURNED_ERRORS = 100
 _DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _DATETIME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})?$")
@@ -44,11 +49,12 @@ class BackupCounts(_StrictBackupModel):
     applications: StrictInt
     application_activities: StrictInt
     application_ai_briefs: StrictInt
+    resume_version_files: StrictInt | None = None
 
-    @field_validator("resume_versions", "applications", "application_activities", "application_ai_briefs")
+    @field_validator("resume_versions", "applications", "application_activities", "application_ai_briefs", "resume_version_files")
     @classmethod
-    def nonnegative(cls, value: int) -> int:
-        if value < 0:
+    def nonnegative(cls, value: int | None) -> int | None:
+        if value is not None and value < 0:
             raise ValueError("must be nonnegative")
         return value
 
@@ -228,11 +234,89 @@ class ApplicationAiBriefBackupRecord(_StrictBackupModel):
         return self
 
 
+class ResumeVersionFileBackupRecord(_StrictBackupModel):
+    id: StrictInt
+    resume_version_id: StrictInt
+    original_filename: StrictStr
+    media_type: StrictStr
+    size_bytes: StrictInt
+    sha256: StrictStr
+    content_base64: StrictStr
+    created_at: StrictStr
+    updated_at: StrictStr
+
+    @field_validator("id", "resume_version_id")
+    @classmethod
+    def positive_id(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("must be a positive integer")
+        return value
+
+    @field_validator("original_filename")
+    @classmethod
+    def safe_filename(cls, value: str) -> str:
+        if not value.strip() or value != value.strip() or "/" in value or "\\" in value or len(value) > 255:
+            raise ValueError("must be a nonblank safe PDF filename")
+        if any(ord(character) < 32 or ord(character) == 127 for character in value) or not value.lower().endswith(".pdf"):
+            raise ValueError("must be a nonblank safe PDF filename")
+        return value
+
+    @field_validator("media_type")
+    @classmethod
+    def pdf_media_type(cls, value: str) -> str:
+        if value != PDF_MEDIA_TYPE:
+            raise ValueError("must be application/pdf")
+        return value
+
+    @field_validator("size_bytes")
+    @classmethod
+    def valid_size(cls, value: int) -> int:
+        if value <= 0 or value > MAX_PDF_SIZE_BYTES:
+            raise ValueError("must be a positive PDF size within 5 MiB")
+        return value
+
+    @field_validator("sha256")
+    @classmethod
+    def valid_digest(cls, value: str) -> str:
+        if not re.fullmatch(r"[0-9a-f]{64}", value):
+            raise ValueError("must be a lowercase SHA-256 digest")
+        return value
+
+    @field_validator("content_base64")
+    @classmethod
+    def valid_pdf_content(cls, value: str) -> str:
+        if not value:
+            raise ValueError("must not be blank")
+        try:
+            content = base64.b64decode(value.encode("ascii"), validate=True)
+        except (UnicodeEncodeError, binascii.Error) as error:
+            raise ValueError("must be valid standard Base64") from error
+        if not content or len(content) > MAX_PDF_SIZE_BYTES or not content.startswith(PDF_SIGNATURE):
+            raise ValueError("must decode to a non-empty PDF within 5 MiB")
+        return value
+
+    @field_validator("created_at", "updated_at")
+    @classmethod
+    def valid_timestamp(cls, value: str) -> str:
+        parse_backup_datetime(value)
+        return value
+
+    @model_validator(mode="after")
+    def content_matches_metadata(self):
+        content = base64.b64decode(self.content_base64.encode("ascii"), validate=True)
+        if len(content) != self.size_bytes:
+            raise ValueError("decoded PDF size does not match size_bytes")
+        if hashlib.sha256(content).hexdigest() != self.sha256:
+            raise ValueError("decoded PDF digest does not match sha256")
+        return self
+
+
 class BackupData(_StrictBackupModel):
     resume_versions: list[ResumeBackupRecord]
     applications: list[ApplicationBackupRecord]
     application_activities: list[ActivityBackupRecord]
     application_ai_briefs: list[ApplicationAiBriefBackupRecord]
+    resume_version_files: list[ResumeVersionFileBackupRecord] | None = None
 
 
 class WorkspaceBackupDocument(_StrictBackupModel):
@@ -246,6 +330,21 @@ class WorkspaceBackupDocument(_StrictBackupModel):
     def valid_timestamp(cls, value: str) -> str:
         parse_backup_datetime(value)
         return value
+
+    @model_validator(mode="after")
+    def versioned_file_contract(self):
+        count_supplied = "resume_version_files" in self.counts.model_fields_set
+        data_supplied = "resume_version_files" in self.data.model_fields_set
+        if self.format == BACKUP_FORMAT and (
+            not count_supplied
+            or not data_supplied
+            or self.counts.resume_version_files is None
+            or self.data.resume_version_files is None
+        ):
+            raise ValueError("current backups require resume_version_files")
+        if self.format == LEGACY_BACKUP_FORMAT and (count_supplied or data_supplied):
+            raise ValueError("legacy backups must not include resume_version_files")
+        return self
 
 
 def _issue(code: str, path: str | None, message: str) -> dict[str, str | None]:
@@ -294,6 +393,8 @@ def workspace_content_summary(content: dict[str, Any]) -> dict[str, int]:
         **application_summary(applications),
         "application_activities": content["counts"]["application_activities"],
         "application_ai_briefs": content["counts"].get("application_ai_briefs", 0),
+        "resume_version_files": content["counts"].get("resume_version_files", 0),
+        "resume_file_bytes": sum(item["size_bytes"] for item in content["data"].get("resume_version_files", [])),
     }
 
 
@@ -305,7 +406,8 @@ def _record_limits(payload: Any) -> list[dict[str, str | None]]:
     if not isinstance(payload, dict) or not isinstance(payload.get("data"), dict):
         return []
     limits = (("resume_versions", MAX_RESUME_VERSIONS), ("applications", MAX_APPLICATIONS),
-              ("application_activities", MAX_APPLICATION_ACTIVITIES), ("application_ai_briefs", MAX_APPLICATION_AI_BRIEFS))
+              ("application_activities", MAX_APPLICATION_ACTIVITIES), ("application_ai_briefs", MAX_APPLICATION_AI_BRIEFS),
+              ("resume_version_files", MAX_RESUME_VERSION_FILES))
     return [_issue("record_limit_exceeded", f"data.{name}", "This backup exceeds the supported record limit.")
             for name, maximum in limits if isinstance(payload["data"].get(name), list) and len(payload["data"][name]) > maximum]
 
@@ -323,7 +425,7 @@ def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDoc
             issues.append(_issue("schema_error", _path(entry["loc"]), "Backup structure contains an invalid or missing field."))
 
     if document is not None:
-        if document.format != BACKUP_FORMAT:
+        if document.format not in SUPPORTED_BACKUP_FORMATS:
             issues.append(_issue("unsupported_format", "format", "This file does not match the current PursuitHQ workspace backup format."))
         if not issues:
             data = document.data
@@ -332,7 +434,9 @@ def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDoc
                            ("applications", data.applications, declared.applications),
                            ("application_activities", data.application_activities, declared.application_activities),
                            ("application_ai_briefs", data.application_ai_briefs, declared.application_ai_briefs))
-            collection_labels = {"resume_versions": "resume version", "applications": "application", "application_activities": "application activity", "application_ai_briefs": "application AI brief"}
+            if document.format == BACKUP_FORMAT:
+                collections += (("resume_version_files", data.resume_version_files or [], declared.resume_version_files),)
+            collection_labels = {"resume_versions": "resume version", "applications": "application", "application_activities": "application activity", "application_ai_briefs": "application AI brief", "resume_version_files": "resume PDF"}
             for name, records, count in collections:
                 if len(records) != count:
                     issues.append(_issue("counts_mismatch", f"counts.{name}", f"Declared {collection_labels[name]} count does not match data.{name}."))
@@ -356,6 +460,13 @@ def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDoc
                 if record.application_id in brief_application_ids:
                     issues.append(_issue("duplicate_application_brief", f"data.application_ai_briefs[{index}].application_id", "Only one AI brief may reference each application."))
                 brief_application_ids.add(record.application_id)
+            file_resume_ids: set[int] = set()
+            for index, record in enumerate(data.resume_version_files or []):
+                if record.resume_version_id not in resume_ids:
+                    issues.append(_issue("missing_resume_reference", f"data.resume_version_files[{index}].resume_version_id", "Resume PDF references a resume version that is not included."))
+                if record.resume_version_id in file_resume_ids:
+                    issues.append(_issue("duplicate_resume_file", f"data.resume_version_files[{index}].resume_version_id", "Only one resume PDF may reference each resume version."))
+                file_resume_ids.add(record.resume_version_id)
 
     return document if not issues else None, issues
 
@@ -366,8 +477,9 @@ def workspace_backup_summary(document: WorkspaceBackupDocument, now: datetime | 
     applications = [record.model_dump() for record in data.applications]
     breakdown = application_summary(applications)
     summary = {"format": document.format, "exported_at": document.exported_at,
-               "resume_versions": len(data.resume_versions), "application_activities": len(data.application_activities), "application_ai_briefs": len(data.application_ai_briefs), **breakdown}
-    if not data.resume_versions and not data.applications and not data.application_activities and not data.application_ai_briefs:
+               "resume_versions": len(data.resume_versions), "application_activities": len(data.application_activities), "application_ai_briefs": len(data.application_ai_briefs),
+               "resume_version_files": len(data.resume_version_files or []), "resume_file_bytes": sum(record.size_bytes for record in data.resume_version_files or []), **breakdown}
+    if not data.resume_versions and not data.applications and not data.application_activities and not data.application_ai_briefs and not data.resume_version_files:
         warnings.append("This backup contains no workspace records.")
     if parse_backup_datetime(document.exported_at).astimezone(timezone.utc) > (now or datetime.now(timezone.utc)).astimezone(timezone.utc) + timedelta(minutes=5):
         warnings.append("The backup export time is in the future.")

@@ -2345,7 +2345,7 @@ a {
 
 .resume-version-card-inactive .resume-version-card-header p,
 .resume-version-card-inactive .resume-version-description,
-.resume-version-card-inactive .resume-version-meta dd { color: #60706d; }
+.resume-version-card-inactive .resume-version-meta-line { color: #60706d; }
 
 .resume-version-card-editing {
   grid-column: 1 / -1;
@@ -2405,38 +2405,25 @@ a {
   background: #f1dddd;
 }
 
-.resume-version-meta {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-}
-
-.resume-version-meta div {
-  display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 8px;
-}
-
-.resume-version-meta dt {
-  color: #60706d;
-  font-size: 0.78rem;
-  font-weight: 800;
-}
-
-.resume-version-meta dd {
-  margin: 0;
-  color: #202a33;
-  font-size: 0.88rem;
-}
-
-.resume-version-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid #e5ebe9;
-}
+.resume-version-header-controls { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.resume-file-section { display: grid; gap: 8px; min-width: 0; border-top: 1px solid #e5ebe9; padding-top: 12px; }
+.resume-file-section h4, .resume-file-section p { margin: 0; }
+.resume-file-section h4 { color: #52605d; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; }
+.resume-file-name { overflow-wrap: anywhere; color: #202a33; font-weight: 750; }
+.resume-file-meta { color: #60706d; font-size: .86rem; }
+.resume-file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; clip-path: inset(50%); }
+.resume-file-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.resume-version-meta-line { margin: 0; color: #52605d; font-size: .88rem; overflow-wrap: anywhere; }
+.resume-actions-disclosure, .manage-pdf-disclosure { position: relative; }
+.resume-actions-disclosure summary, .manage-pdf-disclosure summary { min-height: 38px; box-sizing: border-box; cursor: pointer; border: 1px solid #c5d1ce; border-radius: 6px; padding: 8px 12px; color: #243832; background: #fff; font-size: .9rem; font-weight: 750; list-style: none; }
+.resume-actions-disclosure summary::-webkit-details-marker, .manage-pdf-disclosure summary::-webkit-details-marker { display: none; }
+.resume-actions-disclosure summary::after, .manage-pdf-disclosure summary::after { margin-left: 8px; content: "▾"; }
+.resume-actions-disclosure[open] summary::after, .manage-pdf-disclosure[open] summary::after { content: "▴"; }
+.resume-actions-panel, .manage-pdf-panel { position: absolute; z-index: 3; right: 0; display: grid; min-width: max-content; gap: 6px; margin-top: 6px; border: 1px solid #c5d1ce; border-radius: 7px; padding: 8px; background: var(--color-surface); box-shadow: 0 10px 24px rgba(18, 24, 43, .14); }
+.manage-pdf-panel { right: auto; left: 0; }
+.resume-file-section-read-only { margin-top: 4px; }
+.resume-pdf-preview { display: grid; gap: 12px; }
+.resume-pdf-preview iframe { width: 100%; height: min(62vh, 600px); min-height: 300px; border: 1px solid #dce3e1; border-radius: 6px; }
 .support-workflow-list li {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -2524,7 +2511,8 @@ a {
 }
 
 .primary-small-button:disabled,
-.resume-version-actions button:disabled {
+.resume-actions-panel button:disabled,
+.manage-pdf-panel button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }
@@ -4458,16 +4446,6 @@ textarea:focus-visible {
 .command-center-item {
   position: relative;
   box-shadow: 0 5px 16px rgba(23, 32, 42, 0.045);
-}
-
-.resume-version-meta dt {
-  color: var(--color-muted);
-  letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-.resume-version-meta dd {
-  color: var(--color-text-soft);
 }
 
 .pipeline-card {

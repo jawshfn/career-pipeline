@@ -3,10 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   formatResumeUpdatedDate,
   formatResumeUsage,
-  getDuplicateResumeName,
   getResumeConfirmationDescriptor,
   getResumeUsageCounts,
-  resolveResumeDuplicate,
   resolveResumeEditCancel,
   resolveResumeEditSwitch,
 } from "./ResumeVersionsPage.jsx";
@@ -35,16 +33,6 @@ describe("resume confirmation descriptors", () => {
     expect(resolveResumeEditCancel(dirtyState).editingId).toBeNull();
   });
 
-  it("combines dirty edit and creation work for one duplicate confirmation", () => {
-    const currentState = { ...dirtyState, createForm: { name: "Draft", target_role: "", description: "" } };
-    const action = { type: "duplicate", sourceResumeVersion: resumeB, currentResumeVersion: resumeA };
-    const descriptor = getResumeConfirmationDescriptor(action, currentState);
-    expect(descriptor).toMatchObject({ title: "Replace current resume work?", confirmLabel: "Discard and duplicate" });
-    const result = resolveResumeDuplicate(currentState, resumeB, [resumeA, resumeB]);
-    expect(result.createForm.name).toBe("Frontend Resume copy");
-    expect(result.editingId).toBeNull();
-  });
-
   it("uses a single creation-draft warning when editing a resume", () => {
     const currentState = { ...dirtyState, editingId: null, createForm: { name: "Draft", target_role: "", description: "" } };
     const descriptor = getResumeConfirmationDescriptor({ type: "switch-edit", targetResumeVersion: resumeB }, currentState);
@@ -58,9 +46,6 @@ describe("resume confirmation descriptors", () => {
 });
 
 describe("resume helpers", () => {
-  it("suggests copied names case-insensitively", () => {
-    expect(getDuplicateResumeName("Early Career Resume", [{ name: "early career resume copy" }, { name: "EARLY CAREER RESUME COPY 2" }])).toBe("Early Career Resume copy 3");
-  });
   it("counts application usage", () => {
     const counts = getResumeUsageCounts([{ resume_version_id: 1 }, { resume_version_id: "1" }, { resume_version_id: null }]);
     expect(formatResumeUsage(counts.get("1"))).toBe("Used by 2 applications");

@@ -1,8 +1,8 @@
-import { getDemoExportSnapshot } from "./demoStore.js";
+import { getDemoExportSnapshot, getDemoWorkspaceBackupSnapshot } from "./demoStore.js";
 import { createApplicationsCsvBlob, createWorkspaceBackupBlob } from "../utils/exportFormat.js";
 
-export function downloadWorkspaceBackup() {
-  return Promise.resolve(createWorkspaceBackupBlob(getDemoExportSnapshot()));
+export async function downloadWorkspaceBackup() {
+  return createWorkspaceBackupBlob(await getDemoWorkspaceBackupSnapshot());
 }
 
 export function downloadApplicationsCsv() {

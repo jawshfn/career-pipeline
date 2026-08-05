@@ -8,6 +8,10 @@ export const {
   createResumeVersion,
   deleteResumeVersion,
   getResumeVersionDeleteImpact,
+  getResumeVersion,
+  getResumeVersionFileContent,
   getResumeVersions,
   updateResumeVersion,
+  uploadResumeVersionFile,
+  deleteResumeVersionFile,
 } = resumesApi;

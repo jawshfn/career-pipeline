@@ -160,7 +160,7 @@ const commonTasks = [
   { title: "Review applications", description: "Search your saved opportunities and open Application Detail for notes, dates, preparation, and history. Incorrect, duplicate, or test records can be permanently deleted from the bottom of Application Detail; this also removes activity history and cannot be undone. Use Rejected or Withdrawn for normal historical outcomes.", action: "Open Applications", page: "applications" },
   { title: "Update application status", description: "Move opportunities through Saved, Applied, Interview, Offer, and other workflow stages.", action: "Open Status Board", page: "pipeline" },
   { title: "Set and review follow-ups", description: "See overdue and upcoming follow-ups and decide what needs attention next.", action: "Open Reminders", page: "command-center" },
-  { title: "Manage resume versions", description: "Create, duplicate, update, deactivate, or remove the resume variants used across applications.", action: "Open Resumes", page: "resume-versions" },
+  { title: "Manage resume versions", description: "Create and update resume versions, attach one PDF, preview, download, replace, or remove it, and assign versions to applications.", action: "Open Resumes", page: "resume-versions" },
   { title: "Record application activity", description: "Open an application, select Activity, and add dated notes for calls, assessments, interviews, and other updates.", action: "Open Applications", page: "applications" },
   { title: "Import, export, or restore data", description: "Open Data to import an existing spreadsheet, export applications, create a complete backup, or review a workspace restore.", action: "Open Data", page: "data" },
 ];
@@ -207,7 +207,7 @@ export default function SupportPage({
         <p className="support-recommended-label">{isDemoMode ? "Demo mode" : "Local app"}</p>
         <div>
           <h2 id="runtime-notice-heading">{isDemoMode ? "Explore PursuitHQ with fictional data" : "Full local workflow available"}</h2>
-          <p>{isDemoMode ? "Browser Capture is unavailable in the GitHub Pages demo. Use Paste Job Text or Manual Entry instead." : "Browser Capture is available, and saved opportunities remain in your local PursuitHQ database."}</p>
+          <p>{isDemoMode ? "Browser Capture is unavailable in the GitHub Pages demo. The fictional seeded PDF can be previewed; demo PDF changes stay in browser memory, reset on reload, and are never sent to FastAPI." : "Browser Capture is available, and saved opportunities remain in your local PursuitHQ database."}</p>
         </div>
       </section>
 
@@ -242,8 +242,8 @@ export default function SupportPage({
         <div className="support-disclosure-list">
           <details className="support-disclosure" open><summary>Import applications</summary><div className="support-disclosure-content"><ol><li>Choose or drag in a CSV or XLSX file.</li><li>Select a worksheet and header or headerless table structure.</li><li>Map Company and Role, then confirm the mapping.</li><li>Resolve repeated values, review rows and duplicate decisions, then import approved rows.</li></ol><p>Exact duplicates are skipped by default; choose Import as new only to create another application. Possible duplicates require Keep in import or Exclude from import.</p></div></details>
           <details className="support-disclosure"><summary>Templates</summary><div className="support-disclosure-content"><p>Download browser-local Minimal, Common, or Custom templates as CSV or Excel files.</p></div></details>
-          <details className="support-disclosure"><summary>Export &amp; backup</summary><div className="support-disclosure-content"><p>An application export is a spreadsheet for review or re-import. A workspace backup is a complete JSON copy of the workspace.</p></div></details>
-          <details className="support-disclosure"><summary>Restore workspace</summary><div className="support-disclosure-content"><p>Restore replaces the complete current workspace after review; it is not a merge or spreadsheet import.</p></div></details>
+          <details className="support-disclosure"><summary>Export &amp; backup</summary><div className="support-disclosure-content"><p>An application export is a spreadsheet for review or re-import. A complete workspace JSON backup includes attached resume PDFs.</p></div></details>
+          <details className="support-disclosure"><summary>Restore workspace</summary><div className="support-disclosure-content"><p>Local restore replaces the complete current workspace after review; it is not a merge or spreadsheet import.</p></div></details>
         </div>
       </section>
 

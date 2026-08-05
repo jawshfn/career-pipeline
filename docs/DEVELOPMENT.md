@@ -20,6 +20,14 @@ Running `ai-gateway/` locally is optional contributor/operator work for developi
 
 Startup applies additive local schema work when needed. Historical outcome reconciliation is one-time and marker protected; local and demo behavior should remain aligned. Relevant focused tests cover transitions, Insights, contributors, cache behavior, and backup persistence.
 
+## Resume PDF ownership
+
+Backend: `ResumeVersionFile` is an optional one-to-one, delete-orphan child of a resume version. SQLite stores the BLOB; ordinary reads defer content and return metadata only. The validation service and file endpoints enforce PDF-only, 5 MiB files and update the parent timestamp.
+
+Frontend: the multipart helper and resume service feed `ResumeFileSection`, which owns browser Blob/object-URL cleanup while App refreshes resume state. Demo metadata is serializable demo state; actual Blob bytes live only in a separate memory map. The fictional public asset is lazily loaded, never calls FastAPI, and reset clears temporary bytes.
+
+Backups use V2 with a separate `resume_version_files` collection. Restore strictly validates Base64, signature, size, and digest, replaces the workspace transactionally, and protects stale previews with fingerprints. Legacy backups remain supported without files. Focused tests cover file validation, demo reset/export, service routing, Resume Library behavior, and backup restore.
+
 ## Environment and secrets
 
 | Area | Variable | Purpose |

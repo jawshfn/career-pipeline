@@ -654,6 +654,16 @@ class ResumeVersionUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class ResumeVersionFileMetadataRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    original_filename: str
+    media_type: str
+    size_bytes: int
+    created_at: datetime
+    updated_at: datetime
+
+
 class ResumeVersionRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -664,6 +674,12 @@ class ResumeVersionRead(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    file: ResumeVersionFileMetadataRead | None = None
+
+
+class ResumeVersionFileDeleteRead(BaseModel):
+    resume_version_id: int
+    original_filename: str
 
 
 class ResumeVersionDeleteImpactRead(BaseModel):

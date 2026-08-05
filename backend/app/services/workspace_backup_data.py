@@ -2,12 +2,13 @@
 
 import hashlib
 import json
+import base64
 from typing import Any
 
 from sqlalchemy.orm import Session
 
 from ..backup_format import BACKUP_FORMAT
-from ..models import Application, ApplicationActivity, ApplicationAiBrief, ResumeVersion
+from ..models import Application, ApplicationActivity, ApplicationAiBrief, ResumeVersion, ResumeVersionFile
 from ..schemas import ApplicationActivityRead, ApplicationRead, ResumeVersionRead
 
 
@@ -21,9 +22,25 @@ def workspace_content_payload(db: Session) -> dict[str, Any]:
     applications = db.query(Application).order_by(Application.id.asc()).all()
     activities = db.query(ApplicationActivity).order_by(ApplicationActivity.id.asc()).all()
     briefs = db.query(ApplicationAiBrief).order_by(ApplicationAiBrief.id.asc()).all()
-    resume_records = [as_json_record(resume, ResumeVersionRead) for resume in resumes]
+    resume_files = db.query(ResumeVersionFile).order_by(ResumeVersionFile.id.asc()).all()
+    resume_records = []
+    for resume in resumes:
+        record = as_json_record(resume, ResumeVersionRead)
+        record.pop("file", None)
+        resume_records.append(record)
     application_records = [as_json_record(application, ApplicationRead) for application in applications]
     activity_records = [as_json_record(activity, ApplicationActivityRead) for activity in activities]
+    resume_file_records = [{
+        "id": item.id,
+        "resume_version_id": item.resume_version_id,
+        "original_filename": item.original_filename,
+        "media_type": item.media_type,
+        "size_bytes": item.size_bytes,
+        "sha256": item.sha256,
+        "content_base64": base64.b64encode(item.content).decode("ascii"),
+        "created_at": item.created_at.isoformat(),
+        "updated_at": item.updated_at.isoformat(),
+    } for item in resume_files]
     brief_records = [{"id": item.id, "application_id": item.application_id, "source_fingerprint": item.source_fingerprint,
                       "brief": json.loads(item.brief_json), "model": item.model, "prompt_version": item.prompt_version,
                       "schema_version": item.schema_version, "generated_at": item.generated_at.isoformat(), "request_id": item.request_id,
@@ -35,12 +52,14 @@ def workspace_content_payload(db: Session) -> dict[str, Any]:
             "applications": len(application_records),
             "application_activities": len(activity_records),
             "application_ai_briefs": len(brief_records),
+            "resume_version_files": len(resume_file_records),
         },
         "data": {
             "resume_versions": resume_records,
             "applications": application_records,
             "application_activities": activity_records,
             "application_ai_briefs": brief_records,
+            "resume_version_files": resume_file_records,
         },
     }
 

@@ -11,9 +11,9 @@ PursuitHQ helps job seekers capture opportunities, track application status and 
 - Add jobs manually, from supported links, or with deterministic Paste Job Text review.
 - Use the local Browser Capture companion for supported job pages.
 - Manage applications in Application Detail, Status Board, Reminders, and Dashboard.
-- Assign resume variants, record preparation notes, red flags, and activity.
+- Assign resume variants, attach one optional PDF per version, preview or download it in the browser, and record preparation notes, red flags, and activity.
 - Use Data & Import to bring in existing CSV/XLSX trackers (including headerless tables), review every row and duplicate decision, and download spreadsheet templates. Raw spreadsheets are parsed in the browser. PursuitHQ sends only the normalized applications the user approves for import.
-- Export applications as CSV/XLSX or create a complete JSON workspace backup.
+- Export applications as CSV/XLSX or create a complete JSON workspace backup, including attached PDFs.
 - Generate an explicit, review-only AI Brief without changing saved application fields; local mode stores the latest brief in SQLite.
 - Compare confirmed progression by source and resume version, then inspect the applications contributing to each Outcome Insights metric.
 - Navigate through grouped workflows with an optional compact desktop rail and a compact mobile Menu.
@@ -36,7 +36,7 @@ The local full-stack app stores workspace data in SQLite. The optional Chrome co
 
 The locally running PursuitHQ app includes AI access by default through the deployed PursuitHQ gateway. The Gemini API key remains server-side in that Worker: normal local use needs neither a Gemini key nor Cloudflare, Wrangler, or gateway setup. Job Intelligence Brief does not run Gemini or the Worker on the user's computer.
 
-The public demo is a static GitHub Pages build. It uses temporary fictional in-memory workspace data, so ordinary edits, including reviewed spreadsheet imports, reset on reload and it does not connect to FastAPI. Real local persistence requires the FastAPI backend and SQLite workspace. It also uses the deployed AI gateway, includes five AI-ready fictional applications (with Harborview Systems featured), and keeps generated briefs only for the browser session. Browser Capture and workspace restore are local-only.
+The public demo is a static GitHub Pages build. It uses temporary fictional in-memory workspace data, so ordinary edits, including reviewed spreadsheet imports, reset on reload and it does not connect to FastAPI. It includes a fictional seeded Resume PDF; PDF changes stay only in browser memory. Real local persistence requires the FastAPI backend and SQLite workspace. It also uses the deployed AI gateway, includes five AI-ready fictional applications (with Harborview Systems featured), and keeps generated briefs only for the browser session. Browser Capture and workspace restore are local-only.
 
 New local workspaces offer guided Add Job or Import starting paths. The seeded public demo instead offers a concise evaluation path through its fictional workspace.
 
@@ -84,6 +84,8 @@ cd ai-gateway; npm run check
 - No generic job-board scraping; the browser companion is experimental and locally loaded.
 - AI output requires review and is not AI extraction; local briefs are persisted with their application while demo briefs last only for the browser session.
 - The demo workspace resets after reload.
+- Resume files are PDF-only, one per version, and limited to 5 MiB; DOCX preview or conversion is unavailable.
+- There is no PDF editing, text extraction, OCR, AI resume critique, cloud sharing, or historical file revisions.
 
 ## Documentation
 

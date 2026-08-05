@@ -1,6 +1,6 @@
 import { APPLICATIONS_REVIEW_HEADERS, createApplicationReviewRows, reviewRowValues } from "./applicationReviewRows.js";
 
-export const BACKUP_FORMAT = "pursuithq-workspace-backup";
+export const BACKUP_FORMAT = "pursuithq-workspace-backup-v2";
 export const APPLICATIONS_CSV_HEADERS = APPLICATIONS_REVIEW_HEADERS;
 
 function deepClone(value) {
@@ -39,7 +39,8 @@ function csvCell(value) {
 }
 
 export function createWorkspaceBackup(snapshot, now = new Date()) {
-  const resumeVersions = sortById(snapshot.resume_versions || []);
+  const resumeVersions = sortById(snapshot.resume_versions || []).map(({ file, ...resumeVersion }) => resumeVersion);
+  const resumeFiles = sortById(snapshot.resume_version_files || []);
   const applications = sortById(snapshot.applications || []);
   const activities = sortById(snapshot.application_activities || []);
   const briefs = sortById(snapshot.application_ai_briefs || []);
@@ -48,12 +49,14 @@ export function createWorkspaceBackup(snapshot, now = new Date()) {
     exported_at: now.toISOString(),
     counts: {
       resume_versions: resumeVersions.length,
+      resume_version_files: resumeFiles.length,
       applications: applications.length,
       application_activities: activities.length,
       application_ai_briefs: briefs.length,
     },
     data: deepClone({
       resume_versions: resumeVersions,
+      resume_version_files: resumeFiles,
       applications,
       application_activities: activities,
       application_ai_briefs: briefs.map(toBackupBrief),

@@ -3,12 +3,13 @@
 from datetime import datetime, timezone
 import json
 import hmac
+import base64
 from typing import Any
 
 from sqlalchemy import delete, text
 from sqlalchemy.orm import Session
 
-from ..models import Application, ApplicationActivity, ApplicationAiBrief, ResumeVersion
+from ..models import Application, ApplicationActivity, ApplicationAiBrief, ResumeVersion, ResumeVersionFile
 from ..domain import furthest_stage_for
 from .workspace_backup_validation import (
     WorkspaceBackupDocument,
@@ -40,6 +41,8 @@ def _summary_from_document(document: WorkspaceBackupDocument) -> dict[str, int]:
         **application_summary(applications),
         "application_activities": len(document.data.application_activities),
         "application_ai_briefs": len(document.data.application_ai_briefs),
+        "resume_version_files": len(document.data.resume_version_files or []),
+        "resume_file_bytes": sum(record.size_bytes for record in document.data.resume_version_files or []),
     }
 
 
@@ -87,6 +90,7 @@ def _delete_workspace(db: Session) -> None:
     db.execute(delete(ApplicationActivity))
     db.execute(delete(ApplicationAiBrief))
     db.execute(delete(Application))
+    db.execute(delete(ResumeVersionFile))
     db.execute(delete(ResumeVersion))
 
 
@@ -100,6 +104,19 @@ def _insert_applications(db: Session, document: WorkspaceBackupDocument) -> None
     rows = _application_rows(document)
     if rows:
         db.execute(Application.__table__.insert(), rows)
+
+
+def _insert_resume_files(db: Session, document: WorkspaceBackupDocument) -> None:
+    rows = []
+    for record in document.data.resume_version_files or []:
+        rows.append({
+            **record.model_dump(exclude={"content_base64", "created_at", "updated_at"}),
+            "content": base64.b64decode(record.content_base64.encode("ascii"), validate=True),
+            "created_at": parse_backup_datetime(record.created_at),
+            "updated_at": parse_backup_datetime(record.updated_at),
+        })
+    if rows:
+        db.execute(ResumeVersionFile.__table__.insert(), rows)
 
 
 def _insert_activities(db: Session, document: WorkspaceBackupDocument) -> None:
@@ -145,6 +162,7 @@ def restore_workspace_replace(
         previous_summary = _summary_from_current_workspace(db)
         _delete_workspace(db)
         _insert_resumes(db, document)
+        _insert_resume_files(db, document)
         _insert_applications(db, document)
         _insert_activities(db, document)
         _insert_ai_briefs(db, document)

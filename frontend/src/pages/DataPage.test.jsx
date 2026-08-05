@@ -28,6 +28,7 @@ describe("DataPage", () => {
     expect(markup).toContain("CSV or Excel tracker");
     expect(markup).toContain("Spreadsheet templates");
     expect(markup).toContain("Build a customizable CSV or Excel template for a new application tracker.");
+    expect(markup).toContain("attached PDFs");
     expect(markup).not.toContain("Prepare or standardize a spreadsheet");
     expect((markup.match(/Build your template/g) || []).length).toBe(1);
   });

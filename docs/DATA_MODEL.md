@@ -14,6 +14,10 @@ An application stores required company and role fields plus job link, source, st
 
 A resume version has a name, optional target role and description, active state, and timestamps. Applications may reference one resume version or none. The delete-impact endpoint identifies assignments before removal, and deletion is protected while assignments remain.
 
+## `resume_version_files`
+
+An optional one-to-one child of `resume_versions` stores filename, `application/pdf` media type, size, SHA-256, content BLOB, and timestamps. `resume_version_id` is unique; there is no filesystem path. Delete-orphan lifecycle removes the PDF with its version. Ordinary resume reads expose metadata only, while complete backups carry separate portable Base64 file records.
+
 ## `application_activities`
 
 An activity belongs to one application and stores its date, type, note, and timestamps. Users can create, edit, and delete activity entries. Status changes create backend-owned `Status Change` activities. Outcome-history corrections create backend-owned `Outcome History Correction` activities. Reviewed follow-up actions create one `Follow-up` activity in the same transaction; they do not create a separate table.
@@ -25,10 +29,11 @@ An activity belongs to one application and stores its date, type, note, and time
 ## Relationships and lifecycle
 
 ```text
+resume_versions 1 <- 0..1 resume_version_files
 resume_versions 1 <- 0..many applications 1 <- 0..many application_activities
 ```
 
-Deleting an application removes its activities. Removing a resume version requires its applications to be reassigned or cleared first. JSON backups preserve IDs, relationships, inactive resumes, and archived records; restore replaces the workspace transactionally.
+Deleting an application removes its activities. Deleting a resume version removes its PDF and clears assignments only through the reviewed deletion contract. JSON backups preserve IDs, relationships, inactive resumes, archived records, and PDFs; restore replaces the workspace transactionally.
 
 ## AI persistence boundary
 

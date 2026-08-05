@@ -4,10 +4,14 @@ import { applyApplicationFollowUpAction, correctApplicationOutcomeHistory, creat
 import { invalidateResource } from "./services/staleResource.js";
 import {
   createResumeVersion,
+  deleteResumeVersionFile,
   deleteResumeVersion,
+  getResumeVersion,
+  getResumeVersionFileContent,
   getResumeVersionDeleteImpact,
   getResumeVersions,
   updateResumeVersion,
+  uploadResumeVersionFile,
 } from "./services/resumesService.js";
 import { isDemoMode } from "./config/runtimeMode.js";
 import { FEATURED_DEMO_APPLICATION_ID } from "./demo/demoApplications.js";
@@ -345,6 +349,28 @@ export default function App() {
     return updatedResumeVersion;
   }
 
+  async function refreshResumeAfterFileMutation(resumeVersionId) {
+    const refreshedResumeVersion = await getResumeVersion(resumeVersionId);
+    setResumeVersions((current) => updateActiveResumeVersions(current, refreshedResumeVersion));
+    setAllResumeVersions((current) => upsertResumeVersionToFront(current, refreshedResumeVersion));
+    return refreshedResumeVersion;
+  }
+
+  async function handleUploadResumeVersionFile(resumeVersionId, file) {
+    await uploadResumeVersionFile(resumeVersionId, file);
+    return refreshResumeAfterFileMutation(resumeVersionId);
+  }
+
+  function handleGetResumeVersionFileContent(resumeVersionId) {
+    return getResumeVersionFileContent(resumeVersionId);
+  }
+
+  async function handleDeleteResumeVersionFile(resumeVersionId) {
+    const confirmation = await deleteResumeVersionFile(resumeVersionId);
+    const resumeVersion = await refreshResumeAfterFileMutation(resumeVersionId);
+    return { confirmation, resumeVersion };
+  }
+
   async function handleDeleteResumeVersion(resumeVersionId, expectedAssignmentCount) {
     const deleted = await deleteResumeVersion(resumeVersionId, expectedAssignmentCount);
     const localAssignmentCount = applications.filter(
@@ -402,10 +428,14 @@ export default function App() {
           allResumeVersions={allResumeVersions}
           applications={applications}
           error={loadError}
+          isDemoMode={demoMode}
           isLoading={isLoading}
           onCreateResumeVersion={handleCreateResumeVersion}
           onDeleteResumeVersion={handleDeleteResumeVersion}
           onGetResumeVersionDeleteImpact={getResumeVersionDeleteImpact}
+          onGetResumeVersionFileContent={handleGetResumeVersionFileContent}
+          onUploadResumeVersionFile={handleUploadResumeVersionFile}
+          onDeleteResumeVersionFile={handleDeleteResumeVersionFile}
           onUnsavedChangesChange={handlePageUnsavedChangesChange}
           onUpdateResumeVersion={handleUpdateResumeVersion}
           resumeVersions={resumeVersions}
