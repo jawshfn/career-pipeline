@@ -8,29 +8,10 @@ export const {
   createResumeVersion,
   deleteResumeVersion,
   getResumeVersionDeleteImpact,
+  getResumeVersion,
+  getResumeVersionFileContent,
   getResumeVersions,
   updateResumeVersion,
+  uploadResumeVersionFile,
+  deleteResumeVersionFile,
 } = resumesApi;
-
-const DEMO_FILE_ERROR = "Resume PDF files are available in the local app.";
-
-function localFileApi(apiFunction) {
-  if (isDemoMode()) throw new Error(DEMO_FILE_ERROR);
-  return apiFunction;
-}
-
-export function getResumeVersion(resumeVersionId) {
-  return localFileApi(realResumeVersionsApi.getResumeVersion)(resumeVersionId);
-}
-
-export function uploadResumeVersionFile(resumeVersionId, file) {
-  return localFileApi(realResumeVersionsApi.uploadResumeVersionFile)(resumeVersionId, file);
-}
-
-export function getResumeVersionFileContent(resumeVersionId) {
-  return localFileApi(realResumeVersionsApi.getResumeVersionFileContent)(resumeVersionId);
-}
-
-export function deleteResumeVersionFile(resumeVersionId) {
-  return localFileApi(realResumeVersionsApi.deleteResumeVersionFile)(resumeVersionId);
-}

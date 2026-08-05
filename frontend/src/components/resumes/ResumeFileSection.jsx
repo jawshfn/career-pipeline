@@ -136,13 +136,12 @@ export default function ResumeFileSection({ disabled = false, isDemoMode, isMana
     }
   }
 
-  if (isDemoMode) return <section className="resume-file-section"><h4>Resume file</h4><p>Resume PDF files are managed in the local app.</p></section>;
-
   const file = resumeVersion.file;
   const busy = Boolean(operation) || disabled;
   return (
     <section className="resume-file-section" aria-label={`Resume file for ${resumeVersion.name}`}>
       <h4>Resume file</h4>
+      {isDemoMode ? <p className="resume-file-demo-note">Demo PDF changes stay in this browser session and reset when the page reloads.</p> : null}
       <input accept=".pdf,application/pdf" aria-label={`Choose a PDF for ${resumeVersion.name}`} className="resume-file-input" disabled={disabled} ref={inputRef} type="file" onChange={handleFileSelection} />
       {!file ? <><p>No PDF attached</p><button className="secondary-button" type="button" disabled={busy} onClick={openPicker}>{operation === "attaching" ? "Attaching..." : "Attach PDF"}</button></> : <>
         <p className="resume-file-name">{file.original_filename}</p>

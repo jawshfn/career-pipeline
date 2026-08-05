@@ -9,6 +9,7 @@ import {
   USER_SELECTABLE_APPLICATION_STATUSES,
 } from "../constants/applicationConstants.js";
 import { createDemoState } from "./demoData.js";
+import { deleteDemoResumeFileContent, getDemoResumeFileContent, resetDemoResumeFileContents, setDemoResumeFileContent } from "./demoResumeFiles.js";
 import { createCanonicalJobBriefSource, createJobBriefPayload, createJobBriefSourceFingerprint } from "../services/jobBriefService.js";
 import {
   selectDemoDashboardSummary,
@@ -20,6 +21,7 @@ let demoState = createDemoState();
 
 export function resetDemoState() {
   demoState = createDemoState();
+  resetDemoResumeFileContents();
 }
 
 function clone(value) {
@@ -33,6 +35,95 @@ export function getDemoExportSnapshot() {
     application_activities: demoState.activities,
     application_ai_briefs: demoState.aiBriefs,
   });
+}
+
+function safeFileMetadata(record) {
+  if (!record) return null;
+  const { original_filename, media_type, size_bytes, created_at, updated_at } = record;
+  return { original_filename, media_type, size_bytes, created_at, updated_at };
+}
+
+function decorateResumeVersion(resumeVersion) {
+  return { ...resumeVersion, file: safeFileMetadata(demoState.resumeFiles.find((file) => file.resume_version_id === resumeVersion.id)) };
+}
+
+async function digestBytes(bytes) {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function validateDemoPdf(file) {
+  if (!file?.name) throw new Error("Choose a PDF file.");
+  const filename = file.name.split(/[\\/]/u).pop();
+  if (filename !== file.name || filename.length > 255 || !filename.toLowerCase().endsWith(".pdf")) throw new Error("Choose a PDF file.");
+  if (file.type !== "application/pdf") throw new Error("PDF files must use the application/pdf media type.");
+  if (!file.size) throw new Error("PDF files cannot be empty.");
+  if (file.size > 5 * 1024 * 1024) throw new Error("PDF files must be 5 MiB or smaller.");
+  const bytes = await file.arrayBuffer();
+  if (new TextDecoder().decode(bytes.slice(0, 5)) !== "%PDF-") throw new Error("Choose a valid PDF file.");
+  return { filename, bytes, sha256: await digestBytes(bytes) };
+}
+
+export function getDemoResumeVersion(resumeVersionId) {
+  const resumeVersion = demoState.resumeVersions.find((item) => String(item.id) === String(resumeVersionId));
+  if (!resumeVersion) throw new Error("Resume version not found.");
+  return clone(decorateResumeVersion(resumeVersion));
+}
+
+export async function uploadDemoResumeVersionFile(resumeVersionId, file) {
+  const resumeVersion = demoState.resumeVersions.find((item) => String(item.id) === String(resumeVersionId));
+  if (!resumeVersion) throw new Error("Resume version not found.");
+  const validated = await validateDemoPdf(file);
+  const timestamp = nowIso();
+  const existing = demoState.resumeFiles.find((item) => item.resume_version_id === resumeVersion.id);
+  const record = {
+    id: existing?.id || demoState.nextResumeFileId, resume_version_id: resumeVersion.id,
+    original_filename: validated.filename, media_type: "application/pdf", size_bytes: validated.bytes.byteLength,
+    sha256: validated.sha256, created_at: existing?.created_at || timestamp, updated_at: timestamp,
+  };
+  setDemoResumeFileContent(record.id, new Blob([validated.bytes], { type: "application/pdf" }));
+  demoState = {
+    ...demoState,
+    resumeFiles: [...demoState.resumeFiles.filter((item) => item.resume_version_id !== resumeVersion.id), record],
+    resumeVersions: demoState.resumeVersions.map((item) => item.id === resumeVersion.id ? { ...item, updated_at: timestamp } : item),
+    nextResumeFileId: existing ? demoState.nextResumeFileId : demoState.nextResumeFileId + 1,
+  };
+  return getDemoResumeVersion(resumeVersionId);
+}
+
+export async function getDemoResumeVersionFileContent(resumeVersionId) {
+  const resume = getDemoResumeVersion(resumeVersionId);
+  if (!resume.file) throw new Error("Resume PDF not found.");
+  const record = demoState.resumeFiles.find((item) => String(item.resume_version_id) === String(resumeVersionId));
+  const blob = await getDemoResumeFileContent(record);
+  const bytes = await blob.arrayBuffer();
+  if (bytes.byteLength !== record.size_bytes || await digestBytes(bytes) !== record.sha256) throw new Error("Resume PDF integrity check failed.");
+  return new Blob([bytes], { type: "application/pdf" });
+}
+
+export function deleteDemoResumeVersionFile(resumeVersionId) {
+  const resumeVersion = demoState.resumeVersions.find((item) => String(item.id) === String(resumeVersionId));
+  if (!resumeVersion) throw new Error("Resume version not found.");
+  const existing = demoState.resumeFiles.find((item) => item.resume_version_id === resumeVersion.id);
+  if (!existing) throw new Error("Resume PDF not found.");
+  deleteDemoResumeFileContent(existing.id);
+  const timestamp = nowIso();
+  demoState = { ...demoState, resumeFiles: demoState.resumeFiles.filter((item) => item.id !== existing.id), resumeVersions: demoState.resumeVersions.map((item) => item.id === resumeVersion.id ? { ...item, updated_at: timestamp } : item) };
+  return clone({ resume_version_id: resumeVersion.id, original_filename: existing.original_filename });
+}
+
+export async function getDemoWorkspaceBackupSnapshot() {
+  const snapshot = getDemoExportSnapshot();
+  snapshot.resume_version_files = [];
+  for (const record of [...demoState.resumeFiles].sort((a, b) => a.id - b.id)) {
+    const blob = await getDemoResumeVersionFileContent(record.resume_version_id);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = "";
+    for (let index = 0; index < bytes.length; index += 0x8000) binary += String.fromCharCode(...bytes.subarray(index, index + 0x8000));
+    const { seeded_asset, ...portable } = record;
+    snapshot.resume_version_files.push({ ...portable, content_base64: btoa(binary) });
+  }
+  return snapshot;
 }
 
 function nowIso() {
@@ -529,7 +620,7 @@ export function getDemoResumeVersions({ includeInactive = false } = {}) {
   const resumeVersions = includeInactive
     ? demoState.resumeVersions
     : demoState.resumeVersions.filter((resumeVersion) => resumeVersion.is_active);
-  return clone(sortResumeVersionsByUpdatedAt(resumeVersions));
+  return clone(sortResumeVersionsByUpdatedAt(resumeVersions).map(decorateResumeVersion));
 }
 
 export function createDemoResumeVersion(payload) {
@@ -550,7 +641,7 @@ export function createDemoResumeVersion(payload) {
     nextResumeVersionId: demoState.nextResumeVersionId + 1,
   };
 
-  return clone(resumeVersion);
+  return clone(decorateResumeVersion(resumeVersion));
 }
 
 export function updateDemoResumeVersion(resumeVersionId, payload) {
@@ -577,7 +668,7 @@ export function updateDemoResumeVersion(resumeVersionId, payload) {
     throw new Error("Resume version not found.");
   }
 
-  return clone(updatedResumeVersion);
+  return clone(decorateResumeVersion(updatedResumeVersion));
 }
 
 export function getDemoResumeVersionDeleteImpact(resumeVersionId) {
@@ -619,6 +710,11 @@ export function deleteDemoResumeVersion(resumeVersionId, expectedAssignmentCount
         : application,
     ),
     resumeVersions: demoState.resumeVersions.filter((candidate) => String(candidate.id) !== String(resumeVersionId)),
+    resumeFiles: demoState.resumeFiles.filter((file) => {
+      if (String(file.resume_version_id) !== String(resumeVersionId)) return true;
+      deleteDemoResumeFileContent(file.id);
+      return false;
+    }),
   };
   return clone({
     resume_version_id: impact.resume_version_id,

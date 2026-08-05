@@ -7,8 +7,12 @@ import {
   deleteDemoResumeVersion,
   getDemoApplications,
   getDemoResumeVersionDeleteImpact,
+  getDemoResumeVersion,
+  getDemoResumeVersionFileContent,
   getDemoResumeVersions,
   resetDemoState,
+  uploadDemoResumeVersionFile,
+  deleteDemoResumeVersionFile,
   updateDemoResumeVersion,
 } from "./demoStore.js";
 
@@ -100,5 +104,35 @@ describe("demo resume version ordering", () => {
     const reactivated = updateDemoResumeVersion(2, { is_active: true });
     expect(getDemoResumeVersions()[0]).toMatchObject({ id: reactivated.id, is_active: true });
     vi.useRealTimers();
+  });
+});
+
+describe("demo resume PDFs", () => {
+  beforeEach(() => resetDemoState());
+
+  it("returns only safe seeded metadata and supports attach, replacement, removal, and reset", async () => {
+    expect(getDemoResumeVersion(1).file).toMatchObject({ original_filename: "fictional-software-engineering-resume.pdf", media_type: "application/pdf", size_bytes: 1054 });
+    expect(getDemoResumeVersion(1).file).not.toHaveProperty("sha256");
+    const created = createDemoResumeVersion({ name: "Temporary" });
+    const first = new File(["%PDF-1.4\nfirst\n%%EOF"], "temporary.pdf", { type: "application/pdf" });
+    const attached = await uploadDemoResumeVersionFile(created.id, first);
+    const originalCreatedAt = attached.file.created_at;
+    const replacement = new File(["%PDF-1.4\nreplacement\n%%EOF"], "replacement.pdf", { type: "application/pdf" });
+    const replaced = await uploadDemoResumeVersionFile(created.id, replacement);
+    expect(replaced.file.created_at).toBe(originalCreatedAt);
+    expect(replaced.file.original_filename).toBe("replacement.pdf");
+    expect((await getDemoResumeVersionFileContent(created.id)).type).toBe("application/pdf");
+    deleteDemoResumeVersionFile(created.id);
+    expect(getDemoResumeVersion(created.id).file).toBeNull();
+    resetDemoState();
+    expect(() => getDemoResumeVersion(created.id)).toThrow("Resume version not found.");
+    expect(getDemoResumeVersion(1).file).not.toBeNull();
+  });
+
+  it("rejects invalid uploads without changing the existing file", async () => {
+    const before = getDemoResumeVersion(1);
+    await expect(uploadDemoResumeVersionFile(1, new File(["not a PDF"], "resume.pdf", { type: "application/pdf" }))).rejects.toThrow("valid PDF");
+    await expect(uploadDemoResumeVersionFile(1, new File(["%PDF-1.4"], "resume.txt", { type: "application/pdf" }))).rejects.toThrow("Choose a PDF");
+    expect(getDemoResumeVersion(1).file).toEqual(before.file);
   });
 });

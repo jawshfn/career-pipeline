@@ -4,7 +4,7 @@ This roadmap summarizes PursuitHQ's completed product evolution, its current sta
 
 ## Current product status
 
-PursuitHQ is a mature local-first product prototype: a React/Vite frontend, FastAPI/SQLAlchemy backend, and SQLite workspace. It includes a public fictional-data demo, optional Browser Capture companion, JSON backup with replace restore, CSV and XLSX exports, persisted Job Intelligence Briefs, and a Cloudflare Worker AI gateway. Outcome Insights now reports confirmed historical progression by source and resume version.
+PursuitHQ is a mature local-first product prototype: a React/Vite frontend, FastAPI/SQLAlchemy backend, and SQLite workspace. It includes Resume PDF storage and preview, complete backup portability, a public fictional-data demo, optional Browser Capture companion, CSV and XLSX exports, persisted Job Intelligence Briefs, and a Cloudflare Worker AI gateway. Outcome Insights now reports confirmed historical progression by source and resume version.
 
 It is not a production SaaS platform: workspace data remains local, there is no authentication or synchronization, and Browser Capture supports only documented layouts.
 
@@ -23,6 +23,7 @@ It is not a production SaaS platform: workspace data remains local, there is no 
 | 29          | Flexible spreadsheet import and Data workspace      | Completed reviewed CSV/XLSX import, templates, duplicate integrity, long Job Links, and stabilization.                                             |
 | 30          | First-run onboarding and guided setup               | Added local starting guidance, actionable recovery states, a seeded-demo evaluation path, and accessible reversible guidance.                     |
 | 31          | Navigation architecture and adaptive workspace shell | Grouped navigation, an optional compact desktop rail, an accessible mobile Menu, and reliable top-level transitions complete the workspace shell. |
+| 32          | Resume file management and preview | Added one locally stored PDF per resume version, accessible preview and file actions, complete backup/restore portability, and temporary fictional demo parity. |
 
 ## Phase 0 — Product Planning
 
@@ -174,10 +175,15 @@ Consolidated active progression, status, follow-up, red-flag, and Outcome Insigh
 - Kept the compact preference browser-local while adding an accessible transient mobile Menu disclosure for the same destinations.
 - Successful top-level navigation now begins at the page top while existing unsaved-change protections continue to guard drafts.
 
+## Phase 32 — Resume File Management And Preview
+
+- Added one optional PDF per resume version with secure bounded local storage, validation, accessible file-management actions, and browser-native preview.
+- Added V2 backup portability, legacy backup compatibility, transactional restore, and stale-preview protection.
+- Completed fictional in-memory public-demo parity, documentation, and final stabilization.
+
 ## Later possibilities
 
 - Email and calendar integrations.
-- Resume file preview.
 - Authentication and synchronization.
 - Additional documented ATS adapters.
 - Production distribution for the Browser Capture companion.

@@ -1,0 +1,56 @@
+%PDF-1.4
+% Fictional demo resume
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 318 >>
+stream
+BT
+/F1 20 Tf
+72 720 Td
+(Jordan Lee) Tj
+/F1 11 Tf
+0 -22 Td
+(Fictional Software Engineer) Tj
+0 -36 Td
+(Fictional City, USA  |  jordan.lee@example.test  |  example.test/jordan) Tj
+0 -54 Td
+/F1 14 Tf
+(Experience) Tj
+/F1 11 Tf
+0 -20 Td
+(BrightForge Labs  |  Software Engineer  |  2023 - Present) Tj
+0 -18 Td
+(Built accessible product interfaces and reliable API integrations.) Tj
+0 -42 Td
+/F1 14 Tf
+(Education) Tj
+/F1 11 Tf
+0 -20 Td
+(B.S. Computer Science, Fictional State University) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000033 00000 n 
+0000000082 00000 n 
+0000000139 00000 n 
+0000000265 00000 n 
+0000000801 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+871
+%%EOF

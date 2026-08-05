@@ -31,6 +31,9 @@ FastAPI serves the local JSON API under `/api`; generated interactive schemas ar
 | GET, PATCH | `/api/resume-versions/{id}` | Read or update a version | Supports active/inactive metadata. |
 | GET | `/api/resume-versions/{id}/delete-impact` | Inspect deletion impact | Shows assignments that block deletion. |
 | DELETE | `/api/resume-versions/{id}` | Delete a version | Protected while applications still reference it. |
+| PUT | `/api/resume-versions/{id}/file` | Attach or replace a Resume PDF | Multipart field `file`; PDF-only and 5 MiB maximum. |
+| GET | `/api/resume-versions/{id}/file/content` | Read PDF content | Returns inline PDF bytes for browser preview or download. |
+| DELETE | `/api/resume-versions/{id}/file` | Remove a Resume PDF | Leaves the resume version and its assignments intact. |
 
 ## Dashboard and capture
 
@@ -47,10 +50,10 @@ FastAPI serves the local JSON API under `/api`; generated interactive schemas ar
 
 | Method | Path | Purpose | Important behavior |
 | --- | --- | --- | --- |
-| GET | `/api/exports/workspace` | Download JSON backup | Read-only complete workspace backup. |
+| GET | `/api/exports/workspace` | Download JSON backup | Read-only V2 complete workspace backup, including attached PDFs. |
 | GET | `/api/exports/applications.csv` | Download review CSV | Read-only human-review export; legacy archived records excluded. |
 | POST | `/api/imports/workspace/validate` | Validate a backup | Read-only validation and short-lived restore authorization. |
-| POST | `/api/imports/workspace/restore` | Replace a workspace | Requires authorization; transactional replace restore preserves compatible legacy archives. |
+| POST | `/api/imports/workspace/restore` | Replace a workspace | Requires authorization; transactional reviewed restore supports legacy backups and preserves V2 PDFs. |
 
 The frontend generates XLSX directly; it is not a backend endpoint.
 
