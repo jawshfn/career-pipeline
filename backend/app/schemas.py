@@ -459,6 +459,7 @@ MAX_BROWSER_CAPTURE_TEXT_LENGTH = 100_000
 MAX_BROWSER_CAPTURE_URL_LENGTH = JOB_LINK_MAX_LENGTH
 BROWSER_CAPTURE_TOKEN_PATTERN = r"^[A-Za-z0-9_-]{32,128}$"
 ZIPRECRUITER_SEARCH_PATH_PATTERN = re.compile(r"^/jobs-search(?:/[1-9]\d*)?/?$")
+ZIPRECRUITER_HOME_PATH_PATTERN = re.compile(r"^/jobseeker/home/?$")
 HANDSHAKE_JOB_PATH_PATTERN = re.compile(r"^/jobs/[1-9]\d*/?$")
 
 
@@ -480,10 +481,12 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
     )
     is_supported_path = (
         (provider != "linkedin" or parsed.path.startswith("/jobs/"))
-        and (provider != "ziprecruiter" or ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path))
+        and (provider != "ziprecruiter" or ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path) or ZIPRECRUITER_HOME_PATH_PATTERN.fullmatch(parsed.path))
         and (provider != "handshake" or HANDSHAKE_JOB_PATH_PATTERN.fullmatch(parsed.path))
     )
-    selected_job_keys = parse_qs(parsed.query, keep_blank_values=True).get("lk", [])
+    selected_job_keys = parse_qs(parsed.query, keep_blank_values=True).get(
+        "lk" if ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path) else "jk", []
+    )
     if (
         parsed.scheme not in {"http", "https"}
         or parsed.username

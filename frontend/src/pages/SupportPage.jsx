@@ -68,7 +68,7 @@ function getCaptureMethods(isDemoMode) {
       label: isDemoMode ? "Local app only" : "Best for supported job pages",
       description: isDemoMode
         ? "Browser Capture is unavailable in the GitHub Pages demo."
-        : "Use for supported Greenhouse, Indeed, LinkedIn, ZipRecruiter, standalone authenticated Handshake job pages, or one confidently selected authenticated Handshake search-result side panel.",
+        : "Use for supported Greenhouse, Indeed, LinkedIn, ZipRecruiter selected search-detail or home-page modal jobs, standalone authenticated Handshake job pages, or one confidently selected authenticated Handshake search-result side panel.",
       state: isDemoMode ? "unavailable" : "recommended",
     },
     {

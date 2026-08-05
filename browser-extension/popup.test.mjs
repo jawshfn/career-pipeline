@@ -110,7 +110,7 @@ test("routes an active LinkedIn page to the focused detector", async () => {
   assert.equal(isLinkedInHostname("https://linkedin.com.evil.test/jobs/view/123456"), false);
 });
 
-test("routes only a selected ZipRecruiter search detail to the focused detector", async () => {
+test("routes supported selected ZipRecruiter details to the focused detector", async () => {
   const result = await inspectActivePage({
     tabs: { query: async () => [{ id: 16, url: "https://www.ziprecruiter.com/jobs-search/2?lk=selected-key" }] },
     scripting: { executeScript: async (details) => { assert.equal(details.func.name, "detectZipRecruiterJobPage"); return [{ result: { status: "no-current-job", version: 1 } }]; } },
@@ -121,6 +121,8 @@ test("routes only a selected ZipRecruiter search detail to the focused detector"
   assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobs-search/2?lk=page-two-key"), true);
   assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobs-search/25/?lk=later-page-key"), true);
   assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobs-search?search=data"), false);
+  assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobseeker/home?jk=standalone-selected-job-key"), true);
+  assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobseeker/home/?jk=standalone-selected-job-key&source=home"), true);
   for (const url of [
     "https://www.ziprecruiter.com/jobs-search/0?lk=value",
     "https://www.ziprecruiter.com/jobs-search/page/2?lk=value",
@@ -128,10 +130,21 @@ test("routes only a selected ZipRecruiter search detail to the focused detector"
     "https://www.ziprecruiter.com/jobs-search/2",
     "https://www.ziprecruiter.com/jobs-search/2?lk=",
     "https://www.ziprecruiter.com/jobs-search/2?lk=one&lk=two",
+    "https://www.ziprecruiter.com/jobseeker/home",
+    "https://www.ziprecruiter.com/jobseeker/home?jk=",
+    "https://www.ziprecruiter.com/jobseeker/home?jk=one&jk=two",
+    "https://www.ziprecruiter.com/jobseeker/home?lk=selected-key",
+    "https://www.ziprecruiter.com/jobs-search?jk=selected-key",
+    "https://www.ziprecruiter.com/jobseeker/home/extra?jk=selected-key",
   ]) {
     assert.equal(isZipRecruiterJobUrl(url), false);
   }
   assert.equal(isZipRecruiterJobUrl("https://ziprecruiter.com.evil.test/jobs-search?lk=selected-key"), false);
+  const standalone = await inspectActivePage({
+    tabs: { query: async () => [{ id: 20, url: "https://www.ziprecruiter.com/jobseeker/home?jk=standalone-selected-job-key" }] },
+    scripting: { executeScript: async (details) => { assert.equal(details.func.name, "detectZipRecruiterJobPage"); return [{ result: { status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: "https://www.ziprecruiter.com/jobseeker/home?jk=standalone-selected-job-key" } }]; } },
+  });
+  assert.equal(standalone.provider, "ziprecruiter");
 });
 
 test("routes only a standalone Handshake job page to the focused detector", async () => {

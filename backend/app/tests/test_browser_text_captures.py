@@ -206,6 +206,18 @@ def test_ziprecruiter_browser_capture_accepts_page_one_and_paginated_selected_jo
         ).status_code == 200
 
 
+def test_ziprecruiter_browser_capture_accepts_selected_standalone_home_urls(client):
+    for original_job_link in [
+        "https://www.ziprecruiter.com/jobseeker/home?jk=standalone-selected-job-key",
+        "https://www.ziprecruiter.com/jobseeker/home/?jk=standalone-selected-job-key",
+        "https://www.ziprecruiter.com/jobseeker/home?source=home&jk=standalone-selected-job-key",
+    ]:
+        assert client.post(
+            "/api/browser-text-captures",
+            json=ziprecruiter_capture_payload(original_job_link=original_job_link),
+        ).status_code == 200
+
+
 def test_browser_capture_endpoint_rejects_untrusted_input(client):
     invalid_payloads = [
         capture_payload(provider="linkedin"),
@@ -229,6 +241,13 @@ def test_browser_capture_endpoint_rejects_untrusted_input(client):
         ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search/page/2?lk=fake"),
         ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search/2/extra?lk=fake"),
         ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search/2?lk="),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobseeker/home"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobseeker/home?jk="),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobseeker/home?jk=one&jk=two"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobseeker/home?lk=search-key"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobs-search?jk=home-key"),
+        ziprecruiter_capture_payload(original_job_link="https://www.ziprecruiter.com/jobseeker/home/extra?jk=fake"),
+        ziprecruiter_capture_payload(original_job_link="https://ziprecruiter.com.evil.test/jobseeker/home?jk=fake"),
         ziprecruiter_capture_payload(original_job_link="https://ziprecruiter.com.evil.test/jobs-search?lk=fake"),
         ziprecruiter_capture_payload(original_job_link="https://user:pass@www.ziprecruiter.com/jobs-search?lk=fake"),
         handshake_capture_payload(source="Indeed"),

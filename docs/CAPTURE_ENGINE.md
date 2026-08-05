@@ -21,7 +21,7 @@ Paste Job Text is deterministic parsing of user-supplied text. Structured import
 
 ## Browser Capture transport
 
-Greenhouse transfers verified identifiers for the existing structured import. Indeed, LinkedIn, ZipRecruiter, and Handshake transfer bounded cleaned text through a one-time local backend token. The token is in memory, expires quickly, and never creates an application. See [the Browser Capture guide](../browser-extension/README.md) for supported layouts and permissions.
+Greenhouse transfers verified identifiers for the existing structured import. Indeed, LinkedIn, ZipRecruiter, and Handshake transfer bounded cleaned text through a one-time local backend token. ZipRecruiter is limited to its selected search-detail layout and its selected home-page modal layout. The token is in memory, expires quickly, and never creates an application. See [the Browser Capture guide](../browser-extension/README.md) for supported layouts and permissions.
 
 ## Safety boundaries
 

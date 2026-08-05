@@ -93,6 +93,21 @@ function actionBeforeMetadataFixture() {
     </section>`;
 }
 
+function standaloneFixture({ hidden = false, description = longDescription, role = "Junior Project Manager", employer = true, includeCompanyDescription = true } = {}) {
+  return `
+    <article><h2>Background Recommendation</h2><a href="/co/background">Background Company</a><p>Remote</p></article>
+    <div role="dialog" aria-modal="true" ${hidden ? "hidden" : ""} data-zds-component="modal">
+      <div data-testid="right-pane"><main data-testid="job-details-scroll-container">
+        <header><h2>${role}</h2>${employer ? '<a href="/co/chesapeake-controls">Chesapeake Controls</a>' : ""}<p>Chesapeake, VA â€¢ On-site</p></header>
+        <div><p>$60K - $85K/yr</p><p>Full-time</p><p>Benefits</p><p>Medical and dental coverage</p><p>Posted <span>yesterday</span></p></div>
+        <p>Be Seen First</p><p>New</p><button>1-Click Apply</button>
+        <section data-testid="job-description"><h2>Job description</h2><p>${description}</p>${includeCompanyDescription ? "<h3>Company Description</h3><p>Chesapeake Controls builds fictional industrial systems for regional customers.</p>" : ""}</section>
+        <section><h2>About Chesapeake Controls</h2><p>Industry</p><p>Company size</p><p>Headquarters</p><a href="/co/chesapeake-controls/jobs">View All Chesapeake Controls Jobs</a><button>Report</button></section>
+      </main></div>
+    </div>
+  `;
+}
+
 test("captures only the selected ZipRecruiter detail pane", () => {
   withDom(fixture(), "https://www.ziprecruiter.com/jobs-search?lk=fake-selected-key", (dom) => {
     const result = detectZipRecruiterJobPage();
@@ -168,6 +183,22 @@ test("finds content-classified metadata after an action block and ignores hidden
   });
 });
 
+test("captures only the bounded standalone ZipRecruiter modal", () => {
+  const url = "https://www.ziprecruiter.com/jobseeker/home?jk=standalone-selected-job-key";
+  withDom(standaloneFixture(), url, (dom) => {
+    const result = detectZipRecruiterJobPage();
+    assert.equal(result.status, "detected");
+    assert.equal(result.provider, "ziprecruiter");
+    assert.equal(result.original_job_link, url);
+    assert.equal(result.role_title, "Junior Project Manager");
+    assert.equal(result.company_name, "Chesapeake Controls");
+    assert.match(result.raw_text, /Chesapeake, VA â€¢ On-site\n\$60K - \$85K\/yr\nFull-time\nPosted yesterday/u);
+    assert.match(result.raw_text, /Company Description/u);
+    assert.doesNotMatch(result.raw_text, /Background|1-Click Apply|Benefits|Medical and dental|Be Seen First|\bNew\b|Report|About Chesapeake|Industry|Company size|Headquarters|View All|<\/?/iu);
+    assert.equal(dom.window.document.querySelectorAll("[data-career-pipeline-ziprecruiter-outline]").length, 1);
+  });
+});
+
 test("rejects invalid selected-job routes and ambiguous or hidden detail panes", () => {
   assert.equal(detectZipRecruiterJobPage({ pageUrl: "https://www.ziprecruiter.com/jobs-search?search=data" }).status, "not-ziprecruiter");
   assert.equal(detectZipRecruiterJobPage({ pageUrl: "https://ziprecruiter.com.evil.test/jobs-search?lk=fake" }).status, "not-ziprecruiter");
@@ -189,6 +220,23 @@ test("rejects invalid selected-job routes and ambiguous or hidden detail panes",
   withDom(fixture().replace(longDescription, "x".repeat(100_001)), "https://www.ziprecruiter.com/jobs-search?lk=fake", () => {
     assert.equal(detectZipRecruiterJobPage().status, "capture-too-large");
   });
+  for (const pageUrl of [
+    "https://www.ziprecruiter.com/jobseeker/home",
+    "https://www.ziprecruiter.com/jobseeker/home?jk=",
+    "https://www.ziprecruiter.com/jobseeker/home?jk=one&jk=two",
+    "https://www.ziprecruiter.com/jobseeker/home?lk=only-search-key",
+    "https://www.ziprecruiter.com/jobs-search?jk=only-home-key",
+    "https://www.ziprecruiter.com/jobseeker/home/extra?jk=fake",
+    "https://ziprecruiter.com.evil.test/jobseeker/home?jk=fake",
+    "https://www.ziprecruiter.com:8443/jobseeker/home?jk=fake",
+  ]) assert.equal(detectZipRecruiterJobPage({ pageUrl }).status, "not-ziprecruiter");
+  assert.equal(detectZipRecruiterJobPage({ pageUrl: "https://www.ziprecruiter.com/jobseeker/home/?jk=standalone-selected-job-key&source=home", candidates: [] }).status, "no-current-job");
+  withDom(standaloneFixture({ hidden: true }), "https://www.ziprecruiter.com/jobseeker/home?jk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));
+  withDom(`${standaloneFixture()}${standaloneFixture()}`, "https://www.ziprecruiter.com/jobseeker/home?jk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "ambiguous-job"));
+  withDom(standaloneFixture({ description: "too short", includeCompanyDescription: false }), "https://www.ziprecruiter.com/jobseeker/home?jk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));
+  withDom(standaloneFixture({ description: "x".repeat(100_001) }), "https://www.ziprecruiter.com/jobseeker/home?jk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "capture-too-large"));
+  withDom(standaloneFixture({ role: "" }), "https://www.ziprecruiter.com/jobseeker/home?jk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));
+  withDom(standaloneFixture({ employer: false }), "https://www.ziprecruiter.com/jobseeker/home?jk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));
 });
 
 test("remains injectable without module scope and returns clone-safe data", () => {

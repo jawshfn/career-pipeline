@@ -19,16 +19,20 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
       .join("\n\n");
   }
 
-  function isZipRecruiterJobUrl(rawUrl) {
+  function getZipRecruiterRoute(rawUrl) {
     if (typeof rawUrl !== "string" || !rawUrl || rawUrl.length > MAX_ORIGINAL_URL_LENGTH) return false;
     try {
       const url = new URL(rawUrl);
       const hostname = url.hostname.toLowerCase();
-      const selectedJobKeys = url.searchParams.getAll("lk");
-      return ["http:", "https:"].includes(url.protocol) && !url.username && !url.password &&
+      const isTrustedUrl = ["http:", "https:"].includes(url.protocol) && !url.username && !url.password &&
         (url.port === "" || url.port === "80" || url.port === "443") &&
-        (hostname === "ziprecruiter.com" || hostname.endsWith(".ziprecruiter.com")) &&
-        /^\/jobs-search(?:\/[1-9]\d*)?\/?$/u.test(url.pathname) && selectedJobKeys.length === 1 && Boolean(selectedJobKeys[0].trim());
+        (hostname === "ziprecruiter.com" || hostname.endsWith(".ziprecruiter.com"));
+      if (!isTrustedUrl) return false;
+      const selectedJobKeys = /^\/jobs-search(?:\/[1-9]\d*)?\/?$/u.test(url.pathname)
+        ? url.searchParams.getAll("lk")
+        : /^\/jobseeker\/home\/?$/u.test(url.pathname) ? url.searchParams.getAll("jk") : [];
+      if (selectedJobKeys.length !== 1 || !selectedJobKeys[0].trim()) return false;
+      return /^\/jobs-search(?:\/[1-9]\d*)?\/?$/u.test(url.pathname) ? "search" : "standalone";
     } catch {
       return false;
     }
@@ -57,13 +61,13 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
     const candidates = [heading.parentElement, heading.closest("section"), heading.closest("article"), heading.closest('[role="region"]')]
       .filter(Boolean);
     return candidates.find((candidate) =>
-      candidate.querySelectorAll("h2").length === 1 && exactHeading(candidate.querySelector("h2"), "Job description"),
+      Array.from(candidate.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter((item) => exactHeading(item, "Job description")).length === 1,
     ) || heading.parentElement;
   }
 
   function isInformationalHeading(value) {
     return /^(?:Job description|Company Description|Similar jobs|Recommended jobs|Company information|Ratings?)$/iu.test(value) ||
-      /\brating$/iu.test(value);
+      /\brating$/iu.test(value) || /^About\s+/iu.test(value);
   }
 
   function getHeaderContext(pane, companyLink) {
@@ -97,8 +101,38 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
 
   function getDescriptionText(section, heading) {
     const clone = section.cloneNode(true);
-    Array.from(clone.querySelectorAll("h2")).filter((item) => normalizeSingleLine(item.textContent) === "Job description").forEach((item) => item.remove());
+    Array.from(clone.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter((item) => normalizeSingleLine(item.textContent) === "Job description").forEach((item) => item.remove());
     return normalizeParagraphs(clone.innerText || clone.textContent || "");
+  }
+
+  function getStandaloneDetailContext() {
+    if (typeof document === "undefined") return { status: "no-current-job" };
+    const dialogs = Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"]')).filter(isVisible);
+    if (dialogs.length !== 1) return { status: dialogs.length > 1 ? "ambiguous-job" : "no-current-job" };
+    const panes = Array.from(dialogs[0].querySelectorAll('[data-testid="right-pane"]')).filter(isVisible);
+    if (panes.length !== 1) return { status: panes.length > 1 ? "ambiguous-job" : "no-current-job" };
+    const scopes = Array.from(panes[0].querySelectorAll('[data-testid="job-details-scroll-container"]')).filter(isVisible);
+    if (scopes.length !== 1) return { status: scopes.length > 1 ? "ambiguous-job" : "no-current-job" };
+    return { pane: scopes[0] };
+  }
+
+  function getStandaloneCandidate(pane) {
+    const descriptionHeadings = Array.from(pane.querySelectorAll("h1, h2, h3, h4, h5, h6"))
+      .filter((heading) => isVisible(heading) && exactHeading(heading, "Job description"));
+    if (descriptionHeadings.length !== 1) return { status: descriptionHeadings.length > 1 ? "ambiguous-job" : "no-current-job" };
+    const heading = descriptionHeadings[0];
+    const section = getDescriptionSection(heading);
+    if (!section || !pane.contains(section)) return { status: "no-current-job" };
+    const roleHeadings = Array.from(pane.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter((item) =>
+      isVisible(item) && isBefore(item, heading) && !isInformationalHeading(normalizeSingleLine(item.innerText)),
+    );
+    const companyLinks = Array.from(pane.querySelectorAll('a[href^="/co/"]')).filter((item) => isVisible(item) && isBefore(item, heading));
+    if (roleHeadings.length !== 1 || companyLinks.length !== 1) return { status: (roleHeadings.length > 1 || companyLinks.length > 1) ? "ambiguous-job" : "no-current-job" };
+    const roleTitle = normalizeSingleLine(roleHeadings[0].innerText);
+    const companyName = normalizeSingleLine(companyLinks[0].innerText || companyLinks[0].getAttribute("aria-label"));
+    const description = normalizeParagraphs(getDescriptionText(section, heading));
+    if (!roleTitle || !companyName || description.length < MIN_DESCRIPTION_LENGTH) return { status: "no-current-job" };
+    return { heading, header: pane, pane, section, roleTitle, companyName, description };
   }
 
   function getHeaderLines(header, roleTitle, companyName) {
@@ -142,7 +176,7 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
       if (/^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s*(?:\u2022|\u00b7|\u00e2\u20ac\u00a2|-)\s*(?:Remote|Hybrid|On-site))?$/u.test(line) || /^(?:Remote|Hybrid|On-site)$/iu.test(line)) locations.push(line);
       else if (/^\$\s*\d/iu.test(line)) compensation.push(line);
       else if (/^(?:Full[-\s]?time|Part[-\s]?time|Contract|Internship|Temporary)$/iu.test(line)) employmentTypes.push(line);
-      else if (/^(?:Posted\s+)?\d+\s+(?:day|week|month)s?\s+ago$/iu.test(line)) postedAges.push(line);
+      else if (/^Posted\s+(?:today|yesterday)$/iu.test(line) || /^(?:Posted\s+)?\d+\s+(?:day|week|month)s?\s+ago$/iu.test(line)) postedAges.push(line);
     }
     return { locations, compensation, employmentTypes, postedAges };
   }
@@ -207,7 +241,25 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
 
   try {
     const pageUrl = snapshotOverride?.pageUrl || window.location.href;
-    if (!isZipRecruiterJobUrl(pageUrl)) return controlledResult("not-ziprecruiter");
+    const route = getZipRecruiterRoute(pageUrl);
+    if (!route) return controlledResult("not-ziprecruiter");
+    if (route === "standalone") {
+      const standaloneContext = getStandaloneDetailContext();
+      if (standaloneContext.status) return controlledResult(standaloneContext.status);
+      const candidate = getStandaloneCandidate(standaloneContext.pane);
+      if (candidate.status) return controlledResult(candidate.status);
+      if (candidate.description.length > MAX_DESCRIPTION_LENGTH) return controlledResult("capture-too-large");
+      const metadataLines = Array.from(candidate.pane.querySelectorAll("p, li, span"))
+        .filter((element) => isVisible(element) && isBefore(element, candidate.heading))
+        .map((element) => normalizeSingleLine(element.innerText))
+        .filter((line) => line && !/^(?:Benefits|New|Be Seen First|1-Click Apply|Apply|Save|Share|Report)$/iu.test(line));
+      const metadata = classifyMetadataLines(metadataLines);
+      const lines = [candidate.roleTitle, candidate.companyName, ...metadata.locations, ...metadata.compensation, ...metadata.employmentTypes, ...metadata.postedAges, "Job description", candidate.description];
+      const rawText = lines.filter((line, index) => index === 0 || line !== lines[index - 1]).join("\n");
+      if (rawText.length > MAX_CAPTURE_LENGTH) return controlledResult("capture-too-large");
+      if (!snapshotOverride) outlineDescription(candidate.section);
+      return { version: VERSION, status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: pageUrl, role_title: candidate.roleTitle, company_name: candidate.companyName, description_character_count: candidate.description.length, raw_text: rawText };
+    }
     const headings = snapshotOverride?.candidates || Array.from(document.querySelectorAll("h2")).filter((heading) => exactHeading(heading, "Job description") && isVisible(heading));
     const candidates = headings.map((heading) => {
       const detailContext = heading?.detailContext || getDetailContext(heading);
