@@ -54,8 +54,8 @@ async function digestBytes(bytes) {
 
 async function validateDemoPdf(file) {
   if (!file?.name) throw new Error("Choose a PDF file.");
-  const filename = file.name.split(/[\\/]/u).pop();
-  if (filename !== file.name || filename.length > 255 || !filename.toLowerCase().endsWith(".pdf")) throw new Error("Choose a PDF file.");
+  const filename = file.name.replaceAll("\\", "/").split("/").pop().trim();
+  if (!filename || /[\x00-\x1f\x7f]/u.test(filename) || filename.length > 255 || !filename.toLowerCase().endsWith(".pdf")) throw new Error("Choose a PDF file.");
   if (file.type !== "application/pdf") throw new Error("PDF files must use the application/pdf media type.");
   if (!file.size) throw new Error("PDF files cannot be empty.");
   if (file.size > 5 * 1024 * 1024) throw new Error("PDF files must be 5 MiB or smaller.");

@@ -29,8 +29,8 @@ FastAPI serves the local JSON API under `/api`; generated interactive schemas ar
 | PATCH, DELETE | `/api/applications/{id}/activities/{activity_id}` | Update or delete an activity | Cross-record access is rejected. |
 | GET, POST | `/api/resume-versions` | List or create resume versions | Listing defaults to active versions. |
 | GET, PATCH | `/api/resume-versions/{id}` | Read or update a version | Supports active/inactive metadata. |
-| GET | `/api/resume-versions/{id}/delete-impact` | Inspect deletion impact | Shows assignments that block deletion. |
-| DELETE | `/api/resume-versions/{id}` | Delete a version | Protected while applications still reference it. |
+| GET | `/api/resume-versions/{id}/delete-impact` | Inspect deletion impact | Reports active state and current assignment count for reviewed permanent deletion. |
+| DELETE | `/api/resume-versions/{id}` | Delete a version | Requires an inactive version and `expected_assignment_count`; stale counts conflict, matching applications are unassigned, and any attached PDF is removed. |
 | PUT | `/api/resume-versions/{id}/file` | Attach or replace a Resume PDF | Multipart field `file`; PDF-only and 5 MiB maximum. |
 | GET | `/api/resume-versions/{id}/file/content` | Read PDF content | Returns inline PDF bytes for browser preview or download. |
 | DELETE | `/api/resume-versions/{id}/file` | Remove a Resume PDF | Leaves the resume version and its assignments intact. |

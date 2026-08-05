@@ -16,6 +16,19 @@ import {
   updateDemoResumeVersion,
 } from "./demoStore.js";
 
+function demoPdf(name, contents = "%PDF-1.4\nDemo\n%%EOF", type = "application/pdf") {
+  const blob = new Blob([contents], { type });
+  return { name, type, size: blob.size, arrayBuffer: () => blob.arrayBuffer() };
+}
+
+function isPortableBackupFilename(filename) {
+  return Boolean(filename)
+    && filename === filename.trim()
+    && !/[\\/\x00-\x1f\x7f]/u.test(filename)
+    && filename.length <= 255
+    && filename.toLowerCase().endsWith(".pdf");
+}
+
 describe("demo resume deletion", () => {
   beforeEach(() => resetDemoState());
 
@@ -129,10 +142,47 @@ describe("demo resume PDFs", () => {
     expect(getDemoResumeVersion(1).file).not.toBeNull();
   });
 
-  it("rejects invalid uploads without changing the existing file", async () => {
-    const before = getDemoResumeVersion(1);
-    await expect(uploadDemoResumeVersionFile(1, new File(["not a PDF"], "resume.pdf", { type: "application/pdf" }))).rejects.toThrow("valid PDF");
-    await expect(uploadDemoResumeVersionFile(1, new File(["%PDF-1.4"], "resume.txt", { type: "application/pdf" }))).rejects.toThrow("Choose a PDF");
-    expect(getDemoResumeVersion(1).file).toEqual(before.file);
+  it("normalizes portable filenames before storing them", async () => {
+    const created = createDemoResumeVersion({ name: "Portable filename" });
+    const whitespace = await uploadDemoResumeVersionFile(created.id, demoPdf("  resume.pdf  "));
+    const pathLike = await uploadDemoResumeVersionFile(created.id, demoPdf("folder\\nested/final-resume.PDF"));
+
+    expect(whitespace.file.original_filename).toBe("resume.pdf");
+    expect(pathLike.file.original_filename).toBe("final-resume.PDF");
+    expect(isPortableBackupFilename(whitespace.file.original_filename)).toBe(true);
+    expect(isPortableBackupFilename(pathLike.file.original_filename)).toBe(true);
+  });
+
+  it("rejects invalid uploads without changing the existing file or parent timestamp", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2040-01-01T00:00:00.000Z"));
+    const unattached = createDemoResumeVersion({ name: "Unchanged attachment" });
+    const beforeAttachment = getDemoResumeVersion(unattached.id);
+    await expect(uploadDemoResumeVersionFile(unattached.id, demoPdf("resume.txt"))).rejects.toThrow();
+    expect(getDemoResumeVersion(unattached.id)).toMatchObject({ file: null, updated_at: beforeAttachment.updated_at });
+
+    const created = createDemoResumeVersion({ name: "Unchanged replacement" });
+    await uploadDemoResumeVersionFile(created.id, demoPdf("original.pdf", "%PDF-1.4\noriginal\n%%EOF"));
+    const before = getDemoResumeVersion(created.id);
+    const beforeBytes = new Uint8Array(await (await getDemoResumeVersionFileContent(created.id)).arrayBuffer());
+    const invalidFiles = [
+      demoPdf("line\nbreak.pdf"),
+      demoPdf("bell\u0007.pdf"),
+      demoPdf(`${"a".repeat(252)}.pdf`),
+      demoPdf("resume.txt"),
+      demoPdf("resume.pdf", "%PDF-1.4", "application/octet-stream"),
+      demoPdf("empty.pdf", ""),
+      demoPdf("large.pdf", new Uint8Array(5 * 1024 * 1024 + 1)),
+      demoPdf("signature.pdf", "not a PDF"),
+    ];
+
+    for (const file of invalidFiles) await expect(uploadDemoResumeVersionFile(created.id, file)).rejects.toThrow();
+
+    const after = getDemoResumeVersion(created.id);
+    const afterBytes = new Uint8Array(await (await getDemoResumeVersionFileContent(created.id)).arrayBuffer());
+    expect(after.file).toEqual(before.file);
+    expect(after.updated_at).toBe(before.updated_at);
+    expect(afterBytes).toEqual(beforeBytes);
+    vi.useRealTimers();
   });
 });
