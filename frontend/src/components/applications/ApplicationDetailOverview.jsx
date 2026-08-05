@@ -28,10 +28,15 @@ export default function ApplicationDetailOverview({
         <div className="detail-overview-section-heading">
           <h4>Outcome history</h4>
         </div>
-        <p>Highest confirmed stage: <strong>{furthestStage}</strong></p>
-        {canCorrectOutcomeHistory ? <button className="secondary-button" type="button" onClick={onCorrectOutcomeHistory}>
-          Correct outcome history
-        </button> : null}
+        <div className="outcome-history-summary">
+          <div className="outcome-history-stage">
+            <span>Highest confirmed stage</span>
+            <strong>{furthestStage}</strong>
+          </div>
+          {canCorrectOutcomeHistory ? <button className="secondary-button outcome-history-correction-action" type="button" onClick={onCorrectOutcomeHistory}>
+            Correct outcome history
+          </button> : null}
+        </div>
       </div>
 
       <div className="detail-overview-section">

@@ -1,16 +1,19 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 
 import { downloadApplicationsCsv, downloadWorkspaceBackup } from "./demoExportsApi.js";
-import { createDemoResumeVersion, getDemoExportSnapshot, uploadDemoResumeVersionFile } from "./demoStore.js";
+import { createDemoResumeVersion, getDemoExportSnapshot, resetDemoState, uploadDemoResumeVersionFile } from "./demoStore.js";
 import { APPLICATIONS_CSV_HEADERS } from "../utils/exportFormat.js";
 
 describe("demo exports", () => {
   beforeEach(async () => {
+    resetDemoState();
     const seededPdf = await readFile(new URL("../../public/demo/fictional-software-engineering-resume.pdf", import.meta.url));
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(seededPdf, { status: 200 })));
   });
+
+  afterEach(() => vi.unstubAllGlobals());
   it("exports cloned current demo data without exposing mutable demo state", async () => {
     const snapshot = getDemoExportSnapshot();
     const backupBlob = await downloadWorkspaceBackup();

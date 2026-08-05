@@ -15,6 +15,26 @@ const savedLinkSnapshotItems = [
 ];
 
 describe("Application Detail overview hierarchy", () => {
+  it("renders a compact outcome-history summary and preserves its correction action", () => {
+    const onCorrectOutcomeHistory = vi.fn();
+    const markup = renderToStaticMarkup(
+      <ApplicationDetailOverview attentionItems={[]} furthestStage="Interview" onCorrectOutcomeHistory={onCorrectOutcomeHistory} onOpenTab={vi.fn()} overviewSnapshotItems={savedLinkSnapshotItems} />,
+    );
+
+    expect(markup).toContain("Outcome history");
+    expect(markup).toContain("Highest confirmed stage");
+    expect(markup).toContain("Interview");
+    expect(markup).toContain("outcome-history-summary");
+    expect(markup).toContain("Correct outcome history");
+  });
+
+  it("hides the outcome-history correction action when corrections are unavailable", () => {
+    const markup = renderToStaticMarkup(
+      <ApplicationDetailOverview attentionItems={[]} canCorrectOutcomeHistory={false} furthestStage="Applied" onOpenTab={vi.fn()} overviewSnapshotItems={savedLinkSnapshotItems} />,
+    );
+
+    expect(markup).not.toContain("Correct outcome history");
+  });
   it("omits the Job Link card and action when a link is saved", () => {
     const markup = renderToStaticMarkup(
       <ApplicationDetailOverview

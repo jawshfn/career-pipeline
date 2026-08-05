@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="PursuitHQ">
+  <rect width="32" height="32" rx="7" fill="#12182b"/>
+  <path fill="#ffffff" d="M9 24V8h8.1c3.7 0 6.2 2.2 6.2 5.7 0 3.4-2.5 5.6-6.2 5.6h-3.7V24H9Zm4.4-8.5h3.3c1.4 0 2.3-.7 2.3-1.8 0-1.2-.9-1.9-2.3-1.9h-3.3v3.7Z"/>
+  <circle cx="23.5" cy="23.5" r="2.5" fill="#24b8ac"/>
+</svg>
