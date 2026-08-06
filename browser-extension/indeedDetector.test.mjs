@@ -1,9 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { JSDOM } from "../frontend/node_modules/jsdom/lib/api.js";
 
 import { buildIndeedCaptureText, detectIndeedJobPage } from "./indeedDetector.mjs";
 
 const description = "Build reliable reporting tools for fictional teams. ".repeat(4);
+
+function detectDom(html, url) {
+  const dom = new JSDOM(html, { url });
+  const previous = Object.fromEntries(["window", "document", "Node", "getComputedStyle", "setTimeout"].map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, {
+    window: dom.window,
+    document: dom.window.document,
+    Node: dom.window.Node,
+    getComputedStyle: dom.window.getComputedStyle.bind(dom.window),
+    setTimeout: () => 0,
+  });
+  try {
+    const result = detectIndeedJobPage();
+    return { result, outlined: dom.window.document.querySelectorAll('[data-career-pipeline-indeed-outline]').length };
+  } finally { Object.assign(globalThis, previous); dom.window.close(); }
+}
 
 function snapshot(overrides = {}) {
   return {
@@ -149,4 +166,74 @@ test("requires one title-backed, substantial description and keeps optional fiel
 test("bounds descriptions and final text without reading whole-page content", () => {
   assert.equal(detectIndeedJobPage(snapshot({ descriptions: [{ title: "Role", description: "x".repeat(80_001) }] })).status, "capture-too-large");
   assert.equal(buildIndeedCaptureText({ title: "Role", description: "Description" }), "Role - job post\nJob details\nFull job description\nDescription");
+});
+
+test("captures one selected Indeed sidebar job through visible semantic DOM evidence", () => {
+  const selectedDescription = "Design dependable fictional fulfillment workflows, collaborate with partners, and document measurable improvements for every release. ".repeat(2);
+  const { result } = detectDom(`
+    <main><aside><h2>Background Card Role</h2><a>Background Company</a><h2>Another Background Role</h2></aside>
+    <section role="region" aria-label="Selected job details"><h3>Fictional Operations Specialist</h3><a data-company-name="true">Northstar Logistics</a><div data-testid="jobsearch-JobInfoHeader-companyLocation">Remote - Virginia</div><div id="salaryInfoAndJobType">$72,000 - $84,000 a year\nFull-time</div><h4>Job details</h4><p>Schedule: Monday to Friday</p><h4>Match overview</h4><p>Qualification match controls</p><h3>Full job description</h3><div>${selectedDescription}</div><h3>Company and salary information</h3><p>Do not include this</p></section>
+    <section hidden><h2>Fictional Operations Specialist</h2><h3>Full job description</h3><p>${selectedDescription}</p></section></main>`,
+  "https://www.indeed.com/?vjk=selected-fictional-job-key");
+  assert.equal(result.status, "detected");
+  assert.equal(result.provider, "indeed");
+  assert.equal(result.role_title, "Fictional Operations Specialist");
+  assert.equal(result.company_name, "Northstar Logistics");
+  assert.equal(result.original_job_link, "https://www.indeed.com/?vjk=selected-fictional-job-key");
+  assert.equal(result.description_character_count, selectedDescription.trim().length);
+  assert.match(result.raw_text, /Remote in Virginia\nJob details\n\$72,000 - \$84,000 a year\nFull-time/);
+  assert.match(result.raw_text, /Full job description\nDesign dependable fictional fulfillment workflows/);
+  assert.doesNotMatch(result.raw_text, /Background Card|Background Company|Match overview|Qualification match|Company and salary|Do not include/u);
+});
+
+test("captures one standalone Indeed job through a lower-level semantic heading", () => {
+  const selectedDescription = "Lead fictional data quality reviews, translate findings into practical process changes, and communicate clear outcomes to cross-functional teams. ".repeat(2);
+  const { result } = detectDom(`
+    <main><section role="region"><h5>Fictional Data Quality Lead</h5><a data-company-name="true">Cedar Peak Analytics</a><div data-testid="jobsearch-JobInfoHeader-companyLocation">Albany, NY</div><div id="salaryInfoAndJobType">$90,000 a year\nFull-time</div><button>Apply now</button><button>Save</button><h4>Job details</h4><p>Employment type: Full-time</p><h4>Benefits</h4><p>Benefits summary must not be captured</p><h3>Full job description</h3><div>${selectedDescription}</div><h3>Similar jobs</h3><p>Similar fictional role</p><h3>Report job</h3><footer>Footer navigation</footer></section></main>`,
+  "https://www.indeed.com/viewjob?jk=standalone-fictional-job-key");
+  assert.equal(result.status, "detected");
+  assert.equal(result.role_title, "Fictional Data Quality Lead");
+  assert.equal(result.company_name, "Cedar Peak Analytics");
+  assert.equal(result.description_character_count, selectedDescription.trim().length);
+  assert.match(result.raw_text, /^Fictional Data Quality Lead - job post\nCedar Peak Analytics\nAlbany, NY/m);
+  assert.doesNotMatch(result.raw_text, /Apply now|Benefits summary|Similar fictional|Report job|Footer navigation|<div>/u);
+});
+
+function currentIndeedComponent(selectedDescription) {
+  return `<section id="selected-job-panel"><div data-testid="desktop-job-header"><h5 role="heading" aria-level="5" data-testid="vj-job-title">Fictional Systems Engineer</h5><a href="https://www.indeed.com/cmp/Fictional-Systems" aria-label="Fictional Systems (opens in a new tab)">Fictional Systems</a><div>Richmond, VA 23220</div><div aria-label="$70,000 - $75,000 a year"><div aria-hidden="true">$70,000 - $75,000 a year</div></div></div><div aria-hidden="true"><div data-testid="desktop-embedded-compact-header"><h4 data-testid="vj-job-title-compact">Fictional Systems Engineer</h4></div></div><section><h4 role="heading">Job details</h4><div>$70,000 - $75,000 a year</div><div>Benefits summary must not become core metadata</div><div>Monday to Friday</div></section><section><h4 data-testid="vj-match-overview-heading">Match overview</h4><p>Profile link and qualifications: 2 of 15</p><button>Confirm qualification</button><button>Reject qualification</button></section><section><h4 role="heading" aria-level="4" data-testid="vj-job-description-heading">Full job description</h4><div class="react-native-html-content simple-job-description-html">${selectedDescription}<button>Apply on company site</button></div></section></section>`;
+}
+
+test("captures the current Indeed vj component in selected-panel and standalone layouts", () => {
+  const selectedDescription = "Build fictional systems with reliable engineering practices, communicate tradeoffs clearly, and improve service outcomes for customers. ".repeat(2);
+  for (const [url, wrapper] of [
+    ["https://www.indeed.com/?vjk=selected-fictional-key", (component) => `<aside><article><h2>Background Operations Role</h2><a href="/cmp/background-company">Background Company</a></article></aside>${component}`],
+    ["https://www.indeed.com/viewjob?jk=standalone-fictional-key", (component) => `<nav>Search jobs</nav><main>${component}</main><button>Save job</button><button>Share job</button><section>Company information</section><section>Similar jobs</section><footer>Footer content</footer>`],
+  ]) {
+    const { result, outlined } = detectDom(`<body>${wrapper(currentIndeedComponent(selectedDescription))}</body>`, url);
+    assert.equal(result.status, "detected");
+    assert.equal(result.provider, "indeed");
+    assert.equal(result.source, "Indeed");
+    assert.equal(result.role_title, "Fictional Systems Engineer");
+    assert.equal(result.company_name, "Fictional Systems");
+    assert.equal(result.original_job_link, url);
+    assert.equal(result.description_character_count, selectedDescription.trim().length);
+    assert.match(result.raw_text, /Richmond, VA 23220\nJob details\n\$70,000 - \$75,000 a year/);
+    assert.doesNotMatch(result.raw_text, /Background|compact|Benefits summary|Match overview|Profile link|Qualifications|qualification|Apply on company|Save job|Share job|Company information|Similar jobs|Footer|<div>/iu);
+    assert.equal(outlined, 1);
+    assert.doesNotThrow(() => structuredClone(result));
+  }
+});
+
+test("fails safely for incomplete, hidden, ambiguous, or oversized current Indeed components", () => {
+  const substantial = "A fictional description with enough specific responsibilities to clear the minimum capture requirement safely. ".repeat(2);
+  const url = "https://www.indeed.com/?vjk=selected-fictional-key";
+  for (const html of [
+    currentIndeedComponent(substantial).replace('data-testid="vj-job-title"', 'data-testid="missing-title"'),
+    currentIndeedComponent(substantial).replace('data-testid="vj-job-title"', 'aria-hidden="true" data-testid="vj-job-title"'),
+    currentIndeedComponent(substantial).replace('data-testid="vj-job-description-heading"', 'data-testid="missing-description"'),
+    currentIndeedComponent(substantial).replace(/<div class="react-native-html-content simple-job-description-html">[\s\S]*?<\/div><\/section>/u, "</section>"),
+    currentIndeedComponent("short"),
+  ]) assert.equal(detectDom(html, url).result.status, "no-current-job");
+  assert.equal(detectDom(`${currentIndeedComponent(substantial)}${currentIndeedComponent(substantial)}`, url).result.status, "ambiguous-job");
+  assert.equal(detectDom(currentIndeedComponent("x".repeat(80_001)), url).result.status, "capture-too-large");
 });

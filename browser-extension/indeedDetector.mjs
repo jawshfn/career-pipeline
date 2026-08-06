@@ -10,6 +10,9 @@ export function detectIndeedJobPage(snapshotOverride = null) {
     '[data-testid="jobDescriptionText"]',
   ];
   const TITLE_SELECTORS = ['[data-testid="jobsearch-JobInfoHeader-title"]', "h1"];
+  const CURRENT_TITLE_SELECTOR = '[data-testid="vj-job-title"]';
+  const CURRENT_HEADER_SELECTOR = '[data-testid="desktop-job-header"]';
+  const CURRENT_DESCRIPTION_SELECTOR = '[data-testid="vj-job-description-heading"]';
   const COMPANY_SELECTORS = ['[data-testid="inlineHeader-companyName"]', '[data-company-name="true"]'];
   const LOCATION_SELECTORS = [
     '[data-testid="jobsearch-JobInfoHeader-companyLocation"]',
@@ -88,17 +91,160 @@ export function detectIndeedJobPage(snapshotOverride = null) {
       const url = new URL(rawUrl);
       const hostname = url.hostname.toLowerCase();
       return ["http:", "https:"].includes(url.protocol) && !url.username && !url.password &&
+        (url.port === "" || url.port === "80" || url.port === "443") &&
         (hostname === "indeed.com" || hostname.endsWith(".indeed.com"));
     } catch {
       return false;
     }
   }
 
+  function getIndeedRoute(rawUrl) {
+    if (!isIndeedUrl(rawUrl)) return null;
+    try {
+      const url = new URL(rawUrl);
+      const key = (name) => {
+        const values = url.searchParams.getAll(name);
+        return values.length === 1 && values[0].trim() ? values[0].trim() : "";
+      };
+      if (/^\/viewjob\/?$/u.test(url.pathname)) return key("jk") ? "standalone" : null;
+      return key("vjk") ? "panel" : null;
+    } catch { return null; }
+  }
+
+  function elementText(element, singleLine = false) {
+    const value = element?.innerText || element?.textContent || "";
+    return singleLine ? normalizeSingleLineField(value) : normalizeText(value);
+  }
+
+  function isVisible(element) {
+    if (!element || !element.isConnected) return false;
+    for (let current = element; current && current !== document.documentElement; current = current.parentElement) {
+      if (current.hidden || current.getAttribute("aria-hidden") === "true") return false;
+      const style = getComputedStyle(current);
+      if (style.display === "none" || style.visibility === "hidden") return false;
+    }
+    return true;
+  }
+
+  function isBefore(first, second) {
+    return Boolean(first?.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+  }
+
+  function isDescriptionHeading(element) {
+    return /^h[1-6]$/iu.test(element?.tagName || "") &&
+      ["full job description", "job description"].includes(elementText(element, true).toLowerCase());
+  }
+
+  function isBoundaryHeading(element) {
+    return /^h[1-6]$/iu.test(element?.tagName || "") && /^(?:job details|match overview|benefits|company|company and salary information|similar jobs|jobs with similar titles|similar job categories|career guide articles|report job)$/iu.test(elementText(element, true));
+  }
+
+  function descriptionFromHeading(heading) {
+    const parent = heading.parentElement;
+    if (!parent) return null;
+    const pieces = [];
+    let current = heading.nextElementSibling;
+    while (current && pieces.length < 12) {
+      if (isBoundaryHeading(current) || current.querySelector?.("footer, nav")) break;
+      if (isVisible(current)) {
+        const text = elementText(current);
+        if (text) pieces.push(text);
+      }
+      current = current.nextElementSibling;
+    }
+    const description = normalizeParagraphs(pieces.join("\n\n"));
+    if (description.length >= MIN_DESCRIPTION_LENGTH) return { element: parent, description };
+    const section = heading.closest("section, article, [role='region']");
+    if (!section || !isVisible(section)) return null;
+    const clone = section.cloneNode(true);
+    let branch = heading;
+    while (branch.parentElement && branch.parentElement !== section) branch = branch.parentElement;
+    const branches = Array.from(section.children);
+    const branchIndex = branches.indexOf(branch);
+    branches.slice(0, branchIndex).forEach((item) => item.remove());
+    const nextBoundary = branches.slice(branchIndex + 1).find((item) => isBoundaryHeading(item) || item.querySelector?.("h1,h2,h3,h4,h5,h6"));
+    const cloneBranches = Array.from(clone.children);
+    const cloneIndex = cloneBranches.findIndex((item) => item.textContent === branch.textContent);
+    if (nextBoundary && cloneIndex >= 0) cloneBranches.slice(cloneIndex + 1).forEach((item) => item.remove());
+    clone.querySelectorAll("h1,h2,h3,h4,h5,h6,button,[role='button'],footer,nav").forEach((item) => item.remove());
+    const bounded = normalizeParagraphs(elementText(clone));
+    return bounded.length >= MIN_DESCRIPTION_LENGTH ? { element: section, description: bounded } : null;
+  }
+
+  function informationalHeading(value) {
+    return /^(?:job details|full job description|job description|match overview|benefits|company|company and salary information|similar jobs|jobs with similar titles|report job|apply|save|share)$/iu.test(value);
+  }
+
+  function candidateFromHeading(heading) {
+    const found = descriptionFromHeading(heading);
+    if (!found) return null;
+    let scope = heading.closest("[role='region'], article, section") || heading.parentElement;
+    while (scope?.parentElement && !Array.from(scope.querySelectorAll("h1,h2,h3,h4,h5,h6")).some((item) => isVisible(item) && isBefore(item, heading) && !informationalHeading(elementText(item, true)))) scope = scope.parentElement;
+    const headings = Array.from(scope.querySelectorAll("h1,h2,h3,h4,h5,h6")).filter((item) => isVisible(item) && isBefore(item, heading));
+    const explicit = headings.filter((item) => item.matches(TITLE_SELECTORS.join(",")) && !informationalHeading(elementText(item, true)));
+    const role = (explicit.length ? explicit : headings.filter((item) => !informationalHeading(elementText(item, true)))).at(-1);
+    const roleTitle = elementText(role, true);
+    if (!roleTitle) return null;
+    const company = textFromFirst(COMPANY_SELECTORS, scope) || Array.from(scope.querySelectorAll("a")).filter((item) => isVisible(item) && isBefore(item, heading)).map((item) => elementText(item, true)).find((value) => value && !/^(?:apply|save|share|company reviews)$/iu.test(value)) || "";
+    const location = textFromFirst(LOCATION_SELECTORS, scope) || "";
+    const metadata = textFromFirst(METADATA_SELECTORS, scope, false) || "";
+    return { title: roleTitle, company, location, metadata, description: found.description, element: found.element };
+  }
+
+  function cleanDescriptionText(element) {
+    const clone = element.cloneNode(true);
+    clone.querySelectorAll("script,style,noscript,button,[role='button'],[hidden],[aria-hidden='true']").forEach((item) => item.remove());
+    return normalizeParagraphs(elementText(clone));
+  }
+
+  function headerLocation(header, roleTitle, companyName) {
+    const values = Array.from(header.querySelectorAll("div,span,p")).filter((item) => isVisible(item) && !item.querySelector("div,span,p"))
+      .map((item) => elementText(item, true)).filter(Boolean);
+    return values.find((value) => value !== roleTitle && value !== companyName &&
+      !/(?:\$|\b(?:hour|year|week|month)\b|rating|star|apply|save|share)/iu.test(value) &&
+      /^(?:remote(?:\s+(?:in|[-–])\s+.+)?|hybrid.*|[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?)$/u.test(value)) || "";
+  }
+
+  function currentMetadata(header) {
+    const values = Array.from(header.querySelectorAll("[aria-label], div, span")).filter(isVisible)
+      .map((item) => normalizeSingleLineField(item.getAttribute("aria-label") || elementText(item, true)))
+      .filter((value) => /(?:\$|USD\s*)\s*\d/u.test(value) && /(?:hour|year|week|month)/iu.test(value));
+    return [...new Set(values)].join("\n");
+  }
+
+  function currentCandidateFromHeading(heading) {
+    if (!isVisible(heading) || !isDescriptionHeading(heading)) return null;
+    let region = heading.parentElement;
+    while (region && !Array.from(region.querySelectorAll(CURRENT_HEADER_SELECTOR)).some(isVisible)) region = region.parentElement;
+    if (!region) return null;
+    const headers = Array.from(region.querySelectorAll(CURRENT_HEADER_SELECTOR)).filter(isVisible);
+    if (headers.length !== 1) return null;
+    const header = headers[0];
+    const titles = Array.from(header.querySelectorAll(CURRENT_TITLE_SELECTOR)).filter((item) =>
+      isVisible(item) && /^h[1-6]$/iu.test(item.tagName || "") && elementText(item, true),
+    );
+    if (titles.length !== 1) return null;
+    let descriptionElement = heading.nextElementSibling;
+    while (descriptionElement && !isVisible(descriptionElement)) descriptionElement = descriptionElement.nextElementSibling;
+    if (!descriptionElement || /^h[1-6]$/iu.test(descriptionElement.tagName || "") || descriptionElement.matches("button,[role='button']")) return null;
+    const description = cleanDescriptionText(descriptionElement);
+    if (description.length < MIN_DESCRIPTION_LENGTH) return null;
+    const roleTitle = elementText(titles[0], true);
+    const companyLink = Array.from(header.querySelectorAll('a[href*="/cmp/"]')).find(isVisible);
+    const companyName = normalizeSingleLineField(elementText(companyLink, true) || companyLink?.getAttribute("aria-label")?.replace(/\s*\(opens in a new tab\)\s*$/iu, ""));
+    return {
+      title: roleTitle,
+      company: companyName,
+      location: textFromFirst(LOCATION_SELECTORS, header) || headerLocation(header, roleTitle, companyName),
+      metadata: textFromFirst(METADATA_SELECTORS, header, false) || currentMetadata(header),
+      description,
+      element: descriptionElement,
+    };
+  }
+
   function textFromFirst(selectors, root = document, singleLine = true) {
     for (const selector of selectors) {
-      const text = singleLine
-        ? normalizeSingleLineField(root.querySelector(selector)?.innerText)
-        : normalizeText(root.querySelector(selector)?.innerText);
+      const text = elementText(root.querySelector(selector), singleLine);
       if (text) return text;
     }
     return "";
@@ -121,11 +267,26 @@ export function detectIndeedJobPage(snapshotOverride = null) {
   }
 
   function readSnapshot() {
+    const pageUrl = window.location.href;
+    const route = getIndeedRoute(pageUrl);
+    if (!route) return { pageUrl, descriptions: [] };
+    const currentDescriptions = [];
+    const currentSeen = new Set();
+    const currentHeadings = Array.from(document.querySelectorAll(CURRENT_DESCRIPTION_SELECTOR)).filter(isVisible);
+    currentHeadings.forEach((heading) => {
+      const candidate = currentCandidateFromHeading(heading);
+      if (candidate && !currentSeen.has(candidate.element)) {
+        currentSeen.add(candidate.element);
+        currentDescriptions.push(candidate);
+      }
+    });
+    if (currentDescriptions.length) return { pageUrl, descriptions: currentDescriptions };
+    if (currentHeadings.length || Array.from(document.querySelectorAll(CURRENT_TITLE_SELECTOR)).some(isVisible)) return { pageUrl, descriptions: [] };
     const descriptions = [];
     const seen = new Set();
     for (const selector of DESCRIPTION_SELECTORS) {
       document.querySelectorAll(selector).forEach((element) => {
-        if (seen.has(element)) return;
+        if (seen.has(element) || !isVisible(element)) return;
         seen.add(element);
         const panel = element.closest('[data-testid*="job"], main, article, section') || document;
         descriptions.push({
@@ -138,7 +299,12 @@ export function detectIndeedJobPage(snapshotOverride = null) {
         });
       });
     }
-    return { pageUrl: window.location.href, descriptions };
+    if (descriptions.length) return { pageUrl, descriptions };
+    Array.from(document.querySelectorAll("h1,h2,h3,h4,h5,h6")).filter((heading) => isVisible(heading) && isDescriptionHeading(heading)).forEach((heading) => {
+      const candidate = candidateFromHeading(heading);
+      if (candidate) descriptions.push(candidate);
+    });
+    return { pageUrl, descriptions };
   }
 
   function controlledResult(status) {

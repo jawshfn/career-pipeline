@@ -100,6 +100,21 @@ test("routes an active Indeed page to the focused detector", async () => {
   assert.equal(isIndeedHostname("https://indeed.com.evil.test/viewjob"), false);
 });
 
+test("routes supported Indeed selected and standalone routes while retaining the exact active-tab URL", async () => {
+  for (const url of [
+    "https://www.indeed.com/viewjob?jk=fictional-key",
+    "https://www.indeed.com/?vjk=fictional-key",
+    "https://www.indeed.com/jobs?q=analyst&vjk=fictional-key",
+  ]) {
+    const result = await inspectActivePage({
+      tabs: { query: async () => [{ id: 121, url }] },
+      scripting: { executeScript: async (details) => { assert.equal(details.func.name, "detectIndeedJobPage"); return [{ result: { status: "detected", provider: "indeed", raw_text: "Fictional text" } }]; } },
+    });
+    assert.equal(result.original_job_link, url);
+  }
+  assert.equal(isIndeedHostname("https://www.indeed.com.evil.test/?vjk=fictional-key"), false);
+});
+
 test("routes an active LinkedIn page to the focused detector", async () => {
   const result = await inspectActivePage({
     tabs: { query: async () => [{ id: 13, url: "https://www.linkedin.com/jobs/view/123456" }] },

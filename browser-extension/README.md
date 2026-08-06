@@ -7,7 +7,7 @@ PursuitHQ Capture is an experimental, locally loaded Chrome companion. A user cl
 | Provider | Supported page/layout | Transfer | Important limitation |
 | --- | --- | --- | --- |
 | Greenhouse | Verified Greenhouse identifiers | Identifier handoff to structured import | Only verified jobs. |
-| Indeed | One confidently detected current job | Cleaned text through a one-time local token | Unsupported or ambiguous layouts stop. |
+| Indeed | One selected right-panel job or one standalone `/viewjob?jk=...` job | Cleaned text through a one-time local token | Unsupported or ambiguous layouts stop. |
 | LinkedIn | Standalone `/jobs/view/{id}` and selected current-job panels | Cleaned text token | One current job only. |
 | ZipRecruiter | Selected-job `/jobs-search` detail pane or selected `/jobseeker/home?jk=...` modal | Cleaned text token | Only one bounded, visible selected job; unsupported or ambiguous layouts stop. |
 | Handshake | Authenticated `/jobs/<id>` and selected `/job-search/<id>` panel | Cleaned text token | Selected panel must be unambiguous. |
