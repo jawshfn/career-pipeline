@@ -462,6 +462,8 @@ ZIPRECRUITER_SEARCH_PATH_PATTERN = re.compile(r"^/jobs-search(?:/[1-9]\d*)?/?$")
 ZIPRECRUITER_HOME_PATH_PATTERN = re.compile(r"^/jobseeker/home/?$")
 ZIPRECRUITER_SHARE_PATH_PATTERN = re.compile(r"^/job-redirect/share$")
 ZIPRECRUITER_MATCH_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9+/_-]{32,512}={0,2}$")
+ZIPRECRUITER_V2_PATH_PATTERN = re.compile(r"^/jobs/v2/[A-Za-z0-9_-]{32,512}={0,2}/?$")
+ZIPRECRUITER_V2_TSID_PATTERN = re.compile(r"^\d{1,20}$")
 HANDSHAKE_JOB_PATH_PATTERN = re.compile(r"^/jobs/[1-9]\d*/?$")
 
 
@@ -483,13 +485,14 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
     )
     is_supported_path = (
         (provider != "linkedin" or parsed.path.startswith("/jobs/"))
-        and (provider != "ziprecruiter" or ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path) or ZIPRECRUITER_HOME_PATH_PATTERN.fullmatch(parsed.path) or ZIPRECRUITER_SHARE_PATH_PATTERN.fullmatch(parsed.path))
+        and (provider != "ziprecruiter" or ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path) or ZIPRECRUITER_HOME_PATH_PATTERN.fullmatch(parsed.path) or ZIPRECRUITER_SHARE_PATH_PATTERN.fullmatch(parsed.path) or ZIPRECRUITER_V2_PATH_PATTERN.fullmatch(parsed.path))
         and (provider != "handshake" or HANDSHAKE_JOB_PATH_PATTERN.fullmatch(parsed.path))
     )
     query = parse_qs(parsed.query, keep_blank_values=True)
     is_ziprecruiter_search = provider == "ziprecruiter" and ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path)
     is_ziprecruiter_home = provider == "ziprecruiter" and ZIPRECRUITER_HOME_PATH_PATTERN.fullmatch(parsed.path)
     is_ziprecruiter_share = provider == "ziprecruiter" and ZIPRECRUITER_SHARE_PATH_PATTERN.fullmatch(parsed.path)
+    is_ziprecruiter_v2 = provider == "ziprecruiter" and ZIPRECRUITER_V2_PATH_PATTERN.fullmatch(parsed.path)
     selected_job_keys = query.get("lk" if is_ziprecruiter_search else "jk", [])
     share_tokens = query.get("match_token", [])
     valid_ziprecruiter_route = (
@@ -500,6 +503,10 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
         and set(query) == {"match_token"}
         and len(share_tokens) == 1
         and bool(ZIPRECRUITER_MATCH_TOKEN_PATTERN.fullmatch(share_tokens[0]))
+    ) or (
+        is_ziprecruiter_v2
+        and not parsed.fragment
+        and (not query or (set(query) == {"tsid"} and len(query["tsid"]) == 1 and bool(ZIPRECRUITER_V2_TSID_PATTERN.fullmatch(query["tsid"][0]))))
     )
     if (
         parsed.scheme not in {"http", "https"}

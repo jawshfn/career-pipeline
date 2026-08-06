@@ -218,6 +218,37 @@ def test_ziprecruiter_browser_capture_accepts_selected_standalone_home_urls(clie
         ).status_code == 200
 
 
+def test_ziprecruiter_browser_capture_accepts_and_preserves_direct_v2_urls(client, monkeypatch):
+    store = BrowserTextCaptureStore()
+    monkeypatch.setattr("app.routers.browser_captures.browser_text_capture_store", store)
+    token = "D" * 48
+    for original_job_link in [
+        f"https://www.ziprecruiter.com/jobs/v2/{token}",
+        f"https://www.ziprecruiter.com/jobs/v2/{token}?tsid=123456",
+    ]:
+        created = client.post("/api/browser-text-captures", json=ziprecruiter_capture_payload(original_job_link=original_job_link))
+        assert created.status_code == 200
+        consumed = client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": created.json()["capture_token"]})
+        assert consumed.status_code == 200
+        assert consumed.json()["original_job_link"] == original_job_link
+
+
+def test_ziprecruiter_browser_capture_rejects_invalid_direct_v2_urls(client):
+    token = "D" * 48
+    for original_job_link in [
+        "https://www.ziprecruiter.com/jobs/v2", "https://www.ziprecruiter.com/jobs/v2/", f"https://www.ziprecruiter.com/jobs/v2/{'A' * 31}",
+        f"https://www.ziprecruiter.com/jobs/v2/{'A' * 513}", f"https://www.ziprecruiter.com/jobs/v2/{token}.bad",
+        f"https://www.ziprecruiter.com/jobs/v2/{token}/extra", f"https://www.ziprecruiter.com/jobs/v1/{token}",
+        f"https://www.ziprecruiter.com/jobs/v2/{token}?tsid=1&tsid=2", f"https://www.ziprecruiter.com/jobs/v2/{token}?tsid=",
+        f"https://www.ziprecruiter.com/jobs/v2/{token}?tsid=bad", f"https://www.ziprecruiter.com/jobs/v2/{token}?extra=1",
+        f"https://www.ziprecruiter.com/jobs/v2/{token}?lk=key", f"https://www.ziprecruiter.com/jobs/v2/{token}?jk=key",
+        f"https://www.ziprecruiter.com/jobs/v2/{token}?match_token={'A' * 43}", f"https://www.ziprecruiter.com/jobs/v2/{token}#fragment",
+        f"https://user:pass@www.ziprecruiter.com/jobs/v2/{token}", f"https://www.ziprecruiter.com:8443/jobs/v2/{token}",
+        f"https://ziprecruiter.com.evil.test/jobs/v2/{token}",
+    ]:
+        assert client.post("/api/browser-text-captures", json=ziprecruiter_capture_payload(original_job_link=original_job_link)).status_code == 422
+
+
 def test_ziprecruiter_browser_capture_accepts_only_normalized_share_redirects(client, db_session, monkeypatch):
     store = BrowserTextCaptureStore()
     monkeypatch.setattr("app.routers.browser_captures.browser_text_capture_store", store)

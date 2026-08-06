@@ -28,11 +28,18 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
         (url.port === "" || url.port === "80" || url.port === "443") &&
         (hostname === "ziprecruiter.com" || hostname.endsWith(".ziprecruiter.com"));
       if (!isTrustedUrl) return false;
+      const directMatch = /^\/jobs\/v2\/([A-Za-z0-9_-]{32,512}={0,2})\/?$/u.exec(url.pathname);
+      if (directMatch) {
+        const tsids = url.searchParams.getAll("tsid");
+        if (url.hash || [...url.searchParams].length !== tsids.length || tsids.length > 1 ||
+          (tsids.length === 1 && !/^\d{1,20}$/u.test(tsids[0]))) return false;
+        return "direct";
+      }
       const selectedJobKeys = /^\/jobs-search(?:\/[1-9]\d*)?\/?$/u.test(url.pathname)
         ? url.searchParams.getAll("lk")
         : /^\/jobseeker\/home\/?$/u.test(url.pathname) ? url.searchParams.getAll("jk") : [];
       if (selectedJobKeys.length !== 1 || !selectedJobKeys[0].trim()) return false;
-      return /^\/jobs-search(?:\/[1-9]\d*)?\/?$/u.test(url.pathname) ? "search" : "standalone";
+      return /^\/jobs-search(?:\/[1-9]\d*)?\/?$/u.test(url.pathname) ? "search" : "home";
     } catch {
       return false;
     }
@@ -160,7 +167,7 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
     return normalizeParagraphs(clone.innerText || clone.textContent || "");
   }
 
-  function getStandaloneDetailContext() {
+  function getHomeDetailContext() {
     if (typeof document === "undefined") return { status: "no-current-job" };
     const dialogs = Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"]')).filter(isVisible);
     if (dialogs.length !== 1) return { status: dialogs.length > 1 ? "ambiguous-job" : "no-current-job" };
@@ -171,7 +178,17 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
     return { pane: scopes[0] };
   }
 
-  function getStandaloneCandidate(pane) {
+  function isPrimaryCompanyLink(anchor, pageUrl) {
+    try {
+      const url = new URL(anchor.getAttribute("href") || anchor.href, pageUrl);
+      const hostname = url.hostname.toLowerCase();
+      return (hostname === "ziprecruiter.com" || hostname.endsWith(".ziprecruiter.com")) && /^\/co\//u.test(url.pathname);
+    } catch {
+      return false;
+    }
+  }
+
+  function getBoundedCandidate(pane, pageUrl) {
     const descriptionHeadings = Array.from(pane.querySelectorAll("h1, h2, h3, h4, h5, h6"))
       .filter((heading) => isVisible(heading) && exactHeading(heading, "Job description"));
     if (descriptionHeadings.length !== 1) return { status: descriptionHeadings.length > 1 ? "ambiguous-job" : "no-current-job" };
@@ -181,13 +198,24 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
     const roleHeadings = Array.from(pane.querySelectorAll("h1, h2, h3, h4, h5, h6")).filter((item) =>
       isVisible(item) && isBefore(item, heading) && !isInformationalHeading(normalizeSingleLine(item.innerText)),
     );
-    const companyLinks = Array.from(pane.querySelectorAll('a[href^="/co/"]')).filter((item) => isVisible(item) && isBefore(item, heading));
+    const companyLinks = Array.from(pane.querySelectorAll("a[href]")).filter((item) =>
+      isVisible(item) && isBefore(item, heading) && isPrimaryCompanyLink(item, pageUrl),
+    );
     if (roleHeadings.length !== 1 || companyLinks.length !== 1) return { status: (roleHeadings.length > 1 || companyLinks.length > 1) ? "ambiguous-job" : "no-current-job" };
     const roleTitle = normalizeSingleLine(roleHeadings[0].innerText);
     const companyName = normalizeSingleLine(companyLinks[0].innerText || companyLinks[0].getAttribute("aria-label"));
     const description = normalizeParagraphs(getDescriptionText(section, heading));
     if (!roleTitle || !companyName || description.length < MIN_DESCRIPTION_LENGTH) return { status: "no-current-job" };
     return { heading, header: pane, pane, section, roleTitle, companyName, description };
+  }
+
+  function getDirectDetailContext() {
+    if (typeof document === "undefined") return { status: "no-current-job" };
+    const panes = Array.from(document.querySelectorAll('[data-testid="right-pane"]')).filter(isVisible);
+    if (panes.length !== 1) return { status: panes.length > 1 ? "ambiguous-job" : "no-current-job" };
+    const scopes = Array.from(panes[0].querySelectorAll('[data-testid="job-details-scroll-container"]')).filter(isVisible);
+    if (scopes.length !== 1) return { status: scopes.length > 1 ? "ambiguous-job" : "no-current-job" };
+    return { pane: scopes[0] };
   }
 
   function getHeaderLines(header, roleTitle, companyName) {
@@ -228,12 +256,41 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
       const key = line.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
-      if (/^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s*(?:\u2022|\u00b7|\u00e2\u20ac\u00a2|-)\s*(?:Remote|Hybrid|On-site))?$/u.test(line) || /^(?:Remote|Hybrid|On-site)$/iu.test(line)) locations.push(line);
+      if (isStructuredLocationLine(line)) locations.push(line);
       else if (/^\$\s*\d/iu.test(line)) compensation.push(line);
-      else if (/^(?:Full[-\s]?time|Part[-\s]?time|Contract|Internship|Temporary)$/iu.test(line)) employmentTypes.push(line);
-      else if (/^Posted\s+(?:today|yesterday)$/iu.test(line) || /^(?:Posted\s+)?\d+\s+(?:day|week|month)s?\s+ago$/iu.test(line)) postedAges.push(line);
+      else if (/^(?:Full[-\s]?time|Part[-\s]?time|Contract|Internship|Temporary|Other)$/iu.test(line)) employmentTypes.push(line);
+      else if (/^(?:Re-posted|Posted)\s+(?:today|yesterday)$/iu.test(line) || /^(?:(?:Re-posted|Posted)\s+)?\d+\s+(?:day|week|month)s?\s+ago$/iu.test(line)) postedAges.push(line);
     }
     return { locations, compensation, employmentTypes, postedAges };
+  }
+
+  function getWorkArrangement(value) {
+    if (/^remote$/iu.test(value)) return "Remote";
+    if (/^hybrid(?:\s+(?:work|remote))?$/iu.test(value)) return "Hybrid";
+    if (/^on[-\s]?site(?:\s+work)?$/iu.test(value)) return "On-site";
+    if (/^in[-\s]?person$/iu.test(value)) return "In-person";
+    return "";
+  }
+
+  function hasArrangementList(value) {
+    const arrangements = value.split(",").map((item) => getWorkArrangement(item.trim()));
+    return arrangements.length > 0 && arrangements.every(Boolean);
+  }
+
+  function isStructuredLocationLine(line) {
+    const normalized = normalizeSingleLine(line);
+    if (getWorkArrangement(normalized)) return true;
+
+    const separator = /\s+(?:\u2022|\u00b7|\u00c2\u00b7|\u00e2\u20ac\u00a2|\u00c3\u00a2\u00e2\u201a\u00ac\u00c2\u00a2|-|\u2013|\u2014)\s+/u;
+    const parts = normalized.split(separator);
+    const region = parts[0]?.trim() || "";
+    const arrangements = parts.length === 2 ? parts[1].trim() : "";
+    const cityState = /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/u.test(region);
+    const stateAbbreviations = new Set(["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC"]);
+    const stateOnly = stateAbbreviations.has(region.toUpperCase()) || /^(?:Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming|District of Columbia)$/iu.test(region);
+
+    if (parts.length === 1) return cityState;
+    return (cityState || stateOnly) && hasArrangementList(arrangements);
   }
 
   function getMetadataScore(metadata) {
@@ -298,10 +355,10 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
     const pageUrl = snapshotOverride?.pageUrl || window.location.href;
     const route = getZipRecruiterRoute(pageUrl);
     if (!route) return controlledResult("not-ziprecruiter");
-    if (route === "standalone") {
-      const standaloneContext = getStandaloneDetailContext();
-      if (standaloneContext.status) return controlledResult(standaloneContext.status);
-      const candidate = getStandaloneCandidate(standaloneContext.pane);
+    if (route === "home" || route === "direct") {
+      const boundedContext = route === "direct" ? getDirectDetailContext() : getHomeDetailContext();
+      if (boundedContext.status) return controlledResult(boundedContext.status);
+      const candidate = getBoundedCandidate(boundedContext.pane, pageUrl);
       if (candidate.status) return controlledResult(candidate.status);
       if (candidate.description.length > MAX_DESCRIPTION_LENGTH) return controlledResult("capture-too-large");
       const metadataLines = Array.from(candidate.pane.querySelectorAll("p, li, span"))
@@ -313,6 +370,7 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
       const rawText = lines.filter((line, index) => index === 0 || line !== lines[index - 1]).join("\n");
       if (rawText.length > MAX_CAPTURE_LENGTH) return controlledResult("capture-too-large");
       if (!snapshotOverride) outlineDescription(candidate.section);
+      if (route === "direct") return { version: VERSION, status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: pageUrl, role_title: candidate.roleTitle, company_name: candidate.companyName, description_character_count: candidate.description.length, raw_text: rawText };
       const canonicalJobLink = canonicalShareLink(candidate.pane, null, false);
       if (canonicalJobLink === "ambiguous-job") return controlledResult("ambiguous-job");
       return { version: VERSION, status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: pageUrl, ...(canonicalJobLink ? { canonical_job_link: canonicalJobLink } : {}), role_title: candidate.roleTitle, company_name: candidate.companyName, description_character_count: candidate.description.length, raw_text: rawText };

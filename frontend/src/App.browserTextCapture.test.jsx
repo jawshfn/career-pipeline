@@ -182,11 +182,11 @@ describe("browser text capture startup", () => {
       raw_text: [
         "Fictional Supply Chain Analyst",
         "Fictional Aerospace",
-        "Hampton, VA",
-        "$100K - $120K/yr",
+        "Las Vegas, NV â€¢ On-site, Remote",
+        "$20.50 - $28.25/hr",
         "Full-time",
         "Job description",
-        "Build reliable fictional data tools.",
+        "Location: Las Vegas, NVAbout Fictional AerospaceThis role supports remote operations.",
       ].join("\n"),
     });
 
@@ -203,6 +203,8 @@ describe("browser text capture startup", () => {
     expect(container.textContent).toContain("Fictional Aerospace");
     expect(container.querySelector('select[name="source"]').value).toBe("ZipRecruiter");
     expect(container.querySelector('input[name="job_link"]').value).toBe("https://www.ziprecruiter.com/jobs-search?lk=selected-key");
+    expect(container.querySelector('input[name="location"]').value).toBe("Las Vegas, NV - On-site, Remote");
+    expect(container.querySelector('input[name="location"]').value).not.toContain("About");
     expect(container.textContent).not.toContain("expired or was already used");
     expect(mocks.createApplication).not.toHaveBeenCalled();
   });

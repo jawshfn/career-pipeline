@@ -120,6 +120,15 @@ function standaloneFixture({ hidden = false, description = longDescription, role
   `;
 }
 
+const directToken = "D".repeat(48);
+
+function directFixture({ companyHref = "/co/fictional-operations", includePane = true, includeScroll = true, role = "Fictional Client Support Technician", company = "Fictional Operations", description = longDescription } = {}) {
+  const content = `<header><h1>${role}</h1><a href="${companyHref}">${company}</a><p>Las Vegas, NV • On-site, Remote</p><p>$20.50 - $28.25/hr</p><p>Other</p><p>Re-posted 14 days ago</p></header><section data-testid="job-description"><h2>Job description</h2><p>${description}</p></section>`;
+  const scoped = includeScroll ? `<main data-testid="job-details-scroll-container">${content}</main>` : content;
+  const primary = includePane ? `<section data-testid="right-pane">${scoped}</section>` : scoped;
+  return `<meta property="og:title" content="ZipRecruiter"><meta property="og:url" content="https://www.ziprecruiter.com/jobs">${primary}<aside><article><h2>Recommended Fictional Role</h2><a href="/co/recommended-fictional">Recommendation Company</a><p>Remote</p></article></aside>`;
+}
+
 test("captures only the selected ZipRecruiter detail pane", () => {
   withDom(fixture(), "https://www.ziprecruiter.com/jobs-search?lk=fake-selected-key", (dom) => {
     const result = detectZipRecruiterJobPage();
@@ -214,6 +223,79 @@ test("captures only the bounded standalone ZipRecruiter modal", () => {
   });
 });
 
+test("captures only the bounded direct ZipRecruiter page and preserves its active URL", () => {
+  const url = `https://www.ziprecruiter.com/jobs/v2/${directToken}?tsid=123456`;
+  withDom(directFixture(), url, (dom) => {
+    const result = detectZipRecruiterJobPage();
+    assert.equal(result.status, "detected");
+    assert.equal(result.original_job_link, url);
+    assert.equal(result.canonical_job_link, undefined);
+    assert.equal(result.role_title, "Fictional Client Support Technician");
+    assert.equal(result.company_name, "Fictional Operations");
+    assert.match(result.raw_text, /Las Vegas, NV • On-site, Remote\n\$20\.50 - \$28\.25\/hr\nOther\nRe-posted 14 days ago/u);
+    assert.doesNotMatch(result.raw_text, /Recommended Fictional Role|Recommendation Company|ZipRecruiter/u);
+    assert.equal(dom.window.document.querySelectorAll("[data-career-pipeline-ziprecruiter-outline]").length, 1);
+  });
+  withDom(directFixture({ companyHref: "https://www.ziprecruiter.com/co/fictional-operations" }), `https://www.ziprecruiter.com/jobs/v2/${directToken}`, () => {
+    assert.equal(detectZipRecruiterJobPage().status, "detected");
+  });
+});
+
+test("retains structured multi-arrangement and state-only location metadata across capture layouts", () => {
+  const bullet = "\u00e2\u20ac\u00a2";
+  const searchHtml = fixture().replace(
+    "Howmet Aerospace</a>\n      <p>Hampton, VA</p>",
+    `Howmet Aerospace</a>\n      <p>New York, NY ${bullet} On-site, Remote</p>`,
+  );
+  withDom(searchHtml, "https://www.ziprecruiter.com/jobs-search?lk=location-key", () => {
+    const result = detectZipRecruiterJobPage();
+    assert.match(result.raw_text, new RegExp(`New York, NY ${bullet} On-site, Remote\\n\\$100K`, "u"));
+  });
+
+  const directUrl = `https://www.ziprecruiter.com/jobs/v2/${directToken}`;
+  withDom(directFixture().replace(/<p>Las Vegas[^<]*<\/p>/u, `<p>OR ${bullet} Remote</p>`), directUrl, () => {
+    const result = detectZipRecruiterJobPage();
+    assert.match(result.raw_text, new RegExp(`OR ${bullet} Remote\\n\\$20`, "u"));
+    assert.ok(result.raw_text.indexOf(`OR ${bullet} Remote`) < result.raw_text.indexOf("Job description"));
+  });
+
+  withDom(standaloneFixture().replace(/<p>Chesapeake[^<]*<\/p>/u, `<p>Herndon, VA ${bullet} On-site, Remote</p>`), "https://www.ziprecruiter.com/jobseeker/home?jk=location-key", () => {
+    const result = detectZipRecruiterJobPage();
+    assert.match(result.raw_text, new RegExp(`Herndon, VA ${bullet} On-site, Remote\\n\\$60K`, "u"));
+  });
+});
+
+test("retains valid state and city locations without classifying arbitrary two-letter metadata", () => {
+  const bullet = "\u00e2\u20ac\u00a2";
+  const url = `https://www.ziprecruiter.com/jobs/v2/${directToken}`;
+  for (const location of [`MI ${bullet} Remote`, `Charleston, SC ${bullet} Remote`, `Atlanta, GA ${bullet} Remote`, `Cleveland, OH 44101`, `Virginia ${bullet} Remote`]) {
+    withDom(directFixture().replace(/<p>Las Vegas[^<]*<\/p>/u, `<p>${location}</p>`), url, () => {
+      assert.match(detectZipRecruiterJobPage().raw_text, new RegExp(location.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"), "u"));
+    });
+  }
+  for (const location of ["IT", `IT ${bullet} Remote`]) {
+    withDom(directFixture().replace(/<p>Las Vegas[^<]*<\/p>/u, `<p>${location}</p>`), url, () => {
+      assert.doesNotMatch(detectZipRecruiterJobPage().raw_text, new RegExp(`\\n${location}\\n`, "u"));
+    });
+  }
+});
+
+test("fails closed when the direct ZipRecruiter page is not uniquely bounded", () => {
+  const url = `https://www.ziprecruiter.com/jobs/v2/${directToken}`;
+  withDom(directFixture({ includePane: false }), url, () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));
+  withDom(`${directFixture()}${directFixture()}`, url, () => assert.equal(detectZipRecruiterJobPage().status, "ambiguous-job"));
+  withDom(directFixture({ includeScroll: false }), url, () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));
+  withDom(directFixture().replace('</main>', '</main><main data-testid="job-details-scroll-container"></main>'), url, () => assert.equal(detectZipRecruiterJobPage().status, "ambiguous-job"));
+  withDom(directFixture().replace('data-testid="job-description"><h2>Job description</h2>', 'data-testid="job-description"><h2>Details</h2>'), url, () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));
+  withDom(directFixture().replace('</section></main>', '<h2>Job description</h2></section></main>'), url, () => assert.equal(detectZipRecruiterJobPage().status, "ambiguous-job"));
+  withDom(directFixture({ role: "" }), url, () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));
+  withDom(directFixture().replace('</h1>', '</h1><h2>Second Fictional Role</h2>'), url, () => assert.equal(detectZipRecruiterJobPage().status, "ambiguous-job"));
+  withDom(directFixture({ company: "" }), url, () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));
+  withDom(directFixture().replace('</a><p>Las Vegas', '</a><a href="/co/second-fictional">Second Fictional Company</a><p>Las Vegas'), url, () => assert.equal(detectZipRecruiterJobPage().status, "ambiguous-job"));
+  withDom(directFixture({ description: "too short" }), url, () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));
+  withDom(directFixture({ description: "x".repeat(100_001) }), url, () => assert.equal(detectZipRecruiterJobPage().status, "capture-too-large"));
+});
+
 test("requires a verified share redirect for search captures and verifies portal candidates against lk", () => {
   withDom(fixture().replace(shareLinks(), ""), "https://www.ziprecruiter.com/jobs-search?lk=fake-selected-key", () => {
     assert.equal(detectZipRecruiterJobPage().status, "canonical-link-unavailable");
@@ -280,6 +362,13 @@ test("rejects invalid selected-job routes and ambiguous or hidden detail panes",
     "https://www.ziprecruiter.com/jobseeker/home/extra?jk=fake",
     "https://ziprecruiter.com.evil.test/jobseeker/home?jk=fake",
     "https://www.ziprecruiter.com:8443/jobseeker/home?jk=fake",
+  ]) assert.equal(detectZipRecruiterJobPage({ pageUrl }).status, "not-ziprecruiter");
+  for (const pageUrl of [
+    "https://www.ziprecruiter.com/jobs/v2", "https://www.ziprecruiter.com/jobs/v2/", `https://www.ziprecruiter.com/jobs/v2/${directToken}/extra`,
+    `https://www.ziprecruiter.com/jobs/v1/${directToken}`, `https://www.ziprecruiter.com/jobs/v2/${"A".repeat(31)}`,
+    `https://www.ziprecruiter.com/jobs/v2/${directToken}?tsid=`, `https://www.ziprecruiter.com/jobs/v2/${directToken}?tsid=one`,
+    `https://www.ziprecruiter.com/jobs/v2/${directToken}?tsid=1&tsid=2`, `https://www.ziprecruiter.com/jobs/v2/${directToken}?extra=1`,
+    `https://www.ziprecruiter.com/jobs/v2/${directToken}#fragment`, `https://ziprecruiter.com.evil.test/jobs/v2/${directToken}`,
   ]) assert.equal(detectZipRecruiterJobPage({ pageUrl }).status, "not-ziprecruiter");
   assert.equal(detectZipRecruiterJobPage({ pageUrl: "https://www.ziprecruiter.com/jobseeker/home/?jk=standalone-selected-job-key&source=home", candidates: [] }).status, "no-current-job");
   withDom(standaloneFixture({ hidden: true }), "https://www.ziprecruiter.com/jobseeker/home?jk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "no-current-job"));

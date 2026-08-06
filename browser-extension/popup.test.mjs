@@ -138,6 +138,9 @@ test("routes supported selected ZipRecruiter details to the focused detector", a
   assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobs-search?search=data"), false);
   assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobseeker/home?jk=standalone-selected-job-key"), true);
   assert.equal(isZipRecruiterJobUrl("https://www.ziprecruiter.com/jobseeker/home/?jk=standalone-selected-job-key&source=home"), true);
+  const direct = "D".repeat(48);
+  assert.equal(isZipRecruiterJobUrl(`https://www.ziprecruiter.com/jobs/v2/${direct}`), true);
+  assert.equal(isZipRecruiterJobUrl(`https://www.ziprecruiter.com/jobs/v2/${direct}?tsid=123`), true);
   for (const url of [
     "https://www.ziprecruiter.com/jobs-search/0?lk=value",
     "https://www.ziprecruiter.com/jobs-search/page/2?lk=value",
@@ -151,6 +154,15 @@ test("routes supported selected ZipRecruiter details to the focused detector", a
     "https://www.ziprecruiter.com/jobseeker/home?lk=selected-key",
     "https://www.ziprecruiter.com/jobs-search?jk=selected-key",
     "https://www.ziprecruiter.com/jobseeker/home/extra?jk=selected-key",
+    "https://www.ziprecruiter.com/jobs/v2",
+    "https://www.ziprecruiter.com/jobs/v2/",
+    `https://www.ziprecruiter.com/jobs/v2/${direct}/extra`,
+    `https://www.ziprecruiter.com/jobs/v2/${"!".repeat(48)}`,
+    `https://www.ziprecruiter.com/jobs/v2/${direct}?tsid=`,
+    `https://www.ziprecruiter.com/jobs/v2/${direct}?tsid=one`,
+    `https://www.ziprecruiter.com/jobs/v2/${direct}?tsid=1&tsid=2`,
+    `https://www.ziprecruiter.com/jobs/v2/${direct}?extra=1`,
+    `https://www.ziprecruiter.com/jobs/v2/${direct}#fragment`,
   ]) {
     assert.equal(isZipRecruiterJobUrl(url), false);
   }
@@ -160,6 +172,12 @@ test("routes supported selected ZipRecruiter details to the focused detector", a
     scripting: { executeScript: async (details) => { assert.equal(details.func.name, "detectZipRecruiterJobPage"); return [{ result: { status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: "https://www.ziprecruiter.com/jobseeker/home?jk=standalone-selected-job-key" } }]; } },
   });
   assert.equal(standalone.provider, "ziprecruiter");
+  const directUrl = `https://www.ziprecruiter.com/jobs/v2/${direct}?tsid=123`;
+  const directResult = await inspectActivePage({
+    tabs: { query: async () => [{ id: 22, url: directUrl }] },
+    scripting: { executeScript: async (details) => { assert.equal(details.func.name, "detectZipRecruiterJobPage"); return [{ result: { status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", raw_text: "Fictional text" } }]; } },
+  });
+  assert.equal(directResult.original_job_link, directUrl);
 });
 
 test("preserves a detected ZipRecruiter canonical share link instead of the active search URL", async () => {

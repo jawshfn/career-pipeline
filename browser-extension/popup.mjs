@@ -135,12 +135,20 @@ export function isLinkedInHostname(rawUrl) {
 
 export function isZipRecruiterJobUrl(rawUrl) {
   try {
+    if (typeof rawUrl !== "string" || rawUrl.length > 2_048) return false;
     const url = new URL(rawUrl);
     const hostname = url.hostname.toLowerCase();
     const isTrustedUrl = (url.protocol === "http:" || url.protocol === "https:") && !url.username && !url.password &&
       (url.port === "" || url.port === "80" || url.port === "443") &&
       (hostname === "ziprecruiter.com" || hostname.endsWith(".ziprecruiter.com"));
     if (!isTrustedUrl) return false;
+    const isDirectRoute = /^\/jobs\/v2\/([A-Za-z0-9_-]{32,512}={0,2})\/?$/u.test(url.pathname);
+    if (isDirectRoute) {
+      if (url.hash) return false;
+      const tsids = url.searchParams.getAll("tsid");
+      return [...url.searchParams].length === tsids.length && tsids.length <= 1 &&
+        (tsids.length === 0 || /^\d{1,20}$/u.test(tsids[0]));
+    }
     const selectedJobKeys = /^\/jobs-search(?:\/[1-9]\d*)?\/?$/u.test(url.pathname)
       ? url.searchParams.getAll("lk")
       : /^\/jobseeker\/home\/?$/u.test(url.pathname) ? url.searchParams.getAll("jk") : [];

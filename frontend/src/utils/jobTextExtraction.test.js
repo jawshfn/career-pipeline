@@ -1088,6 +1088,53 @@ describe("buildSmartCaptureReviewState", () => {
     expect(reviewData.notes).toBe("");
   });
 
+  it.each([
+    ["New York, NY â€¢ On-site, Remote", "New York, NY - On-site, Remote"],
+    ["Herndon, VA â€¢ On-site, Remote", "Herndon, VA - On-site, Remote"],
+    ["Las Vegas, NV â€¢ On-site, Remote", "Las Vegas, NV - On-site, Remote"],
+    ["OR â€¢ Remote", "OR - Remote"],
+    ["MI â€¢ Remote", "MI - Remote"],
+    ["Charleston, SC â€¢ Remote", "Charleston, SC - Remote"],
+    ["Atlanta, GA â€¢ Remote", "Atlanta, GA - Remote"],
+    ["Cleveland, OH 44101 - Remote, Remote", "Cleveland, OH 44101 - Remote"],
+  ])("canonicalizes ZipRecruiter structured location metadata: %s", (location, expectedLocation) => {
+    const reviewData = buildSmartCaptureReviewState({
+      rawText: ["Fictional Technician", "Fictional Systems", location, "$20 - $28/hr", "Full-time", "Job description", "Build fictional systems."].join("\n"),
+      jobLink: "https://www.ziprecruiter.com/jobs/v2/" + "x".repeat(48),
+      source: "ZipRecruiter",
+    });
+
+    expect(reviewData.location).toBe(expectedLocation);
+  });
+
+  it("keeps ZipRecruiter Location header-bound and rejects collapsed description labels", () => {
+    const headerWins = buildSmartCaptureReviewState({
+      rawText: ["Fictional Technician", "Fictional Systems", "Las Vegas, NV â€¢ On-site, Remote", "$20 - $28/hr", "Full-time", "Job description", "Location: Las Vegas, NVAbout Fictional SystemsThis role provides remote support."].join("\n"),
+      jobLink: "https://www.ziprecruiter.com/jobs/v2/" + "y".repeat(48),
+      source: "ZipRecruiter",
+    });
+    const descriptionOnly = buildSmartCaptureReviewState({
+      rawText: ["Fictional Technician", "Fictional Systems", "$20 - $28/hr", "Full-time", "Job description", "Location: Las Vegas, NVAbout Fictional SystemsThis role provides remote support and on-site equipment care."].join("\n"),
+      jobLink: "https://www.ziprecruiter.com/jobs/v2/" + "z".repeat(48),
+      source: "ZipRecruiter",
+    });
+
+    expect(headerWins.location).toBe("Las Vegas, NV - On-site, Remote");
+    expect(descriptionOnly.location).toBe("");
+    expect(descriptionOnly.location).not.toContain("About");
+  });
+
+  it("does not classify arbitrary state-like ZipRecruiter metadata without an arrangement", () => {
+    for (const location of ["IT", "HR", "Virginia"]) {
+      const reviewData = buildSmartCaptureReviewState({
+        rawText: ["Fictional Technician", "Fictional Systems", location, "$20 - $28/hr", "Full-time", "Job description", "Build fictional systems."].join("\n"),
+        jobLink: "https://www.ziprecruiter.com/jobs/v2/" + "q".repeat(48),
+        source: "ZipRecruiter",
+      });
+      expect(reviewData.location).toBe("");
+    }
+  });
+
   it("detects ZipRecruiter-style text without a posting-age line", () => {
     const reviewData = buildSmartCaptureReviewState({
       rawText: [

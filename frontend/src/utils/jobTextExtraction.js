@@ -61,12 +61,16 @@ const US_STATE_NAMES = new Set([
   "west virginia", "wisconsin", "wyoming", "district of columbia",
 ]);
 
+const US_STATE_ABBREVIATIONS = new Set([
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
+]);
+
 function normalizeWhitespace(value) {
   return value.replace(/\s+/gu, " ").trim();
 }
 
 function normalizeBulletSeparators(value) {
-  return value.replace(/\s*(?:\u00b7|\u2022|\u00e2\u20ac\u00a2)\s*/gu, " - ").trim();
+  return value.replace(/\s*(?:\u00b7|\u2022|\u00c2\u00b7|\u00e2\u20ac\u00a2|\u00c3\u00a2\u00e2\u201a\u00ac\u00c2\u00a2)\s*/gu, " - ").trim();
 }
 
 function normalizeTitle(value) {
@@ -250,14 +254,44 @@ function detectEmploymentType(lines) {
   return lines.map(getEmploymentTypeFromLine).find(Boolean) || "";
 }
 
+function getStructuredWorkArrangement(value) {
+  if (/^remote$/iu.test(value)) return "Remote";
+  if (/^hybrid\s+work$/iu.test(value)) return "Hybrid work";
+  if (/^hybrid\s+remote$/iu.test(value)) return "Hybrid remote";
+  if (/^hybrid$/iu.test(value)) return "Hybrid";
+  if (/^on[-\s]?site(?:\s+work)?$/iu.test(value)) return "On-site";
+  if (/^in[-\s]?person$/iu.test(value)) return "In-person";
+  return "";
+}
+
+function isSafeStructuredLocation(value) {
+  return value.length <= 160 &&
+    !/\b(?:about|responsibilities|what\s+you(?:'|\u2019)?ll\s+do)\b/iu.test(value) &&
+    !/[.!?]/u.test(value);
+}
+
+function parseStructuredLocation(value) {
+  const normalized = normalizeBulletSeparators(normalizeWhitespace(value))
+    .replace(/\s+(?:\u2013|\u2014)\s+/gu, " - ");
+  if (!normalized || !isSafeStructuredLocation(normalized)) return "";
+
+  const parts = normalized.split(/\s+-\s+/u);
+  if (parts.length > 2) return "";
+  const region = parts[0].trim();
+  const arrangements = parts.length === 2
+    ? parts[1].split(",").map((item) => getStructuredWorkArrangement(item.trim()))
+    : [];
+  const cityState = /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/u.test(region);
+  const stateOnly = US_STATE_ABBREVIATIONS.has(region.toUpperCase()) || US_STATE_NAMES.has(region.toLowerCase());
+
+  if (parts.length === 1) return getStructuredWorkArrangement(region) || (cityState ? region : "");
+  if (!arrangements.length || arrangements.some((arrangement) => !arrangement)) return "";
+  if (!cityState && !stateOnly) return "";
+  return `${region} - ${[...new Set(arrangements)].join(", ")}`;
+}
+
 function detectCityStateLocation(lines) {
-  return (
-    lines.find((line) =>
-      /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?(?:\s+-\s+(?:Remote|Hybrid(?:\s+(?:work|remote))?|On-?site(?:\s+work)?|In person))?$/iu.test(
-        line,
-      ),
-    ) || ""
-  );
+  return lines.map(parseStructuredLocation).find(Boolean) || "";
 }
 
 function isSafeSummaryLocationSegment(value) {
@@ -999,7 +1033,9 @@ function extractZipRecruiterFields(rawText) {
   return {
     ...baseFields,
     ...(orderedIdentity.company_name && orderedIdentity.role_title ? orderedIdentity : {}),
-    location: orderedIdentity.location || baseFields.location,
+    // ZipRecruiter descriptions can collapse a "Location:" label into prose. Only
+    // metadata before the exact Job description heading is trustworthy here.
+    location: orderedIdentity.location,
     job_description: buildJobDescriptionFromMarker(rawText, /^\s*Job description\s*$/imu),
   };
 }
