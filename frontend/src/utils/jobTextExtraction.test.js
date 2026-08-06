@@ -264,13 +264,28 @@ describe("buildSmartCaptureReviewState", () => {
     expect(remoteHeader.location).toBe("Remote");
   });
 
-  it("normalizes supported Indeed remote state and city headers without scanning descriptions", () => {
+  it("parses complete Indeed header locations without rewriting their wording", () => {
     const cases = [
-      ["Massachusetts - Remote", "Remote in Massachusetts"],
-      ["Illinois - Remote", "Remote in Illinois"],
-      ["Remote - Massachusetts", "Remote in Massachusetts"],
+      ["Kentucky â€¢ Remote", "Kentucky - Remote"], ["Remote", "Remote"],
+      ["Pittsburgh, PA â€¢ Remote", "Pittsburgh, PA - Remote"], ["Salt Lake City, UT â€¢ Remote", "Salt Lake City, UT - Remote"],
+      ["Virginia Beach, VA 23452", "Virginia Beach, VA 23452"], ["Hampton, VA 23681", "Hampton, VA 23681"],
+      ["Williamsburg, VA", "Williamsburg, VA"], ["Norfolk, VA 23510 â€¢ Hybrid work", "Norfolk, VA 23510 - Hybrid work"],
+      ["Hampton, VA 23681 – Hybrid work", "Hampton, VA 23681 - Hybrid work"],
+      ["2371 Liberty Way, Virginia Beach, VA 23456", "2371 Liberty Way, Virginia Beach, VA 23456"],
+      ["440 Monticello Avenue, Norfolk, VA 23510", "440 Monticello Avenue, Norfolk, VA 23510"],
+    ];
+    for (const [location, expected] of cases) {
+      expect(buildSmartCaptureReviewState({ rawText: buildIndeedRawText({ location }), jobLink: "", source: "Indeed" }).location).toBe(expected);
+    }
+  });
+
+  it("preserves Indeed region and arrangement header order without scanning descriptions", () => {
+    const cases = [
+      ["Massachusetts - Remote", "Massachusetts - Remote"],
+      ["Illinois - Remote", "Illinois - Remote"],
+      ["Remote - Massachusetts", "Remote - Massachusetts"],
       ["Remote in Massachusetts", "Remote in Massachusetts"],
-      ["Cleveland, OH 44101 - Remote", "Remote in Cleveland, OH 44101"],
+      ["Cleveland, OH 44101 - Remote", "Cleveland, OH 44101 - Remote"],
       ["West Point, VA 23181", "West Point, VA 23181"],
     ];
 

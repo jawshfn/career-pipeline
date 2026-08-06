@@ -30,6 +30,9 @@ export function detectIndeedJobPage(snapshotOverride = null) {
     "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont", "virginia", "washington",
     "west virginia", "wisconsin", "wyoming", "district of columbia",
   ]);
+  const US_STATE_ABBREVIATIONS = new Set([
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY", "DC",
+  ]);
 
   function normalizeText(value) {
     return String(value || "")
@@ -65,15 +68,7 @@ export function detectIndeedJobPage(snapshotOverride = null) {
   }
 
   function formatIndeedLocation(value) {
-    const location = normalizeLocationSeparators(value);
-    if (!location || /^remote$/iu.test(location)) return location ? "Remote" : "";
-
-    const remoteInMatch = location.match(/^remote\s+in\s+(.+)$/iu);
-    const remoteFirstMatch = location.match(/^remote\s+-\s+(.+)$/iu);
-    const remoteLastMatch = location.match(/^(.+)\s+-\s+remote$/iu);
-    const region = remoteInMatch?.[1] || remoteFirstMatch?.[1] || remoteLastMatch?.[1] || "";
-
-    return isSupportedRemoteRegion(region) ? `Remote in ${normalizeSingleLineField(region)}` : location;
+    return normalizeLocationSeparators(value);
   }
 
   function normalizeParagraphs(value) {
@@ -197,6 +192,32 @@ export function detectIndeedJobPage(snapshotOverride = null) {
     return normalizeParagraphs(elementText(clone));
   }
 
+  function getIndeedHeaderLocation(header, roleTitle, companyName, selectorLocation = "") {
+    const isArrangement = (value) => /^(?:remote|hybrid(?:\s+(?:work|remote))?|on[-\s]?site(?:\s+work)?|in[-\s]?person)$/iu.test(value);
+    const isCityState = (value) => /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/u.test(value);
+    const isStreetAddress = (value) => /^\d+\s+[A-Za-z0-9 .'-]+,\s*[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}\s+\d{5}(?:-\d{4})?$/u.test(value);
+    const isState = (value) => US_STATE_NAMES.has(value.toLowerCase()) || US_STATE_ABBREVIATIONS.has(value.toUpperCase());
+    const isStructuralNoise = (value) => /^(?:[\-\u2013\u2014]|\u00b7|\u2022|\u00c2\u00b7|\u00e2\u20ac\u00a2|\u00c3\u00a2\u00e2\u201a\u00ac\u00c2\u00a2)$/u.test(value) ||
+      /^(?:apply(?: now| on company site)?|save|share)$/iu.test(value) || /^\d(?:\.\d)?(?:\s+out of\s+5\s+stars)?$/iu.test(value) ||
+      /(?:\$|\b(?:hour|year|week|month)\b|\b(?:full[-\s]?time|part[-\s]?time|contract|internship|temporary)\b)/iu.test(value);
+    const selectorValue = formatIndeedLocation(selectorLocation);
+    const leaves = Array.from(header.querySelectorAll("div,span,p"))
+      .filter((item) => isVisible(item) && !item.querySelector("div,span,p"))
+      .map((item) => elementText(item, true))
+      .filter((value) => value && value !== roleTitle && value !== companyName && !isStructuralNoise(value))
+      .map(normalizeLocationSeparators);
+    const arrangements = [...new Set(leaves.filter(isArrangement))];
+    const geographic = [...new Set(leaves.filter((value) => isCityState(value) || isStreetAddress(value) || (isState(value) && arrangements.length)))];
+    const selectorParts = selectorValue.split(/\s+-\s+/u);
+    if (selectorParts.length === 2 && isArrangement(selectorParts[1])) return selectorValue;
+    if (selectorValue && (isCityState(selectorValue) || isStreetAddress(selectorValue) || isState(selectorValue)) && !geographic.includes(selectorValue)) geographic.unshift(selectorValue);
+    if (geographic.length > 1) return "";
+    if (geographic.length === 1 && arrangements.length) return `${geographic[0]} - ${arrangements.join(", ")}`;
+    if (geographic.length === 1) return geographic[0];
+    if (arrangements.length === 1) return arrangements[0];
+    return selectorValue || "";
+  }
+
   function headerLocation(header, roleTitle, companyName) {
     const values = Array.from(header.querySelectorAll("div,span,p")).filter((item) => isVisible(item) && !item.querySelector("div,span,p"))
       .map((item) => elementText(item, true)).filter(Boolean);
@@ -235,7 +256,7 @@ export function detectIndeedJobPage(snapshotOverride = null) {
     return {
       title: roleTitle,
       company: companyName,
-      location: textFromFirst(LOCATION_SELECTORS, header) || headerLocation(header, roleTitle, companyName),
+      location: getIndeedHeaderLocation(header, roleTitle, companyName, textFromFirst(LOCATION_SELECTORS, header)),
       metadata: textFromFirst(METADATA_SELECTORS, header, false) || currentMetadata(header),
       description,
       element: descriptionElement,

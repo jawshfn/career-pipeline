@@ -97,12 +97,12 @@ test("keeps a single-line Indeed header location even when the description menti
   assert.match(result.raw_text, /Northstar Systems\nWest Point, VA 23181\nJob details/);
 });
 
-test("formats supported Indeed remote header regions without changing the job content", () => {
+test("normalizes Indeed location separators without rewriting displayed order", () => {
   const cases = [
     ["Massachusettsâ€¢Remote", "Remote in Massachusetts"],
     ["Illinois Â· Remote", "Remote in Illinois"],
-    ["Massachusetts - Remote", "Remote in Massachusetts"],
-    ["Remote - Illinois", "Remote in Illinois"],
+    ["Massachusetts - Remote", "Massachusetts - Remote"],
+    ["Remote - Illinois", "Remote - Illinois"],
     ["Remote in Massachusetts", "Remote in Massachusetts"],
     ["Cleveland, OH 44101â€¢Remote", "Remote in Cleveland, OH 44101"],
     ["Remote", "Remote"],
@@ -126,7 +126,10 @@ test("formats supported Indeed remote header regions without changing the job co
     const lines = result.raw_text.split("\n");
     assert.equal(lines[0], "Fictional Field Coordinator - job post");
     assert.equal(lines[1], "Northstar Services");
-    assert.equal(lines[2], expectedLocation || "Job details");
+    const displayedExpected = /^remote\s+in\s+/iu.test(location)
+      ? expectedLocation
+      : expectedLocation.replace(/^Remote in (.+)$/u, "$1 - Remote");
+    assert.equal(lines[2], displayedExpected || "Job details");
     assert.doesNotMatch(result.raw_text, /(?:â€¢|Â·)/u);
     assert.match(result.raw_text, /First paragraph is unchanged\.\n\nSecond paragraph is unchanged\./);
     assert.doesNotThrow(() => structuredClone(result));
@@ -181,7 +184,7 @@ test("captures one selected Indeed sidebar job through visible semantic DOM evid
   assert.equal(result.company_name, "Northstar Logistics");
   assert.equal(result.original_job_link, "https://www.indeed.com/?vjk=selected-fictional-job-key");
   assert.equal(result.description_character_count, selectedDescription.trim().length);
-  assert.match(result.raw_text, /Remote in Virginia\nJob details\n\$72,000 - \$84,000 a year\nFull-time/);
+  assert.match(result.raw_text, /Remote - Virginia\nJob details\n\$72,000 - \$84,000 a year\nFull-time/);
   assert.match(result.raw_text, /Full job description\nDesign dependable fictional fulfillment workflows/);
   assert.doesNotMatch(result.raw_text, /Background Card|Background Company|Match overview|Qualification match|Company and salary|Do not include/u);
 });
@@ -221,6 +224,23 @@ test("captures the current Indeed vj component in selected-panel and standalone 
     assert.doesNotMatch(result.raw_text, /Background|compact|Benefits summary|Match overview|Profile link|Qualifications|qualification|Apply on company|Save job|Share job|Company information|Similar jobs|Footer|<div>/iu);
     assert.equal(outlined, 1);
     assert.doesNotThrow(() => structuredClone(result));
+  }
+});
+
+test("collects bounded current-header location leaves in display order", () => {
+  const selectedDescription = "Build and support fictional systems with clear documentation and measurable outcomes for the team. ".repeat(2);
+  const cases = [
+    ["Remote Electrical Engineer", "<div>Remote</div>", "Remote"],
+    ["Fictional Engineer", "<div>Kentucky</div><span>â€¢</span><div>Remote</div>", "Kentucky - Remote"],
+    ["Fictional Engineer", "<div>Pittsburgh, PA</div><span>â€¢</span><div>Remote</div>", "Pittsburgh, PA - Remote"],
+    ["Fictional Engineer", "<div>Norfolk, VA 23510</div><span>â€¢</span><div>Hybrid work</div>", "Norfolk, VA 23510 - Hybrid work"],
+    ["Fictional Engineer", "<div>440 Monticello Avenue, Norfolk, VA 23510</div>", "440 Monticello Avenue, Norfolk, VA 23510"],
+  ];
+  for (const [title, locationLeaves, expected] of cases) {
+    const { result } = detectDom(`<section><div data-testid="desktop-job-header"><h5 data-testid="vj-job-title">${title}</h5><a href="/cmp/fictional">Fictional Fabrication</a><div>3.3</div>${locationLeaves}<button>Apply now</button><div>Full-time</div><div aria-label="$80,000 a year">$80,000 a year</div></div><h4 data-testid="vj-job-description-heading">Full job description</h4><div>${selectedDescription}</div></section>`, "https://www.indeed.com/?vjk=leaf-fixture");
+    assert.equal(result.status, "detected");
+    assert.match(result.raw_text, new RegExp(`Fictional Fabrication\\n${expected.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}\\nJob details`));
+    assert.doesNotMatch(result.raw_text, /3\.3|Apply now|Full-time/u);
   }
 });
 

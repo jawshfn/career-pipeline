@@ -394,17 +394,18 @@ function detectCompensation(lines) {
 }
 
 function detectHeaderLocationHint(headerLines) {
-  const remoteRegionLocation = headerLines.map(getIndeedRemoteRegionLocation).find(Boolean);
-  if (remoteRegionLocation) {
-    return remoteRegionLocation;
+  const parsed = headerLines.map(parseIndeedHeaderLocation).filter(Boolean);
+  const combined = parsed.find((value) => /\s+-\s+/u.test(value));
+  if (combined) return combined;
+  const geographic = parsed.find((value) => !getStructuredWorkArrangement(value));
+  const arrangement = parsed.find((value) => getStructuredWorkArrangement(value));
+  if (arrangement) {
+    const stateWithArrangement = headerLines
+      .map((line) => parseIndeedHeaderLocation(`${normalizeIndeedLocationLine(line)} - ${arrangement}`))
+      .find(Boolean);
+    if (stateWithArrangement) return stateWithArrangement;
   }
-
-  const cityStateLocation = detectCityStateLocation(headerLines);
-  if (cityStateLocation) {
-    return cityStateLocation;
-  }
-
-  return headerLines.map(getWorkArrangementFromLine).find(Boolean) || "";
+  return geographic && arrangement ? `${geographic} - ${arrangement}` : geographic || arrangement || "";
 }
 
 function normalizeIndeedLocationLine(line) {
@@ -414,27 +415,21 @@ function normalizeIndeedLocationLine(line) {
     .replace(/\s+-\s+/gu, " - ");
 }
 
-function isSupportedIndeedRemoteRegion(value) {
-  const region = normalizeWhitespace(String(value || ""));
-  return (
-    US_STATE_NAMES.has(region.toLowerCase()) ||
-    /^[A-Z]{2}$/u.test(region) ||
-    /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/u.test(region)
-  );
-}
-
-function getIndeedRemoteRegionLocation(line) {
+function parseIndeedHeaderLocation(line) {
   const location = normalizeIndeedLocationLine(line);
-  if (/^remote$/iu.test(location)) {
-    return "Remote";
-  }
-
-  const remoteInMatch = location.match(/^remote\s+in\s+(.+)$/iu);
-  const remoteFirstMatch = location.match(/^remote\s+-\s+(.+)$/iu);
-  const remoteLastMatch = location.match(/^(.+)\s+-\s+remote$/iu);
-  const region = remoteInMatch?.[1] || remoteFirstMatch?.[1] || remoteLastMatch?.[1] || "";
-
-  return isSupportedIndeedRemoteRegion(region) ? `Remote in ${normalizeWhitespace(region)}` : "";
+  if (!location) return "";
+  const isArrangement = (value) => Boolean(getStructuredWorkArrangement(value));
+  const isCityState = (value) => /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/u.test(value);
+  const isStreetAddress = (value) => /^\d+\s+[A-Za-z0-9 .'-]+,\s*[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}\s+\d{5}(?:-\d{4})?$/u.test(value);
+  const isState = (value) => US_STATE_NAMES.has(value.toLowerCase()) || US_STATE_ABBREVIATIONS.has(value.toUpperCase());
+  if (/^remote\s+in\s+.+$/iu.test(location)) return location;
+  const parts = location.split(/\s+-\s+/u);
+  if (parts.length === 1) return isStreetAddress(location) || isCityState(location) || isArrangement(location) ? location : "";
+  if (parts.length !== 2) return "";
+  const [first, second] = parts;
+  if (isArrangement(second) && (isStreetAddress(first) || isCityState(first) || isState(first))) return `${first} - ${second}`;
+  if (isArrangement(first) && isState(second)) return `${first} - ${second}`;
+  return "";
 }
 
 const googleCompensationCadencePattern =
@@ -966,13 +961,9 @@ function extractHeaderFields(rawText, options = {}) {
 function extractIndeedFields(rawText) {
   const baseFields = extractHeaderFields(rawText);
   const headerLines = getHeaderLines(rawText);
-  const streetAddressLocation = detectStreetAddressLocation(headerLines);
-  const indeedWorkArrangement = headerLines.map(getWorkArrangementFromLine).find(Boolean) || "";
   const headerLocation = detectHeaderLocationHint(headerLines);
   const indeedBonuses = getIndeedDescriptionBonuses(rawText);
-  const indeedLocation = streetAddressLocation
-    ? appendWorkArrangement(streetAddressLocation, indeedWorkArrangement)
-    : headerLocation;
+  const indeedLocation = headerLocation;
 
   return {
     ...baseFields,

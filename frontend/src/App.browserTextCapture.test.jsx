@@ -51,11 +51,13 @@ describe("browser text capture startup", () => {
       source: "Indeed",
       original_job_link: "https://www.indeed.com/?vjk=0123456789abcdef",
       raw_text: [
-        "Fictional Support Specialist - job post",
-        "Northstar Systems",
-        "West Point, VA 23181",
+        "Fictional Mechanical Engineer - job post",
+        "Fictional Refrigeration",
+        "Norfolk, VA 23510 - Hybrid work",
+        "Job details",
+        "Full-time",
         "Full job description",
-        "Support local users.",
+        "Build and support fictional refrigeration systems.",
       ].join("\n"),
     });
     resetBrowserTextCaptureConsumptionCacheForTests();
@@ -88,7 +90,8 @@ describe("browser text capture startup", () => {
     expect(mocks.consumeBrowserTextCapture).toHaveBeenCalledTimes(1);
     expect(mocks.consumeBrowserTextCapture).toHaveBeenCalledWith("a".repeat(43));
     expect(container.textContent).toContain("Review before saving");
-    expect(container.textContent).toContain("Northstar Systems");
+    expect(container.textContent).toContain("Fictional Refrigeration");
+    expect(container.querySelector('input[name="location"]').value).toBe("Norfolk, VA 23510 - Hybrid work");
     expect(container.querySelector('input[name="job_link"]').value).toBe(
       "https://www.indeed.com/viewjob?jk=0123456789abcdef",
     );
