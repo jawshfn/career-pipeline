@@ -199,11 +199,18 @@ def assign_default_to_unassigned_applications(
         )
         if len(eligible) != payload.expected_unassigned_count:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The application list changed. Review the updated count and try again.")
-        now = utc_now()
         application_ids = [application.id for application in eligible]
-        for application in eligible:
-            application.resume_version_id = resume_version.id
-            application.updated_at = now
+        if application_ids:
+            # Supply the stored column value explicitly so Application.updated_at's
+            # onupdate hook cannot turn this administrative backfill into an edit.
+            db.execute(
+                update(Application)
+                .where(Application.id.in_(application_ids))
+                .values(
+                    resume_version_id=resume_version.id,
+                    updated_at=Application.updated_at,
+                )
+            )
         db.commit()
         return ResumeVersionAssignUnassignedRead(
             resume_version_id=resume_version.id,

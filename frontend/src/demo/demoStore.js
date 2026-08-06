@@ -175,7 +175,9 @@ function getActiveApplications() {
 
 function sortByUpdatedAt(applications) {
   return [...applications].sort((first, second) =>
-    String(second.updated_at || "").localeCompare(String(first.updated_at || "")),
+    String(second.updated_at || "").localeCompare(String(first.updated_at || "")) ||
+    String(second.created_at || "").localeCompare(String(first.created_at || "")) ||
+    Number(second.id) - Number(first.id),
   );
 }
 
@@ -690,8 +692,7 @@ export function assignDemoDefaultResumeToUnassigned(resumeVersionId, expectedUna
   const eligible = demoState.applications.filter((application) => !application.is_archived && application.status !== "Archived" && application.resume_version_id == null);
   if (eligible.length !== expectedUnassignedCount) throw new Error("The application list changed. Review the updated count and try again.");
   const ids = eligible.map((application) => application.id);
-  const timestamp = nowIso();
-  demoState = { ...demoState, applications: demoState.applications.map((application) => ids.includes(application.id) ? { ...application, resume_version_id: resumeVersion.id, updated_at: timestamp } : application) };
+  demoState = { ...demoState, applications: demoState.applications.map((application) => ids.includes(application.id) ? { ...application, resume_version_id: resumeVersion.id } : application) };
   return clone({ resume_version_id: resumeVersion.id, name: resumeVersion.name, assigned_application_count: ids.length, assigned_application_ids: ids });
 }
 

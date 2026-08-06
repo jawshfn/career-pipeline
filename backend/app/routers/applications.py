@@ -412,7 +412,11 @@ def list_applications(
             )
         )
 
-    return query.order_by(Application.updated_at.desc()).all()
+    return query.order_by(
+        Application.updated_at.desc(),
+        Application.created_at.desc(),
+        Application.id.desc(),
+    ).all()
 
 
 @router.get("/action-items", response_model=ApplicationActionItemsRead)

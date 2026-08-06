@@ -162,6 +162,25 @@ describe("ApplicationsPage", () => {
     expect(clear.disabled).toBe(true);
   });
 
+  it("sorts saved dates by creation time and IDs, independently of edits, and limits featured placement to recently updated", async () => {
+    const sortable = [
+      { ...applications[0], id: 10, company_name: "August five", date_saved: "2026-08-05", created_at: "2026-08-05T23:00:00Z", updated_at: "2026-08-08T23:00:00Z", status: "Saved" },
+      { ...applications[1], id: 11, company_name: "August six early", date_saved: "2026-08-06", created_at: "2026-08-06T09:00:00Z", updated_at: "2026-08-06T09:30:00Z", status: "Saved" },
+      { ...applications[2], id: 12, company_name: "August six late low ID", date_saved: "2026-08-06", created_at: "2026-08-06T17:00:00Z", updated_at: "2026-08-06T10:00:00Z", status: "Saved" },
+      { ...applications[3], id: 13, company_name: "August six late high ID", date_saved: "2026-08-06", created_at: "2026-08-06T17:00:00Z", updated_at: "2026-08-06T10:00:00Z", status: "Saved" },
+    ];
+    await act(async () => root.render(<ApplicationsPage applications={sortable} error="" featuredApplicationId={10} isLoading={false} onUnsavedChangesChange={vi.fn()} onUpdateApplication={vi.fn()} resumeVersions={[]} />));
+    const sort = container.querySelector('select[name="sortBy"]');
+    const companies = () => [...container.querySelectorAll("tbody tr .opportunity-company")].map((cell) => cell.textContent);
+
+    await act(async () => setControlValue(sort, "saved_desc"));
+    expect(companies()).toEqual(["August six late high ID", "August six late low ID", "August six early", "August five"]);
+    await act(async () => setControlValue(sort, "saved_asc"));
+    expect(companies()).toEqual(["August five", "August six early", "August six late low ID", "August six late high ID"]);
+    await act(async () => setControlValue(sort, "updated_desc"));
+    expect(companies()).toEqual(["August five", "August six late high ID", "August six late low ID", "August six early"]);
+  });
+
   it("keeps follow-up labels, flags, notes, edit actions, and mobile data labels", async () => {
     await renderApplications();
 

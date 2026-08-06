@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   createDemoResumeVersion,
+  createDemoApplication,
+  assignDemoDefaultResumeToUnassigned,
   deleteDemoApplication,
   getDemoActivities,
   deleteDemoResumeVersion,
@@ -116,6 +118,40 @@ describe("demo resume version ordering", () => {
     vi.setSystemTime(new Date("2040-01-03T00:00:00.000Z"));
     const reactivated = updateDemoResumeVersion(2, { is_active: true });
     expect(getDemoResumeVersions()[0]).toMatchObject({ id: reactivated.id, is_active: true });
+    vi.useRealTimers();
+  });
+});
+
+describe("demo default resume assignment", () => {
+  beforeEach(() => resetDemoState());
+
+  it("assigns only eligible applications without rewriting their timestamps or dates", () => {
+    const defaultResume = getDemoResumeVersions().find((resume) => resume.is_active && resume.is_default);
+    const before = getDemoApplications({ includeArchived: true });
+    const eligible = before.filter((application) => !application.is_archived && application.status !== "Archived" && application.resume_version_id == null);
+    const untouched = before.filter((application) => !eligible.some((candidate) => candidate.id === application.id));
+
+    const result = assignDemoDefaultResumeToUnassigned(defaultResume.id, eligible.length);
+    const after = getDemoApplications({ includeArchived: true });
+    expect(result.assigned_application_ids).toEqual(eligible.map((application) => application.id));
+    eligible.forEach((application) => {
+      expect(after.find((item) => item.id === application.id)).toMatchObject({
+        resume_version_id: defaultResume.id,
+        updated_at: application.updated_at,
+        created_at: application.created_at,
+        date_saved: application.date_saved,
+      });
+    });
+    untouched.forEach((application) => expect(after.find((item) => item.id === application.id)).toEqual(application));
+  });
+
+  it("uses updated_at, created_at, and ID for deterministic application ordering", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2040-01-01T00:00:00.000Z"));
+    const first = createDemoApplication({ company_name: "Ordering first", role_title: "Engineer" });
+    const second = createDemoApplication({ company_name: "Ordering second", role_title: "Engineer" });
+    expect(getDemoApplications().slice(0, 2).map((application) => application.id)).toEqual([second.id, first.id]);
+    expect(getDemoApplications().map((application) => application.id)).toEqual(getDemoApplications().map((application) => application.id));
     vi.useRealTimers();
   });
 });

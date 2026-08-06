@@ -89,7 +89,21 @@ function compareDatesWithMissingLast(firstValue, secondValue, direction = "desc"
 }
 
 function compareUpdatedDesc(firstApplication, secondApplication) {
-  return compareDatesWithMissingLast(firstApplication.updated_at, secondApplication.updated_at, "desc");
+  return (
+    compareDatesWithMissingLast(firstApplication.updated_at, secondApplication.updated_at, "desc") ||
+    compareDatesWithMissingLast(firstApplication.created_at, secondApplication.created_at, "desc") ||
+    Number(secondApplication.id) - Number(firstApplication.id)
+  );
+}
+
+function compareSaved(firstApplication, secondApplication, direction) {
+  return (
+    compareDatesWithMissingLast(firstApplication.date_saved, secondApplication.date_saved, direction) ||
+    compareDatesWithMissingLast(firstApplication.created_at, secondApplication.created_at, direction) ||
+    (direction === "asc"
+      ? Number(firstApplication.id) - Number(secondApplication.id)
+      : Number(secondApplication.id) - Number(firstApplication.id))
+  );
 }
 
 function sortApplications(applications, sortBy, featuredApplicationId = null) {
@@ -99,17 +113,11 @@ function sortApplications(applications, sortBy, featuredApplicationId = null) {
       if (secondApplication.id === featuredApplicationId) return 1;
     }
     if (sortBy === "saved_desc") {
-      return (
-        compareDatesWithMissingLast(firstApplication.date_saved, secondApplication.date_saved, "desc") ||
-        compareUpdatedDesc(firstApplication, secondApplication)
-      );
+      return compareSaved(firstApplication, secondApplication, "desc");
     }
 
     if (sortBy === "saved_asc") {
-      return (
-        compareDatesWithMissingLast(firstApplication.date_saved, secondApplication.date_saved, "asc") ||
-        compareUpdatedDesc(firstApplication, secondApplication)
-      );
+      return compareSaved(firstApplication, secondApplication, "asc");
     }
 
     if (sortBy === "follow_up_asc") {

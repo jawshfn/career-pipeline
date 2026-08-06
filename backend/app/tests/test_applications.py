@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 import pytest
 from pydantic import ValidationError
@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from app.domain import ACTIVE_APPLICATION_STATUSES, JOB_LINK_MAX_LENGTH, PROGRESSION_STAGES
 from app.routers.applications import ai_source_fingerprint
 from app.schemas import ApplicationStatusTransitionRequest, OutcomeHistoryCorrectionRequest
+from app.models import Application
 
 
 def create_application(client, **overrides):
@@ -143,6 +144,21 @@ def test_list_applications(client):
 
     assert response.status_code == 200
     assert len(response.json()) == 2
+
+
+def test_list_applications_uses_created_at_then_id_to_break_updated_at_ties(client, db_session):
+    first = create_application(client, company_name="First").json()
+    second = create_application(client, company_name="Second").json()
+    third = create_application(client, company_name="Third").json()
+    shared_updated_at = datetime(2026, 8, 6, 12, tzinfo=timezone.utc)
+    shared_created_at = datetime(2026, 8, 5, 12, tzinfo=timezone.utc)
+    for application_id, created_at in [(first["id"], shared_created_at), (second["id"], shared_created_at + timedelta(hours=1)), (third["id"], shared_created_at + timedelta(hours=1))]:
+        application = db_session.get(Application, application_id)
+        application.created_at = created_at
+        application.updated_at = shared_updated_at
+    db_session.commit()
+
+    assert [item["id"] for item in client.get("/api/applications").json()] == [third["id"], second["id"], first["id"]]
 
 
 def test_get_one_application(client):

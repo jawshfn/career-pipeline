@@ -3,12 +3,19 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from app.models import ApplicationActivity, ResumeVersion
+from app.models import Application, ApplicationActivity, ResumeVersion, utc_now
 
 
 def set_resume_updated_at(db_session, resume_id, updated_at):
     resume = db_session.get(ResumeVersion, resume_id)
     resume.updated_at = updated_at
+    db_session.commit()
+
+
+def set_application_timestamps(db_session, application_id, created_at, updated_at):
+    application = db_session.get(Application, application_id)
+    application.created_at = created_at
+    application.updated_at = updated_at
     db_session.commit()
 
 
@@ -99,7 +106,11 @@ def test_assign_default_to_only_current_non_archived_unassigned_applications(cli
     closed = create_application(client, None, status="Rejected")
     assigned = create_application(client, other["id"], status="Applied")
     archived = create_application(client, None, status="Rejected", is_archived=True)
-    before = client.get(f"/api/applications/{saved['id']}").json()
+    first_timestamp = datetime(2024, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    second_timestamp = datetime(2023, 2, 3, 4, 5, 6, tzinfo=timezone.utc)
+    set_application_timestamps(db_session, saved["id"], first_timestamp - timedelta(days=1), first_timestamp)
+    set_application_timestamps(db_session, closed["id"], second_timestamp - timedelta(days=1), second_timestamp)
+    before = {item["id"]: item for item in client.get("/api/applications?include_archived=true").json()}
 
     response = client.post(f"/api/resume-versions/{default['id']}/assign-unassigned", json={"expected_unassigned_count": 2})
 
@@ -107,12 +118,36 @@ def test_assign_default_to_only_current_non_archived_unassigned_applications(cli
     assert response.json() == {"resume_version_id": default["id"], "name": "General", "assigned_application_count": 2, "assigned_application_ids": [saved["id"], closed["id"]]}
     updated_saved = client.get(f"/api/applications/{saved['id']}").json()
     assert updated_saved["resume_version_id"] == default["id"]
-    assert updated_saved["status"] == before["status"] and updated_saved["date_saved"] == before["date_saved"]
-    assert updated_saved["updated_at"] != before["updated_at"]
-    assert client.get(f"/api/applications/{closed['id']}").json()["resume_version_id"] == default["id"]
-    assert client.get(f"/api/applications/{assigned['id']}").json()["resume_version_id"] == other["id"]
-    assert client.get(f"/api/applications/{archived['id']}").json()["resume_version_id"] is None
+    assert updated_saved["status"] == before[saved["id"]]["status"] and updated_saved["date_saved"] == before[saved["id"]]["date_saved"]
+    assert updated_saved["updated_at"] == before[saved["id"]]["updated_at"]
+    assert updated_saved["created_at"] == before[saved["id"]]["created_at"]
+    updated_closed = client.get(f"/api/applications/{closed['id']}").json()
+    assert updated_closed["resume_version_id"] == default["id"]
+    assert updated_closed["updated_at"] == before[closed["id"]]["updated_at"]
+    assert updated_closed["created_at"] == before[closed["id"]]["created_at"]
+    assert updated_closed["date_saved"] == before[closed["id"]]["date_saved"]
+    assert client.get(f"/api/applications/{assigned['id']}").json() == before[assigned["id"]]
+    assert client.get(f"/api/applications/{archived['id']}").json() == before[archived["id"]]
     assert db_session.query(ApplicationActivity).count() == 0
+
+
+def test_assign_default_preserves_stale_timing_and_individual_resume_edits_refresh_it(client, db_session):
+    default = client.post("/api/resume-versions", json={"name": "General"}).json()
+    other = client.post("/api/resume-versions", json={"name": "Other"}).json()
+    client.patch(f"/api/resume-versions/{default['id']}", json={"is_default": True})
+    application = create_application(client, None, status="Applied")
+    old_timestamp = utc_now() - timedelta(days=15)
+    set_application_timestamps(db_session, application["id"], old_timestamp - timedelta(days=1), old_timestamp)
+
+    assert [item["id"] for item in client.get("/api/applications/action-items").json()["stale_applications"]] == [application["id"]]
+    assigned = client.post(f"/api/resume-versions/{default['id']}/assign-unassigned", json={"expected_unassigned_count": 1})
+    assert assigned.status_code == 200
+    after_bulk = client.get(f"/api/applications/{application['id']}").json()
+    assert datetime.fromisoformat(after_bulk["updated_at"]).replace(tzinfo=timezone.utc) == old_timestamp
+    assert [item["id"] for item in client.get("/api/applications/action-items").json()["stale_applications"]] == [application["id"]]
+
+    updated = client.patch(f"/api/applications/{application['id']}", json={"resume_version_id": other["id"]}).json()
+    assert datetime.fromisoformat(updated["updated_at"]).replace(tzinfo=timezone.utc) > old_timestamp
 
 
 def test_assign_default_rejects_stale_count_without_changes_and_allows_zero(client):
