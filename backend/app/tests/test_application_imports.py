@@ -220,7 +220,7 @@ def test_imported_rows_feed_dashboard_outcomes_and_action_items_without_activity
     dashboard = client.get("/api/dashboard/summary").json()
     cards = {item["key"]: item["value"] for item in dashboard["summary_cards"]}
     assert cards["total_applications"] == 5
-    assert cards["active_applications"] == 3
+    assert cards["active_applications"] == 2
     assert cards["closed_applications"] == 2
     assert cards["upcoming_followups"] == 1
 

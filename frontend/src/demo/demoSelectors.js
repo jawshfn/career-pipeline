@@ -1,5 +1,4 @@
 import {
-  ACTIVE_APPLICATION_STATUSES,
   CLOSED_APPLICATION_STATUSES,
   FOLLOW_UP_EXCLUDED_STATUSES,
   PROGRESSION_STAGES,
@@ -50,7 +49,7 @@ export function selectDemoDashboardSummary({ applications, today, upcomingCutoff
   }
 
   const activeApplicationCount = visibleApplications.filter((application) =>
-    ACTIVE_APPLICATION_STATUSES.has(application.status),
+    PROGRESSION_STAGES.includes(application.status) && application.status !== "Saved",
   ).length;
   const followUpApplications = visibleApplications.filter(
     (application) => !FOLLOW_UP_EXCLUDED_STATUSES.has(application.status),

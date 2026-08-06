@@ -54,18 +54,24 @@ def test_dashboard_excludes_archived_applications(client):
 def test_dashboard_status_and_closed_counts(client):
     create_application(client, status="Saved")
     create_application(client, status="Applied")
+    create_application(client, status="Assessment")
+    create_application(client, status="Recruiter Screen")
     create_application(client, status="Interview")
     create_application(client, status="Offer")
     create_application(client, status="Rejected")
     create_application(client, status="Withdrawn")
+    archived = create_application(client, status="Applied").json()
+    client.patch(f"/api/applications/{archived['id']}", json={"status": "Archived"})
 
     summary = get_summary(client)
 
-    assert get_card(summary, "total_applications")["value"] == 6
-    assert get_card(summary, "active_applications")["value"] == 4
+    assert get_card(summary, "total_applications")["value"] == 8
+    assert get_card(summary, "active_applications")["value"] == 5
     assert get_card(summary, "closed_applications")["value"] == 2
     assert get_count(summary["status_breakdown"], "Saved") == 1
     assert get_count(summary["status_breakdown"], "Applied") == 1
+    assert get_count(summary["status_breakdown"], "Assessment") == 1
+    assert get_count(summary["status_breakdown"], "Recruiter Screen") == 1
     assert get_count(summary["status_breakdown"], "Interview") == 1
     assert get_count(summary["status_breakdown"], "Offer") == 1
     assert get_count(summary["status_breakdown"], "Rejected") == 1

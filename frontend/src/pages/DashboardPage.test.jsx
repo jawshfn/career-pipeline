@@ -71,12 +71,12 @@ describe("DashboardPage", () => {
     vi.clearAllMocks();
   });
 
-  async function renderDashboard({ applications = [], summary = dashboardSummary } = {}) {
+  async function renderDashboard({ applications = [], resumeVersions = [], summary = dashboardSummary } = {}) {
     const onOpenStatusBoard = vi.fn();
     const onNavigate = vi.fn();
     mocks.getDashboardSummary.mockResolvedValue(summary);
     await act(async () => {
-      root.render(<DashboardPage applications={applications} onNavigate={onNavigate} onOpenInsights={vi.fn()} onOpenStatusBoard={onOpenStatusBoard} />);
+      root.render(<DashboardPage applications={applications} resumeVersions={resumeVersions} onNavigate={onNavigate} onOpenInsights={vi.fn()} onOpenStatusBoard={onOpenStatusBoard} />);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -146,14 +146,15 @@ describe("DashboardPage", () => {
     });
   });
 
-  it("applies status, neutral-source, and attention red-flag count classes", async () => {
+  it("keeps the status and source breakdown styling while replacing Red Flags with Resume Usage", async () => {
     await renderDashboard();
 
     ["saved", "applied", "assessment", "screen", "interview", "offer", "closed", "withdrawn"].forEach((status) => {
       expect(container.querySelector(`.dashboard-breakdown-count-status.status-${status}`)).not.toBeNull();
     });
     expect(container.querySelectorAll(".dashboard-breakdown-count-sources")).toHaveLength(2);
-    expect(container.querySelectorAll(".dashboard-breakdown-count-red-flags")).toHaveLength(2);
+    expect(container.textContent).not.toContain("Red Flags");
+    expect(container.textContent).toContain("Resume Usage");
   });
 
   it("links to Outcome Insights instead of embedding effectiveness tables", async () => {
@@ -187,8 +188,17 @@ describe("DashboardPage", () => {
     expect(onNavigate).toHaveBeenNthCalledWith(2, "data");
   });
 
-  it("preserves empty subsection messages when applications exist", async () => {
+  it("renders resume usage with default, inactive, and unassigned states", async () => {
     await renderDashboard({
+      applications: [
+        { id: 1, resume_version_id: 1, status: "Saved" },
+        { id: 2, resume_version_id: 2, status: "Rejected" },
+        { id: 3, resume_version_id: null, status: "Applied" },
+      ],
+      resumeVersions: [
+        { id: 1, name: "General Resume", is_active: true, is_default: true },
+        { id: 2, name: "Historical Resume", is_active: false, is_default: false },
+      ],
       summary: {
         ...dashboardSummary,
         red_flag_snapshot: { flagged_count: 0, items: [] },
@@ -198,8 +208,23 @@ describe("DashboardPage", () => {
     });
 
     expect(container.textContent).toContain("No source data yet.");
-    expect(container.textContent).toContain("No red flags marked on applications.");
-    expect(container.textContent).not.toContain("No resume-version data yet.");
+    expect(container.textContent).toContain("2 assigned across 2 resumes · 1 unassigned");
+    expect(container.textContent).toContain("General Resume");
+    expect(container.textContent).toContain("Historical Resume");
+    expect(container.textContent).toContain("Default");
+    expect(container.textContent).toContain("Inactive");
+    expect(container.textContent).toContain("No resume assigned");
+  });
+
+  it("uses singular resume summary copy and omits a zero-count unassigned row", async () => {
+    await renderDashboard({
+      applications: [{ id: 1, resume_version_id: 1, status: "Applied" }],
+      resumeVersions: [{ id: 1, name: "A very long resume name that must remain visible", is_active: true, is_default: true }],
+    });
+
+    expect(container.textContent).toContain("1 application across 1 resume");
+    expect(container.textContent).toContain("A very long resume name that must remain visible");
+    expect(container.textContent).not.toContain("No resume assigned");
   });
 
   it("shows loading and an initial error without metric panels", async () => {

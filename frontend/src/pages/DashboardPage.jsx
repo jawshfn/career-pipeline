@@ -5,15 +5,12 @@ import { getDashboardSummary } from "../services/dashboardService.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 import { buildApplicationActivitySummary } from "../utils/applicationActivity.js";
+import { buildResumeUsageSummary } from "../utils/resumeUsage.js";
 
 const emptyDashboardSummary = {
   summary_cards: [],
   status_breakdown: [],
   source_breakdown: [],
-  red_flag_snapshot: {
-    flagged_count: 0,
-    items: [],
-  },
 };
 
 function MetricCard({ label, tone, value }) {
@@ -54,6 +51,23 @@ function BreakdownList({ emptyMessage, items, tone = "neutral" }) {
   );
 }
 
+function ResumeUsageList({ entries }) {
+  return (
+    <dl className="dashboard-breakdown-list dashboard-resume-usage-list">
+      {entries.map((entry) => (
+        <div key={String(entry.id)}>
+          <dt>
+            <span className="dashboard-resume-usage-name">{entry.label}</span>
+            {entry.isDefault ? <span className="dashboard-resume-usage-badge dashboard-resume-usage-badge-default">Default</span> : null}
+            {!entry.isActive && !entry.isUnassigned ? <span className="dashboard-resume-usage-badge dashboard-resume-usage-badge-inactive">Inactive</span> : null}
+          </dt>
+          <dd className="dashboard-breakdown-count dashboard-breakdown-count-resume-usage">{entry.count}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 function DashboardDisclosureSection({ children, defaultOpen = true, id, summary, title, tone }) {
   return (
     <details className={`panel dashboard-panel dashboard-disclosure dashboard-panel-${tone}`} open={defaultOpen}>
@@ -77,12 +91,19 @@ function summarizeBreakdown(items, singularLabel, pluralLabel = `${singularLabel
   return `${total} applications across ${items.length} ${label}`;
 }
 
+function summarizeResumeUsage({ assignedApplicationCount, unassignedApplicationCount, distinctAssignedResumeCount }) {
+  const assignedLabel = `${assignedApplicationCount} ${assignedApplicationCount === 1 ? "application" : "applications"}`;
+  const resumeLabel = `${distinctAssignedResumeCount} resume${distinctAssignedResumeCount === 1 ? "" : "s"}`;
+  if (unassignedApplicationCount === 0) return `${assignedLabel} across ${resumeLabel}`;
+  if (assignedApplicationCount === 0) return `0 assigned · ${unassignedApplicationCount} unassigned`;
+  return `${assignedApplicationCount} assigned across ${resumeLabel} · ${unassignedApplicationCount} unassigned`;
+}
+
 function normalizeDashboardSummary(summary) {
   return {
     summary_cards: summary.summary_cards || [],
     status_breakdown: summary.status_breakdown || [],
     source_breakdown: summary.source_breakdown || [],
-    red_flag_snapshot: summary.red_flag_snapshot || emptyDashboardSummary.red_flag_snapshot,
   };
 }
 
@@ -115,7 +136,7 @@ function ApplicationActivityPanel({ applications }) {
   </section>;
 }
 
-export default function DashboardPage({ applications = [], onNavigate = () => {}, onOpenStatusBoard, onOpenInsights }) {
+export default function DashboardPage({ applications = [], resumeVersions = [], onNavigate = () => {}, onOpenStatusBoard, onOpenInsights }) {
   const { data, error, refreshError, isInitialLoading: isLoading } = useStaleResource("dashboard", getDashboardSummary, {
     initialErrorMessage: "Could not load dashboard summary.",
     refreshErrorMessage: "Could not refresh dashboard. Showing the previous summary.",
@@ -123,8 +144,9 @@ export default function DashboardPage({ applications = [], onNavigate = () => {}
   const dashboardSummary = normalizeDashboardSummary(data || emptyDashboardSummary);
 
   const totalApplications = dashboardSummary.status_breakdown.reduce((total, item) => total + item.count, 0);
-  const redFlaggedCount = dashboardSummary.red_flag_snapshot.flagged_count;
   const sourceTotal = dashboardSummary.source_breakdown.reduce((total, item) => total + item.count, 0);
+  const resumeUsage = buildResumeUsageSummary(applications, resumeVersions);
+  const resumeUsageSummary = summarizeResumeUsage(resumeUsage);
 
   return (
     <div className="dashboard-page">
@@ -193,16 +215,12 @@ export default function DashboardPage({ applications = [], onNavigate = () => {}
             </DashboardDisclosureSection>
 
             <DashboardDisclosureSection
-              id="dashboard-red-flags-panel"
-              summary={`${redFlaggedCount} application${redFlaggedCount === 1 ? "" : "s"} flagged`}
-              title="Red Flags"
-              tone="red-flags"
+              id="dashboard-resume-usage-panel"
+              summary={resumeUsageSummary}
+              title="Resume Usage"
+              tone="resume-usage"
             >
-              <BreakdownList
-                emptyMessage="No red flags marked on applications."
-                items={dashboardSummary.red_flag_snapshot.items}
-                tone="red-flags"
-              />
+              <ResumeUsageList entries={resumeUsage.entries} />
             </DashboardDisclosureSection>
           </div>
 

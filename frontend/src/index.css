@@ -4903,6 +4903,48 @@ textarea:focus-visible {
   background: #eef3f5;
 }
 
+.dashboard-breakdown-count-resume-usage {
+  border-color: #b8d8d2;
+  color: #1f5f45;
+  background: #f4fbf9;
+}
+
+.dashboard-resume-usage-list dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px 7px;
+  min-width: 0;
+}
+
+.dashboard-resume-usage-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-resume-usage-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 2px 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.dashboard-resume-usage-badge-default {
+  border-color: #b8d8d2;
+  color: #1f5f45;
+  background: #f4fbf9;
+}
+
+.dashboard-resume-usage-badge-inactive {
+  border-color: #d4dde1;
+  color: #40515c;
+  background: #eef3f5;
+}
+
 .dashboard-breakdown-count-red-flags {
   border-color: #f0c9c2;
   color: #913d31;
@@ -4968,9 +5010,6 @@ textarea:focus-visible {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .dashboard-panel-red-flags {
-    grid-column: 1 / -1;
-  }
 }
 
 @container dashboard-page (max-width: 850px) {
@@ -4984,9 +5023,6 @@ textarea:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .dashboard-panel-red-flags {
-    grid-column: auto;
-  }
 }
 
 @container dashboard-page (max-width: 560px) {

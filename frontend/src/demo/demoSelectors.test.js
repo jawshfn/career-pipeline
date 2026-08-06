@@ -46,6 +46,18 @@ describe("demo read-model selectors", () => {
     });
   });
 
+  it("excludes Saved opportunities from the demo Active applications card while retaining them in Total", () => {
+    const summary = selectDemoDashboardSummary({
+      applications: [application(1, { status: "Saved", furthest_stage: "Saved" }), application(2, { status: "Applied" })],
+      today: "2026-07-30",
+      upcomingCutoff: "2026-08-02",
+    });
+
+    expect(summary.summary_cards.map(({ key, value }) => [key, value])).toEqual(expect.arrayContaining([
+      ["total_applications", 2], ["active_applications", 1], ["closed_applications", 0],
+    ]));
+  });
+
   it("reports outcome scope, historical progression, and source and resume groups", () => {
     const applications = [
       application(1, { source: "LinkedIn", resume_version_id: 1, status: "Rejected", furthest_stage: "Interview" }),

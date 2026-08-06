@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ..database import get_db
 from ..domain import (
-    ACTIVE_APPLICATION_STATUSES,
+    APPLIED_OR_LATER_APPLICATION_STATUSES,
     CLOSED_APPLICATION_STATUSES,
     FOLLOW_UP_EXCLUDED_STATUSES,
     RED_FLAG_FIELDS,
@@ -55,7 +55,9 @@ def get_dashboard_summary(db: Session = Depends(get_db)) -> dict[str, object]:
         if application.status not in FOLLOW_UP_EXCLUDED_STATUSES
     ]
     status_counts = Counter(application.status or SAVED_APPLICATION_STATUS for application in applications)
-    active_application_count = sum(1 for application in applications if application.status in ACTIVE_APPLICATION_STATUSES)
+    active_application_count = sum(
+        1 for application in applications if application.status in APPLIED_OR_LATER_APPLICATION_STATUSES
+    )
     overdue_followup_count = sum(
         1
         for application in follow_up_applications

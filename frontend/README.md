@@ -13,6 +13,8 @@ The React/Vite frontend provides the local workspace and the static GitHub Pages
 - Insights
 - Help
 
+Dashboard keeps Total applications and Closed applications labels, defines Active applications as submitted opportunities still in progress (Applied through Offer), and keeps Saved opportunities in Total applications but out of Active applications. Its lower breakdowns cover Application Status, Sources, and Resume Usage; the top Red-flagged applications metric remains available.
+
 Application Detail includes Overview, Follow-up, Job Details, Job Posting, AI Brief, Resume & Prep, Red Flags, and Activity. Insights provides current-versus-confirmed-history reporting, contributor drill-down, responsive tables, and summary cards.
 
 ## Runtime modes
