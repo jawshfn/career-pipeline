@@ -11,9 +11,9 @@ PursuitHQ helps job seekers capture opportunities, track application status and 
 - Add jobs manually, from supported links, or with deterministic Paste Job Text review.
 - Use the local Browser Capture companion for supported job pages.
 - Manage applications in Application Detail, Status Board, Reminders, and Dashboard.
-- Assign resume variants, attach one optional PDF per version, preview or download it in the browser, and record preparation notes, red flags, and activity.
+- Assign resume variants, attach one optional PDF per version, preview or download it in the browser, and record preparation notes, red flags, and activity. One active resume can be the default for new interactive Add Job drafts; it can be changed before saving, including during Browser Capture, and can be explicitly assigned to currently unassigned applications without replacing existing assignments.
 - Use Data & Import to bring in existing CSV/XLSX trackers (including headerless tables), review every row and duplicate decision, and download spreadsheet templates. Raw spreadsheets are parsed in the browser. PursuitHQ sends only the normalized applications the user approves for import.
-- Export applications as CSV/XLSX or create a complete JSON workspace backup, including attached PDFs.
+- Export applications as CSV/XLSX or create a complete JSON workspace backup, including attached PDFs and the default-resume designation.
 - Generate an explicit, review-only AI Brief without changing saved application fields; local mode stores the latest brief in SQLite.
 - Compare confirmed progression by source and resume version, then inspect the applications contributing to each Outcome Insights metric.
 - Navigate through grouped workflows with an optional compact desktop rail and a compact mobile Menu.

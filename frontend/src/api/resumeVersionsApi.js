@@ -39,6 +39,14 @@ export function updateResumeVersion(resumeVersionId, payload) {
   return apiPatch(`/api/resume-versions/${resumeVersionId}`, payload, RESUME_VERSION_ERROR);
 }
 
+export function assignDefaultResumeToUnassigned(resumeVersionId, expectedUnassignedCount) {
+  return apiPost(
+    `/api/resume-versions/${resumeVersionId}/assign-unassigned`,
+    { expected_unassigned_count: expectedUnassignedCount },
+    RESUME_VERSION_ERROR,
+  );
+}
+
 export function getResumeVersionDeleteImpact(resumeVersionId) {
   return apiGet(`/api/resume-versions/${resumeVersionId}/delete-impact`, RESUME_VERSION_ERROR);
 }

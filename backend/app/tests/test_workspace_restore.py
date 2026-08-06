@@ -111,6 +111,18 @@ def test_preview_authorizes_and_restore_replaces_exact_workspace(client, db_sess
     assert _post_restore(client, raw, authorization["token"]).status_code == 409
 
 
+def test_restore_preserves_default_resume_designation(client, db_session):
+    backup = _source_backup(db_session)
+    backup["data"]["resume_versions"][0]["is_active"] = True
+    backup["data"]["resume_versions"][0]["is_default"] = True
+    raw = _raw(backup)
+    _replace_with_current_workspace(db_session)
+    preview = _post_preview(client, raw).json()
+    assert preview["is_valid"] is True
+    assert _post_restore(client, raw, preview["restore_authorization"]["token"]).status_code == 200
+    assert db_session.query(ResumeVersion).one().is_default is True
+
+
 def test_restore_preserves_a_complete_long_job_link(client, db_session):
     backup = _source_backup(db_session)
     prefix = "https://example.com/jobs/platform-engineer?tracking="

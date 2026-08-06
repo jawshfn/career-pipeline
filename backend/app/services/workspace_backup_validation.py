@@ -65,6 +65,7 @@ class ResumeBackupRecord(_StrictBackupModel):
     target_role: StrictStr | None
     description: StrictStr | None
     is_active: StrictBool
+    is_default: StrictBool = False
     created_at: StrictStr
     updated_at: StrictStr
 
@@ -446,6 +447,11 @@ def validate_workspace_backup_document(payload: Any) -> tuple[WorkspaceBackupDoc
                         issues.append(_issue("duplicate_id", f"data.{name}[{index}].id", "Record IDs must be unique within this collection."))
                     seen.add(record.id)
             resume_ids = {record.id for record in data.resume_versions}
+            default_resumes = [record for record in data.resume_versions if record.is_default]
+            if len(default_resumes) > 1:
+                issues.append(_issue("multiple_default_resumes", "data.resume_versions", "Only one resume version may be marked default."))
+            if any(not record.is_active for record in default_resumes):
+                issues.append(_issue("inactive_default_resume", "data.resume_versions", "The default resume version must be active."))
             application_ids = {record.id for record in data.applications}
             for index, record in enumerate(data.applications):
                 if record.resume_version_id is not None and record.resume_version_id not in resume_ids:

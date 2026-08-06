@@ -5,6 +5,7 @@ import { isDemoMode } from "../config/runtimeMode.js";
 const resumesApi = isDemoMode() ? demoResumesApi : realResumeVersionsApi;
 
 export const {
+  assignDefaultResumeToUnassigned,
   createResumeVersion,
   deleteResumeVersion,
   getResumeVersionDeleteImpact,

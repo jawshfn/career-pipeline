@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta, timezone
 
-from app.models import ResumeVersion
+import pytest
+from sqlalchemy.exc import IntegrityError
+
+from app.models import ApplicationActivity, ResumeVersion
 
 
 def set_resume_updated_at(db_session, resume_id, updated_at):
@@ -49,6 +52,80 @@ def test_get_and_update_resume_version(client):
 
     all_list_response = client.get("/api/resume-versions?include_inactive=true")
     assert len(all_list_response.json()) == 1
+
+
+def test_default_resume_transfers_clears_and_never_restores_when_reactivated(client):
+    first = client.post("/api/resume-versions", json={"name": "General"}).json()
+    second = client.post("/api/resume-versions", json={"name": "Targeted"}).json()
+
+    assert client.patch(f"/api/resume-versions/{first['id']}", json={"is_default": True}).json()["is_default"] is True
+    transferred = client.patch(f"/api/resume-versions/{second['id']}", json={"is_default": True})
+    assert transferred.status_code == 200
+    assert transferred.json()["is_default"] is True
+    assert client.get(f"/api/resume-versions/{first['id']}").json()["is_default"] is False
+
+    deactivated = client.patch(f"/api/resume-versions/{second['id']}", json={"is_active": False})
+    assert deactivated.json()["is_active"] is False
+    assert deactivated.json()["is_default"] is False
+    reactivated = client.patch(f"/api/resume-versions/{second['id']}", json={"is_active": True})
+    assert reactivated.json()["is_default"] is False
+    assert client.patch(f"/api/resume-versions/{first['id']}", json={"is_default": False}).json()["is_default"] is False
+
+
+def test_inactive_resume_cannot_be_default_and_reads_include_default(client):
+    inactive = create_inactive_resume(client)
+    response = client.patch(f"/api/resume-versions/{inactive['id']}", json={"is_default": True})
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Only an active resume version can be the default."
+    assert client.get(f"/api/resume-versions/{inactive['id']}").json()["is_default"] is False
+
+
+def test_database_prevents_multiple_default_resumes(db_session):
+    db_session.add_all([
+        ResumeVersion(name="First default", is_default=True),
+        ResumeVersion(name="Second default", is_default=True),
+    ])
+
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+    db_session.rollback()
+
+
+def test_assign_default_to_only_current_non_archived_unassigned_applications(client, db_session):
+    default = client.post("/api/resume-versions", json={"name": "General"}).json()
+    other = client.post("/api/resume-versions", json={"name": "Other"}).json()
+    client.patch(f"/api/resume-versions/{default['id']}", json={"is_default": True})
+    saved = create_application(client, None, status="Saved")
+    closed = create_application(client, None, status="Rejected")
+    assigned = create_application(client, other["id"], status="Applied")
+    archived = create_application(client, None, status="Rejected", is_archived=True)
+    before = client.get(f"/api/applications/{saved['id']}").json()
+
+    response = client.post(f"/api/resume-versions/{default['id']}/assign-unassigned", json={"expected_unassigned_count": 2})
+
+    assert response.status_code == 200
+    assert response.json() == {"resume_version_id": default["id"], "name": "General", "assigned_application_count": 2, "assigned_application_ids": [saved["id"], closed["id"]]}
+    updated_saved = client.get(f"/api/applications/{saved['id']}").json()
+    assert updated_saved["resume_version_id"] == default["id"]
+    assert updated_saved["status"] == before["status"] and updated_saved["date_saved"] == before["date_saved"]
+    assert updated_saved["updated_at"] != before["updated_at"]
+    assert client.get(f"/api/applications/{closed['id']}").json()["resume_version_id"] == default["id"]
+    assert client.get(f"/api/applications/{assigned['id']}").json()["resume_version_id"] == other["id"]
+    assert client.get(f"/api/applications/{archived['id']}").json()["resume_version_id"] is None
+    assert db_session.query(ApplicationActivity).count() == 0
+
+
+def test_assign_default_rejects_stale_count_without_changes_and_allows_zero(client):
+    default = client.post("/api/resume-versions", json={"name": "General"}).json()
+    client.patch(f"/api/resume-versions/{default['id']}", json={"is_default": True})
+    unassigned = create_application(client, None)
+
+    stale = client.post(f"/api/resume-versions/{default['id']}/assign-unassigned", json={"expected_unassigned_count": 0})
+    assert stale.status_code == 409
+    assert client.get(f"/api/applications/{unassigned['id']}").json()["resume_version_id"] is None
+    assigned = client.post(f"/api/resume-versions/{default['id']}/assign-unassigned", json={"expected_unassigned_count": 1})
+    assert assigned.json()["assigned_application_count"] == 1
+    assert client.post(f"/api/resume-versions/{default['id']}/assign-unassigned", json={"expected_unassigned_count": 0}).json()["assigned_application_ids"] == []
 
 
 def test_resume_version_lists_order_by_updated_at_with_stable_id_tie_breaker(client, db_session):

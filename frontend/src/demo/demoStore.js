@@ -631,6 +631,7 @@ export function createDemoResumeVersion(payload) {
     target_role: payload.target_role || null,
     description: payload.description || null,
     is_active: true,
+    is_default: false,
     created_at: timestamp,
     updated_at: timestamp,
   };
@@ -648,9 +649,18 @@ export function updateDemoResumeVersion(resumeVersionId, payload) {
   let updatedResumeVersion = null;
   const timestamp = nowIso();
 
+  const selected = demoState.resumeVersions.find((resumeVersion) => String(resumeVersion.id) === String(resumeVersionId));
+  if (!selected) throw new Error("Resume version not found.");
+  const targetIsActive = payload.is_active ?? selected.is_active;
+  if (payload.is_default === true && !targetIsActive) {
+    throw new Error("Only an active resume version can be the default.");
+  }
   demoState = {
     ...demoState,
     resumeVersions: demoState.resumeVersions.map((resumeVersion) => {
+      if (payload.is_default === true && String(resumeVersion.id) !== String(resumeVersionId)) {
+        return { ...resumeVersion, is_default: false, updated_at: timestamp };
+      }
       if (String(resumeVersion.id) !== String(resumeVersionId)) {
         return resumeVersion;
       }
@@ -658,6 +668,7 @@ export function updateDemoResumeVersion(resumeVersionId, payload) {
       updatedResumeVersion = {
         ...resumeVersion,
         ...payload,
+        ...(payload.is_active === false ? { is_default: false } : {}),
         updated_at: timestamp,
       };
       return updatedResumeVersion;
@@ -669,6 +680,19 @@ export function updateDemoResumeVersion(resumeVersionId, payload) {
   }
 
   return clone(decorateResumeVersion(updatedResumeVersion));
+}
+
+export function assignDemoDefaultResumeToUnassigned(resumeVersionId, expectedUnassignedCount) {
+  const resumeVersion = demoState.resumeVersions.find((item) => String(item.id) === String(resumeVersionId));
+  if (!resumeVersion) throw new Error("Resume version not found.");
+  if (!resumeVersion.is_active || !resumeVersion.is_default) throw new Error("Only the current active default resume can be assigned to unassigned applications.");
+  if (!Number.isInteger(expectedUnassignedCount) || expectedUnassignedCount < 0) throw new Error("Expected unassigned application count must be a nonnegative integer.");
+  const eligible = demoState.applications.filter((application) => !application.is_archived && application.status !== "Archived" && application.resume_version_id == null);
+  if (eligible.length !== expectedUnassignedCount) throw new Error("The application list changed. Review the updated count and try again.");
+  const ids = eligible.map((application) => application.id);
+  const timestamp = nowIso();
+  demoState = { ...demoState, applications: demoState.applications.map((application) => ids.includes(application.id) ? { ...application, resume_version_id: resumeVersion.id, updated_at: timestamp } : application) };
+  return clone({ resume_version_id: resumeVersion.id, name: resumeVersion.name, assigned_application_count: ids.length, assigned_application_ids: ids });
 }
 
 export function getDemoResumeVersionDeleteImpact(resumeVersionId) {

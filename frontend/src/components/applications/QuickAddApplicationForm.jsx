@@ -17,6 +17,7 @@ import {
 } from "../../utils/applicationPayloads.js";
 import { findSimilarOpportunities } from "../../utils/opportunityDuplicates.js";
 import DuplicateOpportunityWarning from "./DuplicateOpportunityWarning.jsx";
+import { getDefaultResumeVersionId } from "../../utils/resumeVersions.js";
 
 export const initialQuickAddFormState = {
   company_name: "",
@@ -82,14 +83,26 @@ export default function QuickAddApplicationForm({
   onCreateSuccess,
   onUnsavedChangesChange,
 }) {
-  const [formData, setFormData] = useState(initialQuickAddFormState);
+  const initialDefaultResumeVersionId = getDefaultResumeVersionId(resumeVersions);
+  const [formData, setFormData] = useState(() => ({ ...initialQuickAddFormState, resume_version_id: initialDefaultResumeVersionId }));
+  const [pristineResumeVersionId, setPristineResumeVersionId] = useState(initialDefaultResumeVersionId);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTrackingDetails, setShowTrackingDetails] = useState(false);
+  const hasInitializedDefaultResume = React.useRef(Boolean(getDefaultResumeVersionId(resumeVersions)));
+  const hasDraftBeenTouched = React.useRef(false);
 
   useEffect(() => {
-    onUnsavedChangesChange?.(isQuickAddFormDirty(formData));
-  }, [formData, onUnsavedChangesChange]);
+    const defaultResumeVersionId = getDefaultResumeVersionId(resumeVersions);
+    if (!defaultResumeVersionId || hasInitializedDefaultResume.current || hasDraftBeenTouched.current) return;
+    setFormData((current) => current.resume_version_id ? current : { ...current, resume_version_id: defaultResumeVersionId });
+    setPristineResumeVersionId(defaultResumeVersionId);
+    hasInitializedDefaultResume.current = true;
+  }, [resumeVersions]);
+
+  useEffect(() => {
+    onUnsavedChangesChange?.(isQuickAddFormDirty(formData, { ...initialQuickAddFormState, resume_version_id: pristineResumeVersionId }));
+  }, [formData, onUnsavedChangesChange, pristineResumeVersionId]);
 
   useEffect(() => {
     return () => {
@@ -99,6 +112,8 @@ export default function QuickAddApplicationForm({
 
   function updateField(event) {
     const { name, value } = event.target;
+    hasDraftBeenTouched.current = true;
+    if (name === "resume_version_id") hasInitializedDefaultResume.current = true;
     setFormData((current) => {
       if (name === "status" && isAppliedOrLater(value) && !current.date_applied) {
         return { ...current, status: value, date_applied: getTodayValue() };
@@ -109,6 +124,7 @@ export default function QuickAddApplicationForm({
   }
 
   function setFollowUpDate(value) {
+    hasDraftBeenTouched.current = true;
     setFormData((current) => ({ ...current, follow_up_date: value }));
   }
 
@@ -132,7 +148,11 @@ export default function QuickAddApplicationForm({
 
     try {
       const createdApplication = await onCreateApplication(payload);
-      setFormData(initialQuickAddFormState);
+      const defaultResumeVersionId = getDefaultResumeVersionId(resumeVersions);
+      setFormData({ ...initialQuickAddFormState, resume_version_id: defaultResumeVersionId });
+      setPristineResumeVersionId(defaultResumeVersionId);
+      hasInitializedDefaultResume.current = Boolean(defaultResumeVersionId);
+      hasDraftBeenTouched.current = false;
       setShowTrackingDetails(false);
       onCreateSuccess?.(createdApplication);
     } catch (creationError) {

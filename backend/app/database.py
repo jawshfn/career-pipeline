@@ -38,6 +38,7 @@ def get_db() -> Generator[Session, None, None]:
 def create_db_and_tables() -> None:
     Base.metadata.create_all(bind=engine)
     add_application_additive_columns()
+    add_resume_version_additive_columns()
 
 
 def parse_status_change_note(note: str | None) -> tuple[str, str] | None:
@@ -150,3 +151,17 @@ def add_application_additive_columns() -> None:
             text("INSERT INTO internal_schema_migrations (migration_key) VALUES (:key)"),
             {"key": TERMINAL_SUBMISSION_HISTORY_RECONCILIATION_KEY},
         )
+
+
+def add_resume_version_additive_columns() -> None:
+    inspector = inspect(engine)
+    if not inspector.has_table("resume_versions"):
+        return
+    existing_columns = {column["name"] for column in inspector.get_columns("resume_versions")}
+    with engine.begin() as connection:
+        if "is_default" not in existing_columns:
+            connection.execute(text("ALTER TABLE resume_versions ADD COLUMN is_default BOOLEAN NOT NULL DEFAULT 0"))
+        # A partial unique index protects the invariant without constraining the
+        # many valid false values. Existing workspaces have just been backfilled
+        # to false, so index creation is safe and idempotent.
+        connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_resume_versions_single_default ON resume_versions (is_default) WHERE is_default = 1"))

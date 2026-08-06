@@ -4,6 +4,7 @@ import { applyApplicationFollowUpAction, correctApplicationOutcomeHistory, creat
 import { invalidateResource } from "./services/staleResource.js";
 import {
   createResumeVersion,
+  assignDefaultResumeToUnassigned,
   deleteResumeVersionFile,
   deleteResumeVersion,
   getResumeVersion,
@@ -47,6 +48,20 @@ export function updateActiveResumeVersions(resumeVersions, resumeVersion) {
   return resumeVersion.is_active
     ? upsertResumeVersionToFront(resumeVersions, resumeVersion)
     : removeResumeVersionById(resumeVersions, resumeVersion.id);
+}
+
+export function synchronizeResumeDefault(resumeVersions, resumeVersion) {
+  const withoutOtherDefaults = resumeVersion.is_default
+    ? resumeVersions.map((item) => String(item.id) === String(resumeVersion.id) ? item : { ...item, is_default: false })
+    : resumeVersions;
+  return upsertResumeVersionToFront(withoutOtherDefaults, resumeVersion);
+}
+
+export function assignResumeToApplications(applications, resumeVersionId, applicationIds) {
+  const ids = new Set((applicationIds || []).map(String));
+  return applications.map((application) => ids.has(String(application.id))
+    ? { ...application, resume_version_id: resumeVersionId }
+    : application);
 }
 
 export function clearDeletedResumeAssignments(applications, resumeVersionId) {
@@ -342,11 +357,29 @@ export default function App() {
   async function handleUpdateResumeVersion(resumeVersionId, payload) {
     const updatedResumeVersion = await updateResumeVersion(resumeVersionId, payload);
     setResumeVersions((currentResumeVersions) =>
-      updateActiveResumeVersions(currentResumeVersions, updatedResumeVersion),
+      updateActiveResumeVersions(synchronizeResumeDefault(currentResumeVersions, updatedResumeVersion), updatedResumeVersion),
     );
-    setAllResumeVersions((currentResumeVersions) => upsertResumeVersionToFront(currentResumeVersions, updatedResumeVersion));
+    setAllResumeVersions((currentResumeVersions) => synchronizeResumeDefault(currentResumeVersions, updatedResumeVersion));
     invalidateResource("outcome-insights");
     return updatedResumeVersion;
+  }
+
+  async function handleAssignDefaultResumeToUnassigned(resumeVersionId, expectedUnassignedCount) {
+    try {
+      const result = await assignDefaultResumeToUnassigned(resumeVersionId, expectedUnassignedCount);
+      setApplications((currentApplications) => assignResumeToApplications(
+        currentApplications,
+        result.resume_version_id,
+        result.assigned_application_ids,
+      ));
+      invalidateResource("outcome-insights");
+      return result;
+    } catch (assignmentError) {
+      if (assignmentError.message === "The application list changed. Review the updated count and try again.") {
+        setApplications(await getApplications({ includeArchived: true }));
+      }
+      throw assignmentError;
+    }
   }
 
   async function refreshResumeAfterFileMutation(resumeVersionId) {
@@ -431,6 +464,7 @@ export default function App() {
           isDemoMode={demoMode}
           isLoading={isLoading}
           onCreateResumeVersion={handleCreateResumeVersion}
+          onAssignDefaultResumeToUnassigned={handleAssignDefaultResumeToUnassigned}
           onDeleteResumeVersion={handleDeleteResumeVersion}
           onGetResumeVersionDeleteImpact={getResumeVersionDeleteImpact}
           onGetResumeVersionFileContent={handleGetResumeVersionFileContent}

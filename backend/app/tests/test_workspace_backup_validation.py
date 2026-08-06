@@ -59,6 +59,25 @@ def test_backup_validation_accepts_long_job_links_and_rejects_overlong_ones(clie
     assert "schema_error" in issue_codes(post_backup(client, payload))
 
 
+def test_default_resume_backup_validation_is_strict_and_accepts_older_missing_field(client, db_session):
+    payload, _ = populated_backup(db_session)
+    payload["data"]["resume_versions"][0]["is_active"] = True
+    payload["data"]["resume_versions"][0]["is_default"] = True
+    assert post_backup(client, payload).json()["is_valid"] is True
+
+    missing = copy.deepcopy(payload)
+    missing["data"]["resume_versions"][0].pop("is_default")
+    assert post_backup(client, missing).json()["is_valid"] is True
+
+    inactive = copy.deepcopy(payload)
+    inactive["data"]["resume_versions"][0]["is_active"] = False
+    assert "inactive_default_resume" in issue_codes(post_backup(client, inactive))
+
+    non_boolean = copy.deepcopy(payload)
+    non_boolean["data"]["resume_versions"][0]["is_default"] = "true"
+    assert "schema_error" in issue_codes(post_backup(client, non_boolean))
+
+
 def test_transport_content_type_and_body_handling(client, db_session):
     payload, _ = populated_backup(db_session)
     assert post_backup(client, payload).status_code == 200

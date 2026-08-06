@@ -66,4 +66,14 @@ describe("CaptureReviewForm Browser Capture quick finish", () => {
     await act(async () => save.click());
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ status: "Interview" }));
   });
+
+  it("confirms the selected Browser Capture resume and focuses the existing selector when changed", async () => {
+    const selected = { ...reviewData, resume_version_id: "2" };
+    await act(async () => root.render(<CaptureReviewForm captureOrigin="browser-capture" existingApplications={[]} onCreateApplication={vi.fn()} onCreateSuccess={vi.fn()} onReset={vi.fn()} onReviewDataChange={vi.fn()} resumeVersions={[{ id: 2, name: "General Resume", is_active: true, is_default: true }]} reviewData={selected} />));
+    expect(container.textContent).toContain("Resume: General Resume");
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Change").click());
+    expect(container.textContent).toContain("Optional details");
+    expect(container.querySelectorAll('select[name="resume_version_id"]')).toHaveLength(1);
+    expect(focus).toHaveBeenCalled();
+  });
 });

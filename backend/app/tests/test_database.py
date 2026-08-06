@@ -52,6 +52,23 @@ def test_additive_application_columns_preserve_existing_notes_and_rows(tmp_path,
     engine.dispose()
 
 
+def test_additive_resume_default_column_backfills_legacy_rows_and_is_idempotent(tmp_path, monkeypatch):
+    engine = create_engine(f"sqlite:///{tmp_path / 'legacy-resumes.db'}")
+    with engine.begin() as connection:
+        connection.execute(text("CREATE TABLE resume_versions (id INTEGER PRIMARY KEY, name VARCHAR(120), is_active BOOLEAN NOT NULL)"))
+        connection.execute(text("INSERT INTO resume_versions (id, name, is_active) VALUES (1, 'Existing', 1)"))
+    monkeypatch.setattr(database, "engine", engine)
+
+    database.add_resume_version_additive_columns()
+    database.add_resume_version_additive_columns()
+
+    assert "is_default" in {column["name"] for column in inspect(engine).get_columns("resume_versions")}
+    with engine.connect() as connection:
+        assert connection.execute(text("SELECT is_default FROM resume_versions WHERE id = 1")).scalar_one() == 0
+    assert "uq_resume_versions_single_default" in {index["name"] for index in inspect(engine).get_indexes("resume_versions")}
+    engine.dispose()
+
+
 def test_legacy_salary_columns_remain_compatible_with_current_application_model(tmp_path):
     engine = create_engine(f"sqlite:///{tmp_path / 'legacy-salary.db'}")
     database.Base.metadata.create_all(bind=engine)

@@ -655,6 +655,7 @@ class ResumeVersionUpdate(BaseModel):
     target_role: str | None = None
     description: str | None = None
     is_active: bool | None = None
+    is_default: bool | None = None
 
 
 class ResumeVersionFileMetadataRead(BaseModel):
@@ -675,6 +676,7 @@ class ResumeVersionRead(BaseModel):
     target_role: str | None
     description: str | None
     is_active: bool
+    is_default: bool
     created_at: datetime
     updated_at: datetime
     file: ResumeVersionFileMetadataRead | None = None
@@ -696,3 +698,16 @@ class ResumeVersionDeleteRead(BaseModel):
     resume_version_id: int
     name: str
     unassigned_application_count: int
+
+
+class ResumeVersionAssignUnassignedRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    expected_unassigned_count: StrictInt = Field(ge=0)
+
+
+class ResumeVersionAssignUnassignedRead(BaseModel):
+    resume_version_id: int
+    name: str
+    assigned_application_count: int
+    assigned_application_ids: list[int]

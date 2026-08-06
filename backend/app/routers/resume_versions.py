@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import update
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, selectinload
 
 from ..database import get_db
 from ..models import Application, ResumeVersion, ResumeVersionFile, utc_now
 from ..schemas import (
     ResumeVersionCreate,
+    ResumeVersionAssignUnassignedRead,
+    ResumeVersionAssignUnassignedRequest,
     ResumeVersionDeleteImpactRead,
     ResumeVersionDeleteRead,
     ResumeVersionFileDeleteRead,
@@ -145,12 +148,75 @@ def update_resume_version(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume version not found")
 
     updates = payload.model_dump(exclude_unset=True)
-    for field, value in updates.items():
-        setattr(resume_version, field, value)
-
-    db.commit()
+    if updates.get("is_default") is True and not updates.get("is_active", resume_version.is_active):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only an active resume version can be the default.")
+    try:
+        # Reserve the writer before checking/changing the single workspace default.
+        db.connection().exec_driver_sql("BEGIN IMMEDIATE")
+        if updates.get("is_default") is True:
+            db.execute(
+                update(ResumeVersion)
+                .where(ResumeVersion.id != resume_version_id, ResumeVersion.is_default.is_(True))
+                .values(is_default=False, updated_at=utc_now())
+            )
+        if updates.get("is_active") is False:
+            updates["is_default"] = False
+        for field, value in updates.items():
+            setattr(resume_version, field, value)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only one default resume version is allowed.")
+    except SQLAlchemyError:
+        db.rollback()
+        raise
     db.refresh(resume_version)
     return resume_version
+
+
+@router.post("/{resume_version_id}/assign-unassigned", response_model=ResumeVersionAssignUnassignedRead)
+def assign_default_to_unassigned_applications(
+    resume_version_id: int,
+    payload: ResumeVersionAssignUnassignedRequest,
+    db: Session = Depends(get_db),
+) -> ResumeVersionAssignUnassignedRead:
+    try:
+        db.connection().exec_driver_sql("BEGIN IMMEDIATE")
+        resume_version = db.get(ResumeVersion, resume_version_id)
+        if resume_version is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resume version not found")
+        if not resume_version.is_active or not resume_version.is_default:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only the current active default resume can be assigned to unassigned applications.")
+        eligible = (
+            db.query(Application)
+            .filter(
+                Application.resume_version_id.is_(None),
+                Application.is_archived.is_(False),
+                Application.status != "Archived",
+            )
+            .order_by(Application.id.asc())
+            .all()
+        )
+        if len(eligible) != payload.expected_unassigned_count:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="The application list changed. Review the updated count and try again.")
+        now = utc_now()
+        application_ids = [application.id for application in eligible]
+        for application in eligible:
+            application.resume_version_id = resume_version.id
+            application.updated_at = now
+        db.commit()
+        return ResumeVersionAssignUnassignedRead(
+            resume_version_id=resume_version.id,
+            name=resume_version.name,
+            assigned_application_count=len(application_ids),
+            assigned_application_ids=application_ids,
+        )
+    except HTTPException:
+        db.rollback()
+        raise
+    except SQLAlchemyError:
+        db.rollback()
+        raise
 
 
 @router.get("/{resume_version_id}/delete-impact", response_model=ResumeVersionDeleteImpactRead)

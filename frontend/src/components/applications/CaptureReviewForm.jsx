@@ -16,6 +16,7 @@ import {
 import { findSimilarOpportunities } from "../../utils/opportunityDuplicates.js";
 import DuplicateOpportunityWarning from "./DuplicateOpportunityWarning.jsx";
 import JobPostingSnapshotDialog from "./JobPostingSnapshotDialog.jsx";
+import { getDefaultResumeVersionId } from "../../utils/resumeVersions.js";
 
 function getResumeVersionLabel(resumeVersion) {
   return resumeVersion.target_role
@@ -183,6 +184,17 @@ export default function CaptureReviewForm({
   const reviewHeadingRef = useRef(null);
   const hasNavigatedToReview = useRef(false);
   const [submittingStatus, setSubmittingStatus] = useState("");
+  const resumeSelectRef = useRef(null);
+  const hasInitializedDefaultResume = useRef(Boolean(reviewData?.resume_version_id));
+  const hasReviewBeenTouched = useRef(false);
+  const selectedResumeVersion = resumeVersions.find((item) => String(item.id) === String(reviewData.resume_version_id));
+
+  useEffect(() => {
+    const defaultResumeVersionId = getDefaultResumeVersionId(resumeVersions);
+    if (!defaultResumeVersionId || hasInitializedDefaultResume.current || hasReviewBeenTouched.current || reviewData?.resume_version_id) return;
+    onReviewDataChange((current) => current.resume_version_id ? current : { ...current, resume_version_id: defaultResumeVersionId });
+    hasInitializedDefaultResume.current = true;
+  }, [onReviewDataChange, resumeVersions, reviewData?.resume_version_id]);
 
   useEffect(() => {
     setShowTrackingDetails(false);
@@ -208,7 +220,14 @@ export default function CaptureReviewForm({
 
   function updateReviewField(event) {
     const { name, value } = event.target;
+    hasReviewBeenTouched.current = true;
+    if (name === "resume_version_id") hasInitializedDefaultResume.current = true;
     onReviewDataChange((current) => ({ ...current, [name]: value }));
+  }
+
+  function revealResumeSelector() {
+    setShowTrackingDetails(true);
+    window.requestAnimationFrame(() => resumeSelectRef.current?.focus());
   }
 
   async function handleSubmitReview(event) {
@@ -405,7 +424,7 @@ export default function CaptureReviewForm({
 
             <label>
               Resume version
-              <select name="resume_version_id" value={reviewData.resume_version_id} onChange={updateReviewField}>
+              <select ref={resumeSelectRef} name="resume_version_id" value={reviewData.resume_version_id} onChange={updateReviewField}>
                 <option value="">No resume selected</option>
                 {resumeVersions.map((resumeVersion) => (
                   <option key={resumeVersion.id} value={resumeVersion.id}>
@@ -496,6 +515,12 @@ export default function CaptureReviewForm({
           <div className="browser-capture-quick-finish-intro quick-finish-copy">
             <strong>Ready to save</strong>
             <p>Choose the status that should be recorded.</p>
+            <p className="browser-capture-resume-confirmation">
+              {reviewData.resume_version_id
+                ? `Resume: ${selectedResumeVersion?.name || "Selected resume"}`
+                : "No resume selected"}
+              <button className="browser-capture-resume-change" type="button" onClick={revealResumeSelector}>{reviewData.resume_version_id ? "Change" : "Choose"}</button>
+            </p>
           </div>
           <div className="browser-capture-quick-finish-actions quick-finish-common-actions">
             <button className="secondary-button" name="save_intent" type="submit" value="save-for-later" disabled={isSubmitting}>

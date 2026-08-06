@@ -5,6 +5,7 @@ import ConfirmationDialog from "../components/ui/ConfirmationDialog.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
 import AutoGrowingTextarea from "../components/ui/AutoGrowingTextarea.jsx";
 import ResumeFileSection, { formatResumeFileDate, formatResumeFileSize } from "../components/resumes/ResumeFileSection.jsx";
+import { isArchivedApplication } from "../utils/applicationReviewRows.js";
 
 const initialCreateForm = {
   name: "",
@@ -179,6 +180,7 @@ export default function ResumeVersionsPage({
   applications = [],
   error,
   isLoading,
+  onAssignDefaultResumeToUnassigned,
   onCreateResumeVersion,
   onDeleteResumeVersion,
   onDeleteResumeVersionFile,
@@ -204,7 +206,10 @@ export default function ResumeVersionsPage({
   const [deletingId, setDeletingId] = useState(null);
   const [pendingResumeAction, setPendingResumeAction] = useState(null);
   const [pendingResumeDeletion, setPendingResumeDeletion] = useState(null);
+  const [pendingDefaultAssignment, setPendingDefaultAssignment] = useState(null);
   const [deleteDialogError, setDeleteDialogError] = useState("");
+  const [defaultAssignmentError, setDefaultAssignmentError] = useState("");
+  const [isAssigningDefault, setIsAssigningDefault] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(resumeVersions.length === 0);
   const [openDisclosure, setOpenDisclosure] = useState(null);
@@ -411,6 +416,46 @@ export default function ResumeVersionsPage({
     }
   }
 
+  async function handleDefaultToggle(resumeVersion) {
+    setOpenDisclosure(null);
+    setActionError("");
+    setActionMessage("");
+    setSavingId(resumeVersion.id);
+    try {
+      const updated = await onUpdateResumeVersion(resumeVersion.id, { is_default: !resumeVersion.is_default });
+      setActionMessage(updated.is_default
+        ? `"${updated.name}" is now the default for new applications.`
+        : "Default resume cleared.");
+    } catch (updateError) {
+      setActionError(updateError.message || "Could not update the default resume.");
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  function requestDefaultAssignment(resumeVersion, expectedUnassignedCount) {
+    setDefaultAssignmentError("");
+    setPendingDefaultAssignment({ resumeVersion, expectedUnassignedCount });
+  }
+
+  async function confirmDefaultAssignment() {
+    if (!pendingDefaultAssignment || isAssigningDefault) return;
+    setIsAssigningDefault(true);
+    setDefaultAssignmentError("");
+    try {
+      const result = await onAssignDefaultResumeToUnassigned(
+        pendingDefaultAssignment.resumeVersion.id,
+        pendingDefaultAssignment.expectedUnassignedCount,
+      );
+      setActionMessage(`"${result.name}" assigned to ${result.assigned_application_count} application${result.assigned_application_count === 1 ? "" : "s"}.`);
+      setPendingDefaultAssignment(null);
+    } catch (assignmentError) {
+      setDefaultAssignmentError(assignmentError.message || "Could not assign the default resume.");
+    } finally {
+      setIsAssigningDefault(false);
+    }
+  }
+
   async function handleDeleteResumeVersion(resumeVersion) {
     setOpenDisclosure(null);
     setActionError("");
@@ -465,6 +510,10 @@ export default function ResumeVersionsPage({
   const editingResumeVersion = libraryResumeVersions.find((resumeVersion) => resumeVersion.id === editingId);
   const remainingVisibleResumeVersions = visibleResumeVersions.filter((resumeVersion) => resumeVersion.id !== editingId);
   const resumeUsageCounts = getResumeUsageCounts(applications);
+  const unassignedEligibleApplicationCount = applications.filter((application) => (
+    !isArchivedApplication(application)
+    && (application.resume_version_id === null || application.resume_version_id === undefined || application.resume_version_id === "")
+  )).length;
 
   useEffect(() => {
     if (!openDisclosure) return;
@@ -636,6 +685,7 @@ export default function ResumeVersionsPage({
               const isDeleting = deletingId === resumeVersion.id;
               const isDeleteInProgress = isCheckingDelete || isDeleting;
               const usageCount = resumeUsageCounts.get(String(resumeVersion.id)) || 0;
+              const hasUnassignedCallout = resumeVersion.is_active && resumeVersion.is_default && unassignedEligibleApplicationCount > 0;
 
               return (
                 <article
@@ -652,13 +702,15 @@ export default function ResumeVersionsPage({
                           <span className={`resume-version-state ${resumeVersion.is_active ? "" : "resume-version-state-inactive"}`}>
                             {resumeVersion.is_active ? "Active" : "Inactive"}
                           </span>
+                          {resumeVersion.is_active && resumeVersion.is_default ? <span className="resume-version-state resume-version-state-default">Default</span> : null}
                           <details className="resume-actions-disclosure" open={openDisclosure?.resumeVersionId === resumeVersion.id && openDisclosure.type === "resume-actions"} onKeyDown={(event) => handleDisclosureEscape(event, resumeVersion.id, "resume-actions")}>
                             <summary aria-label={`Actions for ${resumeVersion.name}`} onClick={(event) => { event.preventDefault(); setDisclosureOpen(resumeVersion.id, "resume-actions", !(openDisclosure?.resumeVersionId === resumeVersion.id && openDisclosure.type === "resume-actions")); }}>Actions</summary>
                             <div className="resume-actions-panel">
-                              <button className="secondary-button" type="button" disabled={isDeleteInProgress} onClick={() => { closeDisclosure(resumeVersion.id, "resume-actions"); startEditing(resumeVersion); }}>Edit details</button>
-                              <button className="secondary-button" type="button" disabled={isSaving || isDeleteInProgress} onClick={() => { closeDisclosure(resumeVersion.id, "resume-actions"); handleActiveToggle(resumeVersion); }}>
+                              <button className="secondary-button" type="button" disabled={Boolean(savingId) || isDeleteInProgress} onClick={() => { closeDisclosure(resumeVersion.id, "resume-actions"); startEditing(resumeVersion); }}>Edit details</button>
+                              <button className="secondary-button" type="button" disabled={Boolean(savingId) || isDeleteInProgress} onClick={() => { closeDisclosure(resumeVersion.id, "resume-actions"); handleActiveToggle(resumeVersion); }}>
                                 {isSaving ? "Saving..." : resumeVersion.is_active ? "Deactivate" : "Reactivate"}
                               </button>
+                              {resumeVersion.is_active ? <button className="secondary-button" type="button" disabled={Boolean(savingId) || isDeleteInProgress} onClick={() => handleDefaultToggle(resumeVersion)}>{isSaving ? "Saving..." : resumeVersion.is_default ? "Clear default" : "Make default"}</button> : null}
                               {!resumeVersion.is_active ? <button className="quiet-danger-button" type="button" disabled={isDeleteInProgress} onClick={() => { closeDisclosure(resumeVersion.id, "resume-actions"); handleDeleteResumeVersion(resumeVersion); }}>{isCheckingDelete ? "Checking..." : isDeleting ? "Deleting..." : "Delete permanently"}</button> : null}
                             </div>
                           </details>
@@ -673,6 +725,11 @@ export default function ResumeVersionsPage({
                         <time aria-label={formatResumeUpdatedTimestamp(resumeVersion.updated_at) || "Updated date unavailable"} dateTime={resumeVersion.updated_at || undefined} title={formatResumeUpdatedTimestamp(resumeVersion.updated_at) || undefined}>{formatResumeUpdatedDate(resumeVersion.updated_at)}</time>
                         <span aria-hidden="true"> · </span>{formatResumeUsage(usageCount)}
                       </p>
+
+                      {hasUnassignedCallout ? <aside className="resume-default-callout">
+                        <p>{unassignedEligibleApplicationCount === 1 ? "1 application does not have a resume assigned." : `${unassignedEligibleApplicationCount} applications do not have a resume assigned.`}</p>
+                        <button className="secondary-button" type="button" disabled={isAssigningDefault} onClick={() => requestDefaultAssignment(resumeVersion, unassignedEligibleApplicationCount)}>Assign default to {unassignedEligibleApplicationCount} application{unassignedEligibleApplicationCount === 1 ? "" : "s"}</button>
+                      </aside> : null}
 
                       <ResumeFileSection
                         disabled={isDeleteInProgress}
@@ -720,6 +777,18 @@ export default function ResumeVersionsPage({
         onConfirm={confirmResumeDeletion}
         processingLabel="Deleting..."
         title={pendingResumeDeletion ? `Permanently delete "${pendingResumeDeletion.resumeVersion.name}"?` : "Permanently delete resume?"}
+      />
+      <ConfirmationDialog
+        cancelLabel="Cancel"
+        confirmLabel={pendingDefaultAssignment ? `Assign to ${pendingDefaultAssignment.expectedUnassignedCount} application${pendingDefaultAssignment.expectedUnassignedCount === 1 ? "" : "s"}` : "Assign default"}
+        description={pendingDefaultAssignment ? `"${pendingDefaultAssignment.resumeVersion.name}" will be assigned to ${pendingDefaultAssignment.expectedUnassignedCount} application${pendingDefaultAssignment.expectedUnassignedCount === 1 ? "" : "s"} that currently have no resume. Existing resume assignments will not be changed. This does not change application status or dates.` : ""}
+        errorMessage={defaultAssignmentError}
+        isOpen={Boolean(pendingDefaultAssignment)}
+        isProcessing={isAssigningDefault}
+        onCancel={() => { if (!isAssigningDefault) { setDefaultAssignmentError(""); setPendingDefaultAssignment(null); } }}
+        onConfirm={confirmDefaultAssignment}
+        processingLabel="Assigning..."
+        title="Assign the default resume?"
       />
     </div>
   );

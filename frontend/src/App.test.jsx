@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   getBrowserCaptureStartupState,
   clearDeletedResumeAssignments,
+  assignResumeToApplications,
   importedApplicationsFromResult,
   mergeImportedApplications,
   getActiveApplications,
@@ -10,6 +11,7 @@ import {
   removeResumeVersionById,
   replaceApplicationById,
   updateActiveResumeVersions,
+  synchronizeResumeDefault,
   upsertResumeVersionToFront,
   UNSAVED_PAGE_CONFIRM_MESSAGE,
   resolvePageNavigation,
@@ -30,6 +32,7 @@ import {
   isSmartCaptureDirty,
 } from "./components/applications/SmartCaptureForm.jsx";
 import { isResumeFormDirty } from "./pages/ResumeVersionsPage.jsx";
+import { getDefaultResumeVersionId } from "./utils/resumeVersions.js";
 
 describe("unsaved page navigation guard", () => {
   it("allows clean page navigation without confirmation", () => {
@@ -98,6 +101,21 @@ describe("top-level page scroll reset", () => {
 });
 
 describe("resume version collection state", () => {
+  it("keeps exactly the updated resume marked default in each collection", () => {
+    expect(synchronizeResumeDefault([
+      { id: 1, is_active: true, is_default: true },
+      { id: 2, is_active: true, is_default: false },
+    ], { id: 2, is_active: true, is_default: true })).toEqual([
+      { id: 2, is_active: true, is_default: true },
+      { id: 1, is_active: true, is_default: false },
+    ]);
+  });
+
+  it("updates only returned default-backfill application IDs", () => {
+    expect(assignResumeToApplications([{ id: 1, resume_version_id: null }, { id: 2, resume_version_id: 7 }], 3, [1])).toEqual([
+      { id: 1, resume_version_id: 3 }, { id: 2, resume_version_id: 7 },
+    ]);
+  });
   it("moves an updated resume to the front without duplicating it or reordering other resumes", () => {
     const resumes = [{ id: 3 }, { id: 2, is_active: true }, { id: 1 }];
 
@@ -177,6 +195,13 @@ describe("resume version collection state", () => {
       { id: 2, is_archived: false, resume_version_id: 1, status: "Applied" },
       { id: 1, is_archived: false, resume_version_id: null, status: "Interview" },
     ]);
+  });
+});
+
+describe("default resume helper", () => {
+  it("returns only an active explicitly default resume", () => {
+    expect(getDefaultResumeVersionId([{ id: 1, is_active: true }, { id: 2, is_active: true, is_default: true }])).toBe("2");
+    expect(getDefaultResumeVersionId([{ id: 1, is_active: true }, { id: 2, is_active: false, is_default: true }])).toBe("");
   });
 });
 
@@ -287,6 +312,11 @@ describe("browser capture startup", () => {
 describe("editable page dirty-state helpers", () => {
   it("treats unchanged manual Add Job data as clean", () => {
     expect(isQuickAddFormDirty(initialQuickAddFormState)).toBe(false);
+  });
+
+  it("treats an automatic default resume as pristine manual Add Job data", () => {
+    const withDefaultResume = { ...initialQuickAddFormState, resume_version_id: "7" };
+    expect(isQuickAddFormDirty(withDefaultResume, withDefaultResume)).toBe(false);
   });
 
   it("treats manual Add Job input as dirty", () => {

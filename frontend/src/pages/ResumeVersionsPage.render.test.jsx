@@ -70,6 +70,18 @@ describe("ResumeVersionsPage library experience", () => {
     expect(container.querySelector('input[name="name"]').value).toBe("Platform Resume");
   });
 
+  it("shows default controls and a reviewed unassigned callout", async () => {
+    const defaultResume = { ...resume, is_default: true };
+    const other = { ...resume, id: 2, is_default: false, name: "Targeted Resume" };
+    await renderPage([defaultResume, other], { applications: [{ id: 7, status: "Saved", is_archived: false, resume_version_id: null }] });
+    expect(container.textContent).toContain("Default");
+    expect(container.textContent).toContain("1 application does not have a resume assigned.");
+    expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Clear default")).toBe(true);
+    expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Make default")).toBe(true);
+    await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Assign default to 1 application").click());
+    expect(container.querySelector('[role="dialog"]').textContent).toContain("Existing resume assignments will not be changed.");
+  });
+
   it("starts expanded with focused empty-library guidance when there are no versions", async () => {
     await renderPage([]);
     expect(container.querySelector("details").open).toBe(true);

@@ -1,5 +1,6 @@
 import {
   createDemoResumeVersion,
+  assignDemoDefaultResumeToUnassigned,
   deleteDemoResumeVersion,
   getDemoResumeVersionDeleteImpact,
   getDemoResumeVersion,
@@ -29,6 +30,10 @@ export function createResumeVersion(payload) {
 
 export function updateResumeVersion(resumeVersionId, payload) {
   return asAsync(updateDemoResumeVersion(resumeVersionId, payload));
+}
+
+export function assignDefaultResumeToUnassigned(resumeVersionId, expectedUnassignedCount) {
+  return asAsync(assignDemoDefaultResumeToUnassigned(resumeVersionId, expectedUnassignedCount));
 }
 
 export function getResumeVersionDeleteImpact(resumeVersionId) {
