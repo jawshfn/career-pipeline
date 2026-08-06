@@ -19,7 +19,20 @@ vi.mock("../services/jobImportsService.js", () => ({
 }));
 
 import { createCaptureResultFromReviewState } from "../capture/captureContract.js";
-import QuickAddPage from "./QuickAddPage.jsx";
+import QuickAddPage, { applicationsWithCreatedRecord } from "./QuickAddPage.jsx";
+import { buildApplicationActivitySummary } from "../utils/applicationActivity.js";
+
+describe("Quick Add success activity input", () => {
+  it("includes a newly created application exactly once while preserving derived today counts", () => {
+    const created = { id: 4, date_applied: "2026-08-05", status: "Applied" };
+    const existing = [{ id: 1, date_applied: "2026-08-05", status: "Interview" }, { id: 2, date_applied: "2026-08-04", status: "Applied" }, { id: 3, date_applied: "2026-08-05", is_archived: true }];
+    const reference = new Date(2026, 7, 5, 12);
+
+    expect(buildApplicationActivitySummary(applicationsWithCreatedRecord(existing, created), reference).todayCount).toBe(2);
+    expect(buildApplicationActivitySummary(applicationsWithCreatedRecord([...existing, created], created), reference).todayCount).toBe(2);
+    expect(buildApplicationActivitySummary(applicationsWithCreatedRecord(existing, { id: 5, date_applied: null, status: "Saved" }), reference).todayCount).toBe(1);
+  });
+});
 
 const browserCapture = {
   board_token: "fictional-board",

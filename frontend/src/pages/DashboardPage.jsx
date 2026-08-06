@@ -4,6 +4,7 @@ import useStaleResource from "../hooks/useStaleResource.js";
 import { getDashboardSummary } from "../services/dashboardService.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
+import { buildApplicationActivitySummary } from "../utils/applicationActivity.js";
 
 const emptyDashboardSummary = {
   summary_cards: [],
@@ -85,7 +86,36 @@ function normalizeDashboardSummary(summary) {
   };
 }
 
-export default function DashboardPage({ onNavigate = () => {}, onOpenStatusBoard, onOpenInsights }) {
+function ApplicationActivityPanel({ applications }) {
+  const activity = buildApplicationActivitySummary(applications);
+  const maxCount = Math.max(...activity.days.map((day) => day.count), 0);
+  const weekdayFormatter = new Intl.DateTimeFormat(undefined, { weekday: "short" });
+  const dateFormatter = new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric" });
+  const accessibleDateFormatter = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" });
+
+  return <section className="panel dashboard-activity-panel" aria-labelledby="dashboard-activity-title">
+    <div className="dashboard-activity-heading">
+      <div><h3 id="dashboard-activity-title">Application activity</h3><p>{activity.lastSevenDaysCount} applied in the last 7 days</p></div>
+      {activity.lastSevenDaysCount === 0 ? <p className="dashboard-activity-empty">No submitted applications recorded during this period.</p> : null}
+    </div>
+    <ol className="dashboard-activity-days">
+      {activity.days.map((day) => {
+        const label = day.isToday ? "Today" : weekdayFormatter.format(day.date);
+        const height = maxCount ? `${Math.max((day.count / maxCount) * 100, 0)}%` : "0%";
+        const countText = `${day.count} application${day.count === 1 ? "" : "s"} applied`;
+        return <li className={`dashboard-activity-day${day.isToday ? " dashboard-activity-day-today" : ""}`} key={day.dateKey} aria-label={`${day.isToday ? "Today, " : ""}${accessibleDateFormatter.format(day.date)}: ${countText}`}>
+          <span className="dashboard-activity-day-label">{label}</span>
+          <span className="dashboard-activity-day-date">{dateFormatter.format(day.date)}</span>
+          <strong>{day.count}</strong>
+          <span className="dashboard-activity-bar" aria-hidden="true"><span style={{ height }} /></span>
+          <span className="visually-hidden">{countText}</span>
+        </li>;
+      })}
+    </ol>
+  </section>;
+}
+
+export default function DashboardPage({ applications = [], onNavigate = () => {}, onOpenStatusBoard, onOpenInsights }) {
   const { data, error, refreshError, isInitialLoading: isLoading } = useStaleResource("dashboard", getDashboardSummary, {
     initialErrorMessage: "Could not load dashboard summary.",
     refreshErrorMessage: "Could not refresh dashboard. Showing the previous summary.",
@@ -117,6 +147,8 @@ export default function DashboardPage({ onNavigate = () => {}, onOpenStatusBoard
           ))}
         </section>
       ) : null}
+
+      {!isLoading && !error ? <ApplicationActivityPanel applications={applications} /> : null}
 
       {!isLoading && !error && totalApplications > 0 ? (
         <section className="dashboard-status-board-cta" aria-labelledby="dashboard-status-board-cta-title">

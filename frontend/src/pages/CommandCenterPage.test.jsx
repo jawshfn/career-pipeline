@@ -13,6 +13,7 @@ const overdueApplication = { company_name: "Northstar Analytics", follow_up_date
 const upcomingApplication = { ...overdueApplication, company_name: "Cedar Labs", follow_up_date: "2026-07-17", id: 2 };
 const staleApplication = { ...overdueApplication, company_name: "Harbor Works", follow_up_date: null, id: 3, next_action: "" };
 const actionItems = ({ overdue = [], upcoming = [], stale = [] } = {}) => ({ overdue_followups: overdue, upcoming_followups: upcoming, stale_applications: stale });
+const localDateKey = (daysAgo = 0) => { const date = new Date(); date.setHours(12, 0, 0, 0); date.setDate(date.getDate() - daysAgo); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; };
 
 describe("CommandCenterPage", () => {
   let container; let root; let localStorage;
@@ -42,6 +43,37 @@ describe("CommandCenterPage", () => {
     expect(document.activeElement?.id).toBe("starting-surface-title");
     expect(localStorage.getItem("pursuithq:onboarding:local:v1")).toBeNull();
     expect(localStorage.getItem("unrelated")).toBe("keep");
+  });
+
+  it("shows today and seven-day application activity below the daily header, including zero counts and an Add Job action", async () => {
+    const { onNavigate } = await renderPage(actionItems(), vi.fn(), vi.fn(), { applications: [
+      { ...overdueApplication, date_applied: localDateKey() },
+      { ...upcomingApplication, date_applied: localDateKey(3), status: "Interview" },
+      { ...staleApplication, date_applied: localDateKey(), is_archived: true },
+    ] });
+
+    const card = container.querySelector(".command-center-activity-card");
+    expect(container.querySelector(".command-center-daily-header").nextElementSibling).toBe(card);
+    expect(card.textContent).toContain("Applied today");
+    expect(card.textContent).toContain("Last 7 days");
+    expect(card.textContent).toContain("See today’s submissions and your recent activity at a glance.");
+    expect(card.textContent).not.toContain("1 application applied today.");
+    expect(card.querySelector('[aria-label="1 application applied today"]')).not.toBeNull();
+    expect(card.textContent).toContain("Add another job");
+    await act(async () => [...card.querySelectorAll("button")].find((button) => button.textContent === "Add another job").click());
+    expect(onNavigate).toHaveBeenCalledWith("quick-add");
+
+    await act(async () => root.render(<CommandCenterPage applications={[]} onApplyFollowUpAction={vi.fn()} onNavigate={onNavigate} onOpenApplication={vi.fn()} />));
+    expect(container.querySelector(".command-center-activity-card").textContent).toContain("See today’s submissions and your recent activity at a glance.");
+    expect(container.querySelector('.command-center-activity-card [aria-label="0 applications applied today"]')).not.toBeNull();
+    expect(container.querySelector(".command-center-activity-card").textContent).toContain("Add a job");
+  });
+
+  it("refreshes activity immediately when shared applications are rerendered", async () => {
+    await renderPage(actionItems(), vi.fn(), vi.fn(), { applications: [{ ...overdueApplication, date_applied: localDateKey(1) }] });
+    expect(container.querySelector(".command-center-activity-card").textContent).toContain("1");
+    await act(async () => root.render(<CommandCenterPage applications={[{ ...overdueApplication, date_applied: localDateKey(1) }, { ...upcomingApplication, date_applied: localDateKey() }]} onApplyFollowUpAction={vi.fn()} onOpenApplication={vi.fn()} />));
+    expect(container.querySelector('.command-center-activity-card [aria-label="1 application applied today"]')).not.toBeNull();
   });
 
   it("opens the single getting-started application with its id", async () => {

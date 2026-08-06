@@ -49,6 +49,8 @@ const dashboardSummary = {
   ],
   summary_cards: summaryCards,
 };
+const localDay = (daysAgo = 0) => { const date = new Date(); date.setHours(12, 0, 0, 0); date.setDate(date.getDate() - daysAgo); return date; };
+const localDateKey = (daysAgo = 0) => { const date = localDay(daysAgo); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; };
 
 describe("DashboardPage", () => {
   let container;
@@ -69,12 +71,12 @@ describe("DashboardPage", () => {
     vi.clearAllMocks();
   });
 
-  async function renderDashboard({ summary = dashboardSummary } = {}) {
+  async function renderDashboard({ applications = [], summary = dashboardSummary } = {}) {
     const onOpenStatusBoard = vi.fn();
     const onNavigate = vi.fn();
     mocks.getDashboardSummary.mockResolvedValue(summary);
     await act(async () => {
-      root.render(<DashboardPage onNavigate={onNavigate} onOpenInsights={vi.fn()} onOpenStatusBoard={onOpenStatusBoard} />);
+      root.render(<DashboardPage applications={applications} onNavigate={onNavigate} onOpenInsights={vi.fn()} onOpenStatusBoard={onOpenStatusBoard} />);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -92,6 +94,39 @@ describe("DashboardPage", () => {
       expect(container.textContent).toContain(String(metric.value));
       expect(container.querySelector(`.dashboard-metric-card-${metric.tone}`)).not.toBeNull();
     });
+  });
+
+  it("shows seven ordered application days below the metrics, with accessible Today and visible counts", async () => {
+    await renderDashboard({ applications: [
+      { id: 1, date_applied: localDateKey(6), status: "Applied" },
+      { id: 2, date_applied: localDateKey(2), status: "Interview" },
+      { id: 3, date_applied: localDateKey(2), status: "Rejected" },
+      { id: 4, date_applied: localDateKey(), status: "Applied" },
+      { id: 5, date_applied: localDateKey(), is_archived: true },
+    ] });
+
+    const panel = container.querySelector(".dashboard-activity-panel");
+    expect(container.querySelector(".dashboard-metric-grid").compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(panel.textContent).toContain("4 applied in the last 7 days");
+    const accessibleDateFormatter = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric" });
+    expect([...panel.querySelectorAll(".dashboard-activity-day")].map((day) => day.getAttribute("aria-label"))).toEqual([
+      expect.stringContaining(accessibleDateFormatter.format(localDay(6))), expect.stringContaining(accessibleDateFormatter.format(localDay(5))), expect.stringContaining(accessibleDateFormatter.format(localDay(4))), expect.stringContaining(accessibleDateFormatter.format(localDay(3))), expect.stringContaining(accessibleDateFormatter.format(localDay(2))), expect.stringContaining(accessibleDateFormatter.format(localDay(1))), expect.stringContaining(`Today, ${accessibleDateFormatter.format(localDay())}`),
+    ]);
+    expect(panel.querySelectorAll(".dashboard-activity-day")).toHaveLength(7);
+    expect(panel.querySelector(".dashboard-activity-day-today").textContent).toContain("Today");
+    expect([...panel.querySelectorAll(".dashboard-activity-day strong")].map((count) => count.textContent)).toEqual(["1", "0", "0", "0", "2", "0", "1"]);
+  });
+
+  it("keeps the zero-activity panel in an empty workspace and refreshes from new shared applications", async () => {
+    await renderDashboard({
+      summary: { ...dashboardSummary, red_flag_snapshot: { flagged_count: 0, items: [] }, source_breakdown: [], status_breakdown: [], summary_cards: summaryCards.map((metric) => ({ ...metric, value: 0 })) },
+    });
+    expect(container.querySelectorAll(".dashboard-activity-day")).toHaveLength(7);
+    expect(container.textContent).toContain("No submitted applications recorded during this period.");
+    expect([...container.querySelectorAll(".dashboard-activity-day strong")].every((count) => count.textContent === "0")).toBe(true);
+
+    await act(async () => root.render(<DashboardPage applications={[{ id: 1, date_applied: localDateKey(), status: "Applied" }]} onOpenStatusBoard={vi.fn()} />));
+    expect(container.querySelector(".dashboard-activity-panel").textContent).toContain("1 applied in the last 7 days");
   });
 
   it("opens the Status Board and preserves native disclosure chevrons", async () => {

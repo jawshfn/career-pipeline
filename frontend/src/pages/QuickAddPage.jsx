@@ -5,6 +5,12 @@ import QuickAddApplicationForm from "../components/applications/QuickAddApplicat
 import SmartCaptureForm from "../components/applications/SmartCaptureForm.jsx";
 import ConfirmationDialog from "../components/ui/ConfirmationDialog.jsx";
 import { DEFAULT_APPLICATION_SOURCE } from "../constants/applicationConstants.js";
+import { buildApplicationActivitySummary } from "../utils/applicationActivity.js";
+
+export function applicationsWithCreatedRecord(existingApplications = [], createdApplication) {
+  if (!createdApplication || existingApplications.some((application) => String(application.id) === String(createdApplication.id))) return existingApplications;
+  return [...existingApplications, createdApplication];
+}
 
 export default function QuickAddPage({
   browserCaptureError = "",
@@ -31,6 +37,7 @@ export default function QuickAddPage({
   const hasHandledIncomingBrowserTextCapture = useRef(false);
   const successHeadingRef = useRef(null);
   const lastNavigatedSuccess = useRef(null);
+  const successActivity = buildApplicationActivitySummary(applicationsWithCreatedRecord(existingApplications, createdApplication));
 
   useEffect(() => {
     onUnsavedChangesChange?.(activeModeHasUnsavedChanges);
@@ -158,6 +165,10 @@ export default function QuickAddPage({
               {createdApplication.role_title} at {createdApplication.company_name} is now in your application list.
             </p>
           </div>
+          <dl className="quick-add-success-metric">
+            <dt>Applied today</dt>
+            <dd aria-label={`${successActivity.todayCount} application${successActivity.todayCount === 1 ? "" : "s"} applied today`}>{successActivity.todayCount}</dd>
+          </dl>
           <div className="quick-add-success-actions">
             <button className="secondary-button" type="button" onClick={handleAddAnother}>
               Add another

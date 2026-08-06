@@ -8,6 +8,7 @@ import FollowUpActionDialog from "../components/command-center/FollowUpActionDia
 import StartingSurface from "../components/command-center/StartingSurface.jsx";
 import { getOnboardingState } from "../components/command-center/onboardingState.js";
 import { isArchivedApplication } from "../utils/applicationReviewRows.js";
+import { buildApplicationActivitySummary } from "../utils/applicationActivity.js";
 import { FEATURED_DEMO_APPLICATION_ID } from "../demo/demoApplications.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
@@ -100,8 +101,21 @@ export default function CommandCenterPage({ applications = [], isDemoMode = fals
   const hasActionItems = actionItems.overdue_followups.length > 0 || actionItems.upcoming_followups.length > 0 || actionItems.stale_applications.length > 0;
   const onboardingState = getOnboardingState({ applications, isDemoMode });
   const onboardingApplication = isDemoMode ? applications.find((application) => application.id === FEATURED_DEMO_APPLICATION_ID) : applications.find((application) => !isArchivedApplication(application));
+  const activity = buildApplicationActivitySummary(applications);
   return <div className="command-center-page">
     <DailyRemindersHeader />
+    <section className="command-center-activity-card" aria-labelledby="command-center-activity-title">
+      <div className="command-center-activity-copy">
+        <p className="eyebrow">Application activity</p>
+        <h3 id="command-center-activity-title">Keep a clear view of recent applications</h3>
+        <p>See today’s submissions and your recent activity at a glance.</p>
+      </div>
+      <dl className="command-center-activity-metrics">
+        <div><dt>Applied today</dt><dd aria-label={`${activity.todayCount} application${activity.todayCount === 1 ? "" : "s"} applied today`}>{activity.todayCount}</dd></div>
+        <div><dt>Last 7 days</dt><dd aria-label={`${activity.lastSevenDaysCount} application${activity.lastSevenDaysCount === 1 ? "" : "s"} applied in the last 7 days`}>{activity.lastSevenDaysCount}</dd></div>
+      </dl>
+      <button className="primary-small-button command-center-activity-action" type="button" onClick={() => onNavigate("quick-add")}>{applications.length > 0 || activity.todayCount > 0 ? "Add another job" : "Add a job"}</button>
+    </section>
     {onboardingState === "empty" || onboardingState === "getting-started" ? <StartingSurface application={onboardingApplication} isDemoMode={isDemoMode} onNavigate={onNavigate} onOpenApplication={onOpenApplication} /> : null}
     {!isActionItemsLoading && actionMessage ? <div className="message command-center-message" role="status">{actionMessage}</div> : null}
     {isActionItemsLoading ? <LoadingState message="Loading action items..." /> : null}

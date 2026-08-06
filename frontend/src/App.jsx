@@ -404,7 +404,7 @@ export default function App() {
           onOpenApplication={handleOpenApplicationDetails}
         />
       ) : activePage === "dashboard" ? (
-        <DashboardPage onNavigate={navigateToPage} onOpenStatusBoard={() => navigateToPage("pipeline")} onOpenInsights={() => navigateToPage("insights")} />
+        <DashboardPage applications={applications} onNavigate={navigateToPage} onOpenStatusBoard={() => navigateToPage("pipeline")} onOpenInsights={() => navigateToPage("insights")} />
       ) : activePage === "insights" ? (
         <InsightsPage onOpenApplication={handleOpenApplicationDetails} />
       ) : activePage === "quick-add" ? (

@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createDemoState } from "./demoData.js";
 import { FEATURED_DEMO_APPLICATION_ID } from "./demoApplications.js";
 import { deleteDemoApplication, getDemoActionItems, getDemoApplication, getDemoApplications, getDemoOutcomeInsights, resetDemoState } from "./demoStore.js";
 import { getJobBriefEligibility } from "../services/jobBriefService.js";
+import { buildApplicationActivitySummary } from "../utils/applicationActivity.js";
 
 const expectedHistoryById = {
   1: "Applied", 2: "Recruiter Screen", 3: "Interview", 4: "Saved",
@@ -41,5 +42,23 @@ describe("fictional demo application data", () => {
     expect(() => getDemoApplication(FEATURED_DEMO_APPLICATION_ID)).toThrow("Application not found.");
     resetDemoState();
     expect(getDemoApplication(FEATURED_DEMO_APPLICATION_ID).company_name).toBe("Harborview Systems");
+  });
+
+  it("resets to meaningful recent application activity derived from fictional application dates", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 7, 5, 12));
+    try {
+      const first = buildApplicationActivitySummary(createDemoState().applications);
+      expect(first.todayCount).toBeGreaterThan(0);
+      expect(first.lastSevenDaysCount).toBeGreaterThan(1);
+      expect(first.days.some((day) => day.count === 0)).toBe(true);
+
+      resetDemoState();
+      const reset = buildApplicationActivitySummary(getDemoApplications());
+      expect(reset.days.map((day) => day.count)).toEqual(first.days.map((day) => day.count));
+      expect(reset.lastSevenDaysCount).toBe(first.lastSevenDaysCount);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
