@@ -162,6 +162,16 @@ test("routes supported selected ZipRecruiter details to the focused detector", a
   assert.equal(standalone.provider, "ziprecruiter");
 });
 
+test("preserves a detected ZipRecruiter canonical share link instead of the active search URL", async () => {
+  const canonical = "https://www.ziprecruiter.com/job-redirect/share?match_token=QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE";
+  const result = await inspectActivePage({
+    tabs: { query: async () => [{ id: 21, url: "https://www.ziprecruiter.com/jobs-search/2?search=data&lk=selected" }] },
+    scripting: { executeScript: async () => [{ result: { status: "detected", provider: "ziprecruiter", canonical_job_link: canonical, raw_text: "Fictional text" } }] },
+  });
+  assert.equal(result.original_job_link, canonical);
+  assert.doesNotMatch(result.original_job_link, /jobs-search|lk=/u);
+});
+
 test("routes only a standalone Handshake job page to the focused detector", async () => {
   const url = "https://app.joinhandshake.com/jobs/11206968?searchId=example";
   const result = await inspectActivePage({
@@ -249,17 +259,19 @@ test("posts a LinkedIn capture only after the open action using its matching pro
   assert.match(calls[0].url, /^http:\/\/localhost:5173\/#career-pipeline-text-capture=/);
 });
 
-test("posts a ZipRecruiter capture only after the open action with a token-only URL", async () => {
+test("posts a normalized ZipRecruiter share redirect only after the open action with a token-only URL", async () => {
   const calls = [];
   const fetchCalls = [];
   await openBrowserTextCareerPipeline(
-    { status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: "https://www.ziprecruiter.com/jobs-search?lk=fake", raw_text: "Fictional Analyst\nFictional Company\nJob description\n" + "Helpful text ".repeat(10) },
+    { status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: "https://www.ziprecruiter.com/job-redirect/share?match_token=QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE", raw_text: "Fictional Analyst\nFictional Company\nJob description\n" + "Helpful text ".repeat(10) },
     { tabs: { create: async (details) => calls.push(details) } },
     async (url, options) => { fetchCalls.push({ url, options }); return { ok: true, json: async () => ({ version: 1, capture_token: "c".repeat(43) }) }; },
   );
   assert.equal(fetchCalls.length, 1);
   assert.equal(JSON.parse(fetchCalls[0].options.body).provider, "ziprecruiter");
   assert.equal(JSON.parse(fetchCalls[0].options.body).source, "ZipRecruiter");
+  assert.equal(JSON.parse(fetchCalls[0].options.body).original_job_link, "https://www.ziprecruiter.com/job-redirect/share?match_token=QUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUE");
+  assert.doesNotMatch(fetchCalls[0].options.body, /tsid|facebook|linkedin|jobs-search/iu);
   assert.match(calls[0].url, /^http:\/\/localhost:5173\/#career-pipeline-text-capture=/);
   assert.doesNotMatch(calls[0].url, /Fictional Analyst/u);
 });

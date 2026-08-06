@@ -460,6 +460,8 @@ MAX_BROWSER_CAPTURE_URL_LENGTH = JOB_LINK_MAX_LENGTH
 BROWSER_CAPTURE_TOKEN_PATTERN = r"^[A-Za-z0-9_-]{32,128}$"
 ZIPRECRUITER_SEARCH_PATH_PATTERN = re.compile(r"^/jobs-search(?:/[1-9]\d*)?/?$")
 ZIPRECRUITER_HOME_PATH_PATTERN = re.compile(r"^/jobseeker/home/?$")
+ZIPRECRUITER_SHARE_PATH_PATTERN = re.compile(r"^/job-redirect/share$")
+ZIPRECRUITER_MATCH_TOKEN_PATTERN = re.compile(r"^[A-Za-z0-9+/_-]{32,512}={0,2}$")
 HANDSHAKE_JOB_PATH_PATTERN = re.compile(r"^/jobs/[1-9]\d*/?$")
 
 
@@ -481,11 +483,24 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
     )
     is_supported_path = (
         (provider != "linkedin" or parsed.path.startswith("/jobs/"))
-        and (provider != "ziprecruiter" or ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path) or ZIPRECRUITER_HOME_PATH_PATTERN.fullmatch(parsed.path))
+        and (provider != "ziprecruiter" or ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path) or ZIPRECRUITER_HOME_PATH_PATTERN.fullmatch(parsed.path) or ZIPRECRUITER_SHARE_PATH_PATTERN.fullmatch(parsed.path))
         and (provider != "handshake" or HANDSHAKE_JOB_PATH_PATTERN.fullmatch(parsed.path))
     )
-    selected_job_keys = parse_qs(parsed.query, keep_blank_values=True).get(
-        "lk" if ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path) else "jk", []
+    query = parse_qs(parsed.query, keep_blank_values=True)
+    is_ziprecruiter_search = provider == "ziprecruiter" and ZIPRECRUITER_SEARCH_PATH_PATTERN.fullmatch(parsed.path)
+    is_ziprecruiter_home = provider == "ziprecruiter" and ZIPRECRUITER_HOME_PATH_PATTERN.fullmatch(parsed.path)
+    is_ziprecruiter_share = provider == "ziprecruiter" and ZIPRECRUITER_SHARE_PATH_PATTERN.fullmatch(parsed.path)
+    selected_job_keys = query.get("lk" if is_ziprecruiter_search else "jk", [])
+    share_tokens = query.get("match_token", [])
+    valid_ziprecruiter_route = (
+        (is_ziprecruiter_search or is_ziprecruiter_home) and len(selected_job_keys) == 1 and bool(selected_job_keys[0].strip())
+    ) or (
+        is_ziprecruiter_share
+        and not parsed.fragment
+        and set(query) == {"match_token"}
+        and len(share_tokens) == 1
+        and bool(ZIPRECRUITER_MATCH_TOKEN_PATTERN.fullmatch(share_tokens[0]))
+        and not re.search(r"=.+", share_tokens[0])
     )
     if (
         parsed.scheme not in {"http", "https"}
@@ -494,7 +509,7 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
         or port not in {None, 80, 443}
         or not is_supported_host
         or not is_supported_path
-        or (provider == "ziprecruiter" and (len(selected_job_keys) != 1 or not selected_job_keys[0].strip()))
+        or (provider == "ziprecruiter" and not valid_ziprecruiter_route)
     ):
         raise ValueError("original_job_link must be a supported browser capture URL")
     return value

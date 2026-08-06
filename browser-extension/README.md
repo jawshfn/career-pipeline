@@ -9,7 +9,7 @@ PursuitHQ Capture is an experimental, locally loaded Chrome companion. A user cl
 | Greenhouse | Verified Greenhouse identifiers | Identifier handoff to structured import | Only verified jobs. |
 | Indeed | One selected right-panel job or one standalone `/viewjob?jk=...` job | Cleaned text through a one-time local token | Unsupported or ambiguous layouts stop. |
 | LinkedIn | Standalone `/jobs/view/{id}` and selected current-job panels | Cleaned text token | One current job only. |
-| ZipRecruiter | Selected-job `/jobs-search` detail pane or selected `/jobseeker/home?jk=...` modal | Cleaned text token | Only one bounded, visible selected job; unsupported or ambiguous layouts stop. |
+| ZipRecruiter | Selected-job `/jobs-search` detail pane or selected `/jobseeker/home?jk=...` modal | Cleaned text token | Search-pane capture saves a verified, job-specific share redirect rather than search filters or page context. |
 | Handshake | Authenticated `/jobs/<id>` and selected `/job-search/<id>` panel | Cleaned text token | Selected panel must be unambiguous. |
 
 ## Local setup
@@ -28,6 +28,8 @@ Greenhouse uses verified identifiers with the existing backend importer. Other s
 Permissions are limited to `activeTab`, `scripting`, and the narrow local backend host permission. The extension makes no job-board network requests, has no persistent extension storage, no telemetry, no clipboard access, and no broad host permissions. It does not read cookies, storage, authentication tokens, or network responses.
 
 Handshake may activate only a bounded job-description **More** control during a user-initiated capture when necessary. It never activates application, save, share, withdrawal, or unrelated controls.
+
+For ZipRecruiter search-pane jobs, Capture reads the selected pane's supported share controls and saves a normalized job-specific share redirect. Platform-specific `tsid` values, search filters, page numbers, and result ordering are not saved as the application link. If a durable redirect cannot be verified, Capture stops instead of saving the search-context URL; open the job's Share menu and retry, or use Paste Job Text. As with every Browser Capture, review occurs before anything is saved.
 
 ## Testing and removal
 

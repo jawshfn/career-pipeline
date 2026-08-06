@@ -218,6 +218,35 @@ def test_ziprecruiter_browser_capture_accepts_selected_standalone_home_urls(clie
         ).status_code == 200
 
 
+def test_ziprecruiter_browser_capture_accepts_only_normalized_share_redirects(client, db_session, monkeypatch):
+    store = BrowserTextCaptureStore()
+    monkeypatch.setattr("app.routers.browser_captures.browser_text_capture_store", store)
+    token = "A" * 43
+    url = f"https://www.ziprecruiter.com/job-redirect/share?match_token={token}"
+    created = client.post("/api/browser-text-captures", json=ziprecruiter_capture_payload(original_job_link=url))
+    assert created.status_code == 200
+    consumed = client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": created.json()["capture_token"]})
+    assert consumed.status_code == 200
+    assert consumed.json()["original_job_link"] == url
+    assert db_session.query(Application).count() == 0
+    for invalid in [
+        "https://www.ziprecruiter.com/job-redirect/share",
+        "https://www.ziprecruiter.com/job-redirect/share?match_token=",
+        f"https://www.ziprecruiter.com/job-redirect/share?match_token={token}&match_token={token}",
+        "https://www.ziprecruiter.com/job-redirect/share?match_token=not.valid.token",
+        f"https://www.ziprecruiter.com/job-redirect/share?match_token={'A' * 513}",
+        f"https://www.ziprecruiter.com/job-redirect/share?match_token={token}&tsid=platform",
+        f"https://www.ziprecruiter.com/job-redirect/share?match_token={token}&extra=value",
+        f"https://www.ziprecruiter.com/job-redirect/share?match_token={token}#fragment",
+        f"https://www.ziprecruiter.com/jobs/v2/share?match_token={token}",
+        f"https://ziprecruiter.com.evil.test/job-redirect/share?match_token={token}",
+        f"https://user:pass@www.ziprecruiter.com/job-redirect/share?match_token={token}",
+        f"https://www.ziprecruiter.com:8443/job-redirect/share?match_token={token}",
+        f"https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.ziprecruiter.com%2Fjob-redirect%2Fshare%3Fmatch_token%3D{token}",
+    ]:
+        assert client.post("/api/browser-text-captures", json=ziprecruiter_capture_payload(original_job_link=invalid)).status_code == 422
+
+
 def test_browser_capture_endpoint_rejects_untrusted_input(client):
     invalid_payloads = [
         capture_payload(provider="linkedin"),

@@ -221,6 +221,7 @@ function renderResult(result) {
     "not-indeed": "This page is not a supported Indeed job page.",
     "not-linkedin": "This page is not a supported LinkedIn job page.",
     "not-ziprecruiter": "This page is not a supported ZipRecruiter selected job.",
+    "canonical-link-unavailable": "PursuitHQ found the selected ZipRecruiter job but could not verify a durable job link. Open the job's Share menu and try again, or use Paste Job Text.",
     "not-handshake": "This page is not a supported Handshake job page.",
     "no-current-job": "PursuitHQ could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
     "ambiguous-job": "PursuitHQ could not confidently identify the current Indeed job. Copy the job posting and use Paste Job Text.",
@@ -249,6 +250,11 @@ function renderResult(result) {
   if (result?.status === "description-expand-failed" && providerLabel === "Handshake") {
     resetPresentation("neutral");
     appendText("status-title", "Handshake could not fully expand this job description. Open the description and try again, or use Paste Job Text.");
+    return;
+  }
+  if (result?.status === "canonical-link-unavailable" && providerLabel === "ZipRecruiter") {
+    resetPresentation("warning");
+    appendText("status-title", messages[result.status]);
     return;
   }
   if (["no-current-job", "ambiguous-job", "capture-too-large", "not-linkedin", "not-indeed", "not-ziprecruiter", "not-handshake"].includes(result?.status) && providerLabel) {
@@ -300,7 +306,7 @@ export async function inspectActivePage(chromeApi = globalThis.chrome) {
     if (detectionResult.status === "detected") {
       return {
         ...detectionResult,
-        original_job_link: provider === "handshake" && typeof detectionResult.canonical_job_link === "string"
+        original_job_link: (provider === "handshake" || provider === "ziprecruiter") && typeof detectionResult.canonical_job_link === "string"
           ? detectionResult.canonical_job_link
           : activeTab.url,
       };

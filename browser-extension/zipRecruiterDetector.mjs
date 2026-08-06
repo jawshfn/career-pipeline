@@ -38,6 +38,61 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
     }
   }
 
+  function normalizeShareRedirect(rawUrl) {
+    if (typeof rawUrl !== "string" || !rawUrl || rawUrl.length > MAX_ORIGINAL_URL_LENGTH) return null;
+    try {
+      const url = new URL(rawUrl);
+      const hostname = url.hostname.toLowerCase();
+      if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password ||
+        (url.port !== '' && url.port !== '80' && url.port !== '443') ||
+        !(hostname === 'ziprecruiter.com' || hostname.endsWith('.ziprecruiter.com')) ||
+        url.pathname !== '/job-redirect/share' || url.hash) return null;
+      const tokens = url.searchParams.getAll('match_token');
+      if (tokens.length !== 1 || !tokens[0] || tokens[0].length < 32 || tokens[0].length > 512 ||
+        !/^[A-Za-z0-9+/_-]+={0,2}$/u.test(tokens[0]) || /=.+/u.test(tokens[0])) return null;
+      for (const [name] of url.searchParams) if (name !== 'match_token' && name !== 'tsid') return null;
+      const normalized = new URL('https://www.ziprecruiter.com/job-redirect/share');
+      normalized.searchParams.set('match_token', tokens[0]);
+      return { token: tokens[0], url: normalized.href };
+    } catch {
+      return null;
+    }
+  }
+
+  function shareTargetFromAnchor(anchor) {
+    try {
+      const outer = new URL(anchor.href);
+      const hostname = outer.hostname.toLowerCase();
+      let target = null;
+      if ((hostname === 'facebook.com' || hostname.endsWith('.facebook.com')) && outer.pathname === '/sharer/sharer.php') target = outer.searchParams.get('u');
+      if ((hostname === 'linkedin.com' || hostname.endsWith('.linkedin.com')) && outer.pathname === '/sharing/share-offsite/') target = outer.searchParams.get('url');
+      return target ? normalizeShareRedirect(target) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function tokenContainsSelectedKey(token, selectedKey) {
+    try {
+      const normalized = token.replace(/-/gu, '+').replace(/_/gu, '/');
+      const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+      return atob(padded).includes(selectedKey);
+    } catch {
+      return false;
+    }
+  }
+
+  function canonicalShareLink(scope, selectedKey, requireSelectedKey) {
+    if (!scope) return null;
+    const candidates = new Map();
+    for (const anchor of scope.querySelectorAll('a[href]')) {
+      const candidate = shareTargetFromAnchor(anchor);
+      if (candidate && (!requireSelectedKey || tokenContainsSelectedKey(candidate.token, selectedKey))) candidates.set(candidate.token, candidate.url);
+    }
+    if (candidates.size === 1) return [...candidates.values()][0];
+    return candidates.size > 1 ? 'ambiguous-job' : null;
+  }
+
   function isVisible(element) {
     if (!element || !element.isConnected) return false;
     for (let current = element; current && current !== document.documentElement; current = current.parentElement) {
@@ -258,7 +313,9 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
       const rawText = lines.filter((line, index) => index === 0 || line !== lines[index - 1]).join("\n");
       if (rawText.length > MAX_CAPTURE_LENGTH) return controlledResult("capture-too-large");
       if (!snapshotOverride) outlineDescription(candidate.section);
-      return { version: VERSION, status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: pageUrl, role_title: candidate.roleTitle, company_name: candidate.companyName, description_character_count: candidate.description.length, raw_text: rawText };
+      const canonicalJobLink = canonicalShareLink(candidate.pane, null, false);
+      if (canonicalJobLink === "ambiguous-job") return controlledResult("ambiguous-job");
+      return { version: VERSION, status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: pageUrl, ...(canonicalJobLink ? { canonical_job_link: canonicalJobLink } : {}), role_title: candidate.roleTitle, company_name: candidate.companyName, description_character_count: candidate.description.length, raw_text: rawText };
     }
     const headings = snapshotOverride?.candidates || Array.from(document.querySelectorAll("h2")).filter((heading) => exactHeading(heading, "Job description") && isVisible(heading));
     const candidates = headings.map((heading) => {
@@ -289,8 +346,13 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
     const lines = [candidate.roleTitle, candidate.companyName, ...metadata, "Job description", candidate.description];
     const rawText = lines.filter((line, index) => index === 0 || line !== lines[index - 1]).join("\n");
     if (rawText.length > MAX_CAPTURE_LENGTH) return controlledResult("capture-too-large");
+    const selectedKey = new URL(pageUrl).searchParams.get("lk");
+    let canonicalJobLink = canonicalShareLink(candidate.pane, selectedKey, false);
+    if (!canonicalJobLink) canonicalJobLink = canonicalShareLink(document, selectedKey, true);
+    if (canonicalJobLink === "ambiguous-job") return controlledResult("ambiguous-job");
+    if (!canonicalJobLink) return controlledResult("canonical-link-unavailable");
     if (!snapshotOverride) outlineDescription(candidate.section);
-    return { version: VERSION, status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: pageUrl, role_title: candidate.roleTitle, company_name: candidate.companyName, description_character_count: candidate.description.length, raw_text: rawText };
+    return { version: VERSION, status: "detected", provider: "ziprecruiter", source: "ZipRecruiter", original_job_link: pageUrl, canonical_job_link: canonicalJobLink, role_title: candidate.roleTitle, company_name: candidate.companyName, description_character_count: candidate.description.length, raw_text: rawText };
   } catch {
     return controlledResult("extension-error");
   }

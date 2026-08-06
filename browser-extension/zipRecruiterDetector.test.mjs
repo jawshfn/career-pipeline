@@ -5,6 +5,12 @@ import { JSDOM } from "../frontend/node_modules/jsdom/lib/api.js";
 import { detectZipRecruiterJobPage } from "./zipRecruiterDetector.mjs";
 
 const longDescription = "Build reliable data tools for fictional operations teams. ".repeat(4);
+const shareToken = Buffer.from("match payload for fake selected ZipRecruiter job", "utf8").toString("base64");
+
+function shareLinks(token = shareToken) {
+  const target = `https://www.ziprecruiter.com/job-redirect/share?match_token=${encodeURIComponent(token)}&tsid=fictional`;
+  return `<div aria-label="Share this job"><a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(target)}">Facebook</a><a hidden href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(target.replace("fictional", "linkedin"))}">LinkedIn</a></div>`;
+}
 
 function withDom(html, url, callback) {
   const originalDocument = globalThis.document;
@@ -43,6 +49,7 @@ function fixture({ remote = false, compensation = true } = {}) {
       <p>${remote ? "Virginia Beach, VA • Remote" : "Hampton, VA"}</p>
       ${compensation ? "<span>$100K - $120K/yr</span>" : ""}
       <span>Full-time</span><span>Posted 7 days ago</span>
+      ${shareLinks()}
       <section data-testid="job-description"><h2>Job description</h2><div><p>${longDescription}</p><p>Company Description</p></div></section>
     </section>
     <article><h2>Recommended Job</h2><a href="/co/recommended">Recommended Company</a></article>`;
@@ -68,6 +75,7 @@ function ratedFixture() {
       </div>
       <section><h2>Howmet Aerospace rating</h2><p>Powered by real frontline workers on Breakroom</p><p>Based on 158 frontline employees</p><p>45th of 61 rated aerospace companies</p><a href="/rating">View more about working here</a></section>
       <section data-testid="job-description"><h2>Job description</h2><ul><li>${longDescription}</li><li>Analyze fictional supply data.</li></ul><h3>Company Description</h3><p>Fictional employer description.</p></section>
+      ${shareLinks()}
     </section>`;
 }
 
@@ -77,7 +85,7 @@ function hourlyFixture() {
     <section data-testid="current-job-detail"><div class="current-summary">
       <div data-testid="posting-header"><h2>Fictional Security Analyst</h2><a href="/co/Fictional-Defense">Fictional Defense</a><p>Portsmouth, VA</p></div>
       <div data-testid="posting-metadata"><p>$62 - $79.75/hr</p><p>Full-time</p><p>Posted 4 days ago</p></div>
-    </div><section data-testid="job-description"><h2>Job description</h2><p>${longDescription}</p></section></section>`;
+    </div>${shareLinks()}<section data-testid="job-description"><h2>Job description</h2><p>${longDescription}</p></section></section>`;
 }
 
 function actionBeforeMetadataFixture() {
@@ -88,6 +96,7 @@ function actionBeforeMetadataFixture() {
         <div data-testid="posting-header"><h2>Fictional Data Architect</h2><a href="/co/Fictional-Systems">Fictional Systems</a><p>Portsmouth, VA â€¢ On-site</p></div>
         <div data-testid="apply-actions"><h3 hidden>Share this job</h3><p>1-Click Apply</p></div>
         <div data-testid="posting-metadata"><h3 hidden>Share this job</h3><p>$62 - $79.75/hr</p><p>Estimated pay</p><p>Full-time</p><p>Posted 28 days ago</p></div>
+        ${shareLinks()}
       </div>
       <hr><section data-testid="job-description"><h2>Job description</h2><p>${longDescription}</p></section>
     </section>`;
@@ -101,6 +110,7 @@ function standaloneFixture({ hidden = false, description = longDescription, role
         <header><h2>${role}</h2>${employer ? '<a href="/co/chesapeake-controls">Chesapeake Controls</a>' : ""}<p>Chesapeake, VA â€¢ On-site</p></header>
         <div><p>$60K - $85K/yr</p><p>Full-time</p><p>Benefits</p><p>Medical and dental coverage</p><p>Posted <span>yesterday</span></p></div>
         <p>Be Seen First</p><p>New</p><button>1-Click Apply</button>
+        ${shareLinks()}
         <section data-testid="job-description"><h2>Job description</h2><p>${description}</p>${includeCompanyDescription ? "<h3>Company Description</h3><p>Chesapeake Controls builds fictional industrial systems for regional customers.</p>" : ""}</section>
         <section><h2>About Chesapeake Controls</h2><p>Industry</p><p>Company size</p><p>Headquarters</p><a href="/co/chesapeake-controls/jobs">View All Chesapeake Controls Jobs</a><button>Report</button></section>
       </main></div>
@@ -114,6 +124,8 @@ test("captures only the selected ZipRecruiter detail pane", () => {
     assert.equal(result.status, "detected");
     assert.equal(result.role_title, "Supply Chain Data Analyst");
     assert.equal(result.company_name, "Howmet Aerospace");
+    assert.equal(result.canonical_job_link, `https://www.ziprecruiter.com/job-redirect/share?match_token=${encodeURIComponent(shareToken)}`);
+    assert.doesNotMatch(result.canonical_job_link, /tsid|jobs-search|lk=|facebook|linkedin/iu);
     assert.match(result.raw_text, /Hampton, VA\n\$100K - \$120K\/yr\nFull-time/u);
     assert.match(result.raw_text, /Job description\nBuild reliable/u);
     assert.doesNotMatch(result.raw_text, /Left Result|Recommended/u);
@@ -190,6 +202,7 @@ test("captures only the bounded standalone ZipRecruiter modal", () => {
     assert.equal(result.status, "detected");
     assert.equal(result.provider, "ziprecruiter");
     assert.equal(result.original_job_link, url);
+    assert.equal(result.canonical_job_link, `https://www.ziprecruiter.com/job-redirect/share?match_token=${encodeURIComponent(shareToken)}`);
     assert.equal(result.role_title, "Junior Project Manager");
     assert.equal(result.company_name, "Chesapeake Controls");
     assert.match(result.raw_text, /Chesapeake, VA â€¢ On-site\n\$60K - \$85K\/yr\nFull-time\nPosted yesterday/u);
@@ -197,6 +210,26 @@ test("captures only the bounded standalone ZipRecruiter modal", () => {
     assert.doesNotMatch(result.raw_text, /Background|1-Click Apply|Benefits|Medical and dental|Be Seen First|\bNew\b|Report|About Chesapeake|Industry|Company size|Headquarters|View All|<\/?/iu);
     assert.equal(dom.window.document.querySelectorAll("[data-career-pipeline-ziprecruiter-outline]").length, 1);
   });
+});
+
+test("requires a verified share redirect for search captures and verifies portal candidates against lk", () => {
+  withDom(fixture().replace(shareLinks(), ""), "https://www.ziprecruiter.com/jobs-search?lk=fake-selected-key", () => {
+    assert.equal(detectZipRecruiterJobPage().status, "canonical-link-unavailable");
+  });
+  const portalToken = Buffer.from("payload fake-selected-key payload", "utf8").toString("base64");
+  withDom(`${fixture().replace(shareLinks(), "")}<div id="portal">${shareLinks(portalToken)}</div>`, "https://www.ziprecruiter.com/jobs-search?lk=fake-selected-key", () => {
+    assert.equal(detectZipRecruiterJobPage().canonical_job_link, `https://www.ziprecruiter.com/job-redirect/share?match_token=${encodeURIComponent(portalToken)}`);
+  });
+  withDom(`${fixture().replace(shareLinks(), "")}<div id="portal">${shareLinks(shareToken)}</div>`, "https://www.ziprecruiter.com/jobs-search?lk=fake-selected-key", () => {
+    assert.equal(detectZipRecruiterJobPage().status, "canonical-link-unavailable");
+  });
+});
+
+test("rejects unsafe share wrappers and ambiguous selected tokens", () => {
+  const bad = `<a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://evil.test/job-redirect/share?match_token=" + shareToken)}">Bad</a>`;
+  withDom(fixture().replace(shareLinks(), bad), "https://www.ziprecruiter.com/jobs-search?lk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "canonical-link-unavailable"));
+  const alternate = Buffer.from("alternate selected token", "utf8").toString("base64");
+  withDom(fixture().replace(shareLinks(), `${shareLinks()}${shareLinks(alternate)}`), "https://www.ziprecruiter.com/jobs-search?lk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "ambiguous-job"));
 });
 
 test("rejects invalid selected-job routes and ambiguous or hidden detail panes", () => {
