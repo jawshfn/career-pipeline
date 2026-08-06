@@ -5,7 +5,9 @@ import { JSDOM } from "../frontend/node_modules/jsdom/lib/api.js";
 import { detectZipRecruiterJobPage } from "./zipRecruiterDetector.mjs";
 
 const longDescription = "Build reliable data tools for fictional operations teams. ".repeat(4);
-const shareToken = Buffer.from("match payload for fake selected ZipRecruiter job", "utf8").toString("base64");
+const shareToken = "A".repeat(42) + "==";
+const unpaddedShareToken = "B".repeat(43);
+const singlePaddedShareToken = "C".repeat(43) + "=";
 
 function shareLinks(token = shareToken) {
   const target = `https://www.ziprecruiter.com/job-redirect/share?match_token=${encodeURIComponent(token)}&tsid=fictional`;
@@ -230,6 +232,22 @@ test("rejects unsafe share wrappers and ambiguous selected tokens", () => {
   withDom(fixture().replace(shareLinks(), bad), "https://www.ziprecruiter.com/jobs-search?lk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "canonical-link-unavailable"));
   const alternate = Buffer.from("alternate selected token", "utf8").toString("base64");
   withDom(fixture().replace(shareLinks(), `${shareLinks()}${shareLinks(alternate)}`), "https://www.ziprecruiter.com/jobs-search?lk=fake", () => assert.equal(detectZipRecruiterJobPage().status, "ambiguous-job"));
+});
+
+test("accepts valid Base64 padding and rejects embedded or excessive padding", () => {
+  for (const token of [unpaddedShareToken, singlePaddedShareToken, shareToken]) {
+    withDom(fixture().replace(shareLinks(), shareLinks(token)), "https://www.ziprecruiter.com/jobs-search?lk=fake", () => {
+      const result = detectZipRecruiterJobPage();
+      assert.equal(result.status, "detected");
+      assert.equal(result.canonical_job_link, `https://www.ziprecruiter.com/job-redirect/share?match_token=${encodeURIComponent(token)}`);
+      assert.doesNotMatch(result.canonical_job_link, /tsid/u);
+    });
+  }
+  for (const token of ["D".repeat(40) + "=DEF", "E".repeat(40) + "==="]) {
+    withDom(fixture().replace(shareLinks(), shareLinks(token)), "https://www.ziprecruiter.com/jobs-search?lk=fake", () => {
+      assert.equal(detectZipRecruiterJobPage().status, "canonical-link-unavailable");
+    });
+  }
 });
 
 test("rejects invalid selected-job routes and ambiguous or hidden detail panes", () => {

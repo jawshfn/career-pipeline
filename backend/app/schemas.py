@@ -500,7 +500,6 @@ def validate_browser_capture_url(value: str, provider: str) -> str:
         and set(query) == {"match_token"}
         and len(share_tokens) == 1
         and bool(ZIPRECRUITER_MATCH_TOKEN_PATTERN.fullmatch(share_tokens[0]))
-        and not re.search(r"=.+", share_tokens[0])
     )
     if (
         parsed.scheme not in {"http", "https"}

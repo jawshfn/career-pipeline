@@ -49,7 +49,7 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
         url.pathname !== '/job-redirect/share' || url.hash) return null;
       const tokens = url.searchParams.getAll('match_token');
       if (tokens.length !== 1 || !tokens[0] || tokens[0].length < 32 || tokens[0].length > 512 ||
-        !/^[A-Za-z0-9+/_-]+={0,2}$/u.test(tokens[0]) || /=.+/u.test(tokens[0])) return null;
+        !/^[A-Za-z0-9+/_-]+={0,2}$/u.test(tokens[0])) return null;
       for (const [name] of url.searchParams) if (name !== 'match_token' && name !== 'tsid') return null;
       const normalized = new URL('https://www.ziprecruiter.com/job-redirect/share');
       normalized.searchParams.set('match_token', tokens[0]);

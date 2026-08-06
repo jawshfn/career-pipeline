@@ -222,18 +222,21 @@ def test_ziprecruiter_browser_capture_accepts_only_normalized_share_redirects(cl
     store = BrowserTextCaptureStore()
     monkeypatch.setattr("app.routers.browser_captures.browser_text_capture_store", store)
     token = "A" * 43
-    url = f"https://www.ziprecruiter.com/job-redirect/share?match_token={token}"
-    created = client.post("/api/browser-text-captures", json=ziprecruiter_capture_payload(original_job_link=url))
-    assert created.status_code == 200
-    consumed = client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": created.json()["capture_token"]})
-    assert consumed.status_code == 200
-    assert consumed.json()["original_job_link"] == url
+    for accepted_token in [token, "B" * 43 + "=", "C" * 42 + "=="]:
+        url = f"https://www.ziprecruiter.com/job-redirect/share?match_token={accepted_token}"
+        created = client.post("/api/browser-text-captures", json=ziprecruiter_capture_payload(original_job_link=url))
+        assert created.status_code == 200
+        consumed = client.post("/api/browser-text-captures/consume", json={"version": 1, "capture_token": created.json()["capture_token"]})
+        assert consumed.status_code == 200
+        assert consumed.json()["original_job_link"] == url
     assert db_session.query(Application).count() == 0
     for invalid in [
         "https://www.ziprecruiter.com/job-redirect/share",
         "https://www.ziprecruiter.com/job-redirect/share?match_token=",
         f"https://www.ziprecruiter.com/job-redirect/share?match_token={token}&match_token={token}",
         "https://www.ziprecruiter.com/job-redirect/share?match_token=not.valid.token",
+        f"https://www.ziprecruiter.com/job-redirect/share?match_token={'D' * 40}=DEF",
+        f"https://www.ziprecruiter.com/job-redirect/share?match_token={'E' * 40}===",
         f"https://www.ziprecruiter.com/job-redirect/share?match_token={'A' * 513}",
         f"https://www.ziprecruiter.com/job-redirect/share?match_token={token}&tsid=platform",
         f"https://www.ziprecruiter.com/job-redirect/share?match_token={token}&extra=value",
