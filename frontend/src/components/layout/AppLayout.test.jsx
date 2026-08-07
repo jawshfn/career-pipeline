@@ -77,6 +77,20 @@ describe("AppLayout", () => {
     expect(storage.removeItem).toHaveBeenCalledWith(SIDEBAR_COLLAPSED_STORAGE_KEY);
   });
 
+  it("clears the transient desktop sidebar state after geometry settles without changing the saved preference", async () => {
+    await act(async () => root.render(<AppLayout activePage="dashboard" onNavigate={() => false}><div /></AppLayout>));
+    const shell = container.querySelector(".app-shell");
+    const sidebar = container.querySelector(".app-sidebar");
+    await act(async () => container.querySelector(".app-sidebar-toggle").click());
+    expect(shell.classList.contains("app-shell-sidebar-collapsing")).toBe(true);
+    const transitionEnd = new Event("transitionend", { bubbles: true });
+    Object.defineProperty(transitionEnd, "propertyName", { value: "flex-basis" });
+    await act(async () => sidebar.dispatchEvent(transitionEnd));
+    expect(shell.classList.contains("app-shell-sidebar-collapsing")).toBe(false);
+    expect(shell.classList.contains("app-shell-sidebar-collapsed")).toBe(true);
+    expect(storage.setItem).toHaveBeenCalledWith(SIDEBAR_COLLAPSED_STORAGE_KEY, "true");
+  });
+
   it("shows a closed mobile header and opens the grouped disclosure", async () => {
     matchMedia.matches = true;
     await act(async () => root.render(<AppLayout activePage="data" onNavigate={() => true}><div /></AppLayout>));

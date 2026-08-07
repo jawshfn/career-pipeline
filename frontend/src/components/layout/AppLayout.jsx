@@ -29,8 +29,8 @@ function NavigationIcon({ name }) {
   return <svg aria-hidden="true" className="app-nav-icon" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" viewBox="0 0 24 24">{paths[name]}</svg>;
 }
 
-function ChevronIcon({ expanded }) {
-  return <svg aria-hidden="true" className="app-sidebar-toggle-icon" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24"><path d={expanded ? "m15 18-6-6 6-6" : "m9 18 6-6-6-6"} /></svg>;
+function ChevronIcon() {
+  return <svg aria-hidden="true" className="app-sidebar-toggle-icon" fill="none" focusable="false" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></svg>;
 }
 
 function isMobileNavigation() {
@@ -42,6 +42,7 @@ export default function AppLayout({ activePage, children, isDemoMode = false, on
   const [isMobile, setIsMobile] = useState(isMobileNavigation);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [compactLabel, setCompactLabel] = useState(null);
+  const [sidebarTransition, setSidebarTransition] = useState(null);
   const menuButtonRef = useRef(null);
   const currentPage = navigationItems.find((item) => item.id === activePage)?.label || "Applications";
   const expanded = !isCollapsed;
@@ -80,10 +81,17 @@ export default function AppLayout({ activePage, children, isDemoMode = false, on
 
   const toggleSidebar = () => {
     setCompactLabel(null);
-    setIsCollapsed((collapsed) => {
-      if (collapsed) removeStoredSidebarCollapsed(); else storeSidebarCollapsed();
-      return !collapsed;
-    });
+    const nextCollapsed = !isCollapsed;
+    if (nextCollapsed) storeSidebarCollapsed(); else removeStoredSidebarCollapsed();
+    if (!isMobileNavigation() && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setSidebarTransition(nextCollapsed ? "collapsing" : "expanding");
+    } else {
+      setSidebarTransition(null);
+    }
+    setIsCollapsed(nextCollapsed);
+  };
+  const handleSidebarTransitionEnd = (event) => {
+    if (event.target === event.currentTarget && event.propertyName === "flex-basis") setSidebarTransition(null);
   };
   const showCompactLabel = (event, label) => {
     if (!isCollapsed || isMobile) return;
@@ -95,7 +103,7 @@ export default function AppLayout({ activePage, children, isDemoMode = false, on
   };
 
   return (
-    <div className={`app-shell ${isCollapsed ? "app-shell-sidebar-collapsed" : ""}`}>
+    <div className={`app-shell ${isCollapsed ? "app-shell-sidebar-collapsed" : ""} ${sidebarTransition ? `app-shell-sidebar-${sidebarTransition}` : ""}`}>
       <header className="app-mobile-header">
         <div>
           <p className="app-mobile-brand">PursuitHQ</p>
@@ -103,7 +111,7 @@ export default function AppLayout({ activePage, children, isDemoMode = false, on
         </div>
         <button aria-controls="primary-navigation" aria-expanded={isMobileMenuOpen} aria-label={`${isMobileMenuOpen ? "Close" : "Open"} navigation menu`} className="app-mobile-menu-toggle" onClick={() => setIsMobileMenuOpen((open) => !open)} ref={menuButtonRef} type="button">Menu</button>
       </header>
-      <aside className="app-sidebar" aria-label="PursuitHQ navigation">
+      <aside className="app-sidebar" aria-label="PursuitHQ navigation" onTransitionEnd={handleSidebarTransitionEnd}>
         <div className="app-brand" aria-label="PursuitHQ">
           <p className="app-brand-name"><span aria-hidden="true" className="app-brand-mark">P</span><span className="app-brand-full">PursuitHQ</span></p>
           <p className="app-brand-description">Job-search command center</p>
@@ -118,7 +126,7 @@ export default function AppLayout({ activePage, children, isDemoMode = false, on
             </section>
           ))}
         </nav>
-        <button aria-label={`${expanded ? "Collapse" : "Expand"} sidebar`} className="app-sidebar-toggle" onClick={toggleSidebar} type="button"><ChevronIcon expanded={expanded} /><span className="app-sidebar-toggle-label">{expanded ? "Collapse" : "Expand"}</span></button>
+        <button aria-label={`${expanded ? "Collapse" : "Expand"} sidebar`} className="app-sidebar-toggle" onClick={toggleSidebar} type="button"><ChevronIcon /><span className="app-sidebar-toggle-label">{expanded ? "Collapse" : "Expand"}</span></button>
       </aside>
       {compactLabel ? <span aria-hidden="true" className="app-compact-nav-label" style={{ left: compactLabel.left, top: compactLabel.top }}>{compactLabel.label}</span> : null}
       <main className="app-main">
