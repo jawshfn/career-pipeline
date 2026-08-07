@@ -1,4 +1,6 @@
 :root {
+  --page-content-max-width: 1520px;
+  --page-content-max-width-collapsed: 1700px;
   --color-brand-midnight: #12182b;
   --color-brand-midnight-raised: #1a2238;
   --color-brand-blue: #4557d8;
@@ -90,6 +92,8 @@ a {
 .applications-page,
 .command-center-page,
 .dashboard-page,
+.data-page,
+.insights-page,
 .pipeline-page,
 .quick-add-page,
 .resume-versions-page,
@@ -100,16 +104,23 @@ a {
   gap: 20px;
   width: 100%;
   min-width: 0;
-  max-width: 1240px;
-  margin: 0 auto;
+  max-width: var(--page-content-max-width);
+  margin-inline: auto;
 }
 
-.pipeline-page {
-  max-width: 1500px;
-}
-
-.dashboard-page {
-  max-width: 1520px;
+@media (min-width: 781px) {
+  .app-shell-sidebar-collapsed .applications-page,
+  .app-shell-sidebar-collapsed .command-center-page,
+  .app-shell-sidebar-collapsed .dashboard-page,
+  .app-shell-sidebar-collapsed .data-page,
+  .app-shell-sidebar-collapsed .insights-page,
+  .app-shell-sidebar-collapsed .pipeline-page,
+  .app-shell-sidebar-collapsed .quick-add-page,
+  .app-shell-sidebar-collapsed .resume-versions-page,
+  .app-shell-sidebar-collapsed .support-page {
+    max-width: var(--page-content-max-width-collapsed);
+    margin-inline: auto;
+  }
 }
 
 .page-header {
@@ -4133,7 +4144,6 @@ textarea:focus-visible {
 @media (max-width: 720px) { .spreadsheet-import-columns { grid-template-columns: 1fr; } .spreadsheet-import-preset-options { grid-template-columns: 1fr; } .spreadsheet-import-selected li { align-items: start; flex-direction: column; } .spreadsheet-import-column-actions { justify-content: start; } }
 
 /* Data workspace and browser-local spreadsheet intake */
-.data-page { max-width: 1180px; display: grid; gap: 20px; }
 .data-section-nav { display: flex; flex-wrap: wrap; gap: 8px; border-bottom: 1px solid #d8e0de; padding-bottom: 12px; }
 .data-section-nav button { border: 1px solid #cbd6d3; border-radius: 7px; padding: 9px 13px; color: #34413f; background: #fff; font-weight: 800; }
 .data-section-nav button.is-active { border-color: var(--color-primary); background: var(--color-primary-surface); box-shadow: inset 0 0 0 1px var(--color-primary); }
@@ -5622,7 +5632,6 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--color-primary)
   .ai-brief-spinner { animation: none; }
 }
 
-.insights-page { display: grid; gap: 20px; }
 .insights-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
 .insights-panel { padding: 20px; }
 .insights-panel h3 { margin-top: 0; }
