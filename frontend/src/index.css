@@ -124,7 +124,7 @@ a {
 .quick-add-page,
 .resume-versions-page,
 .support-page {
-  animation: primary-page-fade var(--motion-page) linear both, primary-page-settle 240ms var(--motion-sidebar-ease) both;
+  animation: primary-page-fade var(--motion-page) linear both, primary-page-settle 240ms var(--motion-sidebar-ease);
 }
 
 @keyframes primary-page-fade {
@@ -147,7 +147,7 @@ a {
   }
 
   to {
-    transform: translateY(0);
+    transform: none;
   }
 }
 
@@ -3565,6 +3565,41 @@ a {
   display: grid;
   gap: 14px;
   min-width: 0;
+}
+
+.pipeline-status-confirmation {
+  position: fixed;
+  z-index: 30;
+  right: 24px;
+  bottom: 24px;
+  max-width: min(360px, calc(100vw - 48px));
+  border: 1px solid #b7d5cd;
+  border-radius: 8px;
+  padding: 12px 14px;
+  color: #24463f;
+  background: #f1faf7;
+  box-shadow: 0 10px 24px rgba(23, 32, 42, 0.16);
+  font-size: 0.9rem;
+  font-weight: 800;
+  animation: pipeline-status-confirmation-in 160ms ease-out;
+}
+
+@keyframes pipeline-status-confirmation-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  .pipeline-status-confirmation {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pipeline-status-confirmation { animation: none; }
 }
 
 .pipeline-column {

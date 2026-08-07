@@ -92,4 +92,15 @@ describe("ConfirmationDialog", () => {
     expect(document.activeElement).toBe(trigger);
     trigger.remove();
   });
+
+  it("does not restore focus to a trigger that was removed", async () => {
+    const trigger = document.createElement("button");
+    document.body.append(trigger);
+    trigger.focus();
+    const focus = vi.spyOn(trigger, "focus");
+    await render();
+    trigger.remove();
+    await render({ isOpen: false });
+    expect(focus).not.toHaveBeenCalled();
+  });
 });

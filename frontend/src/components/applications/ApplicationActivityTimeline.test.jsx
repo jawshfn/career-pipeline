@@ -244,6 +244,24 @@ describe("ApplicationActivityTimeline", () => {
     nativeConfirm.mockRestore();
   });
 
+  it("removes only the confirmed activity and retains the timeline", async () => {
+    activityApiMocks.deleteApplicationActivity.mockResolvedValue(undefined);
+    await renderTimeline({ activities: [
+      { id: 1, activity_date: "2026-07-15", activity_type: "Note", note: "Delete me" },
+      { id: 2, activity_date: "2026-07-14", activity_type: "Interview", note: "Keep me" },
+    ] });
+    const deleteButtons = [...container.querySelectorAll("button")].filter((button) => button.textContent === "Delete");
+    await act(async () => deleteButtons[0].click());
+    const confirmButton = [...container.querySelector('[role="dialog"]').querySelectorAll("button")]
+      .find((button) => button.textContent === "Delete activity");
+    await act(async () => confirmButton.click());
+    expect(activityApiMocks.deleteApplicationActivity).toHaveBeenCalledWith(1, 1);
+    expect(container.textContent).not.toContain("Delete me");
+    expect(container.textContent).toContain("Keep me");
+    expect(container.textContent).toContain("Activity deleted.");
+    expect(container.querySelector(".activity-timeline-section")).not.toBeNull();
+  });
+
   it("bounds long activity note previews", () => {
     const preview = getActivityNotePreview("word ".repeat(40));
     expect(preview.length).toBeLessThanOrEqual(121);

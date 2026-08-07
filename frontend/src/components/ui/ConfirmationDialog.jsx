@@ -34,9 +34,11 @@ export default function ConfirmationDialog({
   useEffect(() => {
     if (!isOpen) return undefined;
     returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    cancelButtonRef.current?.focus();
+    cancelButtonRef.current?.focus({ preventScroll: true });
     return () => {
-      returnFocusRef.current?.focus?.();
+      if (returnFocusRef.current?.isConnected) {
+        returnFocusRef.current.focus({ preventScroll: true });
+      }
     };
   }, [isOpen]);
 
