@@ -214,7 +214,7 @@ export function detectIndeedJobPage(snapshotOverride = null) {
     if (geographic.length > 1) return "";
     if (geographic.length === 1 && arrangements.length) return `${geographic[0]} - ${arrangements.join(", ")}`;
     if (geographic.length === 1) return geographic[0];
-    if (arrangements.length === 1) return arrangements[0];
+    if (arrangements.length) return arrangements.join(", ");
     return selectorValue || "";
   }
 

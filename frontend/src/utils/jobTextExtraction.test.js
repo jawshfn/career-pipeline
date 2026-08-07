@@ -279,6 +279,20 @@ describe("buildSmartCaptureReviewState", () => {
     }
   });
 
+  it.each([
+    ["On-site, Remote", "On-site, Remote"],
+    ["Remote, On-site", "Remote, On-site"],
+    ["Hybrid work, Remote", "Hybrid work, Remote"],
+    ["Remote, Remote", "Remote"],
+    ["Virginia - On-site, Remote", "Virginia - On-site, Remote"],
+  ])("parses standalone and geographic multi-arrangement headers: %s", (location, expectedLocation) => {
+    expect(buildSmartCaptureReviewState({ rawText: buildIndeedRawText({ location }), jobLink: "", source: "Indeed" }).location).toBe(expectedLocation);
+  });
+
+  it.each(["Remote support, Customer service", "On-site training, Monday to Friday", "IT, HR"])("rejects non-arrangement comma-separated header text: %s", (location) => {
+    expect(buildSmartCaptureReviewState({ rawText: buildIndeedRawText({ location }), jobLink: "", source: "Indeed" }).location).toBe("");
+  });
+
   it("preserves Indeed region and arrangement header order without scanning descriptions", () => {
     const cases = [
       ["Massachusetts - Remote", "Massachusetts - Remote"],

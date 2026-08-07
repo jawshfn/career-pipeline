@@ -265,6 +265,24 @@ test("retains structured multi-arrangement and state-only location metadata acro
   });
 });
 
+test("normalizes standalone arrangement-only ZipRecruiter location candidates", () => {
+  const url = `https://www.ziprecruiter.com/jobs/v2/${directToken}`;
+  const cases = [
+    ["<p>Onsite, Remote</p>", "On-site, Remote"],
+    ["<p>On-site, Remote</p>", "On-site, Remote"],
+    ["<p>Onsite</p><p>Remote</p>", "On-site, Remote"],
+    ["<p>Remote</p><p>Onsite</p>", "Remote, On-site"],
+    ["<p>Remote</p><p>Remote</p>", "Remote"],
+    ["<p>Richmond, VA</p><p>Onsite</p><p>Remote</p>", "Richmond, VA - On-site, Remote"],
+  ];
+  for (const [locationHtml, expected] of cases) {
+    withDom(directFixture().replace(/<p>Las Vegas[^<]*<\/p>/u, locationHtml), url, () => {
+      const result = detectZipRecruiterJobPage();
+      assert.match(result.raw_text, new RegExp(`\\n${expected.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}\\n`, "u"));
+    });
+  }
+});
+
 test("retains valid state and city locations without classifying arbitrary two-letter metadata", () => {
   const bullet = "\u00e2\u20ac\u00a2";
   const url = `https://www.ziprecruiter.com/jobs/v2/${directToken}`;

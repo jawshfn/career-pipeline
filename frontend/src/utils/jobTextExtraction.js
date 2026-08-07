@@ -281,10 +281,15 @@ function parseStructuredLocation(value) {
   const arrangements = parts.length === 2
     ? parts[1].split(",").map((item) => getStructuredWorkArrangement(item.trim()))
     : [];
-  const cityState = /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/u.test(region);
+  const cityStateMatch = region.match(/^[A-Z][A-Za-z .'-]+,\s*([A-Z]{2})(?:\s+\d{5}(?:-\d{4})?)?$/u);
+  const cityState = Boolean(cityStateMatch) && US_STATE_ABBREVIATIONS.has(cityStateMatch[1]);
   const stateOnly = US_STATE_ABBREVIATIONS.has(region.toUpperCase()) || US_STATE_NAMES.has(region.toLowerCase());
 
-  if (parts.length === 1) return getStructuredWorkArrangement(region) || (cityState ? region : "");
+  if (parts.length === 1) {
+    const arrangements = region.split(",").map((item) => getStructuredWorkArrangement(item.trim()));
+    if (arrangements.length && arrangements.every(Boolean)) return [...new Set(arrangements)].join(", ");
+    return cityState ? region : "";
+  }
   if (!arrangements.length || arrangements.some((arrangement) => !arrangement)) return "";
   if (!cityState && !stateOnly) return "";
   return `${region} - ${[...new Set(arrangements)].join(", ")}`;
@@ -419,10 +424,15 @@ function parseIndeedHeaderLocation(line) {
   const location = normalizeIndeedLocationLine(line);
   if (!location) return "";
   const isArrangement = (value) => Boolean(getStructuredWorkArrangement(value));
-  const isCityState = (value) => /^[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}(?:\s+\d{5}(?:-\d{4})?)?$/u.test(value);
+  const isCityState = (value) => {
+    const match = value.match(/^[A-Z][A-Za-z .'-]+,\s*([A-Z]{2})(?:\s+\d{5}(?:-\d{4})?)?$/u);
+    return Boolean(match) && US_STATE_ABBREVIATIONS.has(match[1]);
+  };
   const isStreetAddress = (value) => /^\d+\s+[A-Za-z0-9 .'-]+,\s*[A-Z][A-Za-z .'-]+,\s*[A-Z]{2}\s+\d{5}(?:-\d{4})?$/u.test(value);
   const isState = (value) => US_STATE_NAMES.has(value.toLowerCase()) || US_STATE_ABBREVIATIONS.has(value.toUpperCase());
   if (/^remote\s+in\s+.+$/iu.test(location)) return location;
+  const structuredLocation = parseStructuredLocation(location);
+  if (structuredLocation) return structuredLocation;
   const parts = location.split(/\s+-\s+/u);
   if (parts.length === 1) return isStreetAddress(location) || isCityState(location) || isArrangement(location) ? location : "";
   if (parts.length !== 2) return "";

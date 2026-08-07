@@ -261,7 +261,16 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
       else if (/^(?:Full[-\s]?time|Part[-\s]?time|Contract|Internship|Temporary|Other)$/iu.test(line)) employmentTypes.push(line);
       else if (/^(?:Re-posted|Posted)\s+(?:today|yesterday)$/iu.test(line) || /^(?:(?:Re-posted|Posted)\s+)?\d+\s+(?:day|week|month)s?\s+ago$/iu.test(line)) postedAges.push(line);
     }
-    return { locations, compensation, employmentTypes, postedAges };
+    const arrangementLists = locations.map(getArrangementList);
+    const geographicLocations = locations.filter((_, index) => !arrangementLists[index]);
+    const arrangements = arrangementLists.flatMap((list) => list || []);
+    const uniqueArrangements = [...new Set(arrangements)];
+    const normalizedLocations = geographicLocations.length === 0 && uniqueArrangements.length
+      ? [uniqueArrangements.join(", ")]
+      : geographicLocations.length === 1 && uniqueArrangements.length
+        ? [`${geographicLocations[0]} - ${uniqueArrangements.join(", ")}`]
+        : locations;
+    return { locations: normalizedLocations, compensation, employmentTypes, postedAges };
   }
 
   function getWorkArrangement(value) {
@@ -272,14 +281,18 @@ export function detectZipRecruiterJobPage(snapshotOverride = null) {
     return "";
   }
 
-  function hasArrangementList(value) {
+  function getArrangementList(value) {
     const arrangements = value.split(",").map((item) => getWorkArrangement(item.trim()));
-    return arrangements.length > 0 && arrangements.every(Boolean);
+    return arrangements.length > 0 && arrangements.every(Boolean) ? arrangements : null;
+  }
+
+  function hasArrangementList(value) {
+    return Boolean(getArrangementList(value));
   }
 
   function isStructuredLocationLine(line) {
     const normalized = normalizeSingleLine(line);
-    if (getWorkArrangement(normalized)) return true;
+    if (getWorkArrangement(normalized) || hasArrangementList(normalized)) return true;
 
     const separator = /\s+(?:\u2022|\u00b7|\u00c2\u00b7|\u00e2\u20ac\u00a2|\u00c3\u00a2\u00e2\u201a\u00ac\u00c2\u00a2|-|\u2013|\u2014)\s+/u;
     const parts = normalized.split(separator);

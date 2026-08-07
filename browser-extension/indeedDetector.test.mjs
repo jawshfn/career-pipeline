@@ -244,6 +244,23 @@ test("collects bounded current-header location leaves in display order", () => {
   }
 });
 
+test("collects arrangement-only current-header leaves in source order", () => {
+  const selectedDescription = "Build and support fictional systems with clear documentation and measurable outcomes for the team. ".repeat(2);
+  const cases = [
+    ["Fictional Engineer", "<div>On-site</div><span>&#8226;</span><div>Remote</div>", "On-site, Remote"],
+    ["Fictional Engineer", "<div>Remote</div><span>&#8226;</span><div>On-site</div>", "Remote, On-site"],
+    ["Fictional Engineer", "<div>Remote</div>", "Remote"],
+    ["Fictional Engineer", "<div>Richmond, VA</div><span>&#8226;</span><div>On-site</div><span>&#8226;</span><div>Remote</div>", "Richmond, VA - On-site, Remote"],
+    ["Fictional Engineer", "<div>Remote</div><span>&#8226;</span><div>Remote</div>", "Remote"],
+    ["Remote Support Analyst", "<div>On-site</div><span>&#8226;</span><div>Remote</div>", "On-site, Remote"],
+  ];
+  for (const [title, locationLeaves, expected] of cases) {
+    const { result } = detectDom(`<section><div data-testid="desktop-job-header"><h5 data-testid="vj-job-title">${title}</h5><a href="/cmp/fictional">Fictional Fabrication</a>${locationLeaves}</div><h4 data-testid="vj-job-description-heading">Full job description</h4><div>${selectedDescription}</div></section>`, "https://www.indeed.com/?vjk=arrangement-fixture");
+    assert.equal(result.status, "detected");
+    assert.match(result.raw_text, new RegExp(`Fictional Fabrication\\n${expected.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&")}\\nJob details`));
+  }
+});
+
 test("fails safely for incomplete, hidden, ambiguous, or oversized current Indeed components", () => {
   const substantial = "A fictional description with enough specific responsibilities to clear the minimum capture requirement safely. ".repeat(2);
   const url = "https://www.indeed.com/?vjk=selected-fictional-key";
