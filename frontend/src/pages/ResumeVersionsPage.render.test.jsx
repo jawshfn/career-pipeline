@@ -280,8 +280,8 @@ describe("ResumeVersionsPage library experience", () => {
     expect(onCreateResumeVersion).toHaveBeenCalledWith({ description: null, name: "Platform Resume", target_role: null });
     expect(container.querySelector("details").open).toBe(false);
     expect(name.value).toBe("");
-    expect(container.querySelector(".resume-version-list-panel .message-success").textContent).toContain("Platform Resume created.");
-    expect(container.querySelector(".resume-version-create-panel .message-success")).toBeNull();
+    expect(document.body.querySelector(".viewport-notification").textContent).toContain("Platform Resume created.");
+    expect(container.querySelector(".message-success")).toBeNull();
   });
 
   it("keeps the form open and draft when creation fails", async () => {
@@ -495,11 +495,9 @@ describe("ResumeVersionsPage library experience", () => {
     expect(resumeGrid.textContent).not.toContain(secondResume.name);
     expect(listPanel.querySelectorAll(".resume-version-card-editing")).toHaveLength(1);
     await act(async () => [...container.querySelectorAll("button")].find((button) => button.textContent === "Save").click());
-    const feedback = listPanel.querySelector(".message-success");
-    expect(feedback.textContent).toContain("Second Resume updated.");
-    expect(feedback.compareDocumentPosition(listPanel.querySelector(".resume-version-list")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(document.body.querySelector(".viewport-notification").textContent).toContain("Second Resume updated.");
     expect([...listPanel.querySelectorAll(".resume-version-list h3")].map((heading) => heading.textContent)).toEqual([resume.name, secondResume.name]);
-    expect(container.querySelector(".resume-version-create-panel .message-success")).toBeNull();
+    expect(container.querySelector(".message-success")).toBeNull();
   });
 
   it("restores the edited card to its original position when editing is cancelled", async () => {

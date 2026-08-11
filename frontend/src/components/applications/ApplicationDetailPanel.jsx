@@ -32,6 +32,7 @@ import StatusFollowUpTab from "./StatusFollowUpTab.jsx";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
 import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
+import ViewportNotification from "../ui/ViewportNotification.jsx";
 import StatusTransitionDialog from "./StatusTransitionDialog.jsx";
 import { analyzeStatusTransition, confirmedStageRank, transitionPayloadForDecision } from "../../utils/statusTransition.js";
 import {
@@ -248,6 +249,7 @@ export default function ApplicationDetailPanel({
   const [loadError, setLoadError] = useState("");
   const [saveError, setSaveError] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
+  const [saveMessageTone, setSaveMessageTone] = useState("success");
   const [activeTab, setActiveTab] = useState(getValidDetailTab(initialTab));
   const [activityDraft, setActivityDraft] = useState(getInitialActivityForm);
   const [activityDraftBaseline, setActivityDraftBaseline] = useState(getInitialActivityForm);
@@ -420,6 +422,7 @@ export default function ApplicationDetailPanel({
       onLoadApplication?.(updatedApplication);
       setActivityRefreshVersion((currentVersion) => currentVersion + 1);
       setPendingStatus(null);
+      setSaveMessageTone("success");
       setSaveMessage("Status updated.");
     } catch (error) {
       setSaveError(error.message || "Could not update status.");
@@ -440,6 +443,7 @@ export default function ApplicationDetailPanel({
       onLoadApplication?.(updatedApplication);
       setActivityRefreshVersion((currentVersion) => currentVersion + 1);
       setIsCorrectionDialogOpen(false);
+      setSaveMessageTone("success");
       setSaveMessage("Outcome history corrected.");
     } catch (error) {
       setSaveError(error.message || "Could not correct outcome history.");
@@ -518,6 +522,8 @@ export default function ApplicationDetailPanel({
       setIsStoredBriefStale(false);
       setBriefError("");
       setIsRemoveBriefDialogOpen(false);
+      setSaveMessageTone("destructive-success");
+      setSaveMessage("AI brief removed.");
     } catch (error) {
       const message = error?.message || "Could not remove the saved AI brief. Try again.";
       setBriefRemovalError(message);
@@ -574,6 +580,7 @@ export default function ApplicationDetailPanel({
       setFormData(nextFormState);
       setSavedFormData(nextFormState);
       onLoadApplication?.(updatedApplication);
+      setSaveMessageTone("success");
       setSaveMessage("Changes saved.");
       if (brief && hadUnsavedAiSourceChanges) setIsStoredBriefStale(true);
       setIsSaving(false);
@@ -684,11 +691,7 @@ export default function ApplicationDetailPanel({
       {canRenderDetail ? (
         <form className="application-detail-form" onSubmit={handleSubmit}>
           {saveError ? <ErrorMessage message={saveError} /> : null}
-          {saveMessage ? (
-            <div className="message message-success" role="status">
-              {saveMessage}
-            </div>
-          ) : null}
+          <ViewportNotification message={saveMessage} onDismiss={() => setSaveMessage("")} tone={saveMessageTone} />
           {hasUnsavedChanges ? (
             <div className="message message-warning" role="status">
               <strong>{unsavedWarningTitle}</strong>

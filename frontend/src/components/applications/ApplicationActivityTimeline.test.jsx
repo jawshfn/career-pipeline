@@ -258,7 +258,8 @@ describe("ApplicationActivityTimeline", () => {
     expect(activityApiMocks.deleteApplicationActivity).toHaveBeenCalledWith(1, 1);
     expect(container.textContent).not.toContain("Delete me");
     expect(container.textContent).toContain("Keep me");
-    expect(container.textContent).toContain("Activity deleted.");
+    expect(document.body.textContent).toContain("Activity deleted.");
+    expect(document.body.querySelector(".viewport-notification").classList).toContain("viewport-notification-destructive-success");
     expect(container.querySelector(".activity-timeline-section")).not.toBeNull();
   });
 

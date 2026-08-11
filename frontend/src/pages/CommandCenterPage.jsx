@@ -12,6 +12,7 @@ import { buildApplicationActivitySummary } from "../utils/applicationActivity.js
 import { FEATURED_DEMO_APPLICATION_ID } from "../demo/demoApplications.js";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
+import ViewportNotification from "../components/ui/ViewportNotification.jsx";
 
 const emptyActionItems = { overdue_followups: [], upcoming_followups: [], stale_applications: [] };
 
@@ -117,7 +118,7 @@ export default function CommandCenterPage({ applications = [], isDemoMode = fals
       <button className="primary-small-button command-center-activity-action" type="button" onClick={() => onNavigate("quick-add")}>{applications.length > 0 || activity.todayCount > 0 ? "Add another job" : "Add a job"}</button>
     </section>
     {onboardingState === "empty" || onboardingState === "getting-started" ? <StartingSurface application={onboardingApplication} isDemoMode={isDemoMode} onNavigate={onNavigate} onOpenApplication={onOpenApplication} /> : null}
-    {!isActionItemsLoading && actionMessage ? <div className="message command-center-message" role="status">{actionMessage}</div> : null}
+    <ViewportNotification message={actionMessage} onDismiss={() => setActionMessage("")} />
     {isActionItemsLoading ? <LoadingState message="Loading action items..." /> : null}
     {!isActionItemsLoading && actionItemsError ? <ErrorMessage message={actionItemsError} /> : null}
     {!isActionItemsLoading && !actionItemsError && refreshError ? <p className="message command-center-message" role="status">{refreshError}</p> : null}

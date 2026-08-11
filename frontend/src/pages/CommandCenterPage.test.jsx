@@ -150,7 +150,7 @@ describe("CommandCenterPage", () => {
     await act(async () => dialog.querySelector('input[value="clear"]').click());
     await act(async () => [...dialog.querySelectorAll("button")].find((button) => button.textContent.includes("Clear reminder")).click());
     expect(onApply).toHaveBeenCalledWith(overdueApplication.id, { action: "clear", expected_follow_up_date: overdueApplication.follow_up_date });
-    expect(container.textContent).toContain("Follow-up cleared.");
+    expect(document.body.textContent).toContain("Follow-up cleared.");
   });
 
   it("keeps a non-conflict failure in the dialog", async () => {

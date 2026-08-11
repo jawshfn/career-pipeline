@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 import ErrorMessage from "../ui/ErrorMessage.jsx";
+import ViewportNotification from "../ui/ViewportNotification.jsx";
 import { downloadBlob } from "../../utils/downloadBlob.js";
 
 const MAX_PDF_SIZE_BYTES = 5 * 1024 * 1024;
@@ -32,6 +33,7 @@ export default function ResumeFileSection({ disabled = false, isDemoMode, isMana
   const [operation, setOperation] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [notificationTone, setNotificationTone] = useState("success");
   const [pendingReplacement, setPendingReplacement] = useState(null);
   const [isRemoveOpen, setIsRemoveOpen] = useState(false);
   const [preview, setPreview] = useState(null);
@@ -59,6 +61,7 @@ export default function ResumeFileSection({ disabled = false, isDemoMode, isMana
     setOperation(replacing ? "replacing" : "attaching");
     try {
       const updated = await onUploadFile(resumeVersion.id, file);
+      setNotificationTone("success");
       setMessage(`${replacing ? "PDF replaced" : "PDF attached"} for "${updated.name}".`);
       return updated;
     } catch (uploadError) {
@@ -127,6 +130,7 @@ export default function ResumeFileSection({ disabled = false, isDemoMode, isMana
     setOperation("removing");
     try {
       await onDeleteFile(resumeVersion.id);
+      setNotificationTone("destructive-success");
       setMessage(`PDF removed from "${resumeVersion.name}".`);
       setIsRemoveOpen(false);
     } catch (removeError) {
@@ -159,7 +163,7 @@ export default function ResumeFileSection({ disabled = false, isDemoMode, isMana
         </div>
       </>}
       {error ? <ErrorMessage message={error} /> : null}
-      {message ? <p className="message message-success" role="status">{message}</p> : null}
+      <ViewportNotification message={message} onDismiss={() => setMessage("")} tone={notificationTone} />
       <ConfirmationDialog cancelLabel="Keep current PDF" confirmLabel="Replace PDF" description={`This resume version is used by ${usageCount} application${usageCount === 1 ? "" : "s"}. Replacing the PDF keeps those assignments connected to this version. Use a new resume version for material content changes.`} isOpen={Boolean(pendingReplacement)} isProcessing={operation === "replacing"} onCancel={() => !operation && setPendingReplacement(null)} onConfirm={confirmReplacement} processingLabel="Replacing..." title="Replace this resume PDF?" />
       <ConfirmationDialog cancelLabel="Keep PDF" confirmLabel="Remove PDF" confirmTone="danger" description={`The PDF will be removed from "${resumeVersion.name}". The resume version and all application assignments will remain.`} errorMessage={isRemoveOpen ? error : ""} isOpen={isRemoveOpen} isProcessing={operation === "removing"} onCancel={() => !operation && setIsRemoveOpen(false)} onConfirm={confirmRemoval} processingLabel="Removing..." title="Remove this resume PDF?" />
       <ConfirmationDialog cancelLabel="Close" description={<div className="resume-pdf-preview"><p><strong>{resumeVersion.name}</strong><br />{file?.original_filename}</p><iframe title={`${resumeVersion.name} PDF preview`} src={preview?.url} /><p>PDF preview availability depends on your browser. Open the file in a new tab or download it when the embedded preview is unavailable.</p><div className="resume-file-actions"><button className="secondary-button" type="button" onClick={() => window.open(preview?.url, "_blank", "noopener,noreferrer")}>Open in new tab</button><button className="secondary-button" type="button" onClick={() => preview && downloadBlob(preview.blob, file.original_filename)}>Download</button></div></div>} hideConfirm isOpen={Boolean(preview)} onCancel={clearPreview} showCloseIcon size="wide" title="PDF preview" />

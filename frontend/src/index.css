@@ -3567,9 +3567,9 @@ a {
   min-width: 0;
 }
 
-.pipeline-status-confirmation {
+.viewport-notification {
   position: fixed;
-  z-index: 30;
+  z-index: 1000;
   right: 24px;
   bottom: 24px;
   max-width: min(360px, calc(100vw - 48px));
@@ -3581,16 +3581,23 @@ a {
   box-shadow: 0 10px 24px rgba(23, 32, 42, 0.16);
   font-size: 0.9rem;
   font-weight: 800;
-  animation: pipeline-status-confirmation-in 160ms ease-out;
+  animation: viewport-notification-in 160ms ease-out;
 }
 
-@keyframes pipeline-status-confirmation-in {
+.viewport-notification-destructive-success {
+  border-left: 4px solid var(--color-attention);
+  padding-left: 12px;
+  color: var(--color-text);
+  background: var(--color-attention-soft);
+}
+
+@keyframes viewport-notification-in {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 640px) {
-  .pipeline-status-confirmation {
+  .viewport-notification {
     right: 16px;
     bottom: 16px;
     left: 16px;
@@ -3599,7 +3606,7 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pipeline-status-confirmation { animation: none; }
+  .viewport-notification { animation: none; }
 }
 
 .pipeline-column {

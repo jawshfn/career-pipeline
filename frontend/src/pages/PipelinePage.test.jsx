@@ -101,7 +101,7 @@ describe("PipelinePage status updates", () => {
     const triggers = [...container.querySelectorAll(".pipeline-status-trigger")];
     await act(async () => triggers[0].click());
     await act(async () => findMenuButton(container, "Assessment").click());
-    expect(container.querySelector('[role="status"]').textContent).toBe("Northstar Analytics moved to Assessment.");
+    expect(document.body.querySelector('[role="status"]').textContent).toBe("Northstar Analytics moved to Assessment.");
     await act(async () => triggers[1].click());
     await act(async () => findMenuButton(container, "Offer").click());
     expect(container.textContent).not.toContain("Cedar Labs moved to Offer.");
@@ -117,11 +117,11 @@ describe("PipelinePage status updates", () => {
     await act(async () => vi.advanceTimersByTime(2000));
     await act(async () => triggers[1].click());
     await act(async () => findMenuButton(container, "Offer").click());
-    expect(container.textContent).toContain("Cedar Labs moved to Offer.");
+    expect(document.body.textContent).toContain("Cedar Labs moved to Offer.");
     await act(async () => vi.advanceTimersByTime(2500));
-    expect(container.textContent).toContain("Cedar Labs moved to Offer.");
+    expect(document.body.textContent).toContain("Cedar Labs moved to Offer.");
     await act(async () => vi.advanceTimersByTime(2000));
-    expect(container.querySelector(".pipeline-status-confirmation")).toBeNull();
+    expect(document.body.querySelector(".viewport-notification")).toBeNull();
   });
 
   it("keeps confirmation-required backward transitions intact", async () => {
@@ -138,6 +138,6 @@ describe("PipelinePage status updates", () => {
     const confirmButton = [...dialog.querySelectorAll("button")].find((button) => button.textContent === "Move back to Applied");
     await act(async () => confirmButton.click());
     expect(onTransitionApplicationStatus).toHaveBeenCalledWith(applicationsWithHistory[1], expect.objectContaining({ status: "Applied" }));
-    expect(container.textContent).toContain("Cedar Labs moved to Applied.");
+    expect(document.body.textContent).toContain("Cedar Labs moved to Applied.");
   });
 });

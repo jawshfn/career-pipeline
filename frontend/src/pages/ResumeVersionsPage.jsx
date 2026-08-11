@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import ViewportNotification from "../components/ui/ViewportNotification.jsx";
 
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import ConfirmationDialog from "../components/ui/ConfirmationDialog.jsx";
@@ -201,6 +202,7 @@ export default function ResumeVersionsPage({
   const [actionError, setActionError] = useState("");
   const [createError, setCreateError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
+  const [notificationTone, setNotificationTone] = useState("success");
   const [savingId, setSavingId] = useState(null);
   const [checkingDeleteId, setCheckingDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
@@ -248,6 +250,11 @@ export default function ResumeVersionsPage({
       onUnsavedChangesChange?.(false);
     };
   }, [onUnsavedChangesChange]);
+
+  function showActionMessage(message, tone = "success") {
+    setNotificationTone(tone);
+    setActionMessage(message);
+  }
 
   function updateCreateField(event) {
     const { name, value } = event.target;
@@ -297,7 +304,7 @@ export default function ResumeVersionsPage({
       const created = await onCreateResumeVersion(toPayload(createForm));
       setCreateForm(initialCreateForm);
       setIsCreateOpen(false);
-      setActionMessage(`${created.name} created.`);
+      showActionMessage(`${created.name} created.`);
     } catch (creationError) {
       setIsCreateOpen(true);
       setCreateError(creationError.message || "Could not create resume version.");
@@ -353,7 +360,7 @@ export default function ResumeVersionsPage({
           : resolveResumeCreateStart(currentState);
     if (action.type === "start-create") shouldFocusCreateNameRef.current = true;
     setActionError(nextState.actionError);
-    setActionMessage(nextState.actionMessage);
+    showActionMessage(nextState.actionMessage);
     setCreateError(nextState.createError);
     setCreateForm(nextState.createForm);
     setEditingId(nextState.editingId);
@@ -390,7 +397,7 @@ export default function ResumeVersionsPage({
       setEditingId(null);
       setEditForm(initialCreateForm);
       setEditFormBaseline(initialCreateForm);
-      setActionMessage(`${updated.name} updated.`);
+      showActionMessage(`${updated.name} updated.`);
     } catch (updateError) {
       setActionError(updateError.message || "Could not update resume version.");
     } finally {
@@ -408,7 +415,7 @@ export default function ResumeVersionsPage({
       const updated = await onUpdateResumeVersion(resumeVersion.id, {
         is_active: !resumeVersion.is_active,
       });
-      setActionMessage(`${updated.name} ${updated.is_active ? "reactivated" : "deactivated"}.`);
+      showActionMessage(`${updated.name} ${updated.is_active ? "reactivated" : "deactivated"}.`);
     } catch (updateError) {
       setActionError(updateError.message || "Could not update resume version status.");
     } finally {
@@ -423,7 +430,7 @@ export default function ResumeVersionsPage({
     setSavingId(resumeVersion.id);
     try {
       const updated = await onUpdateResumeVersion(resumeVersion.id, { is_default: !resumeVersion.is_default });
-      setActionMessage(updated.is_default
+      showActionMessage(updated.is_default
         ? `"${updated.name}" is now the default for new applications.`
         : "Default resume cleared.");
     } catch (updateError) {
@@ -447,7 +454,7 @@ export default function ResumeVersionsPage({
         pendingDefaultAssignment.resumeVersion.id,
         pendingDefaultAssignment.expectedUnassignedCount,
       );
-      setActionMessage(`"${result.name}" assigned to ${result.assigned_application_count} application${result.assigned_application_count === 1 ? "" : "s"}.`);
+      showActionMessage(`"${result.name}" assigned to ${result.assigned_application_count} application${result.assigned_application_count === 1 ? "" : "s"}.`);
       setPendingDefaultAssignment(null);
     } catch (assignmentError) {
       setDefaultAssignmentError(assignmentError.message || "Could not assign the default resume.");
@@ -482,7 +489,7 @@ export default function ResumeVersionsPage({
     setDeleteDialogError("");
     try {
       const deleted = await onDeleteResumeVersion(pending.resumeVersion.id, pending.impact.assignment_count);
-      setActionMessage(getResumeDeleteSuccessMessage(deleted));
+      showActionMessage(getResumeDeleteSuccessMessage(deleted), "destructive-success");
       setPendingResumeDeletion(null);
     } catch (deleteError) {
       const message = deleteError.message || "Could not delete resume version.";
@@ -606,7 +613,7 @@ export default function ResumeVersionsPage({
           </label>
         </div>
 
-        {actionMessage ? <div className="message message-success resume-version-list-feedback" role="status">{actionMessage}</div> : null}
+        <ViewportNotification message={actionMessage} onDismiss={() => setActionMessage("")} tone={notificationTone} />
         {!isLoading && actionError ? <ErrorMessage message={actionError} /> : null}
 
         {isLoading ? <LoadingState message="Loading resume versions..." /> : null}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import ViewportNotification from "../components/ui/ViewportNotification.jsx";
 
 import ApplicationDetailPanel from "../components/applications/ApplicationDetailPanel.jsx";
 import ApplicationsTable from "../components/applications/ApplicationsTable.jsx";
@@ -409,7 +410,7 @@ export default function ApplicationsPage({
             {viewedApplications.length === 1 ? "" : "s"}.
           </p>
         </div>
-        {successMessage ? <div className="message message-success applications-list-feedback" role="status">{successMessage}</div> : null}
+        <ViewportNotification message={successMessage} onDismiss={() => setSuccessMessage("")} tone="destructive-success" />
 
         {!isCompletelyEmpty ? <><div className="application-view-tabs" aria-label="Application view">
           {applicationViewOptions.map((option) => (

@@ -206,7 +206,7 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     await act(async () => click(container, "AI Brief"));
 
     expect(onSaveApplication).toHaveBeenCalledWith(1, expect.objectContaining({ company_name: "Updated Northstar" }));
-    expect(container.textContent).toContain("Changes saved.");
+    expect(document.body.textContent).toContain("Changes saved.");
     expect(container.textContent).toContain("Changes were saved, but PursuitHQ could not refresh the saved AI brief status. Reload this application and try again.");
     expect(container.textContent).toContain("A product management role.");
     expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Refresh brief")).toBe(true);
@@ -229,7 +229,7 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     await act(async () => click(container, "AI Brief"));
 
     const saveButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Save changes");
-    expect(container.textContent).toContain("Changes saved.");
+    expect(document.body.textContent).toContain("Changes saved.");
     expect(saveButton.disabled).toBe(false);
     expect(onLoadApplication).toHaveBeenCalledWith({ ...application, company_name: "Updated Northstar" });
     expect(container.textContent).toContain("A product management role.");
@@ -258,7 +258,7 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     });
     await act(async () => click(container, "AI Brief"));
 
-    expect(container.textContent).toContain("Changes saved.");
+    expect(document.body.textContent).toContain("Changes saved.");
     expect(container.textContent).toContain("A product management role.");
     expect(container.textContent).not.toContain("Refresh brief");
     expect(container.textContent).not.toContain("Saved job details changed. Refresh this brief.");
@@ -293,7 +293,7 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     await act(async () => click(container, "Save changes"));
 
     expect(container.textContent).toContain("Application save failed");
-    expect(container.textContent).not.toContain("Changes saved.");
+    expect(document.body.textContent).not.toContain("Changes saved.");
     expect(getAiBrief).toHaveBeenCalledTimes(1);
     expect([...container.querySelectorAll("button")].some((button) => button.textContent === "Saving...")).toBe(false);
   });
@@ -332,6 +332,8 @@ describe("ApplicationDetailPanel AI Brief integration", () => {
     await act(async () => clickLast(container, "Remove brief"));
     expect(deleteAiBrief).toHaveBeenCalledWith(1);
     expect(container.textContent).toContain("Generate AI brief");
+    expect(document.body.querySelector(".viewport-notification").textContent).toBe("AI brief removed.");
+    expect(document.body.querySelector(".viewport-notification").classList).toContain("viewport-notification-destructive-success");
   });
 
   it("aborts active requests on application changes and unmount without rendering a result or error", async () => {

@@ -9,6 +9,7 @@ import ErrorMessage from "../ui/ErrorMessage.jsx";
 import ConfirmationDialog from "../ui/ConfirmationDialog.jsx";
 import LoadingState from "../ui/LoadingState.jsx";
 import AutoGrowingTextarea from "../ui/AutoGrowingTextarea.jsx";
+import ViewportNotification from "../ui/ViewportNotification.jsx";
 import { normalizeUtcTimestamp } from "../../utils/dateFormatting.js";
 
 const activityTypeOptions = [
@@ -111,6 +112,7 @@ export default function ApplicationActivityTimeline({
   const [deleteError, setDeleteError] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [notificationTone, setNotificationTone] = useState("success");
   const previousApplicationIdRef = useRef(applicationId);
 
   useEffect(() => {
@@ -188,6 +190,7 @@ export default function ApplicationActivityTimeline({
         ),
       );
       onResetDraft();
+      setNotificationTone("success");
       setMessage("Activity added.");
     } catch (saveError) {
       setError(saveError.message || "Could not add activity.");
@@ -221,6 +224,7 @@ export default function ApplicationActivityTimeline({
       setActivities((currentActivities) =>
         currentActivities.filter((currentActivity) => currentActivity.id !== activity.id),
       );
+      setNotificationTone("destructive-success");
       setMessage("Activity deleted.");
       setPendingActivityDeletion(null);
     } catch (deleteError) {
@@ -240,11 +244,7 @@ export default function ApplicationActivityTimeline({
       </div>
 
       {error ? <ErrorMessage message={error} /> : null}
-      {message ? (
-        <div className="message message-success" role="status">
-          {message}
-        </div>
-      ) : null}
+      <ViewportNotification message={message} onDismiss={() => setMessage("")} tone={notificationTone} />
 
       {isLoading ? <LoadingState message="Loading activity timeline..." /> : null}
       {!isLoading ? (

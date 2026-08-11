@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
 import PipelineBoard from "../components/pipeline/PipelineBoard.jsx";
 import StatusTransitionDialog from "../components/applications/StatusTransitionDialog.jsx";
 import ErrorMessage from "../components/ui/ErrorMessage.jsx";
 import LoadingState from "../components/ui/LoadingState.jsx";
+import ViewportNotification from "../components/ui/ViewportNotification.jsx";
 import { analyzeStatusTransition, transitionPayloadForDecision } from "../utils/statusTransition.js";
 
 export default function PipelinePage({ applications, error, isLoading, onNavigate = () => {}, onOpenDetails, onTransitionApplicationStatus }) {
@@ -12,27 +13,13 @@ export default function PipelinePage({ applications, error, isLoading, onNavigat
   const [pendingTransition, setPendingTransition] = useState(null);
   const [statusConfirmation, setStatusConfirmation] = useState("");
   const pendingStatusUpdatesRef = useRef(new Set());
-  const statusConfirmationTimerRef = useRef(null);
-
-  useEffect(() => () => {
-    if (statusConfirmationTimerRef.current !== null) {
-      window.clearTimeout(statusConfirmationTimerRef.current);
-    }
-  }, []);
 
   function applicationKey(applicationId) {
     return String(applicationId);
   }
 
   function showStatusConfirmation(application, nextStatus) {
-    if (statusConfirmationTimerRef.current !== null) {
-      window.clearTimeout(statusConfirmationTimerRef.current);
-    }
     setStatusConfirmation(`${application.company_name} moved to ${nextStatus}.`);
-    statusConfirmationTimerRef.current = window.setTimeout(() => {
-      setStatusConfirmation("");
-      statusConfirmationTimerRef.current = null;
-    }, 4500);
   }
 
   async function submitStatusChange(application, nextStatus, payload = {}) {
@@ -89,7 +76,7 @@ export default function PipelinePage({ applications, error, isLoading, onNavigat
     {isLoading ? <LoadingState message="Loading status board..." /> : null}
     {!isLoading && error ? <ErrorMessage message={error} /> : null}
     {!isLoading && !error ? <PipelineBoard applications={applications} onNavigate={onNavigate} onOpenDetails={onOpenDetails} onStatusChange={handleStatusChange} statusUpdateErrors={statusUpdateErrors} updatingApplicationIds={updatingApplicationIds} /> : null}
-    {statusConfirmation ? <div aria-atomic="true" className="pipeline-status-confirmation" role="status">{statusConfirmation}</div> : null}
+    <ViewportNotification message={statusConfirmation} onDismiss={() => setStatusConfirmation("")} />
     {pendingTransition ? <StatusTransitionDialog decision={pendingTransition.decision} errorMessage={statusUpdateErrors.get(applicationKey(pendingTransition.application.id))} isProcessing={updatingApplicationIds.has(applicationKey(pendingTransition.application.id))} onCancel={() => !updatingApplicationIds.has(applicationKey(pendingTransition.application.id)) && setPendingTransition(null)} onConfirm={(intent, confirmedStage) => submitStatusChange(pendingTransition.application, pendingTransition.decision.nextStatus, transitionPayloadForDecision(pendingTransition.decision, intent, confirmedStage))} /> : null}
   </div>;
 }
