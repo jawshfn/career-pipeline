@@ -73,6 +73,20 @@ function sidePanelFixture({ jobId = "11204180", href = `https://app.joinhandshak
     <section><h2>What your school says</h2><p>Decoy school content</p></section></main>`;
 }
 
+function constructionSidePanelFixture({ company = "TDH Steel", role = "Junior Estimator" } = {}) {
+  const description = [
+    `${company} is seeking a motivated and detail-oriented ${role} to support our Preconstruction team.`,
+    "The successful candidate will review project documents, prepare accurate quantity takeoffs, and collaborate with project managers and trade partners.",
+    "This position requires careful organization, clear communication, and a commitment to producing reliable estimates for commercial construction projects.",
+  ].join("\n\n");
+  return `<aside><h1>Neighboring search result</h1><p>Wrong Company</p></aside>
+  <main data-hook="right-content"><header><p>${company}</p><p>Construction</p><a href="https://app.joinhandshake.com/jobs/11231848?searchId=67e50835-6ad0-4058-a913-c2f1b780ffa8"><h1>${role}</h1></a></header>
+    <section><h2>At a glance</h2><p>$50–60K/yr</p><p>Onsite, based in Chesapeake, VA</p><p>Work in person from the location</p><p>Job</p><p>Full-time</p><p>US work authorization required</p></section>
+    <section><h2>Job description</h2><div>${description.split("\n\n").map((line) => `<p>${line}</p>`).join("")}</div></section>
+    <section><h2>Summary Beta</h2><p>Generated summary must stay outside the description.</p></section>
+    <section><h2>Recommended jobs</h2><p>Neighboring recommendation must not be captured.</p></section></main>`;
+}
+
 test("captures an already-complete standalone Handshake description without clicking controls", async () => {
   await withDom(completeFixture(), "https://app.joinhandshake.com/jobs/11206968?searchId=example", async () => {
     const clicks = new Map();
@@ -173,6 +187,35 @@ test("captures only the selected Handshake search side panel and preserves its c
     assert.doesNotMatch(result.raw_text, /Decoy|Wrong Company|Internet & Software|school content/u);
     assert.equal([...clicks.values()].reduce((sum, count) => sum + count, 0), 0);
     assert.doesNotThrow(() => structuredClone(result));
+  });
+});
+
+test("captures a Construction-industry side panel without treating the industry as the company", async () => {
+  await withDom(constructionSidePanelFixture(), "https://app.joinhandshake.com/job-search/11231848?query=operations+support", async () => {
+    const result = await detectHandshakeJobPage();
+    assert.equal(result.status, "detected");
+    assert.equal(result.provider, "handshake");
+    assert.equal(result.company_name, "TDH Steel");
+    assert.equal(result.role_title, "Junior Estimator");
+    assert.equal(result.canonical_job_link, "https://app.joinhandshake.com/jobs/11231848?searchId=67e50835-6ad0-4058-a913-c2f1b780ffa8");
+    for (const expected of [
+      "Company: TDH Steel",
+      "Role: Junior Estimator",
+      "Location: Onsite, based in Chesapeake, VA",
+      "Compensation: $50–60K/yr",
+      "Employment type: Full-time",
+      "TDH Steel is seeking a motivated and detail-oriented Junior Estimator",
+    ]) assert.match(result.raw_text, new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&"), "u"));
+    assert.doesNotMatch(result.raw_text, /Company: Construction|Work in person|US work authorization|Summary Beta|Generated summary|Recommended jobs|Neighboring search result|Wrong Company/u);
+  });
+});
+
+test("keeps a legitimate employer name containing Construction", async () => {
+  await withDom(constructionSidePanelFixture({ company: "Rai Construction and Development In", role: "Project Coordinator" }), "https://app.joinhandshake.com/job-search/11231848?query=operations+support", async () => {
+    const result = await detectHandshakeJobPage();
+    assert.equal(result.status, "detected");
+    assert.equal(result.company_name, "Rai Construction and Development In");
+    assert.equal(result.role_title, "Project Coordinator");
   });
 });
 

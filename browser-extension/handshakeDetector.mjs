@@ -51,7 +51,7 @@ export async function detectHandshakeJobPage(snapshotOverride = null) {
   }
 
   function hasExcludedCompanyText(value) {
-    return /^(?:transportation\s*&\s*logistics|information technology|internet\s*&\s*software|healthcare|financial services|education|government|retail|manufacturing|real estate|media|nonprofit|save|share|quick apply|apply|more|less|job description|at a glance|already applied|withdraw application)$/iu.test(value) ||
+    return /^(?:transportation\s*&\s*logistics|information technology|internet\s*&\s*software|healthcare|financial services|education|government|retail|manufacturing|construction|real estate|media|nonprofit|save|share|quick apply|apply|more|less|job description|at a glance|already applied|withdraw application)$/iu.test(value) ||
       /\b(?:posted|apply by|deadline|work authorization|visa sponsorship|opt\/?cpt|medical|dental|vision|coverage)\b/iu.test(value) || /\$|\b(?:full-time|part-time|contract|internship|temporary)\b/iu.test(value) || /\bbased in\b|\b(?:remote|onsite|on-site|hybrid)\b/iu.test(value);
   }
   function isCredibleCompany(value, title) { return Boolean(value) && value !== title && value.length <= 140 && !hasExcludedCompanyText(value) && !/^(?:company|employer|logo)$/iu.test(value) && /[\p{L}\p{N}]/u.test(value); }
